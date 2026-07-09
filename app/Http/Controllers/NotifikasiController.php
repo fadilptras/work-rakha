@@ -1,0 +1,166 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Notification;
+use Carbon\Carbon;
+use App\Models\User;
+use App\Notifications\BirthdayNotification;
+
+class NotifikasiController extends Controller
+{
+    /**
+     * Menampilkan halaman notifikasi dengan filter & auto-delete lawas.
+     */
+    public function index(Request $request)
+    {
+        $title = 'Notifikasi';
+        $user = Auth::user();
+
+        // === [FITUR BARU] AUTO DELETE > 1 BULAN ===
+        // Menghapus notifikasi yang dibuat lebih dari 1 bulan yang lalu
+        $user->notifications()
+             ->where('created_at', '<', Carbon::now()->subMonth())
+             ->delete();
+        
+        // Ambil filter tipe dari URL, defaultnya 'semua'
+        $filterType = $request->query('type', 'semua');
+
+        // === LOGIKA PENGELOMPOKAN (Sesuai Request) ===
+        $determineType = function ($notification) {
+            $url = strtolower($notification->data['url'] ?? '');
+            $title = strtolower($notification->data['title'] ?? '');
+
+            // 1. Pengajuan Dana
+            if (Str::contains($url, 'dana') || Str::contains($title, 'dana')) {
+                return 'Pengajuan Dana';
+            }
+
+            // 2. Pengajuan Barang
+            if (Str::contains($url, 'barang') || Str::contains($url, 'inventory') || Str::contains($title, 'barang')) {
+                return 'Pengajuan Barang';
+            }
+
+            // 3. Pengajuan Cuti
+            if (Str::contains($url, 'cuti') || Str::contains($title, 'cuti')) {
+                return 'Pengajuan Cuti';
+            }
+
+            // 4. Agenda
+            if (Str::contains($url, 'agenda') || Str::contains($title, 'agenda')) {
+                return 'Agenda';
+            }
+
+            // 5. Lainnya (Ultah, Dokumen, Sistem, dll)
+            return 'Lainnya';
+        };
+
+        // List tombol filter
+        $availableTypes = [
+            'Pengajuan Dana', 
+            'Pengajuan Barang', 
+            'Pengajuan Cuti', 
+            'Agenda', 
+            'Lainnya'
+        ];
+
+        // Query notifikasi
+        $query = $user->notifications()->latest();
+
+        if ($filterType !== 'semua') {
+            $allNotifications = $query->take(200)->get();
+            $notificationsToGroup = $allNotifications->filter(function ($notification) use ($determineType, $filterType) {
+                return $determineType($notification) === $filterType;
+            })->take(50);
+        } else {
+            $notificationsToGroup = $query->take(50)->get();
+        }
+        
+        // Tandai terbaca saat dibuka
+        $unreadIds = $notificationsToGroup->whereNull('read_at')->pluck('id');
+        if ($unreadIds->isNotEmpty()) {
+            $user->notifications()->whereIn('id', $unreadIds)->update(['read_at' => now()]);
+            // Refresh data
+            $notificationsToGroup = $user->notifications()->whereIn('id', $notificationsToGroup->pluck('id'))->latest()->get();
+        }
+
+        // Grouping data
+        $groupedNotifications = $notificationsToGroup->groupBy($determineType);
+
+        // Urutan Tampilan
+        $groupOrder = [
+            'Pengajuan Dana',
+            'Pengajuan Barang',
+            'Pengajuan Cuti',
+            'Agenda',
+            'Lainnya',
+        ];
+
+        return view('users.notifikasi', compact(
+            'groupedNotifications', 
+            'groupOrder', 
+            'title', 
+            'availableTypes',
+            'filterType'
+        ));
+    }
+
+    /**
+     * Fitur Manual: Kirim Notifikasi Ulang Tahun
+     */
+    public function kirimUlangTahun()
+    {
+        try {
+            Artisan::call('app:send-birthday-notifications');
+            $output = Artisan::output();
+            return redirect()->back()->with('success', 'Pengecekan dan pengiriman notifikasi ulang tahun berhasil dieksekusi.');
+            
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mengeksekusi notifikasi: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Menyimpan FCM Token dari Client (Browser/Device) ke Database
+     */
+    public function updateFcmToken(Request $request)
+    {
+        try {
+            // [FIX] Validasi fcm_token
+            $request->validate([
+                'fcm_token' => 'required|string',
+            ]);
+
+            $user = Auth::user();
+            
+            // [FIX] Mengambil input dengan nama yang benar: fcm_token
+            $user->update([
+                'fcm_token' => $request->fcm_token
+            ]);
+
+            return response()->json([
+                'success' => true, 
+                'message' => 'FCM Token berhasil disimpan.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Gagal menyimpan token: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function kirimHariLibur()
+    {
+        try {
+            Artisan::call('app:send-holiday-info');
+            return redirect()->back()->with('success', 'Pengecekan dan pengiriman notifikasi hari libur berhasil dieksekusi.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mengeksekusi notifikasi libur: ' . $e->getMessage());
+        }
+    }
+}

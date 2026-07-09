@@ -1,0 +1,327 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\AbsenController;
+use App\Http\Controllers\PengajuanDanaController;
+use App\Http\Controllers\PengajuanDokumenController;
+use App\Http\Controllers\NotifikasiController;
+use App\Http\Controllers\CutiController;
+use App\Http\Controllers\Admin\AbsensiController;
+use App\Http\Controllers\Admin\CutiController as AdminCutiController;
+use App\Http\Controllers\RekapAbsenController;
+use App\Http\Controllers\Admin\AdminPengajuanDanaController;
+use App\Http\Controllers\Admin\AdminLemburController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\AgendaController;
+use App\Http\Controllers\Admin\AdminPengajuanDokumenController;
+use App\Http\Controllers\Admin\AdminAgendaController;
+use App\Http\Controllers\CrmController;
+use App\Http\Controllers\AktivitasController;
+use App\Http\Controllers\Admin\AdminAktivitasController;
+use App\Http\Controllers\InteractionController;
+use App\Http\Controllers\Admin\AdminCrmController;
+use App\Http\Controllers\PengajuanBarangController;
+use App\Http\Controllers\Admin\AdminPengajuanBarangController;
+use App\Http\Controllers\Admin\HolidayController;
+
+// Route utama, langsung arahkan ke halaman login
+Route::get('/', fn() => redirect()->route('login'));
+
+
+// Route untuk Autentikasi (Login, Logout, Register, Lupa Password)
+Route::controller(LoginController::class)->middleware('guest')->group(function () {
+    Route::get('/login', 'index')->name('login');
+    Route::post('/login', 'authenticate')->name('login.post');
+});
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
+
+Route::view('/forgot-password', 'auth.forgot-password')->middleware('guest')->name('password.request');
+
+
+// Route untuk Fitur Utama Pengguna (yang sudah login)
+Route::middleware('auth')->group(function () {
+    
+    // Dasboard
+    Route::get('/dashboard', function () {
+        return view('users.dashboard', ['title' => 'Dashboard']);
+    })->name('dashboard');
+
+    // Absensi
+    Route::get('/absen', [AbsenController::class, 'absen'])->name('absen');
+    Route::post('/absen', [AbsenController::class, 'store'])->name('absen.store');
+    Route::patch('/absen/keluar/{absensi}', [AbsenController::class, 'updateKeluar'])->name('absen.keluar');
+
+    // Lembur
+    Route::post('/absen/lembur', [AbsenController::class, 'storeLembur'])->name('absen.lembur.store');
+    Route::patch('/absen/lembur/keluar/{lembur}', [AbsenController::class, 'updateLemburKeluar'])->name('absen.lembur.keluar');
+
+    Route::prefix('cuti')->name('cuti.')->group(function () {
+        Route::get('/', [CutiController::class, 'index'])->name('index');
+        Route::get('/create', [CutiController::class, 'create'])->name('create');
+        Route::post('/', [CutiController::class, 'store'])->name('store');
+        
+        // UBAH INI: Tambahkan kata 'detail' agar tidak bentrok dengan route lain
+        Route::get('/detail/{cuti}', [CutiController::class, 'show'])->name('show'); 
+        
+        Route::put('/{cuti}/status', [CutiController::class, 'updateStatus'])->name('updateStatus');
+        Route::post('/{cuti}/cancel', [CutiController::class, 'cancel'])->name('cancel');
+        Route::get('/{cuti}/download', [CutiController::class, 'downloadPdf'])->name('download');
+    });
+
+    // Route Approval Cuti (Ini yang mentrigger notifikasi 'disetujui'/'ditolak')
+    Route::post('/cuti/{cuti}/approve', [AdminCutiController::class, 'approve'])->name('cuti.approve');
+    Route::post('/cuti/{cuti}/reject', [AdminCutiController::class, 'reject'])->name('cuti.reject');
+    
+    // Notifikasi
+    Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index');
+    Route::post('/update-fcm-token', [NotifikasiController::class, 'updateFcmToken'])
+        ->name('fcm.update');
+    
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'editProfile'])->name('profil.index');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profil.update');
+    Route::post('/profile/check-password', [ProfileController::class, 'checkCurrentPassword'])->name('profile.checkPassword');
+    Route::get('/profile/download-pdf', [ProfileController::class, 'downloadPdf'])->name('profile.downloadPdf');
+
+    // Pengajuan Dana
+    Route::get('/pengajuan-dana', [PengajuanDanaController::class, 'index'])->name('pengajuan_dana.index');
+    Route::post('/pengajuan-dana', [PengajuanDanaController::class, 'store'])->name('pengajuan_dana.store');
+    Route::get('/pengajuan-dana/{pengajuanDana}', [PengajuanDanaController::class, 'show'])->name('pengajuan_dana.show');
+    Route::post('/pengajuan-dana/{pengajuanDana}/approve', [PengajuanDanaController::class, 'approve'])->name('pengajuan_dana.approve');
+    Route::post('/pengajuan-dana/{pengajuanDana}/reject', [PengajuanDanaController::class, 'reject'])->name('pengajuan_dana.reject');
+    Route::post('/pengajuan-dana/{pengajuanDana}/proses-pembayaran', [PengajuanDanaController::class, 'prosesPembayaran'])
+        ->name('pengajuan_dana.proses_pembayaran');
+    Route::post('/pengajuan-dana/{pengajuanDana}/upload-bukti-transfer', [PengajuanDanaController::class, 'uploadBuktiTransfer'])
+        ->name('pengajuan_dana.upload_bukti_transfer');
+    Route::get('/pengajuan-dana/{pengajuanDana}/download', [PengajuanDanaController::class, 'downloadPDF'])->name('pengajuan_dana.download');
+    Route::post('/pengajuan-dana/{pengajuanDana}/cancel', [PengajuanDanaController::class, 'cancel'])->name('pengajuan_dana.cancel');
+
+    // Pengajuan Dokumen
+    Route::get('/pengajuan-dokumen', [PengajuanDokumenController::class, 'index'])->name('pengajuan_dokumen.index');
+    Route::post('/pengajuan-dokumen', [PengajuanDokumenController::class, 'store'])->name('pengajuan_dokumen.store');
+    Route::get('/pengajuan-dokumen/{dokumen}/download', [PengajuanDokumenController::class, 'download'])->name('pengajuan_dokumen.download');
+
+    // Rekap Absensi 
+    Route::get('/rekap-absen', [RekapAbsenController::class, 'index'])->name('rekap_absen.index');
+
+    // Agenda
+    Route::get('/agendas', [AgendaController::class, 'index'])->name('agendas.index');
+    Route::post('/agendas', [AgendaController::class, 'store'])->name('agendas.store');
+    Route::get('/get-users', [AgendaController::class, 'getUsers'])->name('agendas.getUsers');
+    Route::put('/agendas/{agenda}', [AgendaController::class, 'update'])->name('agendas.update');
+    Route::delete('/agendas/{agenda}', [AgendaController::class, 'destroy'])->name('agendas.destroy');
+
+    
+Route::controller(CrmController::class)->group(function () {
+    Route::get('/crm', 'index')->name('crm.index');
+    Route::get('/crm/matrix', 'matrix')->name('crm.matrix');
+    Route::post('/crm/store', 'store')->name('crm.store');
+    Route::get('/crm/{client}', 'show')->name('crm.show');
+    Route::post('/crm/interaction', 'storeInteraction')->name('crm.interaction.store');
+    Route::post('/crm/interaction/support', 'storeSupport')->name('crm.interaction.support');
+    Route::delete('/crm/client/{client}', 'destroyClient')->name('crm.client.destroy');
+    Route::delete('/crm/interaction/{interaction}', 'destroyInteraction')->name('crm.interaction.destroy');
+    Route::get('/crm/matrix/export', 'exportMatrix')->name('crm.matrix.export');
+    Route::get('/crm/{client}/export', 'exportClientRecap')->name('crm.client.export');
+    Route::get('/crm/client/{client}/edit', [CrmController::class, 'edit'])->name('crm.client.edit');
+    Route::put('/crm/client/{client}', [CrmController::class, 'update'])->name('crm.client.update');
+    Route::post('/crm/interaction/entertain', 'storeEntertain')->name('crm.interaction.entertain');
+    Route::put('/crm/interaction/{interaction}/update', [CrmController::class, 'updateInteraction'])
+    ->name('crm.interaction.update');
+});
+
+    Route::resource('aktivitas', AktivitasController::class)
+        ->only(['index', 'store']) // Kita hanya butuh method index() dan store()
+        ->middleware('auth');
+
+    Route::get('/aktivitas/json', [AktivitasController::class, 'getAktivitasJson'])
+        ->name('aktivitas.json')
+        ->middleware('auth');
+    Route::get('/aktivitas/json', [AktivitasController::class, 'getAktivitasJson'])->name('aktivitas.getJson');
+
+    Route::get('/kirim-ulang-tahun', [NotifikasiController::class, 'kirimUlangTahun'])
+        ->name('notifikasi.ulangtahun');
+
+    Route::controller(PengajuanBarangController::class)
+        ->prefix('pengajuan-barang')
+        ->name('pengajuan_barang.')
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            
+            // Halaman Detail
+            Route::get('/{pengajuanBarang}', 'show')->name('show');
+            
+            // [PERBAIKAN] Ganti route approve/reject lama dengan satu route updateStatus
+            // Pastikan form di View (users.detail-pengajuan-barang) action-nya mengarah ke route ini
+            Route::patch('/{pengajuanBarang}/status', 'updateStatus')->name('updateStatus');
+
+            // Download & Cancel
+            Route::get('/{pengajuanBarang}/download', 'download')->name('download');
+            Route::post('/{pengajuanBarang}/cancel', 'cancel')->name('cancel');
+        });
+        
+
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    
+    Route::get('/', fn() => redirect()->route('admin.employees.index'));
+    
+    // (role='user')
+    Route::prefix('employees')->name('employees.')->group(function () {
+        Route::get('/', [UserController::class, 'indexByRole'])->defaults('role', 'user')->name('index');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::put('/update', [UserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+
+        // Kepala Divisi
+        Route::post('/{user}/set-as-head', [UserController::class, 'setAsDivisionHead'])->name('setAsHead');
+        Route::get('/{user}/download-pdf', [UserController::class, 'downloadProfilePdf'])->name('downloadProfilePdf');
+    });
+
+    // (role='admin')
+    Route::prefix('admins')->name('admins.')->group(function () {
+        Route::get('/', [UserController::class, 'indexByRole'])->defaults('role', 'admin')->name('index');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::post('/update', [UserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Kelola Absen
+    Route::prefix('absensi')->name('absensi.')->group(function () {
+        // Aktivitas Harian & download PDF
+        Route::get('/', [AbsensiController::class, 'index'])->name('index');
+        Route::get('/pdf/harian', [AbsensiController::class, 'downloadPdfHarian'])->name('downloadPdfHarian');
+        
+        // Rekap Absensi Bulanan & download PDF
+        Route::get('/rekap', [AbsensiController::class, 'rekap'])->name('rekap');
+        Route::get('/rekap/pdf', [AbsensiController::class, 'downloadPdf'])->name('rekap.downloadPdf');
+        Route::get('/rekap/excel', [AbsensiController::class, 'downloadExcel'])->name('rekap.downloadExcel');
+    });
+
+
+    // Rekap Lembur 
+    Route::prefix('lembur')->name('lembur.')->group(function () {
+        Route::get('/', [AdminLemburController::class, 'index'])->name('index');
+        Route::get('/pdf', [AdminLemburController::class, 'downloadPdf'])->name('downloadPdf');
+    });
+        
+    // Cuti
+    Route::prefix('cuti')->name('cuti.')->group(function () {
+    Route::get('/', [AdminCutiController::class, 'index'])->name('index');
+    Route::get('/rekap-pdf', [AdminCutiController::class, 'downloadRekapPDF'])->name('downloadRekapPdf');
+    Route::get('/set-approvers', [AdminCutiController::class, 'setApprovers'])->name('set_approvers');
+    Route::post('/set-approvers', [AdminCutiController::class, 'saveApprovers'])->name('set_approvers.save');
+    Route::get('/pengaturan-pdf', [AdminCutiController::class, 'downloadPengaturanPDF'])->name('downloadPengaturanPDF');
+    Route::get('/pengaturan', [AdminCutiController::class, 'pengaturanCuti'])->name('pengaturan');
+    Route::post('/pengaturan', [AdminCutiController::class, 'updatePengaturanCuti'])->name('updatePengaturan');
+    Route::get('/{cuti}', [AdminCutiController::class, 'show'])->name('show');
+    Route::delete('/{cuti}', [AdminCutiController::class, 'destroy'])->name('destroy');
+    Route::get('/{cuti}/download', [AdminCutiController::class, 'download'])->name('download');
+    });
+
+    // Pengajuan Dana
+    Route::prefix('pengajuan-dana')->name('pengajuan_dana.')->group(function() {
+        Route::get('/', [AdminPengajuanDanaController::class, 'index'])->name('index');
+        Route::get('/rekap-pdf', [AdminPengajuanDanaController::class, 'downloadRekapPDF'])->name('downloadRekapPdf');
+        Route::get('/{pengajuanDana}', [AdminPengajuanDanaController::class, 'show'])->name('show');
+        Route::delete('/{pengajuanDana}', [AdminPengajuanDanaController::class, 'destroy'])->name('destroy');
+        Route::get('/{pengajuanDana}/download', [AdminPengajuanDanaController::class, 'downloadPDF'])->name('downloadPdf');
+        Route::get('/pengaturan/approvers', [AdminPengajuanDanaController::class, 'showSetApprovers'])->name('set_approvers.index');
+        Route::post('/pengaturan/approvers', [AdminPengajuanDanaController::class, 'saveSetApprovers'])->name('set_approvers.save');
+        Route::post('/{pengajuanDana}/mark-as-paid', [AdminPengajuanDanaController::class, 'markAsPaid'])
+             ->name('markAsPaid');
+    });
+
+    // Pengajuan Dokumen
+    Route::prefix('pengajuan-dokumen')->name('pengajuan-dokumen.')->group(function() {
+        Route::get('/', [AdminPengajuanDokumenController::class, 'index'])->name('index');
+        Route::get('/{dokumen}', [AdminPengajuanDokumenController::class, 'show'])->name('show');
+        Route::put('/{dokumen}', [AdminPengajuanDokumenController::class, 'update'])->name('update');
+    });
+
+    // Agenda
+    Route::prefix('agenda')->name('agenda.')->group(function () {
+        Route::get('/', [AdminAgendaController::class, 'index'])->name('index');
+        Route::post('/', [AdminAgendaController::class, 'store'])->name('store');
+        Route::get('/get-all-users', [AdminAgendaController::class, 'getAllUsers'])->name('getAllUsers');
+        Route::get('/events', [AdminAgendaController::class, 'getAdminAgendas'])->name('getEvents');
+        Route::put('/{agenda}', [AdminAgendaController::class, 'update'])->name('update');
+        Route::delete('/{agenda}', [AdminAgendaController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('aktivitas')->name('aktivitas.')->group(function () {
+        Route::get('/', [AdminAktivitasController::class, 'index'])->name('index');
+        
+        // Tambahkan ini:
+        Route::get('/download-pdf', [AdminAktivitasController::class, 'downloadPdf'])->name('downloadPdf');
+    });
+
+    Route::controller(AdminCrmController::class)->prefix('crm')->name('crm.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        
+        // Export Matrix
+        Route::get('/matrix/export', 'exportMatrix')->name('matrix.export');
+
+        // Client Management
+        Route::get('/{client}', 'show')->name('show');
+        Route::get('/client/{client}/edit', 'edit')->name('client.edit');
+        Route::put('/client/{client}', 'update')->name('client.update');
+        Route::delete('/client/{client}', 'destroyClient')->name('client.destroy');
+        
+        // Interaction Store
+        Route::post('/interaction', 'storeInteraction')->name('interaction.store');
+        Route::post('/interaction/support', 'storeSupport')->name('interaction.support');
+        Route::post('/interaction/entertain', 'storeEntertain')->name('interaction.entertain');
+        
+        // Interaction Delete & Update
+        Route::delete('/interaction/{interaction}', 'destroyInteraction')->name('interaction.destroy');
+        
+        // [PERBAIKAN ROUTE UPDATE]
+        // Menghapus '/crm' di awal karena sudah ada prefix
+        // Menggunakan string method 'updateInteraction' bukan array
+        Route::put('/interaction/{interaction}/update', 'updateInteraction')->name('interaction.update');
+        
+        Route::get('/{client}/export', 'exportClientRecap')->name('client.export');
+    });
+    
+    Route::prefix('pengajuan-barang')->name('pengajuan_barang.')->group(function() {
+        Route::get('/', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'index'])->name('index');
+        Route::get('/rekap-pdf', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'downloadRekapPDF'])->name('downloadRekapPdf');
+        Route::get('/set-approvers', [AdminPengajuanBarangController::class, 'setApprovers'])->name('set_approvers'); // Sesuaikan method
+        Route::post('/set-approvers', [AdminPengajuanBarangController::class, 'saveApprovers'])->name('set_approvers.save');
+        Route::get('/{pengajuanBarang}', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'show'])->name('show');
+        Route::delete('/{pengajuanBarang}', [AdminPengajuanBarangController::class, 'destroy'])->name('destroy');
+        Route::get('/{pengajuanBarang}/download', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'downloadPDF'])->name('downloadPdf');
+        Route::put('/{pengajuanBarang}/status', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'updateStatus'])->name('updateStatus');
+    });
+    
+    Route::resource('holidays', HolidayController::class);
+    
+});
+
+
+Route::get('/fonnte-sync-group', function () {
+    // Gunakan token Fonnte milikmu
+    $token = 'MP8iwGyRDCKJVgNs5ejZ'; 
+
+    // 1. Fetch Group (Perintah ke Fonnte untuk mensinkronkan daftar grup dari HP kamu)
+    $sync = Http::withHeaders([
+        'Authorization' => $token,
+    ])->post('https://api.fonnte.com/fetch-group');
+
+    // 2. Get Group (Ambil daftar grup yang berhasil disinkronkan)
+    $list = Http::withHeaders([
+        'Authorization' => $token,
+    ])->post('https://api.fonnte.com/get-whatsapp-group');
+
+    // Menampilkan hasilnya ke layar browser
+    return response()->json([
+        '1_status_sinkronisasi' => $sync->json(),
+        '2_daftar_grup_kamu'    => $list->json()
+    ]);
+});
