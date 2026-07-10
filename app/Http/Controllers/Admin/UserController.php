@@ -7,28 +7,28 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-// --- TAMBAHKAN USE STATEMENT INI ---
 use Barryvdh\DomPDF\Facade\Pdf;
-// ------------------------------------
-// (Hapus use Auth jika tidak digunakan di method lain di controller ini)
-use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Illuminate\Http\Response;
 
 class UserController extends Controller
 {
     /**
-     * Menampilkan user berdasarkan role (Admin atau Karyawan).
+     * Menampilkan daftar user berdasarkan role ('admin' or 'user').
      */
-    public function indexByRole($role)
+    public function indexByRole(string $role): View
     {
         if (!in_array($role, ['admin', 'user'])) {
             abort(404);
         }
 
         if ($role === 'admin') {
-            $users = User::where('role', 'admin')->orderBy('name')->get();
+            $users = User::query()->where('role', 'admin')->orderBy('name')->get();
+            
             return view('admin.admin', [
                 'users' => $users,
                 'title' => 'Kelola Admin',
@@ -36,222 +36,156 @@ class UserController extends Controller
             ]);
         }
 
-        if ($role === 'user') {
-            // --- EAGER LOADING DITAMBAHKAN DI SINI ---
-            $users = User::where('role', 'user')
-                         ->orderBy('divisi')
-                         ->orderBy('name')
-                         ->with('riwayatPendidikan', 'riwayatPekerjaan') // <-- Eager Load
-                         ->get();
-            // ----------------------------------------
+        $usersByDivision = User::query()
+                        ->where('role', 'user')
+                        ->with(['riwayatPendidikan', 'riwayatPekerjaan']) 
+                        ->orderBy('divisi')
+                        ->orderBy('name')
+                        ->get()
+                        ->groupBy('divisi');
 
-            $usersByDivision = $users->groupBy(function ($user) {
-                return $user->divisi ?: 'Tanpa Divisi';
-            });
+        return view('admin.karyawan', [
+            'usersByDivision' => $usersByDivision, 
+            'title' => 'Kelola Karyawan',
+            'defaultRole' => 'user'
+        ]);
+    }
 
-            return view('admin.karyawan', [
-                'usersByDivision' => $usersByDivision,
-                'title' => 'Kelola Karyawan',
-                'defaultRole' => 'user'
-            ]);
+    /**
+     * Menampilkan halaman edit terpisah untuk karyawan tertentu.
+     */
+    public function edit(User $user): View
+    {
+        if ($user->role !== 'user') {
+            abort(404);
         }
-    }
 
-    /**
-     * Menyimpan user baru.
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name'              => ['required', 'string', 'max:255'],
-            'email'             => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password'          => ['required', 'string', 'min:8'],
-            'role'              => ['required', Rule::in(['admin', 'user'])],
-            'jabatan'           => 'nullable|string|max:255',
-            'tanggal_bergabung' => 'nullable|date',
-            // 'profile_picture'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Dihapus karena foto tidak di-upload di form ini
-            'divisi'            => 'nullable|string|max:255',
+        return view('admin.edit_karyawan', [
+            'user' => $user,
+            'title' => 'Edit Data Karyawan'
         ]);
-
-        DB::transaction(function () use ($validated, $request) {
-            $validated['password'] = Hash::make($validated['password']);
-
-            // Hapus logika upload foto jika tidak ada field-nya
-            // if ($request->hasFile('profile_picture')) { ... }
-
-            if (empty($validated['tanggal_bergabung'])) {
-                $validated['tanggal_bergabung'] = Carbon::now();
-            }
-
-            User::create($validated);
-        });
-
-        $redirectRoute = $request->role === 'admin' ? 'admin.admins.index' : 'admin.employees.index';
-        return redirect()->route($redirectRoute)->with('success', 'Akun berhasil ditambahkan.');
     }
 
     /**
-     * Mengupdate data user.
+     * Memperbarui data biodata, divisi, jabatan, jatah cuti, beserta foto hasil crop.
      */
-    public function update(Request $request)
+    public function update(Request $request, User $user): RedirectResponse
     {
-        // Pastikan user_id ada dalam request
-        $request->validate(['user_id' => 'required|exists:users,id']);
-        $user = User::findOrFail($request->user_id);
-
         $validated = $request->validate([
-            // --- Akun Dasar ---
-            'name'              => ['required', 'string', 'max:255'],
-            'email'             => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role'              => ['required', Rule::in(['admin', 'user'])],
-            'password'          => ['nullable', 'string', 'min:8'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'divisi' => ['required', 'string', 'max:100'],
+            'jabatan' => ['nullable', 'string', 'max:100'],
+            'jatah_cuti' => ['nullable', 'integer', 'min:0'],
+            'status_karyawan' => ['nullable', 'string', 'max:100'],
             
-            // --- Pekerjaan & Divisi ---
-            'jabatan'           => 'nullable|string|max:255',
-            'divisi'            => 'nullable|string|max:255',
-            'tanggal_bergabung' => 'nullable|date',
-            'nip'               => 'nullable|string|max:50',
-            'status_karyawan'   => 'nullable|string|max:50',
-            'lokasi_kerja'      => 'nullable|string|max:255',
-            'tanggal_mulai_kontrak' => 'nullable|date',
-            'tanggal_akhir_kontrak' => 'nullable|date',
+            // Validasi Data Tambahan Lengkap
+            'nik' => ['nullable', 'string', 'max:20'],
+            'nomor_telepon' => ['nullable', 'string', 'max:20'],
+            'tempat_lahir' => ['nullable', 'string', 'max:100'],
+            'tanggal_lahir' => ['nullable', 'date'],
+            'jenis_kelamin' => ['nullable', 'in:Laki-laki,Perempuan'],
+            'agama' => ['nullable', 'string', 'max:50'],
+            
+            // Finansial & Bank
+            'nama_bank' => ['nullable', 'string', 'max:50'],
+            'nomor_rekening' => ['nullable', 'string', 'max:50'],
+            'pemilik_rekening' => ['nullable', 'string', 'max:100'],
+            'npwp' => ['nullable', 'string', 'max:50'],
+            'bpjs_kesehatan' => ['nullable', 'string', 'max:50'],
+            'bpjs_ketenagakerjaan' => ['nullable', 'string', 'max:50'],
+            
+            // Kontak Darurat
+            'kontak_darurat_nama' => ['nullable', 'string', 'max:100'],
+            'kontak_darurat_nomor' => ['nullable', 'string', 'max:20'],
+            'kontak_darurat_hubungan' => ['nullable', 'string', 'max:50'],
 
-            // --- Data Pribadi ---
-            'nik'               => 'nullable|string|max:20',
-            'nomor_telepon'     => 'nullable|string|max:20',
-            'tempat_lahir'      => 'nullable|string|max:100',
-            'tanggal_lahir'     => 'nullable|date',
-            'jenis_kelamin'     => 'nullable|in:Laki-laki,Perempuan',
-            'agama'             => 'nullable|string|max:50',
-            'status_pernikahan' => 'nullable|string|max:50',
-            'golongan_darah'    => 'nullable|string|max:5',
-            'alamat_ktp'        => 'nullable|string',
-            'alamat_domisili'   => 'nullable|string',
-
-            // --- Administrasi & Bank ---
-            'npwp'                  => 'nullable|string|max:50',
-            'ptkp'                  => 'nullable|string|max:10',
-            'bpjs_kesehatan'        => 'nullable|string|max:50',
-            'bpjs_ketenagakerjaan'  => 'nullable|string|max:50',
-            'nama_bank'             => 'nullable|string|max:100',
-            'nomor_rekening'        => 'nullable|string|max:50',
-            'pemilik_rekening'      => 'nullable|string|max:100',
-
-            // --- Kontak Darurat ---
-            'kontak_darurat_nama'     => 'nullable|string|max:100',
-            'kontak_darurat_nomor'    => 'nullable|string|max:20',
-            'kontak_darurat_hubungan' => 'nullable|string|max:50',
-
-            // --- Foto Profil ---
-            'profile_picture'         => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-
-            'user_id'           => 'required|exists:users,id' 
+            // Penampung file base64 dari Cropper.js
+            'cropped_image' => ['nullable', 'string'],
         ]);
 
-        DB::transaction(function () use ($request, $validated, $user) {
-            // Logika Password
-            if ($request->filled('password')) {
-                $validated['password'] = Hash::make($validated['password']);
-            } else {
-                unset($validated['password']);
-            }
-
-            // Logika Foto Profil
-            if ($request->hasFile('profile_picture')) {
-                // Hapus foto lama dari storage jika sebelumnya ada foto
-                if ($user->profile_picture) {
+        // Memproses Upload Gambar jika ada string base64 baru dari cropper
+        if ($request->filled('cropped_image')) {
+            try {
+                $image_parts = explode(";base64,", $request->cropped_image);
+                $image_base64 = base64_decode($image_parts[1]);
+                
+                $fileName = 'profile_pictures/' . uniqid() . '.png';
+                
+                // Hapus foto lama di storage jika ada sebelumnya
+                if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
                     Storage::disk('public')->delete($user->profile_picture);
                 }
-                // Simpan foto baru ke folder 'profile_pictures'
-                $path = $request->file('profile_picture')->store('profile_pictures', 'public');
-                $validated['profile_picture'] = $path;
-            } else {
-                // Jangan timpa data foto di database jika admin tidak mengupload gambar baru
-                unset($validated['profile_picture']); 
+
+                Storage::disk('public')->put($fileName, $image_base64);
+                $validated['profile_picture'] = $fileName;
+            } catch (\Exception $e) {
+                return back()->with('error', 'Gagal memproses crop foto profil. Silakan coba lagi.');
             }
-
-            // Logika Tanggal Bergabung (Biarkan lama jika kosong)
-            if (empty($validated['tanggal_bergabung'])) {
-                 unset($validated['tanggal_bergabung']);
-            }
-
-            unset($validated['user_id']); // Hapus ID dari array data
-
-            // Update semua data sekaligus
-            $user->update($validated);
-        });
-
-        $redirectRoute = $request->role === 'admin' ? 'admin.admins.index' : 'admin.employees.index';
-        return redirect()->route($redirectRoute)->with('success', 'Data profil karyawan berhasil diperbarui secara lengkap.');
-    }
-
-
-    /**
-     * Menghapus user.
-     */
-    public function destroy(User $user)
-    {
-        if ($user->email === 'admin@rakha.com') {
-            return redirect()->back()->with('error', 'Aksi Ditolak! Akun admin utama tidak dapat dihapus.');
         }
 
-        $role = $user->role;
+        // Singkirkan input cropped_image agar tidak error mass-assignment ke DB
+        unset($validated['cropped_image']);
 
-        DB::transaction(function () use ($user) {
-            if ($user->profile_picture) {
-                Storage::disk('public')->delete($user->profile_picture);
-            }
-            $user->delete();
-        });
+        $user->update($validated);
 
-        $redirectRoute = $role === 'admin' ? 'admin.admins.index' : 'admin.employees.index';
-        return redirect()->route($redirectRoute)->with('success', 'Akun berhasil dihapus.');
+        return redirect()->route('admin.employees.index')->with('success', "Seluruh data profil a.n. {$user->name} berhasil diperbarui.");
     }
 
     /**
-     * Mengatur user sebagai Kepala Divisi.
+     * Menghapus akun pengguna dari sistem secara permanen.
      */
-    public function setAsDivisionHead(User $user)
+    public function destroy(User $user): RedirectResponse
     {
-        if (empty($user->divisi)) {
-            return redirect()->back()->with('error', 'Tidak bisa mengatur kepala divisi untuk karyawan tanpa divisi.');
+        if ($user->id === Auth::id()) {
+            return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
+        // Hapus file foto dari storage sebelum delete records
+        if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+            Storage::disk('public')->delete($user->profile_picture);
+        }
+
+        $nama = $user->name;
+        $user->delete();
+
+        return back()->with('success', "Akun a.n. {$nama} berhasil dihapus permanen.");
+    }
+
+    /**
+     * Mengatur seorang karyawan menjadi Kepala Divisi (menggantikan kepala divisi lama di divisi yang sama).
+     */
+    public function setAsDivisionHead(User $user): RedirectResponse
+    {
         DB::transaction(function () use ($user) {
-            User::where('divisi', $user->divisi)
+            User::query()
+                ->where('divisi', $user->divisi)
                 ->where('id', '!=', $user->id)
                 ->update(['is_kepala_divisi' => false]);
+
             $user->update(['is_kepala_divisi' => true]);
         });
 
         return redirect()->route('admin.employees.index')->with('success', "{$user->name} telah diatur sebagai Kepala Divisi {$user->divisi}.");
     }
 
-    // --- === METHOD BARU UNTUK DOWNLOAD PDF === ---
     /**
      * Menghasilkan dan mengunduh PDF profil karyawan spesifik.
      */
-    public function downloadProfilePdf(User $user)
+    public function downloadProfilePdf(User $user): Response
     {
-        // 1. Muat relasi yang dibutuhkan (sudah dimuat di indexByRole, tapi kita muat lagi untuk keamanan)
-        $user->load('riwayatPendidikan', 'riwayatPekerjaan');
+        $user->load(['riwayatPendidikan', 'riwayatPekerjaan']);
 
-        // 2. Siapkan data untuk view
+        $admin = Auth::user();
+
         $data = [
             'user' => $user,
-            // Ambil nama user yang mencetak (admin yang sedang login)
-            'pencetak' => Auth::user()->name,
+            'pencetak' => $admin ? $admin->name : 'Admin',
             'tanggal_cetak' => now()->translatedFormat('d F Y H:i')
         ];
 
-        // 3. Load view PDF ('pdf.profile' yang sama dengan ProfileController)
         $pdf = Pdf::loadView('pdf.profile', $data)->setPaper('a4', 'portrait');
 
-        // 4. Buat nama file
-        $namaFile = 'Profil Karyawan - ' . $user->name . ' - ' . now()->format('Ymd') . '.pdf';
-
-        // 5. Kembalikan sebagai download
-        return $pdf->download($namaFile);
+        return $pdf->download('Profil_' . str_replace(' ', '_', $user->name) . '.pdf');
     }
-    // --- === AKHIR METHOD BARU === ---
 }

@@ -11,9 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // DAFTARKAN ALIAS MIDDLEWARE ANDA DI SINI
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'redirect.if.admin' => \App\Http\Middleware\RedirectIfAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

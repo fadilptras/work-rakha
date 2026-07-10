@@ -92,7 +92,8 @@
                             </h2>
                         </div>
 
-                        <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {{-- [DIUBAH SIKIT DI SINI]: grid dari 3 kolom jadi 4 kolom agar pas 4 approver --}}
+                        <div class="p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                             {{-- TAHAP 1 --}}
                             <div class="rounded border border-slate-200 p-3 bg-slate-50 border-l-[3px] {{ $pengajuanBarang->status_appr_1 == 'disetujui' ? 'border-l-green-500' : 'border-l-yellow-400' }}">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tahap 1</span>
@@ -113,10 +114,19 @@
 
                             {{-- TAHAP 3 --}}
                             <div class="rounded border border-slate-200 p-3 bg-slate-50 border-l-[3px] {{ $pengajuanBarang->status_appr_3 == 'disetujui' ? 'border-l-green-500' : 'border-l-yellow-400' }}">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tahap 3 (Final)</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tahap 3</span>
                                 <h4 class="text-xs font-bold text-slate-800 truncate">{{ $pengajuanBarang->approver3->name ?? 'Belum Diatur' }}</h4>
                                 <span class="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-bold {{ $pengajuanBarang->status_appr_3 == 'disetujui' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
                                     {{ ucfirst($pengajuanBarang->status_appr_3) }}
+                                </span>
+                            </div>
+
+                            {{-- [DITAMBAHKAN]: TAHAP 4 (FINAL) --}}
+                            <div class="rounded border border-slate-200 p-3 bg-slate-50 border-l-[3px] {{ $pengajuanBarang->status_appr_4 == 'disetujui' ? 'border-l-green-500' : 'border-l-yellow-400' }}">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tahap 4 (Final)</span>
+                                <h4 class="text-xs font-bold text-slate-800 truncate">{{ $pengajuanBarang->approver4->name ?? 'Belum Diatur' }}</h4>
+                                <span class="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-bold {{ $pengajuanBarang->status_appr_4 == 'disetujui' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
+                                    {{ ucfirst($pengajuanBarang->status_appr_4) }}
                                 </span>
                             </div>
                         </div>
@@ -160,6 +170,8 @@
                 // Status pengecekan apakah tahap sebelumnya sudah 'clear' (disetujui atau skipped)
                 $afterAppr1 = in_array($pengajuanBarang->status_appr_1, ['disetujui', 'skipped']);
                 $afterAppr2 = in_array($pengajuanBarang->status_appr_2, ['disetujui', 'skipped']);
+                // [DITAMBAHKAN]: Pengecekan setelah Appr 3 clear
+                $afterAppr3 = in_array($pengajuanBarang->status_appr_3, ['disetujui', 'skipped']);
 
                 // Logic siapa yang sedang bertugas approve
                 $isAppr1 = ($user->id == $pengajuanBarang->approver_barang_1_id && $pengajuanBarang->status_appr_1 == 'menunggu');
@@ -170,13 +182,17 @@
                 // Approver 3 muncul jika Appr 2 sudah clear (baik disetujui atau karena Appr 2 null/skipped)
                 $isAppr3 = ($user->id == $pengajuanBarang->approver_barang_3_id && $afterAppr2 && $pengajuanBarang->status_appr_3 == 'menunggu');
                 
-                $showForm = $isAppr1 || $isAppr2 || $isAppr3;
+                // [DITAMBAHKAN]: Approver 4 muncul jika Appr 3 sudah clear
+                $isAppr4 = ($user->id == $pengajuanBarang->approver_barang_4_id && $afterAppr3 && $pengajuanBarang->status_appr_4 == 'menunggu');
+                
+                $showForm = $isAppr1 || $isAppr2 || $isAppr3 || $isAppr4;
             @endphp                         
 
             @if($showForm)
             <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 border-t-4 border-t-blue-500 mb-12">
                 <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center">
-                    <i class="fas fa-gavel text-slate-800 mr-2"></i> Tindakan Persetujuan {{ $isAppr3 ? '(Final)' : '' }}
+                    {{-- [DIUBAH SIKIT]: Teks (Final) sekarang mengacu ke isAppr4 --}}
+                    <i class="fas fa-gavel text-slate-800 mr-2"></i> Tindakan Persetujuan {{ $isAppr4 ? '(Final)' : '' }}
                 </h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">

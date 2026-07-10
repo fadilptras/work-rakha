@@ -1,7 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\LoginController;
+
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Admin\Auth\RegisteredUserController;
+use App\Http\Controllers\Admin\Auth\PasswordResetController;
+
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AbsenController;
 use App\Http\Controllers\PengajuanDanaController;
@@ -20,28 +24,26 @@ use App\Http\Controllers\Admin\AdminAgendaController;
 use App\Http\Controllers\CrmController;
 use App\Http\Controllers\AktivitasController;
 use App\Http\Controllers\Admin\AdminAktivitasController;
-use App\Http\Controllers\InteractionController;
+// use App\Http\Controllers\InteractionController;
 use App\Http\Controllers\Admin\AdminCrmController;
 use App\Http\Controllers\PengajuanBarangController;
 use App\Http\Controllers\Admin\AdminPengajuanBarangController;
 use App\Http\Controllers\Admin\HolidayController;
 
-// Route utama, langsung arahkan ke halaman login
+// Awalan
 Route::get('/', fn() => redirect()->route('login'));
 
-
-// Route untuk Autentikasi (Login, Logout, Register, Lupa Password)
-Route::controller(LoginController::class)->middleware('guest')->group(function () {
-    Route::get('/login', 'index')->name('login');
-    Route::post('/login', 'authenticate')->name('login.post');
+// Autentikasi (Login, Logout, Lupa Password)
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.post');
 });
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
-
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout')->middleware('auth');
 Route::view('/forgot-password', 'auth.forgot-password')->middleware('guest')->name('password.request');
 
 
 // Route untuk Fitur Utama Pengguna (yang sudah login)
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     
     // Dasboard
     Route::get('/dashboard', function () {
@@ -169,23 +171,24 @@ Route::controller(CrmController::class)->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     
     Route::get('/', fn() => redirect()->route('admin.employees.index'));
-    
-    // (role='user')
+
+    Route::patch('/users/{user}/reset-password', [PasswordResetController::class, 'resetToDefault'])->name('users.resetPassword'); 
     Route::prefix('employees')->name('employees.')->group(function () {
         Route::get('/', [UserController::class, 'indexByRole'])->defaults('role', 'user')->name('index');
-        Route::post('/', [UserController::class, 'store'])->name('store');
-        Route::put('/update', [UserController::class, 'update'])->name('update');
-        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+        Route::post('/', [RegisteredUserController::class, 'store'])->name('store');
 
-        // Kepala Divisi
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+
+        Route::put('/{user}', [UserController::class, 'update'])->name('update');
+        
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
         Route::post('/{user}/set-as-head', [UserController::class, 'setAsDivisionHead'])->name('setAsHead');
         Route::get('/{user}/download-pdf', [UserController::class, 'downloadProfilePdf'])->name('downloadProfilePdf');
     });
 
-    // (role='admin')
     Route::prefix('admins')->name('admins.')->group(function () {
         Route::get('/', [UserController::class, 'indexByRole'])->defaults('role', 'admin')->name('index');
-        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::post('/', [RegisteredUserController::class, 'store'])->name('store');
         Route::post('/update', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
     });
