@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'redirect.if.admin' => \App\Http\Middleware\RedirectIfAdmin::class,
+            'admin.idle' => \App\Http\Middleware\AdminIdleTimeout::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
