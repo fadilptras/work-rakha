@@ -14,7 +14,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\RekapAbsensiExport;
 
-class AbsensiController extends Controller
+class AdminAbsensiController extends Controller
 {
     /**
      * Menampilkan data absensi harian.

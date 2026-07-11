@@ -16,7 +16,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod; 
 use Barryvdh\DomPDF\Facade\Pdf;
 
-class CutiController extends Controller
+class AdminCutiController extends Controller
 {
     public function index(Request $request)
     {

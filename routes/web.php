@@ -5,15 +5,16 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\Auth\RegisteredUserController;
 use App\Http\Controllers\Admin\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\ConfirmablePasswordController;
 
-use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\AbsenController;
 use App\Http\Controllers\PengajuanDanaController;
 use App\Http\Controllers\PengajuanDokumenController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\CutiController;
-use App\Http\Controllers\Admin\AbsensiController;
-use App\Http\Controllers\Admin\CutiController as AdminCutiController;
+use App\Http\Controllers\Admin\AdminAbsensiController;
+use App\Http\Controllers\Admin\AdminCutiController;
 use App\Http\Controllers\RekapAbsenController;
 use App\Http\Controllers\Admin\AdminPengajuanDanaController;
 use App\Http\Controllers\Admin\AdminLemburController;
@@ -24,11 +25,10 @@ use App\Http\Controllers\Admin\AdminAgendaController;
 use App\Http\Controllers\CrmController;
 use App\Http\Controllers\AktivitasController;
 use App\Http\Controllers\Admin\AdminAktivitasController;
-// use App\Http\Controllers\InteractionController;
 use App\Http\Controllers\Admin\AdminCrmController;
 use App\Http\Controllers\PengajuanBarangController;
 use App\Http\Controllers\Admin\AdminPengajuanBarangController;
-use App\Http\Controllers\Admin\HolidayController;
+use App\Http\Controllers\Admin\AdminHolidayController;
 
 // Awalan
 Route::get('/', fn() => redirect()->route('login'));
@@ -41,6 +41,10 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout')->middleware('auth');
 Route::view('/forgot-password', 'auth.forgot-password')->middleware('guest')->name('password.request');
 
+Route::middleware('auth')->group(function () {
+    Route::get('/confirm-password', [ConfirmablePasswordController::class, 'show'])->name('password.confirm');
+    Route::post('/confirm-password', [ConfirmablePasswordController::class, 'store']);
+});
 
 // Route untuk Fitur Utama Pengguna (yang sudah login)
 Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
@@ -168,41 +172,50 @@ Route::controller(CrmController::class)->group(function () {
 
 });
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin.')->group(function () {
     
     Route::get('/', fn() => redirect()->route('admin.employees.index'));
 
     Route::patch('/users/{user}/reset-password', [PasswordResetController::class, 'resetToDefault'])->name('users.resetPassword'); 
     Route::prefix('employees')->name('employees.')->group(function () {
-        Route::get('/', [UserController::class, 'indexByRole'])->defaults('role', 'user')->name('index');
+        Route::get('/', [AdminUserController::class, 'indexByRole'])->defaults('role', 'user')->name('index');
         Route::post('/', [RegisteredUserController::class, 'store'])->name('store');
 
-        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+        Route::get('/{user}/edit', [AdminUserController::class, 'edit'])->name('edit');
 
-        Route::put('/{user}', [UserController::class, 'update'])->name('update');
+        Route::put('/{user}', [AdminUserController::class, 'update'])->name('update');
         
-        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
-        Route::post('/{user}/set-as-head', [UserController::class, 'setAsDivisionHead'])->name('setAsHead');
-        Route::get('/{user}/download-pdf', [UserController::class, 'downloadProfilePdf'])->name('downloadProfilePdf');
+        Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
+        Route::post('/{user}/set-as-head', [AdminUserController::class, 'setAsDivisionHead'])->name('setAsHead');
+        Route::get('/{user}/download-pdf', [AdminUserController::class, 'downloadProfilePdf'])->name('downloadProfilePdf');
     });
 
     Route::prefix('admins')->name('admins.')->group(function () {
-        Route::get('/', [UserController::class, 'indexByRole'])->defaults('role', 'admin')->name('index');
-        Route::post('/', [RegisteredUserController::class, 'store'])->name('store');
-        Route::post('/update', [UserController::class, 'update'])->name('update');
-        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+        Route::get('/', [AdminUserController::class, 'indexByRole'])->defaults('role', 'admin')->name('index');
+        
+        Route::post('/', [RegisteredUserController::class, 'store'])
+            ->name('store')
+            ->middleware('password.confirm'); // Proteksi Tambah Admin
+            
+        Route::post('/update', [AdminUserController::class, 'updateAdmin'])
+            ->name('update')
+            ->middleware('password.confirm'); // Proteksi Edit Admin
+            
+        Route::delete('/{user}', [AdminUserController::class, 'destroy'])
+            ->name('destroy')
+            ->middleware('password.confirm'); // Proteksi Hapus Admin
     });
     
     // Kelola Absen
     Route::prefix('absensi')->name('absensi.')->group(function () {
         // Aktivitas Harian & download PDF
-        Route::get('/', [AbsensiController::class, 'index'])->name('index');
-        Route::get('/pdf/harian', [AbsensiController::class, 'downloadPdfHarian'])->name('downloadPdfHarian');
+        Route::get('/', [AdminAbsensiController::class, 'index'])->name('index');
+        Route::get('/pdf/harian', [AdminAbsensiController::class, 'downloadPdfHarian'])->name('downloadPdfHarian');
         
         // Rekap Absensi Bulanan & download PDF
-        Route::get('/rekap', [AbsensiController::class, 'rekap'])->name('rekap');
-        Route::get('/rekap/pdf', [AbsensiController::class, 'downloadPdf'])->name('rekap.downloadPdf');
-        Route::get('/rekap/excel', [AbsensiController::class, 'downloadExcel'])->name('rekap.downloadExcel');
+        Route::get('/rekap', [AdminAbsensiController::class, 'rekap'])->name('rekap');
+        Route::get('/rekap/pdf', [AdminAbsensiController::class, 'downloadPdf'])->name('rekap.downloadPdf');
+        Route::get('/rekap/excel', [AdminAbsensiController::class, 'downloadExcel'])->name('rekap.downloadExcel');
     });
 
 
@@ -303,7 +316,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('/{pengajuanBarang}/status', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'updateStatus'])->name('updateStatus');
     });
     
-    Route::resource('holidays', HolidayController::class);
+    Route::resource('holidays', AdminHolidayController::class);
     
 });
 

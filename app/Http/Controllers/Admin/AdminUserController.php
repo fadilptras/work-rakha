@@ -15,7 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Http\Response;
 
-class UserController extends Controller
+class AdminUserController extends Controller
 {
     /**
      * Menampilkan daftar user berdasarkan role ('admin' or 'user').
@@ -130,6 +130,42 @@ class UserController extends Controller
         $user->update($validated);
 
         return redirect()->route('admin.employees.index')->with('success', "Seluruh data profil a.n. {$user->name} berhasil diperbarui.");
+    }
+
+    /**
+     * Memperbarui data admin (termasuk password jika diisi).
+     */
+    public function updateAdmin(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+        
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'password' => ['nullable', 'string', 'min:8'],
+            'profile_picture' => ['nullable', 'image', 'max:2048']
+        ]);
+
+        if ($request->filled('password')) {
+            $validated['password'] = bcrypt($request->password);
+        } else {
+            unset($validated['password']);
+        }
+
+        if ($request->hasFile('profile_picture')) {
+            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                Storage::disk('public')->delete($user->profile_picture);
+            }
+            $validated['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
+        }
+
+        $user->update($validated);
+
+        return back()->with('success', "Data admin a.n. {$user->name} berhasil diperbarui.");
     }
 
     /**
