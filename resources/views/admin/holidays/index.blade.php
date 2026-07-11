@@ -1,21 +1,32 @@
 <x-layout-admin>
     <x-slot:title>Manajemen Hari Libur</x-slot:title>
 
-    {{-- Container Utama dengan Alpine Data untuk Modal --}}
+    {{-- Container Utama dengan Alpine Data untuk Modal & Drawer --}}
     <div x-data="{ 
-            showEditModal: false,
-            editId: '',
-            editTanggal: '',
-            editKeterangan: '',
-            editIsCuti: false,
-            editUrl: '',
+            showDrawer: false,
+            isEdit: false,
+            drawerTitle: '',
+            formUrl: '',
+            tanggalValue: '',
+            keteranganValue: '',
+            isCutiValue: false,
+            openCreate() {
+                this.isEdit = false;
+                this.drawerTitle = 'Tambah Hari Libur Baru';
+                this.formUrl = '{{ route('admin.holidays.store') }}';
+                this.tanggalValue = '';
+                this.keteranganValue = '';
+                this.isCutiValue = false;
+                this.showDrawer = true;
+            },
             openEdit(id, tanggal, keterangan, isCuti) {
-                this.editId = id;
-                this.editTanggal = tanggal;
-                this.editKeterangan = keterangan;
-                this.editIsCuti = isCuti == 1; // Convert to boolean
-                this.editUrl = '{{ route('admin.holidays.update', ':id') }}'.replace(':id', id);
-                this.showEditModal = true;
+                this.isEdit = true;
+                this.drawerTitle = 'Edit Hari Libur';
+                this.formUrl = '{{ route('admin.holidays.update', ':id') }}'.replace(':id', id);
+                this.tanggalValue = tanggal;
+                this.keteranganValue = keterangan;
+                this.isCutiValue = isCuti == 1; // Convert to boolean
+                this.showDrawer = true;
             }
          }">
 
@@ -23,14 +34,20 @@
         <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-white tracking-tight">Manajemen Hari Libur</h1>
-                <p class="text-zinc-400 text-sm mt-1">Atur daftar hari libur nasional dan cuti bersama.</p>
+                <p class="text-zinc-400 text-sm mt-1">Atur daftar hari libur nasional dan cuti bersama perusahaan.</p>
             </div>
             
             <div class="flex items-center gap-3">
-                <div class="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm">
-                    <span class="block text-xs text-zinc-500 uppercase font-bold">Total Libur</span>
-                    <span class="text-lg font-bold text-white">{{ $holidays->total() }}</span>
+                <div class="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm flex items-center gap-3">
+                    <div>
+                        <span class="block text-[9px] text-zinc-500 uppercase font-bold tracking-wider">Total Libur</span>
+                        <span class="text-lg font-bold text-white leading-none">{{ $holidays->total() }} Hari</span>
+                    </div>
                 </div>
+                <button @click="openCreate()" 
+                    class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-md flex items-center transition-transform duration-200 hover:scale-105 text-sm">
+                    <i class="fas fa-plus mr-2"></i> Tambah Hari Libur
+                </button>
             </div>
         </div>
 
@@ -39,7 +56,7 @@
         <div x-data="{ show: true }" x-show="show" class="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-between shadow-lg">
             <div class="flex items-center gap-3">
                 <i class="fas fa-check-circle text-xl"></i>
-                <span class="font-medium">{{ session('success') }}</span>
+                <span class="font-medium text-sm">{{ session('success') }}</span>
             </div>
             <button @click="show = false" class="text-emerald-400 hover:text-emerald-300"><i class="fas fa-times"></i></button>
         </div>
@@ -56,63 +73,17 @@
         </div>
         @endif
 
-        {{-- CARD: FORM TAMBAH DATA --}}
-        <div class="mb-8 bg-zinc-800 rounded-xl shadow-lg border border-zinc-700/50 overflow-hidden">
-            <div class="px-6 py-4 border-b border-zinc-700/50 bg-zinc-800/50 flex items-center gap-2">
-                <div class="p-1.5 bg-indigo-500/10 rounded-lg text-indigo-400">
-                    <i class="fas fa-plus-circle"></i>
-                </div>
-                <h2 class="font-semibold text-white">Tambah Hari Libur Baru</h2>
-            </div>
-            
-            <div class="p-6">
-                <form action="{{ route('admin.holidays.store') }}" method="POST">
-                    @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
-                        
-                        {{-- Input Tanggal --}}
-                        <div class="md:col-span-3 space-y-1.5">
-                            <label for="tanggal" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Tanggal</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fas fa-calendar text-zinc-500"></i>
-                                </div>
-                                <input type="date" name="tanggal" id="tanggal" required
-                                       class="pl-10 w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2.5 text-white placeholder-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm">
-                            </div>
-                        </div>
-
-                        {{-- Input Keterangan --}}
-                        <div class="md:col-span-5 space-y-1.5">
-                            <label for="keterangan" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Keterangan Libur</label>
-                            <input type="text" name="keterangan" id="keterangan" placeholder="Contoh: Hari Raya Idul Fitri" required
-                                   class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm">
-                        </div>
-
-                        {{-- Checkbox Cuti Bersama --}}
-                        <div class="md:col-span-2 pb-3">
-                            <label class="inline-flex items-center cursor-pointer group">
-                                <input type="checkbox" name="is_cuti_bersama" value="1" 
-                                       class="w-5 h-5 rounded border-zinc-600 bg-zinc-900 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-zinc-800 transition-colors">
-                                <span class="ml-3 text-sm text-zinc-300 group-hover:text-white transition-colors">Cuti Bersama?</span>
-                            </label>
-                        </div>
-
-                        {{-- Tombol Simpan --}}
-                        <div class="md:col-span-2">
-                            <button type="submit" 
-                                    class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-lg shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 flex justify-center items-center gap-2 transform active:scale-95">
-                                <i class="fas fa-save"></i>
-                                <span>Simpan</span>
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        {{-- TABEL DATA --}}
+        {{-- TABEL DATA (Lebar Penuh / Full-Width) --}}
         <div class="bg-zinc-800 rounded-xl shadow-lg border border-zinc-700/50 overflow-hidden flex flex-col">
+            <div class="px-6 py-4 bg-zinc-700/30 border-b border-zinc-700 flex justify-between items-center">
+                <h2 class="text-sm font-bold text-sky-400 flex items-center">
+                    <i class="fas fa-list mr-2.5"></i> Daftar Hari Libur
+                </h2>
+                <span class="bg-sky-600/10 text-sky-400 border border-sky-600/30 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                    Aktif
+                </span>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="bg-zinc-900/50 text-xs uppercase font-bold text-zinc-400 border-b border-zinc-700">
@@ -120,45 +91,45 @@
                             <th scope="col" class="px-6 py-4 w-16 text-center">No</th>
                             <th scope="col" class="px-6 py-4">Tanggal & Hari</th>
                             <th scope="col" class="px-6 py-4">Keterangan</th>
-                            <th scope="col" class="px-6 py-4 text-center">Jenis</th>
-                            <th scope="col" class="px-6 py-4 text-center w-32">Aksi</th>
+                            <th scope="col" class="px-6 py-4 text-center w-48">Jenis</th>
+                            <th scope="col" class="px-6 py-4 text-center w-28">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-zinc-700/50">
                         @forelse ($holidays as $index => $holiday)
                         <tr class="hover:bg-zinc-700/30 transition-colors group">
                             {{-- Nomor --}}
-                            <td class="px-6 py-4 text-center text-zinc-500 font-mono">
+                            <td class="px-6 py-4 text-center text-zinc-500 font-mono text-xs">
                                 {{ $holidays->firstItem() + $index }}
                             </td>
                             
                             {{-- Tanggal --}}
                             <td class="px-6 py-4">
                                 <div class="flex flex-col">
-                                    <span class="text-white font-medium text-base">
+                                    <span class="text-white font-medium text-sm">
                                         {{ $holiday->tanggal->translatedFormat('d F Y') }}
                                     </span>
-                                    <span class="text-zinc-500 text-xs mt-0.5">
+                                    <span class="text-zinc-500 text-[10px] mt-0.5 uppercase tracking-wider font-semibold">
                                         {{ $holiday->tanggal->translatedFormat('l') }}
                                     </span>
                                 </div>
                             </td>
 
                             {{-- Keterangan --}}
-                            <td class="px-6 py-4 text-zinc-300 font-medium">
+                            <td class="px-6 py-4 text-zinc-300 font-medium text-xs">
                                 {{ $holiday->keterangan }}
                             </td>
 
                             {{-- Label Jenis --}}
                             <td class="px-6 py-4 text-center">
                                 @if($holiday->is_cuti_bersama)
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                        <span class="w-1 h-1 rounded-full bg-purple-400"></span>
                                         Cuti Bersama
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium bg-red-500/10 text-red-400 border border-red-500/20">
+                                        <span class="w-1 h-1 rounded-full bg-red-400"></span>
                                         Libur Nasional
                                     </span>
                                 @endif
@@ -168,10 +139,10 @@
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     
-                                    {{-- TOMBOL EDIT (Trigger Modal) --}}
+                                    {{-- TOMBOL EDIT (Trigger Drawer) --}}
                                     <button type="button" 
                                             @click="openEdit('{{ $holiday->id }}', '{{ $holiday->tanggal->format('Y-m-d') }}', '{{ addslashes($holiday->keterangan) }}', '{{ $holiday->is_cuti_bersama }}')"
-                                            class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-amber-400 hover:bg-amber-500/10 transition-all border border-transparent hover:border-amber-500/20"
+                                            class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-sky-400 hover:bg-sky-500/10 transition-all border border-transparent hover:border-sky-500/20 text-xs"
                                             title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -182,7 +153,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
-                                                class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20"
+                                                class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20 text-xs"
                                                 title="Hapus">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
@@ -195,10 +166,10 @@
                             <td colspan="5" class="px-6 py-16 text-center">
                                 <div class="flex flex-col items-center justify-center">
                                     <div class="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center mb-4">
-                                        <i class="far fa-calendar-times text-3xl text-zinc-600"></i>
+                                        <i class="far fa-calendar-times text-2xl text-zinc-650"></i>
                                     </div>
-                                    <h3 class="text-zinc-300 font-medium text-lg">Belum ada data libur</h3>
-                                    <p class="text-zinc-500 text-sm mt-1">Silakan tambahkan hari libur melalui form di atas.</p>
+                                    <h3 class="text-zinc-300 font-medium text-sm">Belum ada data libur</h3>
+                                    <p class="text-zinc-500 text-xs mt-1">Silakan tambahkan hari libur dengan menekan tombol diatas.</p>
                                 </div>
                             </td>
                         </tr>
@@ -215,77 +186,91 @@
             @endif
         </div>
 
-        {{-- MODAL EDIT (Hidden by default, shown via Alpine) --}}
-        <div x-show="showEditModal" style="display: none;" 
-             class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-             x-transition:enter="transition ease-out duration-300"
+        {{-- BACKDROP OVERLAY DRAWER --}}
+        <div x-show="showDrawer" style="display: none;" 
+             class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+             x-transition:enter="transition ease-out duration-350"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave="transition ease-in duration-250"
              x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0">
+             x-transition:leave-end="opacity-0"
+             @click="showDrawer = false"></div>
+
+        {{-- RIGHT SLIDE-OVER DRAWER: FORM TAMBAH/EDIT --}}
+        <div x-show="showDrawer" style="display: none;" 
+             class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-zinc-800 border-l border-zinc-700 shadow-2xl flex flex-col h-full"
+             x-transition:enter="transition ease-out duration-350 transform"
+             x-transition:enter-start="translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-250 transform"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="translate-x-full">
             
-            <div class="bg-zinc-800 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-md overflow-hidden"
-                 @click.away="showEditModal = false"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95">
-                
-                {{-- Modal Header --}}
-                <div class="px-6 py-4 border-b border-zinc-700 bg-zinc-800 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i class="fas fa-edit text-amber-500"></i> Edit Hari Libur
-                    </h3>
-                    <button @click="showEditModal = false" class="text-zinc-400 hover:text-white transition-colors">
-                        <i class="fas fa-times"></i>
-                    </button>
+            {{-- Drawer Header --}}
+            <div class="px-6 py-5 border-b border-zinc-700 bg-zinc-800 flex justify-between items-center flex-shrink-0">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fas text-sky-400" :class="isEdit ? 'fa-edit' : 'fa-plus-circle'"></i>
+                    <span x-text="drawerTitle"></span>
+                </h3>
+                <button @click="showDrawer = false" class="text-zinc-400 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            
+            {{-- Drawer Form Body --}}
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-grow space-y-6">
+                {{-- INFO BOX --}}
+                <div class="bg-sky-900/30 border border-sky-700 rounded-lg p-4 flex items-start gap-3 shadow-inner">
+                    <div class="text-sky-400 mt-0.5"><i class="fas fa-info-circle text-xl"></i></div>
+                    <div>
+                        <h4 class="text-xs font-bold text-sky-300">Kalender Kerja Operasional</h4>
+                        <p class="text-[10px] text-gray-300 mt-1">Menginput tanggal libur nasional dan cuti bersama akan secara otomatis menonaktifkan sistem kehadiran mandiri karyawan pada tanggal tersebut.</p>
+                    </div>
                 </div>
 
-                {{-- Modal Body (Form Edit) --}}
-                <form :action="editUrl" method="POST" class="p-6">
+                <form id="holiday-form" :action="formUrl" method="POST" class="space-y-5">
                     @csrf
-                    @method('PUT')
                     
-                    <div class="space-y-4">
-                        {{-- Edit Tanggal --}}
-                        <div>
-                            <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Tanggal</label>
-                            <input type="date" name="tanggal" x-model="editTanggal" required
-                                   class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors">
-                        </div>
-
-                        {{-- Edit Keterangan --}}
-                        <div>
-                            <label class="block text-xs font-semibold text-zinc-400 uppercase mb-1">Keterangan</label>
-                            <input type="text" name="keterangan" x-model="editKeterangan" required
-                                   class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors">
-                        </div>
-
-                        {{-- Edit Cuti Bersama --}}
-                        <div>
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="checkbox" name="is_cuti_bersama" value="1" x-model="editIsCuti"
-                                       class="w-5 h-5 rounded border-zinc-600 bg-zinc-900 text-amber-500 focus:ring-amber-500 focus:ring-offset-zinc-800">
-                                <span class="ml-2 text-sm text-zinc-300">Cuti Bersama?</span>
-                            </label>
+                    {{-- Inject Method PUT jika Edit --}}
+                    <template x-if="isEdit">
+                        <input type="hidden" name="_method" value="PUT">
+                    </template>
+                    
+                    {{-- Input Tanggal --}}
+                    <div class="space-y-1.5">
+                        <label for="tanggal_input" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Tanggal Libur</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-calendar text-zinc-500 text-sm"></i>
+                            </div>
+                            <input type="date" name="tanggal" id="tanggal_input" required x-model="tanggalValue"
+                                   class="pl-10 w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-xs">
                         </div>
                     </div>
 
-                    {{-- Modal Footer --}}
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button type="button" @click="showEditModal = false" 
-                                class="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:text-white hover:bg-zinc-700 transition-colors">
-                            Batal
-                        </button>
-                        <button type="submit" 
-                                class="px-4 py-2 rounded-lg text-sm font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-500/20 transition-all">
-                            Simpan Perubahan
-                        </button>
+                    {{-- Input Keterangan --}}
+                    <div class="space-y-1.5">
+                        <label for="keterangan_input" class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Keterangan Libur</label>
+                        <input type="text" name="keterangan" id="keterangan_input" placeholder="Contoh: Hari Raya Idul Fitri" required x-model="keteranganValue"
+                               class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-xs">
+                    </div>
+
+                    {{-- Checkbox Cuti Bersama --}}
+                    <div class="pt-2">
+                        <label class="inline-flex items-center cursor-pointer group">
+                            <input type="checkbox" name="is_cuti_bersama" value="1" x-model="isCutiValue"
+                                   class="w-5 h-5 rounded border-zinc-600 bg-zinc-900 text-sky-600 focus:ring-sky-500 focus:ring-offset-zinc-800 transition-colors">
+                            <span class="ml-3 text-sm text-zinc-300 group-hover:text-white transition-colors">Cuti Bersama?</span>
+                        </label>
                     </div>
                 </form>
+            </div>
+            
+            {{-- Drawer Footer --}}
+            <div class="p-4 border-t border-zinc-700 bg-zinc-900/50 flex justify-end space-x-3 flex-shrink-0">
+                <button type="button" @click="showDrawer = false" class="px-4 py-2 bg-zinc-700 text-gray-300 rounded-lg hover:bg-zinc-650 transition-colors text-xs">Batal</button>
+                <button type="submit" form="holiday-form" class="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 shadow-md transition-colors text-xs font-semibold flex items-center">
+                    <i class="fas fa-save mr-2"></i> Simpan Data
+                </button>
             </div>
         </div>
 
