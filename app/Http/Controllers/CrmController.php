@@ -131,6 +131,7 @@ class CrmController extends Controller
 
     public function show(Client $client, Request $request)
     {
+        $client->load('interactions');
         // 1. Cek Akses Halaman
         $hasAccess = $this->hasFullAccess();
         if ($client->user_id !== Auth::id() && !$hasAccess) abort(403, 'Akses Ditolak.');
@@ -439,6 +440,7 @@ class CrmController extends Controller
     
     public function exportClientRecap(Client $client, Request $request)
     {
+        $client->load('interactions');
         // 1. Cek Hak Akses
         if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
         
@@ -470,7 +472,10 @@ class CrmController extends Controller
         $startingLabel = ($year > $creationYear) ? "Saldo Tahun " . ($year - 1) : "Saldo Awal";
         $startingBalance = $client->saldo_awal ?? 0;
 
-        $pastInteractions = $client->interactions()->whereYear('tanggal_interaksi', '<', $year)->get();
+        $allInteractions = $client->interactions;
+        $pastInteractions = $allInteractions->filter(function ($item) use ($year) {
+            return Carbon::parse($item->tanggal_interaksi)->year < $year;
+        });
         foreach($pastInteractions as $item) {
             if ($item->jenis_transaksi == 'OUT') {
                 $startingBalance -= $item->nilai_kontribusi;
@@ -482,7 +487,9 @@ class CrmController extends Controller
             }
         }
 
-        $yearlyInteractions = $client->interactions()->whereYear('tanggal_interaksi', $year)->get();
+        $yearlyInteractions = $allInteractions->filter(function ($item) use ($year) {
+            return Carbon::parse($item->tanggal_interaksi)->year == $year;
+        });
         $recap = [];
         $currentSaldo = $startingBalance; 
 

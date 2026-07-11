@@ -154,16 +154,27 @@ class CutiController extends Controller
             $cuti->user->decrement('sisa_cuti', $cuti->total_hari);
             
             $period = CarbonPeriod::create($cuti->tanggal_mulai, $cuti->tanggal_selesai);
+            $dates = [];
             foreach ($period as $date) {
-                Absensi::updateOrCreate(
-                    [
+                $dates[] = $date->format('Y-m-d');
+            }
+
+            $existingAbsensi = Absensi::where('user_id', $cuti->user_id)
+                ->whereIn('tanggal', $dates)
+                ->get()
+                ->keyBy('tanggal');
+
+            foreach ($dates as $dateStr) {
+                if ($existingAbsensi->has($dateStr)) {
+                    $existingAbsensi->get($dateStr)->update(['status' => 'cuti']);
+                } else {
+                    Absensi::create([
                         'user_id' => $cuti->user_id,
-                        'tanggal' => $date->format('Y-m-d'),
-                    ],
-                    [
-                        'status' => 'cuti'
-                    ]
-                );
+                        'tanggal' => $dateStr,
+                        'status' => 'cuti',
+                        'jam_masuk' => '00:00:00',
+                    ]);
+                }
             }
 
             Notification::send($cuti->user, new CutiNotification($cuti, 'disetujui'));
@@ -174,10 +185,19 @@ class CutiController extends Controller
 
     public function download(Cuti $cuti)
     {
-        $approver1 = User::find($cuti->user->approver_cuti_1_id);
-        $approver2 = User::find($cuti->user->approver_cuti_2_id);
-        $approver3 = User::find($cuti->user->approver_cuti_3_id);
-        $approver4 = User::find($cuti->user->approver_cuti_4_id);
+        $approverIds = array_filter([
+            $cuti->user->approver_cuti_1_id,
+            $cuti->user->approver_cuti_2_id,
+            $cuti->user->approver_cuti_3_id,
+            $cuti->user->approver_cuti_4_id,
+        ]);
+        
+        $approvers = User::whereIn('id', $approverIds)->get()->keyBy('id');
+        
+        $approver1 = $approvers->get($cuti->user->approver_cuti_1_id);
+        $approver2 = $approvers->get($cuti->user->approver_cuti_2_id);
+        $approver3 = $approvers->get($cuti->user->approver_cuti_3_id);
+        $approver4 = $approvers->get($cuti->user->approver_cuti_4_id);
 
         $sisaCuti = $cuti->user->sisa_cuti ?? 0;
 

@@ -117,6 +117,7 @@ class AdminCrmController extends Controller
 
     public function show(Client $client, Request $request)
     {
+        $client->load('interactions');
         $year = $request->input('year', date('Y'));
         $historyYear = $request->input('history_year');
         $queryInteractions = $client->interactions()->orderBy('tanggal_interaksi', 'desc');
@@ -226,7 +227,11 @@ class AdminCrmController extends Controller
         $creationYear = $client->created_at->format('Y');
         $startingLabel = ($year > $creationYear) ? "Saldo Tahun " . ($year - 1) : "Saldo Awal";
         $startingBalance = $client->saldo_awal ?? 0;
-        $pastInteractions = $client->interactions()->whereYear('tanggal_interaksi', '<', $year)->get();
+
+        $allInteractions = $client->interactions;
+        $pastInteractions = $allInteractions->filter(function ($item) use ($year) {
+            return Carbon::parse($item->tanggal_interaksi)->year < $year;
+        });
         foreach($pastInteractions as $item) {
             if ($item->jenis_transaksi == 'OUT') $startingBalance -= $item->nilai_kontribusi;
             elseif ($item->jenis_transaksi == 'IN') {
@@ -236,7 +241,9 @@ class AdminCrmController extends Controller
                  $startingBalance += $nominal * ($rate / 100);
             }
         }
-        $yearlyInteractions = $client->interactions()->whereYear('tanggal_interaksi', $year)->get();
+        $yearlyInteractions = $allInteractions->filter(function ($item) use ($year) {
+            return Carbon::parse($item->tanggal_interaksi)->year == $year;
+        });
         $recap = []; $currentSaldo = $startingBalance; 
         for ($m = 1; $m <= 12; $m++) {
             $monthlyData = $yearlyInteractions->filter(fn($item) => Carbon::parse($item->tanggal_interaksi)->month == $m);
@@ -277,6 +284,7 @@ class AdminCrmController extends Controller
     
     public function exportClientRecap(Client $client, Request $request)
     {
+        $client->load('interactions');
         // 1. Ambil tahun
         $year = $request->input('year', date('Y'));
     

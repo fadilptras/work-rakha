@@ -224,14 +224,21 @@ class AbsensiController extends Controller
             })
             ->toArray();
 
-        foreach ($users as $user) {
-            $absensiRecords = Absensi::where('user_id', $user->id)
-                ->whereBetween('tanggal', [$startDate, $endDate])
-                ->get()->keyBy('tanggal');
+        $userIds = $users->pluck('id');
 
-            $lemburRecords = Lembur::where('user_id', $user->id)
-                ->whereBetween('tanggal', [$startDate, $endDate])
-                ->get()->keyBy('tanggal');
+        $allAbsensi = Absensi::whereIn('user_id', $userIds)
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->get()
+            ->groupBy('user_id');
+
+        $allLembur = Lembur::whereIn('user_id', $userIds)
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->get()
+            ->groupBy('user_id');
+
+        foreach ($users as $user) {
+            $absensiRecords = collect($allAbsensi->get($user->id) ?? [])->keyBy('tanggal');
+            $lemburRecords = collect($allLembur->get($user->id) ?? [])->keyBy('tanggal');
             
             $summary = ['H' => 0, 'S' => 0, 'I' => 0, 'C' => 0, 'A' => 0, 'L' => 0, 'terlambat' => 0, 'total_menit_kerja' => 0];
             $dailyRecords = [];
