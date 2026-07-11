@@ -26,7 +26,6 @@ class AdminPengajuanDokumenController extends Controller
 
     public function show(PengajuanDokumen $dokumen)
     {
-        // [FIX] Mengirim variabel dengan nama 'pengajuanDana' agar sesuai dengan view
         return view('admin.pengajuan-dokumen.show', ['pengajuanDana' => $dokumen]);
     }
 
@@ -45,10 +44,8 @@ class AdminPengajuanDokumenController extends Controller
             $validated['file_hasil'] = $request->file('file_hasil')->store('dokumen_hasil', 'public');
         }
         
-        // Menggunakan variabel $dokumen dari route model binding untuk update
         $dokumen->update($validated);
 
-        // Redirect kembali dengan variabel $dokumen yang sama
         return redirect()->route('admin.pengajuan-dokumen.show', $dokumen)->with('success', 'Status pengajuan berhasil diperbarui!');
     }
 }

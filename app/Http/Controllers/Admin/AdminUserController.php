@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 
 class AdminUserController extends Controller
 {
@@ -129,6 +130,10 @@ class AdminUserController extends Controller
 
         $user->update($validated);
 
+        Cache::forget('karyawan_list_dropdown');
+        Cache::forget('admin_list_dropdown');
+        Cache::forget('approvers_list_dropdown');
+
         return redirect()->route('admin.employees.index')->with('success', "Seluruh data profil a.n. {$user->name} berhasil diperbarui.");
     }
 
@@ -165,6 +170,10 @@ class AdminUserController extends Controller
 
         $user->update($validated);
 
+        Cache::forget('karyawan_list_dropdown');
+        Cache::forget('admin_list_dropdown');
+        Cache::forget('approvers_list_dropdown');
+
         return back()->with('success', "Data admin a.n. {$user->name} berhasil diperbarui.");
     }
 
@@ -184,6 +193,10 @@ class AdminUserController extends Controller
 
         $nama = $user->name;
         $user->delete();
+
+        Cache::forget('karyawan_list_dropdown');
+        Cache::forget('admin_list_dropdown');
+        Cache::forget('approvers_list_dropdown');
 
         return back()->with('success', "Akun a.n. {$nama} berhasil dihapus permanen.");
     }

@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod; 
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -44,7 +45,10 @@ class AdminCutiController extends Controller
         }
 
         $cutiRequests = $query->paginate(10)->withQueryString(); 
-        $users = User::where('role', 'user')->orderBy('name')->get();
+        
+        $users = Cache::rememberForever('karyawan_list_dropdown', function () {
+            return User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
+        });
 
         return view('admin.cuti.index', [
             'title' => 'Manajemen Pengajuan Cuti',
@@ -56,11 +60,20 @@ class AdminCutiController extends Controller
     
     public function setApprovers()
     {
-        $potentialApprovers = User::where('name', '!=', 'Admin Rakha')->orderBy('name')->get();
-        $admins = User::orderBy('name')->get(); 
+        $potentialApprovers = Cache::rememberForever('approvers_list_dropdown', function () {
+            return User::where('name', '!=', 'Admin Rakha')->orderBy('name')->get(['id', 'name']);
+        });
+        
+        $admins = Cache::rememberForever('admins_list_dropdown', function () {
+            return User::orderBy('name')->get(['id', 'name', 'role']);
+        });
+        
+        $employees = Cache::rememberForever('karyawan_list_dropdown', function () {
+            return User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
+        });
 
         return view('admin.cuti.set-approvers', [
-            'employees' => User::where('role', 'user')->orderBy('name')->get(),
+            'employees' => $employees,
             'approvers' => $potentialApprovers, 
             'admins' => $admins, 
             'title' => 'Set Approver Pengajuan Cuti'
@@ -198,7 +211,7 @@ class AdminCutiController extends Controller
     {
         $tahunIni = Carbon::now()->year;
 
-        $users = User::where('role', 'user')->get()->map(function ($user) {
+        $users = User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'jatah_cuti', 'sisa_cuti'])->map(function ($user) {
             $totalCuti = $user->jatah_cuti ?? 12;
             $sisaCuti = $user->sisa_cuti ?? 0;
             $user->cuti_terpakai = max(0, $totalCuti - $sisaCuti);
@@ -272,7 +285,7 @@ class AdminCutiController extends Controller
     {
         $tahunIni = Carbon::now()->year;
 
-        $users = User::where('role', 'user')->orderBy('name')->get()->map(function ($user) {
+        $users = User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'jatah_cuti', 'sisa_cuti'])->map(function ($user) {
             $totalCuti = $user->jatah_cuti ?? 12;
             $sisaCuti = $user->sisa_cuti ?? 0;
             $user->cuti_terpakai = max(0, $totalCuti - $sisaCuti);

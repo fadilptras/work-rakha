@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Notifications\AgendaNotification;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Cache;
 
 
 class AdminAgendaController extends Controller
@@ -19,7 +20,6 @@ class AdminAgendaController extends Controller
      */
     public function index(Request $request)
     {
-        // Tidak ada perubahan di sini, sudah benar
         $query = Agenda::with('creator');
 
         if ($request->filled('start_date') && $request->filled('end_date')) {
@@ -43,8 +43,6 @@ class AdminAgendaController extends Controller
         $agendas = Agenda::with(['creator', 'guests'])->get();
 
         $events = $agendas->map(function($agenda) {
-            // HAPUS KONDISI IF DI SEKITAR RETURN
-            // GANTI DENGAN PENGECEKAN NULL MENGGUNAKAN NULL COALESCING OPERATOR (??)
             return [
                 'id' => $agenda->id, 
                 'title' => \Illuminate\Support\Str::limit($agenda->title, 15), 
@@ -56,22 +54,21 @@ class AdminAgendaController extends Controller
                     'fullTitle' => $agenda->title, 
                     'description' => $agenda->description,
                     'location' => $agenda->location,
-                    // INI PERUBAHANNYA
                     'organizer' => $agenda->creator->name ?? 'Pengguna Dihapus', 
                     'guests' => $agenda->guests->pluck('name')->toArray(),
                     'guest_ids' => $agenda->guests->pluck('id')->toArray(),
                 ]
             ];
-        }); // Hapus ->filter() karena tidak ada lagi nilai null
+        });
 
         return response()->json($events);
     }
 
-    // ... (Fungsi store, update, destroy, getAllUsers tidak perlu diubah) ...
-    // ... (Salin sisa fungsi dari file asli Anda ke sini) ...
-    
     /**
      * Menyimpan agenda baru yang dibuat oleh admin.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
@@ -101,14 +98,12 @@ class AdminAgendaController extends Controller
         if (!empty($validated['guests'])) {
             $agenda->guests()->sync($validated['guests']);
 
-            // ===== TAMBAHKAN LOGIKA NOTIFIKASI DI SINI =====
             $guestsToNotify = User::whereIn('id', $validated['guests'])->get();
             $creatorName = Auth::user()->name;
             
             if ($guestsToNotify->isNotEmpty()) {
                 Notification::send($guestsToNotify, new AgendaNotification($agenda, 'undangan_baru', $creatorName));
             }
-            // ===============================================
         }
 
         return redirect()->route('admin.agenda.index')->with('success', 'Agenda berhasil dibuat!');
@@ -137,15 +132,12 @@ class AdminAgendaController extends Controller
         $agenda->update($agendaData);
         $agenda->guests()->sync($validated['guests'] ?? []);
 
-        // ===== TAMBAHKAN LOGIKA NOTIFIKASI DI SINI =====
-        // PERBAIKAN KECIL: Tambahkan pengecekan jika creator null
         $creatorName = $agenda->creator->name ?? 'Sistem'; 
         $guestsToNotify = $agenda->fresh()->guests; 
 
         if ($guestsToNotify->isNotEmpty()) {
             Notification::send($guestsToNotify, new AgendaNotification($agenda, 'agenda_diperbarui', $creatorName));
         }
-        // ===============================================
 
         return redirect()->route('admin.agenda.index')->with('success', 'Agenda berhasil diperbarui!');
     }
@@ -155,17 +147,12 @@ class AdminAgendaController extends Controller
      */
     public function destroy(Agenda $agenda)
     {
-        // ===== TAMBAHKAN LOGIKA NOTIFIKASI DI SINI =====
-        // Ambil daftar tamu SEBELUM relasinya dihapus
         $guestsToNotify = $agenda->guests; 
-        // PERBAIKAN KECIL: Tambahkan pengecekan jika creator null
         $creatorName = $agenda->creator->name ?? 'Sistem';
-        // ===============================================
 
-        $agenda->guests()->sync([]); // Lepaskan relasi tamu
+        $agenda->guests()->sync([]); 
         $agenda->delete();
 
-        // Kirim notifikasi setelah proses hapus
         if ($guestsToNotify->isNotEmpty()) {
             Notification::send($guestsToNotify, new AgendaNotification($agenda, 'agenda_dibatalkan', $creatorName));
         }
@@ -178,10 +165,12 @@ class AdminAgendaController extends Controller
      */
     public function getAllUsers()
     {
-        $users = User::where('role', 'user')
-                     ->select('id', 'name')
-                     ->orderBy('name', 'asc')
-                     ->get();
+        $users = Cache::rememberForever('karyawan_list_dropdown', function () {
+            return User::where('role', 'user')
+                         ->select('id', 'name')
+                         ->orderBy('name', 'asc')
+                         ->get();
+        });
         return response()->json($users);
     }
 }

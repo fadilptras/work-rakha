@@ -3,11 +3,12 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Models\PengajuanBarang;
 use App\Notifications\Channels\WhatsAppChannel;
 
-class PengajuanBarangNotification extends Notification
+class PengajuanBarangNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

@@ -3,11 +3,12 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Models\Client;
 use App\Notifications\Channels\WhatsAppChannel;
 
-class ClientBirthdayNotification extends Notification
+class ClientBirthdayNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

@@ -9,6 +9,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth; 
 use Illuminate\Support\Facades\Notification; 
 use App\Notifications\PengajuanDanaNotification;
@@ -61,13 +62,11 @@ class AdminPengajuanDanaController extends Controller
         
         $pengajuanDanas = $query->paginate(10)->appends($request->query());
 
-        $karyawanList = User::where('role', 'user')->orderBy('name')->get();
-        $divisiList = User::where('role', 'user')
-                            ->whereNotNull('divisi')
-                            ->select('divisi')
-                            ->distinct()
-                            ->orderBy('divisi')
-                            ->get();
+        // Karyawan dan Divisi (Optimasi menggunakan Cache)
+        $karyawanList = Cache::rememberForever('karyawan_list_dropdown', function () {
+            return User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'divisi']);
+        });
+        $divisiList = $karyawanList->pluck('divisi')->filter()->unique()->values();
 
         return view('admin.pengajuan-dana.index', [
             'title' => 'Kelola Pengajuan Dana',
@@ -96,7 +95,6 @@ class AdminPengajuanDanaController extends Controller
      */
     public function downloadPDF(PengajuanDana $pengajuanDana)
     {
-        // [FIX] Gunakan nama relasi yang benar dari Model PengajuanDana
         $pengajuanDana->load(['user', 'approver1', 'approver2', 'financeProcessor', 'user.managerKeuangan']);
         
         $pdf = PDF::loadView('pdf.pdf_pengajuan_dana', compact('pengajuanDana'));
@@ -184,11 +182,13 @@ class AdminPengajuanDanaController extends Controller
      */
     public function showSetApprovers()
     {
-        $employees = User::where('role', 'user')->orderBy('name')->get();
-
-        $approvers =  User::where('name', '!=', 'Admin Rakha')
-                                  ->orderBy('name')
-                                  ->get();
+        $employees = Cache::rememberForever('karyawan_list_dropdown', function () {
+            return User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
+        });
+        
+        $approvers = Cache::rememberForever('approvers_list_dropdown', function () {
+            return User::where('name', '!=', 'Admin Rakha')->orderBy('name')->get(['id', 'name']);
+        });
 
         $financeManagers = $approvers; // Samakan list finance manager dengan approver
 

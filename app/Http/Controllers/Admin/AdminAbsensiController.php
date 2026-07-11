@@ -13,6 +13,7 @@ use Carbon\CarbonPeriod;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\RekapAbsensiExport;
+use Illuminate\Support\Facades\Cache;
 
 class AdminAbsensiController extends Controller
 {
@@ -26,9 +27,10 @@ class AdminAbsensiController extends Controller
         $day = intval($request->input('day', now()->day));
         $divisi = $request->input('divisi');
         $status = $request->input('status');
-
-        $divisions = User::select('divisi')->whereNotNull('divisi')->distinct()->pluck('divisi');
-
+        $karyawanList = Cache::rememberForever('karyawan_list_dropdown', function () {
+            return User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'divisi']);
+        });
+        $divisions = $karyawanList->pluck('divisi')->filter()->unique()->values();
         $date_for_page = now()->year($year)->month($month)->day($day);
         
         $isWeekend = $date_for_page->isSunday();
@@ -101,8 +103,12 @@ class AdminAbsensiController extends Controller
 
         $rekapData = $this->getRekapData($startDate, $endDate, $divisi, $userId);
         
-        $divisions = User::select('divisi')->whereNotNull('divisi')->distinct()->pluck('divisi');
-        $usersList = User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
+        $karyawanList = Cache::rememberForever('karyawan_list_dropdown', function () {
+            return User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'divisi']);
+        });
+
+        $divisions = $karyawanList->pluck('divisi')->filter()->unique()->values();
+        $usersList = $karyawanList;
 
         $allDates = collect();
         if ($startDate && $endDate) {
@@ -224,14 +230,24 @@ class AdminAbsensiController extends Controller
             })
             ->toArray();
 
-        foreach ($users as $user) {
-            $absensiRecords = Absensi::where('user_id', $user->id)
-                ->whereBetween('tanggal', [$startDate, $endDate])
-                ->get()->keyBy('tanggal');
+        /**
+         * Mengambil seluruh data absensi dan lembur sekaligus (Bulk Fetching)
+         * untuk menghindari masalah N+1 Query pada loop karyawan di bawah.
+         */
+        $userIds = $users->pluck('id')->toArray();
+        $allAbsensi = Absensi::whereIn('user_id', $userIds)
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->get()
+            ->groupBy('user_id');
 
-            $lemburRecords = Lembur::where('user_id', $user->id)
-                ->whereBetween('tanggal', [$startDate, $endDate])
-                ->get()->keyBy('tanggal');
+        $allLembur = Lembur::whereIn('user_id', $userIds)
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->get()
+            ->groupBy('user_id');
+
+        foreach ($users as $user) {
+            $absensiRecords = collect($allAbsensi->get($user->id, []))->keyBy('tanggal');
+            $lemburRecords = collect($allLembur->get($user->id, []))->keyBy('tanggal');
             
             $summary = ['H' => 0, 'S' => 0, 'I' => 0, 'C' => 0, 'A' => 0, 'L' => 0, 'terlambat' => 0, 'total_menit_kerja' => 0];
             $dailyRecords = [];

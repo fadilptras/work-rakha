@@ -10,6 +10,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class AdminPengajuanBarangController extends Controller
 {
@@ -37,7 +38,10 @@ class AdminPengajuanBarangController extends Controller
             $query->where('user_id', $request->karyawan_id);
         }
 
-        $karyawanList = User::where('role', 'user')->orderBy('name')->get();
+        $karyawanList = Cache::rememberForever('karyawan_list_dropdown', function () {
+            return User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
+        });
+        
         $divisiList = User::select('divisi')->whereNotNull('divisi')->distinct()->get();
         $pengajuanBarangs = $query->paginate(10);
 
@@ -50,11 +54,22 @@ class AdminPengajuanBarangController extends Controller
      */
     public function setApprovers()
     {
-        $potentialApprovers = User::orderBy('name')->get();
+        $employees = Cache::rememberForever('karyawan_list_dropdown', function () {
+            return User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
+        });
+        
+        $approvers = Cache::rememberForever('approvers_list_dropdown', function () {
+            return User::where('name', '!=', 'Admin Rakha')->orderBy('name')->get(['id', 'name']);
+        });
+
+        $admins = Cache::rememberForever('admins_list_dropdown', function () {
+            return User::orderBy('name')->get(['id', 'name', 'role']);
+        });
 
         return view('admin.pengajuan-barang.set-approvers', [
-            'employees' => User::where('role', 'user')->orderBy('name')->get(),
-            'approvers' => $potentialApprovers, 
+            'employees' => $employees,
+            'approvers' => $approvers, 
+            'admins' => $admins, 
             'title' => 'Set Approver Pengajuan Barang'
         ]);
     }

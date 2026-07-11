@@ -3,13 +3,14 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Models\Cuti;
 // IMPORT WAJIB CHANNEL
 use App\Notifications\Channels\WhatsAppChannel;
 use Carbon\Carbon;
 
-class CutiNotification extends Notification
+class CutiNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

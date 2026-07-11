@@ -13,9 +13,13 @@ use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ClientAnnualExport;
 use App\Exports\MatrixAnnualExport;
+use Illuminate\Support\Facades\Cache;
 
 class AdminCrmController extends Controller
 {
+    /**
+     * Menampilkan daftar klien beserta ringkasan saldo/transaksi.
+     */
     public function index(Request $request)
     {
         $userId = $request->input('user_id');
@@ -62,7 +66,9 @@ class AdminCrmController extends Controller
             $totalNet   += $saldo_klien;
         }
 
-        $users = User::orderBy('name', 'asc')->get(); 
+        $users = Cache::rememberForever('karyawan_list_dropdown', function () {
+            return User::where('role', 'user')->orderBy('name', 'asc')->get(['id', 'name', 'divisi']);
+        });
 
         return view('admin.crm.index', [
             'title'      => 'Monitoring Sales & CRM',
@@ -74,6 +80,9 @@ class AdminCrmController extends Controller
         ]);
     }
 
+    /**
+     * Mengunduh matriks penjualan tahunan seluruh klien ke format Excel.
+     */
     public function exportMatrix(Request $request)
     {
         $year = $request->input('year', date('Y'));
@@ -86,6 +95,9 @@ class AdminCrmController extends Controller
         return Excel::download(new MatrixAnnualExport($clients, $months, $year), 'ADMIN_Laporan_Matrix_Sales_' . $year . '.xlsx');
     }
 
+    /**
+     * Menyimpan data klien baru ke database.
+     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -108,7 +120,10 @@ class AdminCrmController extends Controller
         ]);
         if ($validator->fails()) return redirect()->back()->withErrors($validator, 'createClient')->withInput();
         $data = $validator->validated();
-        $salesPerson = User::findOrFail($request->user_id);
+        
+        $usersList = Cache::get('karyawan_list_dropdown', collect());
+        $salesPerson = $usersList->firstWhere('id', $request->user_id) ?? User::findOrFail($request->user_id);
+        
         $data['user_id'] = $salesPerson->id;
         $data['pic']     = $salesPerson->name;
         $client = Client::create($data);
@@ -124,8 +139,6 @@ class AdminCrmController extends Controller
         $interactions = $queryInteractions->paginate(15)->withQueryString(); 
 
         $calc = $this->calculateRecapData($client, $year);
-        
-        // TAMBAHAN: Hitung saldo real-time untuk header
         $currentBalance = $this->calculateRealTimeBalance($client);
 
         return view('admin.crm.show', [
@@ -256,7 +269,9 @@ class AdminCrmController extends Controller
         return ['recap' => $recap, 'totals' => ['gross_in' => collect($recap)->sum('gross_in'), 'net_value' => collect($recap)->sum('net_value'), 'out' => collect($recap)->sum('out'), 'saldo' => $currentSaldo], 'starting_balance' => $startingBalance, 'starting_label' => $startingLabel];
     }
 
-    // TAMBAHAN: Helper hitung saldo untuk header admin
+    /**
+     * Menghitung saldo secara real-time berdasarkan interaksi.
+     */
     private function calculateRealTimeBalance($client)
     {
         $balance = $client->saldo_awal ?? 0;
@@ -275,20 +290,18 @@ class AdminCrmController extends Controller
         return $balance;
     }
     
+    /**
+     * Mengekspor rekapitulasi data spesifik klien ke Excel.
+     */
     public function exportClientRecap(Client $client, Request $request)
     {
-        // 1. Ambil tahun
         $year = $request->input('year', date('Y'));
-    
-        // 2. Hitung data rekap
         $calc = $this->calculateRecapData($client, $year);
     
-        // 3. BERSIHKAN NAMA FILE (Hapus / dan \)
-        // Kita hapus karakter yang dilarang menggunakan str_replace atau preg_replace
+        // Pembersihan karakter khusus pada nama klien untuk nama file aman
         $safeName = str_replace(['/', '\\'], '_', $client->nama_user);
         $fileName = 'Laporan_Sales_' . str_replace(' ', '_', $safeName) . '_' . $year . '.xlsx';
     
-        // 4. Download
         return Excel::download(new ClientAnnualExport(
             $client,
             $calc['recap'],

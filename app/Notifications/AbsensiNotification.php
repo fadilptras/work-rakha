@@ -3,13 +3,14 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Models\Absensi;
 use App\Models\Lembur;
 use App\Notifications\Channels\WhatsAppChannel;
 use Carbon\Carbon;
 
-class AbsensiNotification extends Notification
+class AbsensiNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

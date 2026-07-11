@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 
 class RegisteredUserController extends Controller
 {
@@ -45,6 +46,10 @@ class RegisteredUserController extends Controller
         ]);
 
         $roleText = $user->role === 'admin' ? 'Admin' : 'Karyawan';
+
+        Cache::forget('karyawan_list_dropdown');
+        Cache::forget('admin_list_dropdown');
+        Cache::forget('approvers_list_dropdown');
 
         return back()->with('success', "Akun {$roleText} a.n. {$user->name} berhasil dibuat! Password default: {$defaultPassword}");
     }
