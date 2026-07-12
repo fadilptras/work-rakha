@@ -185,6 +185,191 @@
             }
         }
 
+        /* == Notifikasi Bar Mobile == */
+        .mobile-notif-bar {
+            background: #1a1f2e;
+            color: #e2e8f0;
+            border-radius: 999px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            gap: 8px;
+        }
+        .mobile-notif-bar .notif-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mobile-notif-bar .notif-lihat { color: #93c5fd; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+
+        /* == Weekly Strip Kalender Mobile == */
+        .weekly-strip {
+            background: #fff;
+            border-radius: 1rem;
+            padding: 14px 16px;
+            box-shadow: 0 2px 12px rgba(59,130,246,0.08);
+            border: 1px solid #e0e7ef;
+        }
+        .weekly-strip .week-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .weekly-strip .week-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e3a5f;
+            text-align: center;
+            flex: 1;
+        }
+        .weekly-strip .week-nav-btn {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.15s;
+        }
+        .weekly-strip .week-nav-btn:hover { background: #dbeafe; color: #1d4ed8; }
+        .weekly-strip .days-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+        }
+        .weekly-strip .day-label {
+            font-size: 0.72rem;
+            color: #9ca3af;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .weekly-strip .day-num {
+            width: 34px; height: 34px;
+            line-height: 34px;
+            border-radius: 50%;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin: 0 auto;
+        }
+        .weekly-strip .day-num:hover { background: #dbeafe; }
+        .weekly-strip .day-num.today {
+            background: #1d4ed8;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(29,78,216,0.3);
+        }
+        .weekly-strip .day-num.selected {
+            background: #111827;
+            color: #fff;
+            font-weight: 700;
+        }
+        .weekly-strip .day-num.has-event::after {
+            content: '';
+            display: block;
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            background: #3b82f6;
+            margin: 1px auto 0;
+        }
+        .weekly-strip .day-num.today.has-event::after { background: #fff; }
+
+        /* == Absensi Buttons Mobile == */
+        .absensi-grid-mobile {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .absensi-btn-mobile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fff;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 14px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1f2937;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+        }
+        .absensi-btn-mobile:hover { box-shadow: 0 4px 14px rgba(59,130,246,0.13); transform: translateY(-1px); }
+        .absensi-btn-mobile.active-btn {
+            background: #1d4ed8;
+            color: #fff;
+            border-color: #1d4ed8;
+        }
+        .absensi-btn-mobile.active-btn i { color: #fff; }
+        .absensi-btn-mobile .btn-icon {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.1rem;
+        }
+        .absensi-btn-mobile.active-btn .btn-icon { background: rgba(255,255,255,0.2); }
+
+        /* == Welcome Card Mobile == */
+        .mobile-welcome-card {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 60%, #3b82f6 100%);
+            border-radius: 1rem;
+            padding: 18px 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .mobile-welcome-card::before {
+            content: '';
+            position: absolute;
+            right: -30px; top: -30px;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.07);
+        }
+        .mobile-welcome-card::after {
+            content: '';
+            position: absolute;
+            right: 30px; bottom: -40px;
+            width: 90px; height: 90px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+        .mobile-welcome-card .avatar-circle {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.18);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            position: relative; z-index: 1;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        /* == Agenda Hari Ini Mobile == */
+        .mobile-agenda-card {
+            background: #fff;
+            border-radius: 1rem;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 12px rgba(59,130,246,0.07);
+        }
+        .mobile-agenda-empty {
+            background: #f0f4ff;
+            border-radius: 0.85rem;
+            padding: 28px 16px;
+            text-align: center;
+            border: 1px solid #dbeafe;
+        }
+
     </style>
     @endpush
 
@@ -208,90 +393,213 @@
                 </div>
             @endif
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {{-- ===== TAMPILAN MOBILE (tersembunyi di desktop) ===== --}}
+            <div class="sm:hidden flex flex-col bg-gray-50 pb-4">
 
-                {{-- KOLOM PROFIL: Sangat Compact, Hanya Foto, Nama, dan Divisi --}}
-                <div class="lg:col-span-1 space-y-4">
-                    <div class="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-4 rounded-2xl shadow-xl shadow-blue-500/20">
-                        <h2 class="text-xl font-bold">Welcome Back, {{ Auth::user()->name }}!</h2>
-                        <p class="text-xs mt-1 text-blue-100">Semoga harimu produktif.</p>
+                {{-- Welcome Card --}}
+                <div class="px-4 pt-4 pb-3">
+                    <div class="mobile-welcome-card">
+                        <div style="position:relative;z-index:1;">
+                            <p class="text-sm text-blue-100 font-medium mb-0.5">Selamat datang kembali,</p>
+                            <h2 class="text-2xl font-bold text-white leading-tight">{{ Auth::user()->name }}</h2>
+                        </div>
+                        <div class="avatar-circle">
+                            <i class="fas fa-user-tie text-2xl text-white/80"></i>
+                        </div>
                     </div>
-                    
-                    <div class="bg-white/60 backdrop-blur-lg border border-white/30 shadow-xl shadow-blue-500/20 p-4 rounded-2xl">
-                        {{-- Bagian Header Profil (Horizontal) --}}
-                        <div class="flex items-center gap-4">
-                            <div class="w-16 h-16 shrink-0 aspect-square overflow-hidden rounded-full border-2 border-white/50 shadow-sm">
-                                <img class="w-full h-full object-cover" src="{{ Auth::user()->profile_picture ? asset('storage/' . Auth::user()->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode(Auth::user()->name).'&background=random&color=fff&size=128' }}" alt="Foto Profil">
-                            </div>
-                            <div class="overflow-hidden">
-                                <p class="font-bold text-lg text-gray-800 leading-tight truncate">{{ Auth::user()->name }}</p>
-                                <p class="text-xs font-semibold text-blue-600 mt-0.5 truncate">Divisi: {{ Auth::user()->divisi ?? '-' }}</p>
+                </div>
+
+                {{-- Divisi Info --}}
+                <div class="px-4 pb-3">
+                    <div class="flex items-center gap-2 bg-white rounded-xl px-4 py-2.5 shadow-sm border border-blue-50">
+                        <i class="fas fa-briefcase text-blue-500 text-sm"></i>
+                        <span class="text-sm text-gray-600">Divisi: <span class="font-semibold text-gray-800">{{ Auth::user()->divisi ?? '-' }}</span></span>
+                    </div>
+                </div>
+
+                {{-- Absensi Section --}}
+                <div class="px-4 pb-4">
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-800 text-base mb-3">Absensi</h3>
+                        <div class="absensi-grid-mobile">
+                            <a href="{{ route('absen') }}" class="absensi-btn-mobile active-btn">
+                                <div class="btn-icon">
+                                    <i class="fas fa-fingerprint"></i>
+                                </div>
+                                <span>Absen</span>
+                            </a>
+                            <a href="{{ route('aktivitas.index') }}" class="absensi-btn-mobile">
+                                <div class="btn-icon" style="background:#f3f0ff;">
+                                    <i class="fas fa-tasks" style="color:#7c3aed;"></i>
+                                </div>
+                                <span>Aktivitas</span>
+                            </a>
+                            <a href="{{ route('cuti.create') }}" class="absensi-btn-mobile">
+                                <div class="btn-icon" style="background:#f0fdf4;">
+                                    <i class="fas fa-calendar-times" style="color:#16a34a;"></i>
+                                </div>
+                                <span>Cuti</span>
+                            </a>
+                            <a href="{{ route('rekap_absen.index') }}" class="absensi-btn-mobile">
+                                <div class="btn-icon" style="background:#fffbeb;">
+                                    <i class="fas fa-history" style="color:#d97706;"></i>
+                                </div>
+                                <span>Rekap</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Weekly Calendar Strip --}}
+                <div class="px-4 pb-4">
+                    <div class="weekly-strip">
+                        <div class="week-header">
+                            <button class="week-nav-btn" id="mobile-prev-week"><i class="fas fa-chevron-left"></i></button>
+                            <div class="week-title" id="mobile-week-title">Memuat...</div>
+                            <button class="week-nav-btn" id="mobile-next-week"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="days-row" id="mobile-days-labels">
+                            <div class="day-label">Min</div>
+                            <div class="day-label">Sen</div>
+                            <div class="day-label">Sel</div>
+                            <div class="day-label">Rab</div>
+                            <div class="day-label">Kam</div>
+                            <div class="day-label">Jum</div>
+                            <div class="day-label">Sab</div>
+                        </div>
+                        <div class="days-row" id="mobile-days-nums"></div>
+                    </div>
+                </div>
+
+                {{-- Agenda Hari Ini --}}
+                <div class="px-4 pb-4">
+                    <div class="mobile-agenda-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-gray-800 text-base">Agenda Hari Ini</h3>
+                            <button id="mobile-add-agenda-btn" class="w-9 h-9 rounded-full bg-gray-900 hover:bg-gray-800 text-white flex items-center justify-center shadow-md transition-all duration-200 hover:scale-105">
+                                <i class="fas fa-plus text-xs"></i>
+                            </button>
+                        </div>
+                        <div id="mobile-agenda-today-container">
+                            <div class="mobile-agenda-empty">
+                                <i class="fas fa-calendar-alt text-3xl text-blue-300 mb-3"></i>
+                                <p class="font-semibold text-blue-700 text-sm">Tidak ada agenda</p>
+                                <p class="text-xs text-blue-400 mt-1">Tap + untuk menambah jadwal.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="lg:col-span-2 xl:col-span-3 space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white/60 backdrop-blur-lg border border-white/30 shadow-xl shadow-blue-500/20 p-6 rounded-2xl flex flex-col">
-                            <h3 class="font-bold text-gray-900 mb-8 text-xl">Absensi</h3>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <a href="{{ route('absen') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-blue-200 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-fingerprint text-2xl text-blue-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Absen</span></a>
-                                    <a href="{{ route('aktivitas.index') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-purple-200 hover:border-purple-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-tasks text-2xl text-purple-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Aktivitas</span></a>
-                                    <a href="{{ route('cuti.create') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-green-200 hover:border-green-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-calendar-alt text-2xl text-green-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Cuti</span></a>
-                                    <a href="{{ route('rekap_absen.index') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-yellow-200 hover:border-yellow-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-history text-2xl text-yellow-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Rekap</span></a>
-                                </div>
+                {{-- Notifikasi Bar --}}
+                <div class="px-4 pb-2">
+                    <div class="mobile-notif-bar">
+                        <i class="fas fa-bell text-gray-400 flex-shrink-0 mr-1"></i>
+                        @php
+                            $latestNotif = Auth::user()->notifications->first();
+                        @endphp
+                        <span class="notif-text">
+                            @if($latestNotif)
+                                {{ $latestNotif->data['title'] ?? 'Notifikasi baru' }}
+                            @else
+                                Tidak ada notifikasi baru.
+                            @endif
+                        </span>
+                        <a href="{{ route('notifikasi.index') }}" class="notif-lihat">Lihat &rsaquo;</a>
+                    </div>
+                </div>
+
+            </div>
+            {{-- ===== AKHIR TAMPILAN MOBILE ===== --}}
+
+            {{-- ===== TAMPILAN DESKTOP (tersembunyi di mobile) ===== --}}
+            <div class="hidden sm:block">
+                <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+                    {{-- KOLOM PROFIL: Sangat Compact, Hanya Foto, Nama, dan Divisi --}}
+                    <div class="lg:col-span-1 space-y-4">
+                        <div class="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-4 rounded-2xl shadow-xl shadow-blue-500/20">
+                            <h2 class="text-xl font-bold">Welcome Back, {{ Auth::user()->name }}!</h2>
+                            <p class="text-xs mt-1 text-blue-100">Semoga harimu produktif.</p>
                         </div>
-                        <div class="bg-gradient-to-br from-gray-900 to-slate-800 text-white p-6 rounded-2xl shadow-xl shadow-slate-900/40 border border-slate-700 flex flex-col">
-                            <div class="flex justify-between items-center mb-4 flex-shrink-0">
-                                <h3 class="font-bold text-white text-xl">Notifikasi</h3>
-                                <a href="{{ route('notifikasi.index') }}" class="relative flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200">
-                                    <span class="text-sm font-semibold">Lihat Semua</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
-                                    @if (Auth::user()->unreadNotifications->count() > 0)
-                                        <span class="absolute top-0 right-0 inline-flex items-center justify-center h-4 w-4 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                                            {{ Auth::user()->unreadNotifications->count() }}
-                                        </span>
-                                    @endif
-                                </a>
-                            </div>
-                            <div class="space-y-3 flex-grow flex flex-col justify-center">
-                                @forelse(Auth::user()->notifications->take(2) as $notification)
-                                <a href="{{ $notification->data['url'] ?? '#' }}" class="block p-3 rounded-lg {{ $notification->read_at ? 'bg-gray-800/50' : 'bg-blue-800' }} hover:bg-gray-700/70 transition-colors duration-150">
-                                    <div class="flex items-start">
-                                        <i class="fas {{ $notification->data['icon'] ?? 'fa-info-circle' }} text-xl text-white mt-1 mr-3"></i>
-                                        <div>
-                                            <p class="font-semibold text-sm text-gray-100">{{ $notification->data['title'] ?? 'Notifikasi Baru' }}</p>
-                                            <p class="text-xs text-gray-300 line-clamp-1">{{ $notification->data['message'] ?? 'Tidak ada detail' }}</p>
-                                        </div>
-                                    </div>
-                                </a>
-                                @empty
-                                <div class="flex-grow flex items-center justify-center"><p class="text-center text-gray-400 py-4 text-sm">Tidak ada notifikasi baru.</p></div>
-                                @endforelse
+                        
+                        <div class="bg-white/60 backdrop-blur-lg border border-white/30 shadow-xl shadow-blue-500/20 p-4 rounded-2xl">
+                            {{-- Bagian Header Profil (Horizontal) --}}
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 shrink-0 aspect-square overflow-hidden rounded-full border-2 border-white/50 shadow-sm">
+                                    <img class="w-full h-full object-cover" src="{{ Auth::user()->profile_picture ? asset('storage/' . Auth::user()->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode(Auth::user()->name).'&background=random&color=fff&size=128' }}" alt="Foto Profil">
+                                </div>
+                                <div class="overflow-hidden">
+                                    <p class="font-bold text-lg text-gray-800 leading-tight truncate">{{ Auth::user()->name }}</p>
+                                    <p class="text-xs font-semibold text-blue-600 mt-0.5 truncate">Divisi: {{ Auth::user()->divisi ?? '-' }}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="bg-white/60 backdrop-blur-lg border border-white/30 shadow-xl shadow-blue-500/20 md:p-6 rounded-2xl">
-                        <div class="flex flex-col md:flex-row gap-4 md:gap-8">
-                            <div class="w-full lg:w-3/5">
-                                <div id="mini-calendar"></div>
+
+                    <div class="lg:col-span-2 xl:col-span-3 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white/60 backdrop-blur-lg border border-white/30 shadow-xl shadow-blue-500/20 p-6 rounded-2xl flex flex-col">
+                                <h3 class="font-bold text-gray-900 mb-8 text-xl">Absensi</h3>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <a href="{{ route('absen') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-blue-200 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-fingerprint text-2xl text-blue-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Absen</span></a>
+                                        <a href="{{ route('aktivitas.index') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-purple-200 hover:border-purple-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-tasks text-2xl text-purple-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Aktivitas</span></a>
+                                        <a href="{{ route('cuti.create') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-green-200 hover:border-green-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-calendar-alt text-2xl text-green-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Cuti</span></a>
+                                        <a href="{{ route('rekap_absen.index') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-yellow-200 hover:border-yellow-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-history text-2xl text-yellow-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Rekap</span></a>
+                                    </div>
                             </div>
-                            <div class="hidden lg:block w-1 bg-blue-200"></div>
-                            <div class="w-full lg:w-2/5 flex flex-col px-4 pb-4 md:px-0 md:pb-0">
+                            <div class="bg-gradient-to-br from-gray-900 to-slate-800 text-white p-6 rounded-2xl shadow-xl shadow-slate-900/40 border border-slate-700 flex flex-col">
                                 <div class="flex justify-between items-center mb-4 flex-shrink-0">
-                                    <h3 id="agenda-list-title" class="font-bold text-gray-900 text-lg">Agenda Minggu Ini</h3>
-                                    <button id="add-agenda-btn" class="bg-gray-900 hover:bg-gray-800 text-white font-bold w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center shadow-md hover:scale-105">
-                                        <i class="fas fa-plus text-sm"></i>
-                                    </button>
+                                    <h3 class="font-bold text-white text-xl">Notifikasi</h3>
+                                    <a href="{{ route('notifikasi.index') }}" class="relative flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200">
+                                        <span class="text-sm font-semibold">Lihat Semua</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                                        @if (Auth::user()->unreadNotifications->count() > 0)
+                                            <span class="absolute top-0 right-0 inline-flex items-center justify-center h-4 w-4 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                                                {{ Auth::user()->unreadNotifications->count() }}
+                                            </span>
+                                        @endif
+                                    </a>
                                 </div>
-                                <div id="agenda-list-container" class="h-80 overflow-y-auto pr-2 space-y-3 -mr-2"></div>
+                                <div class="space-y-3 flex-grow flex flex-col justify-center">
+                                    @forelse(Auth::user()->notifications->take(2) as $notification)
+                                    <a href="{{ $notification->data['url'] ?? '#' }}" class="block p-3 rounded-lg {{ $notification->read_at ? 'bg-gray-800/50' : 'bg-blue-800' }} hover:bg-gray-700/70 transition-colors duration-150">
+                                        <div class="flex items-start">
+                                            <i class="fas {{ $notification->data['icon'] ?? 'fa-info-circle' }} text-xl text-white mt-1 mr-3"></i>
+                                            <div>
+                                                <p class="font-semibold text-sm text-gray-100">{{ $notification->data['title'] ?? 'Notifikasi Baru' }}</p>
+                                                <p class="text-xs text-gray-300 line-clamp-1">{{ $notification->data['message'] ?? 'Tidak ada detail' }}</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    @empty
+                                    <div class="flex-grow flex items-center justify-center"><p class="text-center text-gray-400 py-4 text-sm">Tidak ada notifikasi baru.</p></div>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/60 backdrop-blur-lg border border-white/30 shadow-xl shadow-blue-500/20 md:p-6 rounded-2xl">
+                            <div class="flex flex-col md:flex-row gap-4 md:gap-8">
+                                <div class="w-full lg:w-3/5">
+                                    <div id="mini-calendar"></div>
+                                </div>
+                                <div class="hidden lg:block w-1 bg-blue-200"></div>
+                                <div class="w-full lg:w-2/5 flex flex-col px-4 pb-4 md:px-0 md:pb-0">
+                                    <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                                        <h3 id="agenda-list-title" class="font-bold text-gray-900 text-lg">Agenda Minggu Ini</h3>
+                                        <button id="add-agenda-btn" class="bg-gray-900 hover:bg-gray-800 text-white font-bold w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center shadow-md hover:scale-105">
+                                            <i class="fas fa-plus text-sm"></i>
+                                        </button>
+                                    </div>
+                                    <div id="agenda-list-container" class="h-80 overflow-y-auto pr-2 space-y-3 -mr-2"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            {{-- ===== AKHIR TAMPILAN DESKTOP ===== --}}
+
         </main>
     </div>
 
@@ -524,6 +832,11 @@
             });
             calendar.render();
 
+            // Update kalender saat viewport berubah (mobile <-> desktop)
+            window.addEventListener('resize', function() {
+                calendar.updateSize();
+            });
+
             function showAgendaDetails(event) {
                 const props = event.extendedProps;
                 const startTime = event.allDay ? 'Seharian' : formatTime(event.start);
@@ -733,6 +1046,172 @@
                         guestContainer.innerHTML = '<p class="text-gray-500 text-sm">Tidak ada karyawan lain untuk diundang.</p>';
                     }
                 });
+
+            // == Mobile Add Agenda Button ==
+            const mobileAddAgendaBtn = document.getElementById('mobile-add-agenda-btn');
+            if (mobileAddAgendaBtn) {
+                mobileAddAgendaBtn.addEventListener('click', openModalForCreate);
+            }
+        });
+    </script>
+
+    <script>
+        // ============================================================
+        // == MOBILE WEEKLY CALENDAR STRIP LOGIC ==
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const prevBtn   = document.getElementById('mobile-prev-week');
+            const nextBtn   = document.getElementById('mobile-next-week');
+            const titleEl   = document.getElementById('mobile-week-title');
+            const daysNumEl = document.getElementById('mobile-days-nums');
+            const agendaTodayContainer = document.getElementById('mobile-agenda-today-container');
+
+            if (!prevBtn || !nextBtn || !titleEl || !daysNumEl) return;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Awal minggu berdasarkan Senin (ISO Week) - gambar mulai dari Min
+            // Kita pakai Sunday-based week seperti gambar referensi (Min–Sab)
+            let currentWeekStart = getSundayOfWeek(today);
+
+            // Nama bulan singkat
+            const monthNames = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
+            function getSundayOfWeek(d) {
+                const day = new Date(d);
+                day.setHours(0,0,0,0);
+                const dayOfWeek = day.getDay(); // 0=Sun
+                day.setDate(day.getDate() - dayOfWeek);
+                return day;
+            }
+
+            function formatShortDate(d) {
+                return d.getDate() + ' ' + monthNames[d.getMonth()];
+            }
+
+            function isSameDay(a, b) {
+                return a.getFullYear() === b.getFullYear() &&
+                       a.getMonth() === b.getMonth() &&
+                       a.getDate() === b.getDate();
+            }
+
+            // Ambil semua events dari server
+            let allEvents = [];
+            fetch("{{ route('agendas.index') }}")
+                .then(r => r.json())
+                .then(data => {
+                    allEvents = data;
+                    renderWeek(currentWeekStart);
+                    renderTodayAgenda();
+                })
+                .catch(() => {
+                    renderWeek(currentWeekStart);
+                });
+
+            function getEventDates() {
+                return allEvents.map(ev => {
+                    const d = new Date(ev.start);
+                    d.setHours(0,0,0,0);
+                    return d.getTime();
+                });
+            }
+
+            function renderWeek(startDate) {
+                // Title: "12 Jul - 18 Jul 2026"
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 6);
+
+                const startStr = startDate.getDate() + ' ' + monthNames[startDate.getMonth()];
+                const endStr   = endDate.getDate() + ' ' + monthNames[endDate.getMonth()] + ' ' + endDate.getFullYear();
+                titleEl.textContent = startStr + ' - ' + endStr;
+
+                const eventTimes = getEventDates();
+                daysNumEl.innerHTML = '';
+
+                for (let i = 0; i < 7; i++) {
+                    const day = new Date(startDate);
+                    day.setDate(startDate.getDate() + i);
+
+                    const isToday    = isSameDay(day, today);
+                    const hasEvent   = eventTimes.includes(day.getTime());
+
+                    const div = document.createElement('div');
+                    div.style.display = 'flex';
+                    div.style.flexDirection = 'column';
+                    div.style.alignItems = 'center';
+
+                    const span = document.createElement('span');
+                    span.className = 'day-num' + (isToday ? ' today' : '') + (hasEvent ? ' has-event' : '');
+                    span.textContent = day.getDate();
+
+                    span.addEventListener('click', () => {
+                        // Highlight selected
+                        daysNumEl.querySelectorAll('.day-num').forEach(el => {
+                            el.classList.remove('selected');
+                        });
+                        if (!isToday) span.classList.add('selected');
+                        renderDayAgenda(day);
+                    });
+
+                    div.appendChild(span);
+                    daysNumEl.appendChild(div);
+                }
+            }
+
+            function renderTodayAgenda() {
+                renderDayAgenda(today);
+            }
+
+            function formatTime(dateStr) {
+                const d = new Date(dateStr);
+                return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+            }
+
+            function renderDayAgenda(day) {
+                if (!agendaTodayContainer) return;
+
+                const dayEvents = allEvents.filter(ev => {
+                    const evDate = new Date(ev.start);
+                    evDate.setHours(0,0,0,0);
+                    return isSameDay(evDate, day);
+                });
+
+                if (dayEvents.length === 0) {
+                    agendaTodayContainer.innerHTML = `
+                        <div class="mobile-agenda-empty">
+                            <i class="fas fa-calendar-alt text-3xl text-blue-300 mb-3"></i>
+                            <p class="font-semibold text-blue-700 text-sm">Tidak ada agenda</p>
+                            <p class="text-xs text-blue-400 mt-1">Tap + untuk menambah jadwal.</p>
+                        </div>`;
+                    return;
+                }
+
+                let html = '<div class="space-y-2">';
+                dayEvents.forEach(ev => {
+                    const color = ev.backgroundColor || '#3B82F6';
+                    const timeStr = ev.allDay ? 'Seharian' : formatTime(ev.start);
+                    html += `
+                        <div class="flex items-center gap-3 p-3 rounded-xl border" style="border-left: 4px solid ${color}; background:#f9fafb;">
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">${ev.title || ev.extendedProps?.fullTitle || 'Agenda'}</p>
+                                <p class="text-xs text-gray-500">${timeStr}</p>
+                            </div>
+                        </div>`;
+                });
+                html += '</div>';
+                agendaTodayContainer.innerHTML = html;
+            }
+
+            prevBtn.addEventListener('click', () => {
+                currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+                renderWeek(currentWeekStart);
+            });
+
+            nextBtn.addEventListener('click', () => {
+                currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+                renderWeek(currentWeekStart);
+            });
         });
     </script>
     @endpush

@@ -4,174 +4,420 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-    <div class="min-h-screen bg-gradient-to-br from-sky-50 to-blue-100 font-sans text-sm pb-20">
-        
-        <div class="max-w-7xl mx-auto pt-0 px-0 md:px-0">
+    @push('styles')
+    <style>
+        /* ===== REKAP ABSENSI — MOBILE FIRST STYLES ===== */
+
+        .rekap-page-wrapper {
+            padding: 16px 16px 48px;
+        }
+        @media (min-width: 768px) {
+            .rekap-page-wrapper { padding: 24px 24px 56px; }
+        }
+
+        /* Back Button */
+        .rekap-back-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 18px;
+            background: #fff;
+            border: 1.5px solid #dbeafe;
+            border-radius: 999px;
+            color: #1d4ed8;
+            font-size: 0.82rem; font-weight: 600;
+            text-decoration: none;
+            transition: all 0.18s;
+            margin-bottom: 16px;
+        }
+        .rekap-back-btn:hover { background: #eff6ff; }
+
+        /* Header Card */
+        .rekap-header-card {
+            background: linear-gradient(135deg, #001BB7 0%, #0c2dc2 60%, #1e40af 100%);
+            border-radius: 24px;
+            padding: 20px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 27, 183, 0.15);
+            margin-bottom: 16px;
+        }
+        @media (min-width: 768px) {
+            .rekap-header-card { padding: 32px; }
+        }
+        .rekap-header-card::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 160px; height: 160px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+            }
+        }
+        @media (min-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        /* Stats Card */
+        .stats-card {
+            border-radius: 16px;
+            padding: 16px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 94px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .stats-card:hover { transform: translateY(-2px); }
+        .stats-card::after {
+            content: '';
+            position: absolute;
+            top: -10px; right: -10px;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.12);
+        }
+        .stats-card-label {
+            font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            opacity: 0.9;
+        }
+        .stats-card-value {
+            font-size: 2.2rem; font-weight: 900;
+            line-height: 1;
+        }
+        .stats-card-icon {
+            position: absolute;
+            bottom: 12px; right: 12px;
+            font-size: 1.6rem;
+            opacity: 0.35;
+        }
+
+        /* Card Colors */
+        .stats-hadir   { background: #10b981; }
+        .stats-sakit   { background: #f43f5e; }
+        .stats-izin    { background: #f59e0b; }
+        .stats-cuti    { background: #9333ea; }
+        .stats-lembur  { background: #4f46e5; }
+        .stats-alpa    { background: #64748b; }
+
+        /* Terlambat Bar */
+        .terlambat-bar {
+            background: linear-gradient(90deg, #f97316 0%, #ea580c 100%);
+            border-radius: 16px;
+            padding: 14px 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+        .terlambat-label {
+            font-size: 0.78rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .terlambat-value {
+            font-size: 1.3rem; font-weight: 900;
+        }
+
+        /* Container Card */
+        .rekap-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid #f1f5f9;
+        }
+        .rekap-card-title {
+            font-size: 1rem; font-weight: 800; color: #111827;
+            margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* Filter Form Controls */
+        .filter-select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            color: #1f2937;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.88rem; font-weight: 700;
+            outline: none;
+            cursor: pointer;
+        }
+        .filter-btn {
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            color: #fff;
+            font-size: 0.88rem; font-weight: 700;
+            border: none; border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.25);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover { background: #2563eb; }
+
+        /* Daily Logs */
+        .log-item {
+            background: #fff;
+            border-radius: 16px;
+            border: 1.5px solid #f1f5f9;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.15s;
+        }
+        .log-item:hover { border-color: #bfdbfe; }
+        .log-indicator {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 5px;
+        }
+        .log-header {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #f8fafc;
+        }
+        .log-date-box {
+            display: flex; align-items: baseline; gap: 6px;
+        }
+        .log-day {
+            font-size: 1.15rem; font-weight: 800; color: #1f2937;
+        }
+        .log-month {
+            font-size: 0.78rem; font-weight: 600; color: #6b7280;
+            text-transform: uppercase;
+        }
+        .log-weekday {
+            font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase;
+        }
+        .log-badge {
+            font-size: 0.7rem; font-weight: 800;
+            padding: 4px 10px; border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        /* Log Body */
+        .log-body {
+            padding: 14px 16px;
+        }
+        .log-time-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        .log-time-card {
+            background: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+        .log-time-label {
+            display: block;
+            font-size: 0.65rem; font-weight: 700; color: #94a3b8;
+            text-transform: uppercase; margin-bottom: 2px;
+        }
+        .log-time-val {
+            font-size: 0.95rem; font-weight: 800; font-family: monospace;
+        }
+
+        /* Log Info */
+        .log-info-box {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #f1f5f9;
+            font-size: 0.78rem; color: #475569;
+            display: flex; align-items: flex-start; gap: 8px;
+            line-height: 1.4;
+        }
+
+        .log-action-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #dbeafe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 0.78rem; font-weight: 700;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .log-action-btn:hover { background: #dbeafe; }
+    </style>
+    @endpush
+
+    <div class="bg-gray-50 sm:bg-gradient-to-br sm:from-sky-50 sm:to-blue-100 min-h-screen">
+        <div class="max-w-5xl mx-auto rekap-page-wrapper">
 
             {{-- TOMBOL KEMBALI --}}
-            <div class="mb-6">
-                <a href="{{ route('dashboard') }}" 
-                class="inline-flex items-center justify-center w-auto h-10 px-4 rounded-lg bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-md hover:shadow-lg hover:brightness-110 transition-all gap-2"
-                title="Kembali ke Dashboard">
-                    <i class="fas fa-arrow-left"></i>
-                    <span class="font-medium text-sm">Kembali</span>
-                </a>
-            </div>
+            <a href="{{ route('dashboard') }}" class="rekap-back-btn">
+                <i class="fas fa-arrow-left text-xs"></i>
+                Kembali
+            </a>
 
-            {{-- 2. HEADER --}}
-            <div class="bg-[#001BB7] rounded-3xl shadow-xl shadow-blue-900/20 mb-8 overflow-hidden relative border border-blue-900/10">
-                <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none z-0"></div>
-                <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-blue-400 opacity-20 rounded-full blur-2xl pointer-events-none z-0"></div>
-
-                <div class="p-6 md:p-8 relative z-10 text-white">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                        <div>
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/30 shadow-sm">
-                                    Rekapitulasi
-                                </span>
-                            </div>
-                            <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm mb-2">
-                                Riwayat Absensi
-                            </h1>
-                            <p class="text-blue-100 opacity-90 text-sm max-w-xl leading-relaxed">
-                                Pantau catatan kehadiran, keterlambatan, lembur, dan aktivitas harian Anda dalam satu periode.
-                            </p>
+            {{-- 2. HEADER CARD --}}
+            <div class="rekap-header-card">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 relative z-10">
+                    <div>
+                        <div class="mb-2">
+                            <span class="bg-white/20 backdrop-blur-md text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/20">
+                                Rekapitulasi
+                            </span>
                         </div>
+                        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-1">
+                            Riwayat Absensi
+                        </h1>
+                        <p class="text-blue-100 opacity-90 text-[12px] md:text-sm max-w-md leading-relaxed">
+                            Pantau catatan kehadiran, keterlambatan, lembur, dan aktivitas harian Anda dalam satu periode.
+                        </p>
+                    </div>
 
-                        {{-- Form Filter --}}
-                        <div class="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl w-full md:w-auto min-w-[300px]">
-                            <form method="GET" action="{{ route('rekap_absen.index') }}">
-                                <div class="flex flex-col gap-3">
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label class="block text-[10px] uppercase font-bold text-blue-200 mb-1">Bulan</label>
-                                            <select name="bulan" class="w-full bg-white/90 text-gray-800 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 font-bold border-none cursor-pointer">
-                                                @foreach($daftarBulan as $num => $nama)
-                                                    <option value="{{ $num }}" {{ $num == $bulanDipilih ? 'selected' : '' }}>{{ $nama }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] uppercase font-bold text-blue-200 mb-1">Tahun</label>
-                                            <select name="tahun" class="w-full bg-white/90 text-gray-800 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 font-bold border-none cursor-pointer">
-                                                @foreach($daftarTahun as $tahun)
-                                                    <option value="{{ $tahun }}" {{ $tahun == $tahunDipilih ? 'selected' : '' }}>{{ $tahun }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
+                    {{-- Form Filter --}}
+                    <div class="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl w-full lg:w-auto min-w-[280px]">
+                        <form method="GET" action="{{ route('rekap_absen.index') }}">
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-[9px] uppercase font-bold text-blue-200 mb-1">Bulan</label>
+                                        <select name="bulan" class="filter-select">
+                                            @foreach($daftarBulan as $num => $nama)
+                                                <option value="{{ $num }}" {{ $num == $bulanDipilih ? 'selected' : '' }}>{{ $nama }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
-                                    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg shadow-md transition transform active:scale-95 flex items-center justify-center gap-2">
-                                        <i class="fas fa-filter text-xs"></i> Tampilkan Data
-                                    </button>
+                                    <div>
+                                        <label class="block text-[9px] uppercase font-bold text-blue-200 mb-1">Tahun</label>
+                                        <select name="tahun" class="filter-select">
+                                            @foreach($daftarTahun as $tahun)
+                                                <option value="{{ $tahun }}" {{ $tahun == $tahunDipilih ? 'selected' : '' }}>{{ $tahun }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
-                            </form>
-                        </div>
+                                <button type="submit" class="filter-btn">
+                                    <i class="fas fa-filter text-xs"></i> Tampilkan Data
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
 
             {{-- 3. GRID STATISTIK --}}
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 md:gap-4 mb-8">
+            <div class="stats-grid">
                 {{-- Card Hadir --}}
-                <div class="bg-emerald-500 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                    <div class="absolute top-0 right-0 -mt-2 -mr-2 w-12 h-12 bg-white/20 rounded-full blur-xl"></div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-emerald-100 mb-1">Hadir</p>
-                    <div class="flex justify-between items-end">
-                        <span class="text-3xl font-extrabold">{{ $rekap['hadir'] }}</span>
-                        <i class="fas fa-check-circle text-2xl text-emerald-200/50 group-hover:scale-110 transition"></i>
-                    </div>
+                <div class="stats-card stats-hadir">
+                    <p class="stats-card-label">Hadir</p>
+                    <span class="stats-card-value">{{ $rekap['hadir'] }}</span>
+                    <i class="fas fa-check-circle stats-card-icon"></i>
                 </div>
                 {{-- Card Sakit --}}
-                <div class="bg-rose-500 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                    <div class="absolute top-0 right-0 -mt-2 -mr-2 w-12 h-12 bg-white/20 rounded-full blur-xl"></div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-rose-100 mb-1">Sakit</p>
-                    <div class="flex justify-between items-end">
-                        <span class="text-3xl font-extrabold">{{ $rekap['sakit'] }}</span>
-                        <i class="fas fa-clinic-medical text-2xl text-rose-200/50 group-hover:scale-110 transition"></i>
-                    </div>
+                <div class="stats-card stats-sakit">
+                    <p class="stats-card-label">Sakit</p>
+                    <span class="stats-card-value">{{ $rekap['sakit'] }}</span>
+                    <i class="fas fa-clinic-medical stats-card-icon"></i>
                 </div>
                 {{-- Card Izin --}}
-                <div class="bg-amber-500 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                    <div class="absolute top-0 right-0 -mt-2 -mr-2 w-12 h-12 bg-white/20 rounded-full blur-xl"></div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-amber-100 mb-1">Izin</p>
-                    <div class="flex justify-between items-end">
-                        <span class="text-3xl font-extrabold">{{ $rekap['izin'] }}</span>
-                        <i class="fas fa-envelope-open-text text-2xl text-amber-200/50 group-hover:scale-110 transition"></i>
-                    </div>
+                <div class="stats-card stats-izin">
+                    <p class="stats-card-label">Izin</p>
+                    <span class="stats-card-value">{{ $rekap['izin'] }}</span>
+                    <i class="fas fa-envelope-open-text stats-card-icon"></i>
                 </div>
                 {{-- Card Cuti --}}
-                <div class="bg-purple-600 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                    <div class="absolute top-0 right-0 -mt-2 -mr-2 w-12 h-12 bg-white/20 rounded-full blur-xl"></div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-purple-200 mb-1">Cuti</p>
-                    <div class="flex justify-between items-end">
-                        <span class="text-3xl font-extrabold">{{ $rekap['cuti'] }}</span>
-                        <i class="fas fa-plane-departure text-2xl text-purple-300/50 group-hover:scale-110 transition"></i>
-                    </div>
+                <div class="stats-card stats-cuti">
+                    <p class="stats-card-label">Cuti</p>
+                    <span class="stats-card-value">{{ $rekap['cuti'] }}</span>
+                    <i class="fas fa-plane-departure stats-card-icon"></i>
                 </div>
                 {{-- Card Lembur --}}
-                <div class="bg-indigo-600 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                    <div class="absolute top-0 right-0 -mt-2 -mr-2 w-12 h-12 bg-white/20 rounded-full blur-xl"></div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-indigo-200 mb-1">Lembur</p>
-                    <div class="flex justify-between items-end">
-                        <span class="text-3xl font-extrabold">{{ $rekap['lembur'] }}</span>
-                        <i class="fas fa-business-time text-2xl text-indigo-300/50 group-hover:scale-110 transition"></i>
-                    </div>
+                <div class="stats-card stats-lembur">
+                    <p class="stats-card-label">Lembur</p>
+                    <span class="stats-card-value">{{ $rekap['lembur'] }}</span>
+                    <i class="fas fa-business-time stats-card-icon"></i>
                 </div>
                 {{-- Card Alpa --}}
-                <div class="bg-slate-600 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                    <div class="absolute top-0 right-0 -mt-2 -mr-2 w-12 h-12 bg-white/20 rounded-full blur-xl"></div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-200 mb-1">Alpa</p>
-                    <div class="flex justify-between items-end">
-                        <span class="text-3xl font-extrabold">{{ $rekap['alpa'] }}</span>
-                        <i class="fas fa-user-slash text-2xl text-slate-300/50 group-hover:scale-110 transition"></i>
-                    </div>
-                </div>
-                {{-- Card Terlambat --}}
-                <div class="col-span-2 md:col-span-2 lg:col-span-1 bg-orange-500 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                    <div class="absolute top-0 right-0 -mt-2 -mr-2 w-12 h-12 bg-white/20 rounded-full blur-xl"></div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-orange-100 mb-1">Total Terlambat</p>
-                    <div class="flex justify-between items-end">
-                        <div class="flex flex-col">
-                            @php
-                                $parts = explode(' ', $rekap['terlambat_formatted']);
-                                $jam = isset($parts[0]) ? $parts[0] : 0;
-                                $menit = isset($parts[2]) ? $parts[2] : 0;
-                            @endphp
-                            <span class="text-xl font-extrabold leading-none">{{ $jam }}<span class="text-xs font-normal opacity-80">j</span> {{ $menit }}<span class="text-xs font-normal opacity-80">m</span></span>
-                        </div>
-                        <i class="fas fa-exclamation-triangle text-2xl text-orange-200/50 group-hover:scale-110 transition"></i>
-                    </div>
+                <div class="stats-card stats-alpa">
+                    <p class="stats-card-label">Alpa</p>
+                    <span class="stats-card-value">{{ $rekap['alpa'] }}</span>
+                    <i class="fas fa-user-slash stats-card-icon"></i>
                 </div>
             </div>
 
+            {{-- Card Terlambat (Orange Bar) --}}
+            <div class="terlambat-bar">
+                <div class="terlambat-label">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Total Terlambat</span>
+                </div>
+                @php
+                    $parts = explode(' ', $rekap['terlambat_formatted']);
+                    $jam = isset($parts[0]) ? $parts[0] : 0;
+                    $menit = isset($parts[2]) ? $parts[2] : 0;
+                @endphp
+                <span class="terlambat-value">{{ $jam }}j {{ $menit }}m</span>
+            </div>
+
             {{-- 4. CHART SECTION --}}
-            <div class="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 md:p-8 mb-8 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
-                <div class="flex flex-col md:flex-row items-center gap-8">
-                    <div class="w-full md:w-1/3">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Visualisasi Kehadiran</h3>
-                        <p class="text-gray-500 text-sm mb-4">Grafik representasi persentase kehadiran Anda bulan ini.</p>
-                    </div>
-                    <div class="w-full md:w-2/3 h-64 md:h-72 relative">
-                        <canvas id="rekapAbsensiChart"></canvas>
-                    </div>
+            <div class="rekap-card">
+                <h3 class="rekap-card-title">
+                    <i class="fas fa-chart-pie text-blue-500"></i>
+                    <span>Visualisasi Kehadiran</span>
+                </h3>
+                <div class="w-full h-60 relative mt-4">
+                    <canvas id="rekapAbsensiChart"></canvas>
                 </div>
             </div>
 
             {{-- 5. DETAIL HARIAN --}}
-            <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden relative">
-                <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                    <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
+            <div class="rekap-card" style="padding: 0; overflow: hidden; background: transparent; box-shadow: none; border: none;">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
                         <span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg text-xs"><i class="fas fa-list"></i></span>
                         Detail Harian
                     </h3>
                 </div>
 
-                {{-- TAMPILAN DESKTOP (TABEL) --}}
-                <div class="hidden md:block overflow-x-auto custom-scrollbar">
+                {{-- DESKTOP VIEW (TABLE) --}}
+                <div class="hidden md:block bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-gray-50/80 text-gray-500 uppercase font-bold text-[11px] tracking-widest border-b border-gray-200">
+                        <thead class="bg-gray-50 text-gray-500 uppercase font-bold text-[10px] tracking-widest border-b border-gray-100">
                             <tr>
                                 <th class="px-6 py-4">Tanggal</th>
                                 <th class="px-6 py-4 text-center">Status</th>
@@ -190,35 +436,34 @@
                                          $isLate = $waktuMasuk->gt($batas);
                                     }
                                     
-                                    $rowClass = $item->is_weekend ? 'bg-slate-50/70' : 'hover:bg-blue-50/30 transition duration-200';
+                                    $rowClass = $item->is_weekend ? 'bg-slate-50/70' : 'hover:bg-blue-50/20 transition';
                                     
-                                    $statusStyle = 'bg-gray-100 text-gray-600 border-gray-200';
-                                    switch(strtolower($item->status)) {
-                                        case 'hadir': $statusStyle = 'bg-emerald-100 text-emerald-700 border-emerald-200'; break;
-                                        case 'sakit': $statusStyle = 'bg-rose-100 text-rose-700 border-rose-200'; break;
-                                        case 'izin':  $statusStyle = 'bg-amber-100 text-amber-700 border-amber-200'; break;
-                                        case 'cuti':  $statusStyle = 'bg-purple-100 text-purple-700 border-purple-200'; break;
-                                        case 'lembur':$statusStyle = 'bg-indigo-100 text-indigo-700 border-indigo-200'; break;
-                                        case 'alpa':  $statusStyle = 'bg-slate-200 text-slate-700 border-slate-300'; break;
-                                    }
+                                    $statusStyle = match(strtolower($item->status)) {
+                                        'hadir'  => 'background:#dcfce7; color:#16a34a; border-color:#bbf7d0;',
+                                        'sakit'  => 'background:#fee2e2; color:#dc2626; border-color:#fecaca;',
+                                        'izin'   => 'background:#fef9c3; color:#ca8a04; border-color:#fef08a;',
+                                        'cuti'   => 'background:#f3e8ff; color:#9333ea; border-color:#e9d5ff;',
+                                        'lembur' => 'background:#e0e7ff; color:#4f46e5; border-color:#c7d2fe;',
+                                        default  => 'background:#f3f4f6; color:#4b5563; border-color:#e5e7eb;',
+                                    };
                                 @endphp
                                 <tr class="{{ $rowClass }}">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex flex-col">
                                             <span class="text-sm font-bold text-gray-800">{{ $item->tanggal->format('d') }}</span>
-                                            <span class="text-xs text-gray-500">{{ $item->tanggal->translatedFormat('F Y') }}</span>
-                                            <span class="text-[10px] font-bold uppercase mt-1 {{ $item->is_weekend ? 'text-red-400' : 'text-blue-500' }}">
+                                            <span class="text-xs text-gray-400 font-medium">{{ $item->tanggal->translatedFormat('F Y') }}</span>
+                                            <span class="text-[9px] font-bold uppercase mt-0.5 {{ $item->is_weekend ? 'text-red-400' : 'text-blue-500' }}">
                                                 {{ $item->tanggal->translatedFormat('l') }}
                                             </span>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 text-center align-middle">
-                                        <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border {{ $statusStyle }}">
+                                        <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border" style="{{ $statusStyle }}">
                                             {{ $item->status }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-center align-middle">
-                                        <div class="inline-flex items-center bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-200 shadow-sm">
+                                        <div class="inline-flex items-center bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100 shadow-sm">
                                             <span class="font-mono font-bold text-emerald-600 text-xs">{{ $item->jam_masuk ? \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') : '--:--' }}</span>
                                             <span class="text-gray-300 mx-2">|</span>
                                             <span class="font-mono font-bold text-red-500 text-xs">{{ $item->jam_keluar ? \Carbon\Carbon::parse($item->jam_keluar)->format('H:i') : '--:--' }}</span>
@@ -226,17 +471,17 @@
                                     </td>
                                     <td class="px-6 py-4 text-center align-middle">
                                         @if($item->jumlah_aktivitas > 0)
-                                            <button onclick="openModalAktivitas('{{ $item->tanggal->toDateString() }}')" class="group inline-flex items-center px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">
-                                                <i class="fas fa-clipboard-list mr-1.5 group-hover:text-white"></i> {{ $item->jumlah_aktivitas }} Log
+                                            <button onclick="openModalAktivitas('{{ $item->tanggal->toDateString() }}')" class="group inline-flex items-center px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
+                                                <i class="fas fa-clipboard-list mr-1.5"></i> {{ $item->jumlah_aktivitas }} Log
                                             </button>
                                         @else
                                             <span class="text-gray-300 text-xs italic">-</span>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 align-middle">
-                                        <div class="text-sm text-gray-600 truncate max-w-xs" title="{{ $item->keterangan }}">
+                                        <div class="text-xs text-gray-600 truncate max-w-xs" title="{{ $item->keterangan }}">
                                             @if($isLate)
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700 mr-1 border border-orange-200">Terlambat</span>
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 mr-1 border border-orange-200">Terlambat</span>
                                             @endif
                                             {{ $item->keterangan ?? '-' }}
                                         </div>
@@ -244,9 +489,9 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400 bg-gray-50/30">
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400">
                                         <div class="flex flex-col items-center">
-                                            <i class="far fa-calendar-times text-3xl mb-2 opacity-50"></i>
+                                            <i class="far fa-calendar-times text-2xl mb-2 opacity-50"></i>
                                             <span>Tidak ada data absensi untuk periode ini.</span>
                                         </div>
                                     </td>
@@ -256,8 +501,8 @@
                     </table>
                 </div>
 
-                {{-- TAMPILAN MOBILE (KARTU) --}}
-                <div class="block md:hidden bg-gray-50 p-4 space-y-4">
+                {{-- MOBILE VIEW (CLEAN COMPACT CARDS) --}}
+                <div class="block md:hidden space-y-3">
                     @forelse($detailHarian as $item)
                         @php
                             $isLate = false;
@@ -267,53 +512,63 @@
                                 $isLate = $waktuMasuk->gt($batas);
                             }
 
-                            $borderColor = 'border-gray-300'; $headerBg = 'bg-gray-100 text-gray-600';
-                            switch(strtolower($item->status)) {
-                                case 'hadir': $borderColor = 'border-emerald-500'; $headerBg = 'bg-emerald-100 text-emerald-700'; break;
-                                case 'sakit': $borderColor = 'border-rose-500'; $headerBg = 'bg-rose-100 text-rose-700'; break;
-                                case 'izin':  $borderColor = 'border-amber-500'; $headerBg = 'bg-amber-100 text-amber-700'; break;
-                                case 'lembur':$borderColor = 'border-indigo-500'; $headerBg = 'bg-indigo-100 text-indigo-700'; break;
-                                case 'alpa':  $borderColor = 'border-slate-400'; $headerBg = 'bg-slate-200 text-slate-700'; break;
-                            }
+                            $logColor = match(strtolower($item->status)) {
+                                'hadir'  => '#10b981',
+                                'sakit'  => '#f43f5e',
+                                'izin'   => '#f59e0b',
+                                'cuti'   => '#9333ea',
+                                'lembur' => '#4f46e5',
+                                default  => '#64748b',
+                            };
+
+                            $badgeStyle = match(strtolower($item->status)) {
+                                'hadir'  => 'background:#dcfce7; color:#16a34a;',
+                                'sakit'  => 'background:#fee2e2; color:#dc2626;',
+                                'izin'   => 'background:#fef9c3; color:#ca8a04;',
+                                'cuti'   => 'background:#f3e8ff; color:#9333ea;',
+                                'lembur' => 'background:#e0e7ff; color:#4f46e5;',
+                                default  => 'background:#f3f4f6; color:#4b5563;',
+                            };
                         @endphp
                         
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
-                            <div class="absolute left-0 top-0 bottom-0 w-1.5 {{ str_replace('border-', 'bg-', $borderColor) }}"></div>
-                            <div class="pl-5 p-4">
-                                <div class="flex justify-between items-start mb-3">
-                                    <div>
-                                        <div class="flex items-baseline gap-2">
-                                            <span class="text-lg font-bold text-gray-800">{{ $item->tanggal->format('d') }}</span>
-                                            <span class="text-xs font-medium text-gray-500 uppercase">{{ $item->tanggal->translatedFormat('M Y') }}</span>
-                                        </div>
-                                        <p class="text-[11px] font-bold uppercase tracking-wide {{ $item->is_weekend ? 'text-red-500' : 'text-blue-500' }}">
-                                            {{ $item->tanggal->translatedFormat('l') }}
-                                        </p>
-                                    </div>
-                                    <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide {{ $headerBg }}">
-                                        {{ $item->status }}
+                        <div class="log-item">
+                            <div class="log-indicator" style="background: {{ $logColor }}"></div>
+                            
+                            {{-- Header --}}
+                            <div class="log-header">
+                                <div class="log-date-box">
+                                    <span class="log-day">{{ $item->tanggal->format('d') }}</span>
+                                    <span class="log-month">{{ $item->tanggal->translatedFormat('M Y') }}</span>
+                                    <span class="log-weekday {{ $item->is_weekend ? 'text-red-500' : 'text-blue-600' }}">
+                                        &bull; {{ $item->tanggal->translatedFormat('l') }}
                                     </span>
                                 </div>
+                                <span class="log-badge" style="{{ $badgeStyle }}">
+                                    {{ $item->status }}
+                                </span>
+                            </div>
 
-                                <div class="grid grid-cols-2 gap-px bg-gray-100 rounded-lg overflow-hidden border border-gray-200 mb-3">
-                                    <div class="bg-white p-2 text-center">
-                                        <span class="block text-[9px] uppercase text-gray-400 font-bold mb-0.5">Masuk</span>
-                                        <span class="block text-sm font-mono font-bold text-emerald-600">
+                            {{-- Body --}}
+                            <div class="log-body">
+                                <div class="log-time-grid">
+                                    <div class="log-time-card">
+                                        <span class="log-time-label">Masuk</span>
+                                        <span class="log-time-val text-emerald-600">
                                             {{ $item->jam_masuk ? \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') : '--:--' }}
                                         </span>
                                     </div>
-                                    <div class="bg-white p-2 text-center">
-                                        <span class="block text-[9px] uppercase text-gray-400 font-bold mb-0.5">Keluar</span>
-                                        <span class="block text-sm font-mono font-bold text-red-500">
+                                    <div class="log-time-card">
+                                        <span class="log-time-label">Keluar</span>
+                                        <span class="log-time-val text-red-500">
                                             {{ $item->jam_keluar ? \Carbon\Carbon::parse($item->jam_keluar)->format('H:i') : '--:--' }}
                                         </span>
                                     </div>
                                 </div>
 
                                 @if($item->keterangan || $isLate)
-                                    <div class="mb-3 text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 flex items-start gap-2">
+                                    <div class="log-info-box">
                                         <i class="fas fa-info-circle text-blue-400 mt-0.5"></i>
-                                        <div class="leading-relaxed">
+                                        <div>
                                             @if($isLate) <span class="text-orange-600 font-bold block mb-0.5">Terlambat</span> @endif
                                             {{ $item->keterangan ?? 'Tidak ada keterangan.' }}
                                         </div>
@@ -321,20 +576,21 @@
                                 @endif
 
                                 @if($item->jumlah_aktivitas > 0)
-                                    <button onclick="openModalAktivitas('{{ $item->tanggal->toDateString() }}')" class="w-full flex items-center justify-center text-xs font-bold text-blue-700 border border-blue-200 bg-blue-50/50 hover:bg-blue-100 py-2.5 rounded-lg transition shadow-sm active:scale-95">
-                                        <i class="fas fa-eye mr-2"></i> Lihat {{ $item->jumlah_aktivitas }} Catatan Aktivitas
+                                    <button onclick="openModalAktivitas('{{ $item->tanggal->toDateString() }}')" class="log-action-btn">
+                                        <i class="fas fa-eye text-xs"></i> Lihat {{ $item->jumlah_aktivitas }} Catatan Aktivitas
                                     </button>
                                 @endif
                             </div>
                         </div>
                     @empty
-                        <div class="text-center py-12 text-gray-400">
-                            <i class="far fa-calendar-times text-2xl opacity-50 mb-2"></i>
-                            <p class="text-sm font-medium">Tidak ada data absensi.</p>
+                        <div class="riwayat-empty" style="background:#fff; border: 2px dashed #e2e8f0; border-radius: 16px; padding: 32px 16px; text-align: center;">
+                            <i class="far fa-calendar-times text-3xl text-gray-300 mb-2 block"></i>
+                            <p class="text-gray-500 text-sm font-medium">Tidak ada data absensi untuk periode ini.</p>
                         </div>
                     @endforelse
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -387,7 +643,7 @@
                             responsive: true,
                             maintainAspectRatio: false,
                             cutout: '70%',
-                            plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { size: 11, family: "'Inter', sans-serif" } } } }
+                            plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 15, font: { size: 10, family: "'Inter', sans-serif" } } } }
                         }
                     });
                 }
@@ -409,7 +665,6 @@
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 modalDate.textContent = d.toLocaleDateString('id-ID', options);
 
-                // FIXED: MENGGUNAKAN ROUTE HELPER UNTUK URL YANG BENAR
                 axios.get('{{ route('aktivitas.getJson') }}', {
                     params: { start: date, user_id: '{{ auth()->id() }}' }
                 })
