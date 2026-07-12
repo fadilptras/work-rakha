@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-    Schema::table('pengajuan_dana', function (Blueprint $table) {
-        // Ubah panjangnya (misal jadi 20)
-        $table->string('payment_status', 50)->nullable()->change();
-    });
+        Schema::table('pengajuan_dana', function (Blueprint $table) {
+            // Kolom payment_status belum ada sebelumnya, tambahkan sebagai kolom baru.
+            // (Migrasi ini sebelumnya mencoba ->change() pada kolom yang belum dibuat.)
+            if (!Schema::hasColumn('pengajuan_dana', 'payment_status')) {
+                $table->string('payment_status', 50)->nullable();
+            }
+        });
     }
 
     /**
@@ -23,7 +26,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('pengajuan_dana', function (Blueprint $table) {
-            //
+            if (Schema::hasColumn('pengajuan_dana', 'payment_status')) {
+                $table->dropColumn('payment_status');
+            }
         });
     }
 };
