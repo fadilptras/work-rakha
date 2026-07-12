@@ -370,6 +370,169 @@
             border: 1px solid #dbeafe;
         }
 
+        /* == Modern Agenda & Detail Modals == */
+        #agenda-modal, #agenda-detail-modal {
+            z-index: 1000 !important;
+            backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.4);
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1.5px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1e293b;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 14px 20px;
+            border-top: 1.5px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            background: #f8fafc;
+        }
+
+        /* Form styling */
+        .modal-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .modal-input {
+            width: 100%;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.88rem;
+            color: #1e293b;
+            outline: none;
+            transition: all 0.15s;
+            box-sizing: border-box;
+        }
+        .modal-input:focus {
+            border-color: #3b82f6;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* guest-list-container styling */
+        .guest-list-card {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            padding: 10px;
+            height: 150px;
+            overflow-y: auto;
+        }
+        .guest-item {
+            display: flex;
+            align-items: center;
+            padding: 7px 8px;
+            border-radius: 8px;
+            transition: background 0.1s;
+        }
+        .guest-item:hover { background: #f1f5f9; }
+        .guest-item label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #334155;
+            margin-left: 8px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Color bar selector */
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+        .color-picker-input {
+            width: 34px; height: 34px;
+            padding: 0; border: none;
+            background: none; cursor: pointer;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .color-picker-input::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker-input::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+        .btn-modal-primary {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            color: #fff; font-size: 0.85rem; font-weight: 700;
+            border: none; border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+            transition: all 0.15s;
+        }
+        .btn-modal-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+
+        .btn-modal-secondary {
+            padding: 10px 18px;
+            background: #f1f5f9;
+            color: #475569; font-size: 0.85rem; font-weight: 700;
+            border: 1.5px solid #e2e8f0; border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-modal-secondary:hover { background: #e2e8f0; }
+
+        /* Detail Modal layout styles */
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1.5px solid #f1f5f9;
+        }
+        .detail-icon-box {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: #eff6ff;
+            display: flex; align-items: center; justify-content: center;
+            color: #3b82f6; font-size: 0.88rem;
+            flex-shrink: 0;
+        }
+        .detail-label { font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+        .detail-value { font-size: 0.85rem; font-weight: 800; color: #1e293b; }
     </style>
     @endpush
 
@@ -605,80 +768,85 @@
 
     {{-- KONTEN MODAL --}}
     <div id="agenda-modal" class="fixed inset-0 bg-black bg-opacity-60 z-40 hidden flex items-center justify-center p-4">
-        <div class="bg-white/80 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl shadow-blue-900/20 w-full max-w-3xl mx-4 p-6 flex flex-col max-h-[90vh] transform transition-all" id="agenda-modal-content">
+        <div class="modal-card max-w-2xl w-full max-h-[90vh]" id="agenda-modal-content">
             
-            <div class="flex-shrink-0 flex justify-between items-center border-b border-black/10 pb-3 mb-6">
-                <h4 class="text-xl font-bold text-gray-800">Buat Agenda Baru</h4>
-                <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-2xl"></i></button>
+            <div class="modal-header">
+                <h4 class="modal-title" id="modal-agenda-title-text">Buat Agenda Baru</h4>
+                <button type="button" id="close-modal-btn" class="text-gray-400 hover:text-gray-700 transition"><i class="fas fa-times text-xl"></i></button>
             </div>
 
-            <div class="flex-grow overflow-y-auto -mr-3 pr-3">
-                <form id="agenda-form" method="POST">
-                    @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                        
-                        <div class="space-y-6">
-                            <div>
-                                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Judul Agenda <span class="text-red-500">*</span></label>
-                                <input type="text" id="title" name="title" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white/70" placeholder="Contoh: Rapat Evaluasi Bulanan">
-                                <small id="title-error" class="text-red-500 text-xs mt-1 hidden"></small>
+            <form id="agenda-form" method="POST" class="flex flex-col flex-grow overflow-hidden">
+                @csrf
+                <div class="modal-body space-y-4 flex-grow custom-scrollbar">
+                    {{-- Judul Agenda --}}
+                    <div>
+                        <label for="title" class="modal-label">Judul Agenda <span class="text-red-500">*</span></label>
+                        <input type="text" id="title" name="title" required class="modal-input" placeholder="Contoh: Rapat Evaluasi Bulanan">
+                        <small id="title-error" class="text-red-500 text-xs mt-1 hidden"></small>
+                    </div>
+
+                    {{-- Deskripsi --}}
+                    <div>
+                        <label for="description" class="modal-label">Deskripsi</label>
+                        <textarea id="description" name="description" rows="3" class="modal-input" placeholder="Jelaskan detail agenda di sini..."></textarea>
+                    </div>
+
+                    {{-- Waktu Acara (Tanggal & Jam Side-by-Side) --}}
+                    <div>
+                        <label class="modal-label">Waktu Acara <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="sm:col-span-1">
+                                <label for="agenda_date" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tanggal</label>
+                                <input type="text" id="agenda_date" required class="modal-input" placeholder="Pilih Tanggal">
                             </div>
                             <div>
-                                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
-                                <textarea id="description" name="description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white/70" placeholder="Jelaskan detail agenda di sini..."></textarea>
+                                <label for="start_hour" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Mulai</label>
+                                <input type="text" id="start_hour" required class="modal-input" placeholder="Jam">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Waktu Acara <span class="text-red-500">*</span></label>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                   <div>
-                                        <label for="agenda_date" class="block text-xs font-medium text-gray-500 mb-1">Tanggal</label>
-                                        <input type="text" id="agenda_date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white/70" placeholder="Pilih Tanggal">
-                                   </div>
-                                   <div class="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label for="start_hour" class="block text-xs font-medium text-gray-500 mb-1">Mulai</label>
-                                            <input type="text" id="start_hour" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white/70" placeholder="Jam">
-                                        </div>
-                                        <div>
-                                            <label for="end_hour" class="block text-xs font-medium text-gray-500 mb-1">Selesai</label>
-                                            <input type="text" id="end_hour" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white/70" placeholder="Jam">
-                                        </div>
-                                   </div>
-                                </div>
-                                <small id="start_time-error" class="text-red-500 text-xs mt-1 hidden"></small>
-                                <small id="end_time-error" class="text-red-500 text-xs mt-1 hidden"></small>
+                                <label for="end_hour" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Selesai</label>
+                                <input type="text" id="end_hour" required class="modal-input" placeholder="Jam">
+                            </div>
+                        </div>
+                        <small id="start_time-error" class="text-red-500 text-xs mt-1 hidden"></small>
+                        <small id="end_time-error" class="text-red-500 text-xs mt-1 hidden"></small>
+                    </div>
+
+                    {{-- Grid Tamu & Lokasi --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="modal-label">Undang Karyawan</label>
+                            <div id="guest-list-container" class="guest-list-card custom-scrollbar">
+                                <p class="text-gray-400 text-xs italic">Memuat karyawan...</p>
                             </div>
                         </div>
 
-                        <div class="space-y-6">
+                        <div class="space-y-3">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Undang Karyawan</label>
-                                <div id="guest-list-container" class="h-40 overflow-y-auto rounded-lg border bg-white/70 p-3 space-y-2">
-                                    <p class="text-gray-400">Memuat karyawan...</p>
+                                <label for="location" class="modal-label">Lokasi</label>
+                                <input type="text" id="location" name="location" class="modal-input" placeholder="Contoh: Ruang Meeting Lt. 2">
+                            </div>
+                            <div>
+                                <label for="color" class="modal-label">Warna Label</label>
+                                <div class="color-picker-wrapper">
+                                    <input type="color" id="color" name="color" value="#3B82F6" class="color-picker-input">
+                                    <span class="text-xs text-gray-500 font-semibold">Sentuh untuk memilih warna</span>
                                 </div>
-                            </div>
-                            <div>
-                                <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
-                                <input type="text" id="location" name="location" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white/70" placeholder="Contoh: Ruang Meeting Lt. 2">
-                            </div>
-                            <div>
-                                <label for="color" class="block text-sm font-medium text-gray-700 mb-1">Warna Label</label>
-                                <input type="color" id="color" name="color" value="#3B82F6" class="w-full h-10 px-1 py-1 border border-gray-300 rounded-lg cursor-pointer">
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="flex-shrink-0 flex justify-end mt-6 pt-4 border-t border-black/10">
-                        <button type="button" id="cancel-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg mr-2">Batal</button>
-                        <button type="submit" id="save-agenda-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Simpan Agenda</button>
-                    </div>
-                </form>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" id="cancel-btn" class="btn-modal-secondary">Batal</button>
+                    <button type="submit" id="save-agenda-btn" class="btn-modal-primary">Simpan Agenda</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <div id="agenda-detail-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white/90 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl shadow-blue-900/20 w-full max-w-2xl mx-4 p-6 transform transition-all" id="agenda-detail-content">
+        <div class="modal-card max-w-xl w-full max-h-[85vh] overflow-hidden" id="agenda-detail-content">
             {{-- KONTEN DETAIL AKAN DIISI OLEH JAVASCRIPT --}}
         </div>
     </div>
@@ -846,19 +1014,27 @@
                 let organizerAndGuestsHTML = '';
                 
                 if (props.type === 'agenda') {
-                    let guestsHTML = '<p class="text-gray-500 text-sm">Tidak ada tamu yang diundang.</p>';
+                    let guestsHTML = '<p class="text-gray-400 text-xs italic">Tidak ada tamu yang diundang.</p>';
                     if (props.guests && props.guests.length > 0) {
-                        guestsHTML = `<div class="flex flex-wrap gap-2">${props.guests.map(guest => `<span class="bg-gray-200 text-gray-800 text-xs font-semibold px-2.5 py-1 rounded-full">${guest}</span>`).join('')}</div>`;
+                        guestsHTML = `<div class="flex flex-wrap gap-1.5">${props.guests.map(guest => `<span class="bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-100">${guest}</span>`).join('')}</div>`;
                     }
 
                     organizerAndGuestsHTML = `
-                        <div>
-                            <h5 class="font-bold text-gray-800 mb-2 flex items-center gap-2"><i class="fas fa-user-tie fa-fw text-gray-400"></i>Penyelenggara</h5>
-                            <p class="text-gray-600">${props.organizer}</p>
+                        <div class="detail-row">
+                            <div class="detail-icon-box"><i class="fas fa-user-tie"></i></div>
+                            <div>
+                                <p class="detail-label">Penyelenggara</p>
+                                <p class="detail-value">${props.organizer}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h5 class="font-bold text-gray-800 mb-3 flex items-center gap-2"><i class="fas fa-users fa-fw text-gray-400"></i>Tamu Undangan</h5>
-                            ${guestsHTML}
+                        <div class="detail-row" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                            <div class="flex items-center gap-3">
+                                <div class="detail-icon-box"><i class="fas fa-users"></i></div>
+                                <div>
+                                    <p class="detail-label" style="margin-bottom: 0;">Tamu Undangan</p>
+                                </div>
+                            </div>
+                            <div class="pt-2">${guestsHTML}</div>
                         </div>
                     `;
                 }
@@ -867,66 +1043,70 @@
                 if (props.type === 'agenda' && props.is_creator) {
                     const realId = String(event.id).replace('agenda_', ''); 
                     
-                    const editButton = `<button type="button" id="edit-agenda-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg">Edit</button>`;
+                    const editButton = `<button type="button" id="edit-agenda-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Edit</button>`;
                     const csrfToken = document.querySelector('form#agenda-form input[name="_token"]').value;
                     const deleteUrl = "{{ route('agendas.destroy', ['agenda' => ':id']) }}".replace(':id', realId);
                     const deleteForm = `
                         <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus agenda ini?')" class="ml-2">
                             <input type="hidden" name="_token" value="${csrfToken}">
                             <input type="hidden" name="_method" value="DELETE">
-                            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Hapus</button>
+                            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Hapus</button>
                         </form>
                     `;
                     actionButtonsHTML = `
-                        <button id="close-detail-modal-bottom-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg mr-auto">Tutup</button>
+                        <button id="close-detail-modal-bottom-btn" class="btn-modal-secondary mr-auto">Tutup</button>
                         ${editButton}
                         ${deleteForm}
                     `;
                 } else {
-                    actionButtonsHTML = `<button id="close-detail-modal-bottom-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg ml-auto">Tutup</button>`;
+                    actionButtonsHTML = `<button id="close-detail-modal-bottom-btn" class="btn-modal-secondary ml-auto">Tutup</button>`;
                 }
 
                 const headerLabel = props.type === 'holiday' ? 'Informasi Libur' : 'Detail Agenda';
 
                 const contentHTML = `
-                    <div class="flex justify-between items-start pb-3 mb-4 border-b border-black/10">
+                    <div class="modal-header">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wider" style="color: ${event.backgroundColor || '#3B82F6'}">${headerLabel}</p>
-                            <h4 class="text-2xl font-bold text-gray-900 mt-1">${props.fullTitle}</h4>
+                            <p class="text-[10px] font-extrabold uppercase tracking-wider" style="color: ${event.backgroundColor || '#3B82F6'}">${headerLabel}</p>
+                            <h4 class="text-lg font-bold text-gray-900 mt-0.5">${props.fullTitle}</h4>
                         </div>
-                        <button id="close-detail-modal-btn" class="text-gray-400 hover:text-gray-800 transition-colors"><i class="fas fa-times text-2xl"></i></button>
+                        <button type="button" id="close-detail-modal-btn" class="text-gray-400 hover:text-gray-700 transition"><i class="fas fa-times text-xl"></i></button>
                     </div>
                     
-                    <div class="max-h-[60vh] overflow-y-auto pr-3 -mr-3 space-y-5 text-sm">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            <div class="flex items-start gap-3">
-                                <i class="fas fa-calendar-alt fa-fw text-gray-400 text-lg mt-1"></i>
+                    <div class="modal-body space-y-4 max-h-[55vh] overflow-y-auto custom-scrollbar">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="detail-row">
+                                <div class="detail-icon-box"><i class="fas fa-calendar-alt"></i></div>
                                 <div>
-                                    <p class="text-xs text-gray-500">Waktu & Tanggal</p>
-                                    <p class="font-semibold text-gray-800">${formatFullDate(event.start)}</p>
-                                    <p class="text-gray-600">${timeDisplay}</p>
+                                    <p class="detail-label">Waktu & Tanggal</p>
+                                    <p class="detail-value">${formatFullDate(event.start)}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">${timeDisplay}</p>
                                 </div>
                             </div>
+                            
                             ${props.location ? `
-                            <div class="flex items-start gap-3">
-                                <i class="fas fa-map-marker-alt fa-fw text-gray-400 text-lg mt-1"></i>
+                            <div class="detail-row">
+                                <div class="detail-icon-box"><i class="fas fa-map-marker-alt"></i></div>
                                 <div>
-                                    <p class="text-xs text-gray-500">Lokasi</p>
-                                    <p class="font-semibold text-gray-800">${props.location}</p>
+                                    <p class="detail-label">Lokasi</p>
+                                    <p class="detail-value">${props.location}</p>
                                 </div>
                             </div>` : ''}
                         </div>
                         
                         ${props.description ? `
-                        <div>
-                            <h5 class="font-bold text-gray-800 mb-2 flex items-center gap-2"><i class="fas fa-info-circle fa-fw text-gray-400"></i>Keterangan</h5>
-                            <div class="text-gray-700 bg-gray-100 p-4 rounded-lg border text-sm">${props.description.replace(/\n/g, '<br>')}</div>
+                        <div class="detail-row" style="flex-direction: column; align-items: stretch; gap: 6px;">
+                            <div class="flex items-center gap-3">
+                                <div class="detail-icon-box"><i class="fas fa-info-circle"></i></div>
+                                <span class="detail-label" style="margin-bottom: 0;">Keterangan</span>
+                            </div>
+                            <div class="text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 text-xs leading-relaxed mt-1" style="white-space: pre-wrap;">${props.description}</div>
                         </div>` : ''}
                         
                         ${organizerAndGuestsHTML}
                     </div>
                     
-                    <div class="mt-6 pt-4 border-t border-black/10 flex items-center">
+                    <div class="modal-footer">
                         ${actionButtonsHTML}
                     </div>
                 `;
@@ -944,7 +1124,7 @@
             
             function closeDetailModal() { detailModal.classList.add('hidden'); }
             detailModal.addEventListener('click', (e) => { if (e.target === detailModal) closeDetailModal(); });
-            
+
             function openModalForCreate() {
                 const existingMethodInput = agendaForm.querySelector('input[name="_method"]');
                 if (existingMethodInput) existingMethodInput.remove();
@@ -952,7 +1132,7 @@
                 agendaForm.reset();
                 agendaForm.setAttribute('action', "{{ route('agendas.store') }}"); 
                 
-                modalTitle.textContent = 'Buat Agenda Baru';
+                document.getElementById('modal-agenda-title-text').textContent = 'Buat Agenda Baru';
                 saveButton.textContent = 'Simpan Agenda';
                 document.getElementById('color').value = '#3B82F6';
                 agendaDate.setDate(new Date());
@@ -978,7 +1158,7 @@
                 methodInput.value = 'PUT';
                 agendaForm.appendChild(methodInput);
                 
-                modalTitle.textContent = 'Edit Agenda';
+                document.getElementById('modal-agenda-title-text').textContent = 'Edit Agenda';
                 saveButton.textContent = 'Update Agenda';
                 
                 document.getElementById('title').value = event.extendedProps.fullTitle;
@@ -1036,14 +1216,14 @@
                     if (users.length > 0) {
                         users.forEach(user => {
                             guestContainer.insertAdjacentHTML('beforeend', `
-                                <div class="flex items-center">
+                                <div class="guest-item">
                                     <input id="guest-${user.id}" name="guests[]" value="${user.id}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <label for="guest-${user.id}" class="ml-3 block text-sm font-medium text-gray-700">${user.name}</label>
+                                    <label for="guest-${user.id}">${user.name}</label>
                                 </div>
                             `);
                         });
                     } else {
-                        guestContainer.innerHTML = '<p class="text-gray-500 text-sm">Tidak ada karyawan lain untuk diundang.</p>';
+                        guestContainer.innerHTML = '<p class="text-gray-400 text-xs italic">Tidak ada karyawan lain untuk diundang.</p>';
                     }
                 });
 
