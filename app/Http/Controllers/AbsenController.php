@@ -86,19 +86,18 @@ class AbsenController extends Controller
             ->get()
             ->keyBy(fn($item) => Carbon::parse($item->tanggal)->toDateString());
 
-        $cutiDalamPeriode = Cuti::where('user_id', $user->id)
-            ->where('status', 'disetujui')
-            ->where(function ($query) use ($startDate, $endDate) {
-                $query->where('tanggal_mulai', '<=', $endDate)
-                      ->where('tanggal_selesai', '>=', $startDate);
-            })
-            ->get();
-            
         $lemburDalamPeriode = Lembur::where('user_id', $user->id)
             ->whereBetween('tanggal', [$startDate, $endDate])
             ->whereNotNull('jam_keluar_lembur')
             ->get()
             ->keyBy(fn($item) => Carbon::parse($item->tanggal)->toDateString());
+            
+        $holidays = Holiday::whereBetween('tanggal', [$startDate, $endDate])
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [Carbon::parse($item->tanggal)->format('Y-m-d') => $item->keterangan];
+            })
+            ->toArray();
 
         $rekap = [
             'hadir' => 0,
@@ -110,7 +109,6 @@ class AbsenController extends Controller
             'terlambat' => 0,
             'total_menit_kerja' => 0
         ];
-        $standardWorkHour = Carbon::createFromTime(8, 0, 0, 'Asia/Jakarta');
         
         $period = CarbonPeriod::create($startDate, $endDate);
 
@@ -118,52 +116,22 @@ class AbsenController extends Controller
             $tanggalFormatted = $day->toDateString();
             $recordAbsensi = $absensiDalamPeriode->get($tanggalFormatted);
             $recordLembur = $lemburDalamPeriode->get($tanggalFormatted);
+            $holidayString = $holidays[$tanggalFormatted] ?? null;
 
-            $isOnLeave = $cutiDalamPeriode->first(function ($cuti) use ($day) {
-                return $day->between(Carbon::parse($cuti->tanggal_mulai), Carbon::parse($cuti->tanggal_selesai));
-            });
+            $dailyStatus = \App\Services\AttendanceService::calculateDailyStatus($day, $recordAbsensi, $recordLembur, $holidayString);
 
-            if ($day->isWeekend()) {
-                // Weekend logic
-            } elseif ($isOnLeave) {
-                $rekap['cuti']++;
-            } elseif ($recordAbsensi) {
-                $status = strtolower($recordAbsensi->status);
-                if (array_key_exists($status, $rekap)) {
-                    $rekap[$status]++;
-                }
-                
-                if ($status === 'hadir' && $recordAbsensi->jam_masuk) {
-                    $jamMasuk = Carbon::parse($recordAbsensi->jam_masuk, 'Asia/Jakarta');
-                    
-                    if ($jamMasuk->gt($standardWorkHour)) {
-                        $diffInMinutes = abs($jamMasuk->diffInMinutes($standardWorkHour));
-                        $rekap['terlambat'] += $diffInMinutes;
-                    }
-
-                    // --- LOGIKA HITUNG DURASI BERSIH ---
-                    if ($recordAbsensi->jam_keluar) {
-                        $tglKeluar = $recordAbsensi->tanggal_keluar ?? $recordAbsensi->tanggal;
-
-                        $waktuMasuk = Carbon::parse($recordAbsensi->tanggal . ' ' . $recordAbsensi->jam_masuk);
-                        $waktuKeluar = Carbon::parse($tglKeluar . ' ' . $recordAbsensi->jam_keluar);
-
-                        if (is_null($recordAbsensi->tanggal_keluar) && $waktuKeluar->lt($waktuMasuk)) {
-                            $waktuKeluar->addDay();
-                        }
-
-                        $rekap['total_menit_kerja'] += $waktuMasuk->diffInMinutes($waktuKeluar);
-                    }
-                }
-            } else {
-                if ($day->isPast() && !$day->isToday()) {
-                    $rekap['tidak hadir']++;
-                }
-            }
+            if ($dailyStatus->status_key === 'H' || strpos($dailyStatus->status_key, 'H ') === 0) $rekap['hadir']++;
+            if ($dailyStatus->status_key === 'S' || strpos($dailyStatus->status_key, 'S ') === 0) $rekap['sakit']++;
+            if ($dailyStatus->status_key === 'I' || strpos($dailyStatus->status_key, 'I ') === 0) $rekap['izin']++;
+            if ($dailyStatus->status_key === 'C' || strpos($dailyStatus->status_key, 'C ') === 0) $rekap['cuti']++;
+            if ($dailyStatus->status_key === 'A' || strpos($dailyStatus->status_key, 'A ') === 0) $rekap['tidak hadir']++;
             
-            if ($recordLembur) {
+            if (strpos($dailyStatus->status_key, 'L') !== false) {
                 $rekap['lembur']++;
             }
+            
+            $rekap['terlambat'] += $dailyStatus->terlambat_menit;
+            $rekap['total_menit_kerja'] += $dailyStatus->kerja_menit;
         }
         
         $totalMenitTerlambat = $rekap['terlambat'];

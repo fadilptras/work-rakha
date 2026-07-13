@@ -41,6 +41,18 @@ class PengajuanDana extends Model
         'approver_2_catatan',
         'approver_2_approved_at',
         
+        // Kolom untuk Approver 3 (dari User) - Bagian ini yang upload bukti transfer
+        'approver_3_id',
+        'approver_3_status',
+        'approver_3_catatan',
+        'approver_3_approved_at',
+
+        // Kolom untuk Approver 4 (dari User) - Verifikasi akhir (Admin)
+        'approver_4_id',
+        'approver_4_status',
+        'approver_4_catatan',
+        'approver_4_approved_at',
+        
         // Kolom untuk Finance (Manager Keuangan dicek dinamis)
         'payment_status', // 'menunggu', 'diproses', 'selesai', 'ditolak', 'skipped'
         'catatan_finance',
@@ -63,6 +75,8 @@ class PengajuanDana extends Model
         'lampiran' => 'array',
         'approver_1_approved_at' => 'datetime',
         'approver_2_approved_at' => 'datetime',
+        'approver_3_approved_at' => 'datetime',
+        'approver_4_approved_at' => 'datetime',
         'finance_processed_at' => 'datetime',
     ];
 
@@ -90,6 +104,22 @@ class PengajuanDana extends Model
     public function approver2(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approver_2_id');
+    }
+
+    /**
+     * Relasi ke user Approver 3.
+     */
+    public function approver3(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approver_3_id');
+    }
+
+    /**
+     * Relasi ke user Approver 4.
+     */
+    public function approver4(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approver_4_id');
     }
 
     /**

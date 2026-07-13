@@ -174,18 +174,7 @@ class CutiController extends Controller
             $cuti->update(['status' => 'disetujui']);
             $cuti->user->decrement('sisa_cuti', $cuti->total_hari);
             
-            $period = CarbonPeriod::create($cuti->tanggal_mulai, $cuti->tanggal_selesai);
-            foreach ($period as $date) {
-                Absensi::updateOrCreate(
-                    [
-                        'user_id' => $cuti->user_id,
-                        'tanggal' => $date->format('Y-m-d'),
-                    ],
-                    [
-                        'status' => 'cuti'
-                    ]
-                );
-            }
+
 
             Notification::send($cuti->user, new CutiNotification($cuti, 'disetujui'));
         }

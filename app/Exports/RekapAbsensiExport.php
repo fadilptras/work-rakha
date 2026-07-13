@@ -80,7 +80,7 @@ class RekapAbsensiExport implements FromCollection, WithHeadings, WithMapping, W
 
     private function formatZero($value)
     {
-        return ($value === 0 || $value === '0') ? '-' : $value;
+        return ($value === 0 || $value === '0') ? '0' : $value;
     }
 
     public function headings(): array
@@ -166,6 +166,7 @@ class RekapAbsensiExport implements FromCollection, WithHeadings, WithMapping, W
                 $sheet->mergeCells("A2:{$lastColStr}2");
                 $sheet->mergeCells("A3:{$lastColStr}3");
                 $sheet->getStyle('A1:A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('A1:A3')->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF1E3A8A'));
 
                 $sheet->mergeCells('A5:A6');
                 $sheet->mergeCells('B5:B6');
@@ -193,14 +194,35 @@ class RekapAbsensiExport implements FromCollection, WithHeadings, WithMapping, W
                 ];
                 $sheet->getStyle("A5:{$lastColStr}{$lastRow}")->applyFromArray($styleBorder);
 
+                // Corporate Header Styling (Biru Tua)
                 $sheet->getStyle("A5:{$lastColStr}6")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle("A5:{$lastColStr}6")->getFill()
                     ->setFillType(Fill::FILL_SOLID)
-                    ->getStartColor()->setARGB('FFEEEEEE'); 
+                    ->getStartColor()->setARGB('FF1E3A8A'); 
+                $sheet->getStyle("A5:{$lastColStr}6")->getFont()
+                    ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'))
+                    ->setBold(true);
 
+                // Freeze Panes (Kunci baris nama karyawan & tanggal)
+                $sheet->freezePane('E7');
+
+                // Styling text alignment data
                 $sheet->getStyle("B7:D{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
                 $sheet->getStyle("A7:A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle("{$startDateCol}7:{$lastColStr}{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                // Background Khusus untuk area Rekap Kehadiran & Evaluasi
+                $evalColIndex = $startSumColIndex + 6;
+                $evalColStr = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($evalColIndex);
+                $sheet->getStyle("{$startSumCol}7:{$evalColStr}{$lastRow}")
+                    ->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setARGB('FFF8FAFC');
+
+                // Wrap text khusus kolom Terlambat
+                $sheet->getStyle("{$evalColStr}7:{$evalColStr}{$lastRow}")
+                    ->getAlignment()
+                    ->setWrapText(true);
 
                 // --- LOGIC PEWARNAAN ---
                 
@@ -213,15 +235,15 @@ class RekapAbsensiExport implements FromCollection, WithHeadings, WithMapping, W
                     $isHoliday = isset($this->holidays[$date->toDateString()]);
                     $isSunday = $date->isSunday();
 
-                    // Jika Libur/Minggu: Warnai kolom dari baris 6 (Header Tanggal) s/d Akhir Data
+                    // Jika Libur/Minggu: Warnai kolom dari baris 7 s/d Akhir Data
                     if ($isHoliday || $isSunday) {
-                        $sheet->getStyle("{$colStr}6:{$colStr}{$lastRow}")
+                        $sheet->getStyle("{$colStr}7:{$colStr}{$lastRow}")
                             ->getFill()
                             ->setFillType(Fill::FILL_SOLID)
-                            ->getStartColor()->setARGB('FFFFEBEB'); // Warna Merah Muda (mirip bg-red-50)
+                            ->getStartColor()->setARGB('FFFFEBEB'); // Warna Merah Muda
                         
-                        // Khusus Header (Baris 6), beri teks merah juga agar jelas
-                        $sheet->getStyle("{$colStr}6")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFF0000'));
+                        // Header Tanggal juga dibedakan dengan warna merah muda agar jelas
+                        $sheet->getStyle("{$colStr}6")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFCCCC'));
                     }
 
                     // Loop pewarnaan Status (H, S, I...)

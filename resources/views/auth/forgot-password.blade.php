@@ -11,9 +11,8 @@
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
     <link rel="manifest" href="{{ asset('site.webmanifest') }}">
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  @vite(['resources/css/app.css', 'resources/js/app.js'])
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
   <style>
     body { 
       font-family: 'Poppins', sans-serif; 
@@ -49,8 +48,8 @@
 
   <!-- Sky theme background accents -->
   <div class="absolute inset-0 bg-rings z-0"></div>
-  <div class="absolute top-1/4 left-10 w-[30rem] h-[30rem] bg-white rounded-full filter blur-[100px] opacity-70 z-0"></div>
-  <div class="absolute bottom-1/4 right-10 w-[30rem] h-[30rem] bg-sky-300 rounded-full filter blur-[100px] opacity-50 z-0"></div>
+  <div class="absolute top-1/4 left-10 w-[30rem] h-[30rem] bg-white rounded-full filter blur-3xl opacity-40 z-0"></div>
+  <div class="absolute bottom-1/4 right-10 w-[30rem] h-[30rem] bg-sky-300 rounded-full filter blur-3xl opacity-30 z-0"></div>
 
   <div class="min-h-screen flex flex-col lg:items-center lg:justify-center relative z-10 w-full">
 

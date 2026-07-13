@@ -24,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Cuti::observe(\App\Observers\CutiObserver::class);
+
         View::composer('components.layout-admin', function ($view) {
             // Menghitung & mengirimkan jumlah cuti yang pending (Di-cache selama 60 detik)
             $pending_cuti_count = Cache::remember('pending_cuti_count', 60, function () {

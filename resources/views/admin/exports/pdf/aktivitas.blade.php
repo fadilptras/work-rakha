@@ -3,12 +3,27 @@
 <head>
     <title>Laporan Aktivitas Harian</title>
     <style>
-        body { font-family: sans-serif; font-size: 10pt; color: #333; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10px; color: #333; }
         
-        /* Header Laporan */
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
-        .header h2 { margin: 0; text-transform: uppercase; color: #1e3a8a; }
-        .header p { margin: 2px 0; color: #555; font-size: 9pt; }
+        /* HEADER DOKUMEN (KOP) */
+        .header-doc {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #1e3a8a;
+            padding-bottom: 10px;
+        }
+        .header-doc h1 { 
+            margin: 0; 
+            font-size: 22px; 
+            text-transform: uppercase; 
+            color: #1e3a8a;
+            font-weight: 800;
+        }
+        .header-doc p { 
+            margin: 2px 0; 
+            font-size: 11px;
+            color: #555; 
+        }
         
         /* Info Filter */
         .meta-info { margin-bottom: 15px; font-size: 10pt; }
@@ -18,13 +33,14 @@
         
         /* Header Tabel Biru */
         th { 
-            background-color: #2563eb; /* Blue-600 */
-            color: #ffffff; 
+            background-color: #1e3a8a;
+            color: white; 
             padding: 8px; 
             text-align: left; 
             font-weight: bold;
-            font-size: 9pt;
-            border: 1px solid #1e40af;
+            font-size: 9px;
+            text-transform: uppercase;
+            border: 1px solid #1e3a8a;
         }
         
         td { 
@@ -54,9 +70,9 @@
 </head>
 <body>
 
-    <div class="header">
-        <h2>Laporan Aktivitas Harian Karyawan</h2>
-        <p>Sistem Manajemen Dashboard Admin Kelola-in</p>
+    <div class="header-doc">
+        <h1>Laporan Aktivitas Karyawan</h1>
+        <p>PT RAKHA NUSANTARA MEDIKA</p>
     </div>
 
     <div class="meta-info">

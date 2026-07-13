@@ -26,7 +26,7 @@
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-zinc-400 uppercase tracking-wider">APPROVER CUTI 1</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-zinc-400 uppercase tracking-wider">APPROVER CUTI 2</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-zinc-400 uppercase tracking-wider">APPROVER CUTI 3</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-zinc-400 uppercase tracking-wider">ADMIN)</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-zinc-400 uppercase tracking-wider">ADMIN</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-700">
@@ -45,7 +45,7 @@
                                                 <i class="fas fa-chevron-down text-[9px] text-zinc-400"></i>
                                             </div>
                                             <select name="approver_cuti_{{ $i }}[{{ $employee->id }}]" 
-                                                    class="w-full appearance-none p-2 pr-8 bg-zinc-700 border border-zinc-600 rounded-lg text-xs text-white focus:ring-amber-500 focus:border-amber-500 approver-select">
+                                                    class="w-full appearance-none p-2 pr-8 bg-zinc-700 border border-zinc-600 rounded-lg text-xs text-white focus:ring-sky-500 focus:border-sky-500 approver-select">
                                                 <option value="">-- Tidak Ada --</option>
                                                 @foreach ($approvers as $approver)
                                                     <option value="{{ $approver->id }}" @selected($employee->{"approver_cuti_{$i}_id"} == $approver->id)>
@@ -64,7 +64,7 @@
                                                 <i class="fas fa-chevron-down text-[9px] text-zinc-400"></i>
                                             </div>
                                             <select name="approver_cuti_4[{{ $employee->id }}]" 
-                                                    class="w-full appearance-none p-2 pr-8 bg-zinc-700 border border-zinc-600 rounded-lg text-xs text-white focus:ring-amber-500 focus:border-amber-500 approver-select">
+                                                    class="w-full appearance-none p-2 pr-8 bg-zinc-700 border border-zinc-600 rounded-lg text-xs text-white focus:ring-sky-500 focus:border-sky-500 approver-select">
                                                 <option value="">-- Tidak Ada --</option>
                                                 @foreach ($admins as $adminData)
                                                     <option value="{{ $adminData->id }}" @selected($employee->approver_cuti_4_id == $adminData->id)>
@@ -87,7 +87,7 @@
             </div>
 
             <div class="mt-6 flex justify-end">
-                <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-200">
+                <button type="submit" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-200">
                     Simpan Perubahan
                 </button>
             </div>

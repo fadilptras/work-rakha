@@ -55,32 +55,32 @@
         <div class="p-6">
             <form action="{{ route('admin.cuti.index') }}" method="GET">
                 <input type="hidden" name="tab" value="{{ $activeTab }}">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                    <div>
+                <div class="flex flex-wrap items-end gap-4 w-full">
+                    <div class="flex-1 min-w-[150px] max-w-[250px]">
                         <label for="user_id" class="block text-sm font-medium text-zinc-400 mb-1">Karyawan</label>
                         <div class="relative">
-                            <select name="user_id" id="user_id" class="w-full appearance-none bg-zinc-700 border border-zinc-600 rounded-lg pl-3 pr-10 py-2 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm cursor-pointer">
+                            <select name="user_id" id="user_id" class="w-full appearance-none bg-zinc-700 border border-zinc-600 rounded-lg pl-3 pr-8 py-2 text-white shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm cursor-pointer">
                                 <option value="">Semua Karyawan</option>
                                 @foreach($users as $user)
                                     <option value="{{ $user->id }}" @selected(request('user_id') == $user->id)>{{ $user->name }}</option>
                                 @endforeach
                             </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400">
                                 <i class="fas fa-chevron-down text-xs"></i>
                             </div>
                         </div>
                     </div>
-                    <div>
+                    <div class="flex-1 min-w-[130px] max-w-[200px]">
                         <label for="tanggal_mulai" class="block text-sm font-medium text-zinc-400 mb-1">Tanggal Mulai</label>
-                        <input type="date" name="tanggal_mulai" id="tanggal_mulai" value="{{ request('tanggal_mulai') }}" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm [color-scheme:dark]">
+                        <input type="date" name="tanggal_mulai" id="tanggal_mulai" value="{{ request('tanggal_mulai') }}" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm [color-scheme:dark]">
                     </div>
-                    <div>
+                    <div class="flex-1 min-w-[130px] max-w-[200px]">
                         <label for="tanggal_akhir" class="block text-sm font-medium text-zinc-400 mb-1">Tanggal Akhir</label>
-                        <input type="date" name="tanggal_akhir" id="tanggal_akhir" value="{{ request('tanggal_akhir') }}" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm [color-scheme:dark]">
+                        <input type="date" name="tanggal_akhir" id="tanggal_akhir" value="{{ request('tanggal_akhir') }}" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm [color-scheme:dark]">
                     </div>
-                    <div class="flex items-end gap-2 lg:col-span-2">
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">Filter</button>
-                        <a href="{{ route('admin.cuti.index') }}" class="bg-zinc-600 hover:bg-zinc-500 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition text-center">Reset</a>
+                    <div class="flex flex-wrap items-end gap-2 flex-none ml-auto">
+                        <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">Filter</button>
+                        <a href="{{ route('admin.cuti.index') }}" class="bg-zinc-600 hover:bg-zinc-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition text-center">Reset</a>
                         <button type="submit" formaction="{{ route('admin.cuti.downloadRekapPdf') }}" formmethod="GET" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition flex items-center justify-center gap-2 whitespace-nowrap" title="Download Rekap PDF">
                             <i class="fas fa-file-pdf"></i>
                             <span>Cetak Rekap</span>

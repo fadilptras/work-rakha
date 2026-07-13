@@ -190,13 +190,15 @@ class AdminPengajuanDanaController extends Controller
             return User::where('name', '!=', 'Admin Rakha')->orderBy('name')->get(['id', 'name']);
         });
 
-        $financeManagers = $approvers; // Samakan list finance manager dengan approver
+        $admins = Cache::rememberForever('admins_list_dropdown', function () {
+            return User::orderBy('name')->get(['id', 'name', 'role']);
+        });
 
         return view('admin.pengajuan-dana.set-approvers', [
             'title' => 'Atur Alur Persetujuan Karyawan',
             'employees' => $employees,
             'approvers' => $approvers,
-            'financeManagers' => $financeManagers,
+            'admins' => $admins,
         ]);
         
     }
@@ -209,17 +211,18 @@ class AdminPengajuanDanaController extends Controller
         $request->validate([
             'approver_1' => 'required|array',
             'approver_2' => 'required|array',
-            'manager_keuangan' => 'required|array', 
+            'approver_3' => 'required|array', 
+            'approver_4' => 'required|array', 
             'approver_1.*' => 'nullable|exists:users,id',
             'approver_2.*' => 'nullable|exists:users,id|different:approver_1.*', 
-            'manager_keuangan.*' => 'nullable|exists:users,id', 
-        ], [
-            'approver_2.*.different' => 'Approver 1 dan Approver 2 tidak boleh orang yang sama.',
+            'approver_3.*' => 'nullable|exists:users,id|different:approver_2.*', 
+            'approver_4.*' => 'nullable|exists:users,id', 
         ]);
 
         $approver1Data = $request->input('approver_1');
         $approver2Data = $request->input('approver_2');
-        $managerKeuanganData = $request->input('manager_keuangan'); 
+        $approver3Data = $request->input('approver_3'); 
+        $approver4Data = $request->input('approver_4'); 
 
         DB::beginTransaction();
         try {
@@ -230,7 +233,8 @@ class AdminPengajuanDanaController extends Controller
 
                     // Pastikan key ada sebelum mengakses
                     $user->approver_2_id = $approver2Data[$userId] ?? null; 
-                    $user->manager_keuangan_id = $managerKeuanganData[$userId] ?? null;
+                    $user->approver_dana_3_id = $approver3Data[$userId] ?? null;
+                    $user->approver_dana_4_id = $approver4Data[$userId] ?? null;
                     
                     $user->save();
                 }

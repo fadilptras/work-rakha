@@ -43,6 +43,7 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($defaultPassword),
             'is_kepala_divisi' => false,
             'jatah_cuti' => $validated['jatah_cuti'] ?? 12,
+            'sisa_cuti' => $validated['jatah_cuti'] ?? 12,
         ]);
 
         $roleText = $user->role === 'admin' ? 'Admin' : 'Karyawan';

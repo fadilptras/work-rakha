@@ -35,7 +35,7 @@
         {{-- TAB NAVIGATION --}}
         <div class="flex border-b border-zinc-700 px-6 mt-4">
             <a href="{{ route('admin.pengajuan_dana.index', array_merge(request()->query(), ['tab' => 'pending', 'page' => 1])) }}" 
-               class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'pending' ? 'border-amber-500 text-amber-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
+               class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'pending' ? 'border-sky-500 text-sky-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
                <i class="fas fa-clock mr-2"></i> Diproses
             </a>
             <a href="{{ route('admin.pengajuan_dana.index', array_merge(request()->query(), ['tab' => 'approved', 'page' => 1])) }}" 
@@ -62,7 +62,7 @@
                     <div class="lg:col-span-2">
                         <label for="karyawan_id" class="block text-sm font-medium text-zinc-400 mb-1">Nama Karyawan</label>
                         <div class="relative">
-                            <select name="karyawan_id" id="karyawan_id" class="w-full bg-zinc-700 border-zinc-600 rounded-lg text-white pl-3 pr-10 py-2 appearance-none focus:ring-amber-500 focus:border-amber-500">
+                            <select name="karyawan_id" id="karyawan_id" class="w-full bg-zinc-700 border-zinc-600 rounded-lg text-white pl-3 pr-8 py-2 appearance-none focus:ring-sky-500 focus:border-sky-500">
                                 <option value="">Semua Karyawan</option>
                                 @foreach ($karyawanList as $karyawan)
                                     <option value="{{ $karyawan->id }}" {{ request('karyawan_id') == $karyawan->id ? 'selected' : '' }}>
@@ -70,7 +70,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400">
                                 <i class="fas fa-chevron-down text-xs"></i>
                             </div>
                         </div>
@@ -80,15 +80,15 @@
                     <div>
                         <label for="divisi" class="block text-sm font-medium text-zinc-400 mb-1">Divisi</label>
                         <div class="relative">
-                            <select name="divisi" id="divisi" class="w-full bg-zinc-700 border-zinc-600 rounded-lg text-white pl-3 pr-10 py-2 appearance-none focus:ring-amber-500 focus:border-amber-500">
+                            <select name="divisi" id="divisi" class="w-full bg-zinc-700 border-zinc-600 rounded-lg text-white pl-3 pr-8 py-2 appearance-none focus:ring-sky-500 focus:border-sky-500">
                                 <option value="">Semua Divisi</option>
                                 @foreach ($divisiList as $item)
-                                    <option value="{{ $item->divisi }}" {{ request('divisi') == $item->divisi ? 'selected' : '' }}>
-                                        {{ $item->divisi }}
+                                    <option value="{{ $item }}" {{ request('divisi') == $item ? 'selected' : '' }}>
+                                        {{ $item }}
                                     </option>
                                 @endforeach
                             </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400">
                                 <i class="fas fa-chevron-down text-xs"></i>
                             </div>
                         </div>
@@ -109,7 +109,7 @@
                 {{-- Tombol Action Filter --}}
                 <div class="mt-4 flex justify-end">
                     <div class="flex items-center gap-2">
-                        <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition">Filter</button>
+                        <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition">Filter</button>
                         <a href="{{ route('admin.pengajuan_dana.index') }}" class="bg-zinc-600 hover:bg-zinc-500 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition text-center">Reset</a>
                         <button type="submit" formaction="{{ route('admin.pengajuan_dana.downloadRekapPdf') }}" formmethod="GET" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition flex items-center justify-center gap-2" title="Download Rekap PDF">
                             <i class="fas fa-file-pdf"></i>
@@ -140,9 +140,9 @@
                         
                         {{-- UBAH: Nama jadi Link --}}
                         <td class="px-6 py-4 font-medium">
-                            <a href="{{ route('admin.pengajuan_dana.show', $pengajuan) }}" class="text-white hover:text-amber-400 hover:underline transition flex flex-col">
+                            <a href="{{ route('admin.pengajuan_dana.show', $pengajuan) }}" class="text-white hover:text-sky-400 hover:underline transition flex flex-col">
                                 <span class="text-base truncate">{{ $pengajuan->user->name }}</span>
-                                <span class="text-xs text-zinc-500 font-normal mt-0.5 group-hover:text-amber-500/70">Klik untuk melihat detail</span>
+                                <span class="text-xs text-zinc-500 font-normal mt-0.5 group-hover:text-sky-500/70">Klik untuk melihat detail</span>
                             </a>
                         </td>
                         

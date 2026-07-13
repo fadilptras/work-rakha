@@ -68,7 +68,7 @@
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0 h-10 w-10">
                                                 @if($user->profile_picture)
-                                                    <img class="h-10 w-10 rounded-full object-cover border border-zinc-600" src="{{ asset('storage/' . $user->profile_picture) }}" alt="{{ $user->name }}">
+                                                    <img class="h-10 w-10 rounded-full object-cover border border-zinc-600" src="{{ asset('storage/' . $user->profile_picture) }}" alt="{{ $user->name }}" loading="lazy">
                                                 @else
                                                     <div class="h-10 w-10 rounded-full bg-zinc-600 flex items-center justify-center text-white font-bold border border-zinc-500">
                                                         {{ strtoupper(substr($user->name, 0, 1)) }}
@@ -104,7 +104,7 @@
                                         <span class="bg-zinc-700 px-2 py-1 rounded text-xs font-bold">{{ $user->jatah_cuti }} Hari</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button class="open-detail-modal-btn text-emerald-400 hover:text-emerald-300 mr-3" data-user="{{ json_encode($user) }}" title="Lihat Detail">
+                                        <button class="open-detail-modal-btn text-emerald-400 hover:text-emerald-300 mr-3" data-id="{{ $user->id }}" title="Lihat Detail">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                         
@@ -293,134 +293,146 @@
             });
 
             document.querySelectorAll('.open-detail-modal-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const user = JSON.parse(btn.getAttribute('data-user'));
-                    const baseUrl = "{{ url('storage') }}";
+                btn.addEventListener('click', async () => {
+                    const userId = btn.getAttribute('data-id');
+                    const modalBody = document.getElementById('detail-modal-body');
                     
-                    const tglGabung = user.tanggal_bergabung ? new Date(user.tanggal_bergabung).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : '-';
-                    const tglLahir = user.tanggal_lahir ? new Date(user.tanggal_lahir).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : '-';
-                    const tglMulaiKontrak = user.tanggal_mulai_kontrak ? new Date(user.tanggal_mulai_kontrak).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : '-';
-                    const tglAkhirKontrak = user.tanggal_akhir_kontrak ? new Date(user.tanggal_akhir_kontrak).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : '-';
-
-                    document.getElementById('btn-download-pdf').href = `/admin/employees/${user.id}/download-pdf`;
-                    
-                    let profileImg = user.profile_picture ? `${baseUrl}/${user.profile_picture}` : null;
-                    let initial = user.name.charAt(0).toUpperCase();
-                    let imgHTML = profileImg 
-                        ? `<img src="${profileImg}" alt="Foto ${user.name}" class="w-32 h-32 rounded-full object-cover border-4 border-sky-500 shadow-xl">` 
-                        : `<div class="w-32 h-32 rounded-full bg-zinc-700 flex items-center justify-center border-4 border-zinc-600 shadow-xl"><span class="text-5xl text-white font-bold">${initial}</span></div>`;
-
-                    let pendHTML = '<p class="text-gray-400 italic text-sm">Belum ada riwayat pendidikan.</p>';
-                    if (user.riwayat_pendidikan && user.riwayat_pendidikan.length > 0) {
-                        pendHTML = user.riwayat_pendidikan.map(p => `
-                            <div class="relative pl-6 border-l-2 border-sky-500 mb-3">
-                                <span class="absolute -left-[6px] top-1 w-2.5 h-2.5 rounded-full bg-sky-500"></span>
-                                <h5 class="font-bold text-white text-sm">${p.jenjang ?? p.tingkat} - ${p.nama_institusi}</h5>
-                                <p class="text-sky-300 text-xs">${p.jurusan ?? '-'} (${p.tahun_lulus})</p>
-                            </div>
-                        `).join('');
-                    }
-
-                    let pekjHTML = '<p class="text-gray-400 italic text-sm">Belum ada pengalaman kerja.</p>';
-                    if (user.riwayat_pekerjaan && user.riwayat_pekerjaan.length > 0) {
-                        pekjHTML = user.riwayat_pekerjaan.map(p => `
-                            <div class="relative pl-6 border-l-2 border-emerald-500 mb-3">
-                                <span class="absolute -left-[6px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                                <h5 class="font-bold text-white text-sm">${p.posisi} di ${p.nama_perusahaan}</h5>
-                                <p class="text-emerald-300 text-xs">${p.tanggal_mulai ?? p.tahun_mulai} - ${p.tanggal_selesai ?? p.tahun_selesai}</p>
-                            </div>
-                        `).join('');
-                    }
-
-                    const bodyHTML = `
-                        <div class="grid grid-cols-1 md:grid-cols-3">
-                            <div class="bg-zinc-900/50 p-6 flex flex-col items-center border-r border-zinc-700">
-                                <div class="mb-4 relative">
-                                    ${imgHTML}
-                                    ${user.is_kepala_divisi ? `<div class="absolute -bottom-1 -right-1 bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold border border-zinc-800"><i class="fas fa-crown"></i> KADIV</div>` : ''}
-                                </div>
-                                <h4 class="text-lg font-bold text-white text-center mb-0.5">${user.name}</h4>
-                                <p class="text-sky-400 font-medium text-xs text-center mb-4">${user.jabatan ?? 'Staff'} - ${user.divisi}</p>
-                                
-                                <div class="w-full space-y-3">
-                                    <div class="bg-zinc-800/80 p-2.5 rounded border border-zinc-700/50">
-                                        <p class="text-[10px] text-gray-400 uppercase tracking-wider">Email Utama</p>
-                                        <p class="text-white text-xs break-all"><i class="fas fa-envelope text-gray-500 mr-1.5"></i>${user.email}</p>
-                                    </div>
-                                    <div class="bg-zinc-800/80 p-2.5 rounded border border-zinc-700/50">
-                                        <p class="text-[10px] text-gray-400 uppercase tracking-wider">No. Telepon / WA</p>
-                                        <p class="text-white text-xs"><i class="fas fa-phone text-gray-500 mr-1.5"></i>${user.nomor_telepon ?? '-'}</p>
-                                    </div>
-                                    <div class="bg-zinc-800/80 p-2.5 rounded border border-zinc-700/50">
-                                        <p class="text-[10px] text-gray-400 uppercase tracking-wider">Status / Tgl Gabung</p>
-                                        <p class="text-white text-xs"><i class="fas fa-calendar-alt text-gray-500 mr-1.5"></i>${tglGabung} (${user.status_karyawan ?? 'Aktif'})</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-span-2 p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[65vh] overflow-y-auto custom-scrollbar">
-                                <div>
-                                    <h4 class="text-sm font-bold text-sky-400 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-user-circle mr-1.5"></i>Biodata Pribadi</h4>
-                                    <table class="w-full text-xs space-y-2">
-                                        <tr><td class="text-gray-400 py-1 w-28">NIK KTP</td><td class="text-white">: ${user.nik ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Tempat Lahir</td><td class="text-white">: ${user.tempat_lahir ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Tanggal Lahir</td><td class="text-white">: ${tglLahir}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Gender / Darah</td><td class="text-white">: ${user.jenis_kelamin ?? '-'} (${user.golongan_darah ?? '-'})</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Agama</td><td class="text-white">: ${user.agama ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Status Nikah</td><td class="text-white">: ${user.status_pernikahan ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Alamat KTP</td><td class="text-white break-words">: ${user.alamat_ktp ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Alamat Domisili</td><td class="text-white break-words">: ${user.alamat_domisili ?? '-'}</td></tr>
-                                    </table>
-                                </div>
-
-                                <div>
-                                    <h4 class="text-sm font-bold text-emerald-400 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-briefcase mr-1.5"></i>Ketenagakerjaan & Kepegawaian</h4>
-                                    <table class="w-full text-xs space-y-2">
-                                        <tr><td class="text-gray-400 py-1 w-28">NIP Perusahaan</td><td class="text-white">: ${user.nip ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Lokasi Kerja</td><td class="text-white">: ${user.lokasi_kerja ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Mulai Kontrak</td><td class="text-white">: ${tglMulaiKontrak}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Akhir Kontrak</td><td class="text-white">: ${tglAkhirKontrak}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Jatah Cuti Tahunan</td><td class="text-white font-bold">: ${user.jatah_cuti ?? 12} Hari</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Sisa Kuota Cuti</td><td class="text-emerald-400 font-bold">: ${user.sisa_cuti ?? 0} Hari</td></tr>
-                                    </table>
-                                </div>
-
-                                <div>
-                                    <h4 class="text-sm font-bold text-yellow-500 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-credit-card mr-1.5"></i>Finansial & Legalitasitas</h4>
-                                    <table class="w-full text-xs space-y-2">
-                                        <tr><td class="text-gray-400 py-1 w-28">Nama Bank</td><td class="text-white">: ${user.nama_bank ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">No. Rekening</td><td class="text-white">: ${user.nomor_rekening ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Pemilik Rekening</td><td class="text-white">: ${user.pemilik_rekening ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">NPWP</td><td class="text-white">: ${user.npwp ?? '-'} (PTKP: ${user.ptkp ?? '-'})</td></tr>
-                                        <tr><td class="text-gray-400 py-1">BPJS Kesehatan</td><td class="text-white">: ${user.bpjs_kesehatan ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">BPJS Ketenagakerjaan</td><td class="text-white">: ${user.bpjs_ketenagakerjaan ?? '-'}</td></tr>
-                                    </table>
-                                </div>
-
-                                <div>
-                                    <h4 class="text-sm font-bold text-red-400 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-heartbeat mr-1.5"></i>Kontak Darurat</h4>
-                                    <table class="w-full text-xs space-y-2">
-                                        <tr><td class="text-gray-400 py-1 w-28">Nama Kontak</td><td class="text-white">: ${user.kontak_darurat_nama ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">No. Telepon / HP</td><td class="text-white">: ${user.kontak_darurat_nomor ?? '-'}</td></tr>
-                                        <tr><td class="text-gray-400 py-1">Hubungan Relasi</td><td class="text-white">: ${user.kontak_darurat_hubungan ?? '-'}</td></tr>
-                                    </table>
-                                </div>
-
-                                <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-                                    <div>
-                                        <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wider">Riwayat Pendidikan</h4>
-                                        ${pendHTML}
-                                    </div>
-                                    <div>
-                                        <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wider">Pengalaman Kerja</h4>
-                                        ${pekjHTML}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    document.getElementById('detail-modal-body').innerHTML = bodyHTML;
+                    modalBody.innerHTML = '<div class="flex justify-center items-center h-48"><i class="fas fa-spinner fa-spin text-4xl text-sky-400"></i></div>';
                     toggleModal(detailModal, true);
+
+                    try {
+                        const response = await fetch(`/admin/employees/${userId}/ajax-detail`);
+                        if (!response.ok) throw new Error('Gagal memuat profil');
+                        const user = await response.json();
+                        
+                        const baseUrl = "{{ url('storage') }}";
+                        
+                        const tglGabung = user.tanggal_bergabung ? new Date(user.tanggal_bergabung).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : '-';
+                        const tglLahir = user.tanggal_lahir ? new Date(user.tanggal_lahir).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : '-';
+                        const tglMulaiKontrak = user.tanggal_mulai_kontrak ? new Date(user.tanggal_mulai_kontrak).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : '-';
+                        const tglAkhirKontrak = user.tanggal_akhir_kontrak ? new Date(user.tanggal_akhir_kontrak).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : '-';
+
+                        document.getElementById('btn-download-pdf').href = `/admin/employees/${user.id}/download-pdf`;
+                        
+                        let profileImg = user.profile_picture ? `${baseUrl}/${user.profile_picture}` : null;
+                        let initial = user.name.charAt(0).toUpperCase();
+                        let imgHTML = profileImg 
+                            ? `<img src="${profileImg}" alt="Foto ${user.name}" class="w-32 h-32 rounded-full object-cover border-4 border-sky-500 shadow-xl">` 
+                            : `<div class="w-32 h-32 rounded-full bg-zinc-700 flex items-center justify-center border-4 border-zinc-600 shadow-xl"><span class="text-5xl text-white font-bold">${initial}</span></div>`;
+
+                        let pendHTML = '<p class="text-gray-400 italic text-sm">Belum ada riwayat pendidikan.</p>';
+                        if (user.riwayat_pendidikan && user.riwayat_pendidikan.length > 0) {
+                            pendHTML = user.riwayat_pendidikan.map(p => `
+                                <div class="relative pl-6 border-l-2 border-sky-500 mb-3">
+                                    <span class="absolute -left-[6px] top-1 w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                                    <h5 class="font-bold text-white text-sm">${p.jenjang ?? p.tingkat} - ${p.nama_institusi}</h5>
+                                    <p class="text-sky-300 text-xs">${p.jurusan ?? '-'} (${p.tahun_lulus})</p>
+                                </div>
+                            `).join('');
+                        }
+
+                        let pekjHTML = '<p class="text-gray-400 italic text-sm">Belum ada pengalaman kerja.</p>';
+                        if (user.riwayat_pekerjaan && user.riwayat_pekerjaan.length > 0) {
+                            pekjHTML = user.riwayat_pekerjaan.map(p => `
+                                <div class="relative pl-6 border-l-2 border-emerald-500 mb-3">
+                                    <span class="absolute -left-[6px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                    <h5 class="font-bold text-white text-sm">${p.posisi} di ${p.nama_perusahaan}</h5>
+                                    <p class="text-emerald-300 text-xs">${p.tanggal_mulai ?? p.tahun_mulai} - ${p.tanggal_selesai ?? p.tahun_selesai}</p>
+                                </div>
+                            `).join('');
+                        }
+
+                        const bodyHTML = `
+                            <div class="grid grid-cols-1 md:grid-cols-3">
+                                <div class="bg-zinc-900/50 p-6 flex flex-col items-center border-r border-zinc-700">
+                                    <div class="mb-4 relative">
+                                        ${imgHTML}
+                                        ${user.is_kepala_divisi ? `<div class="absolute -bottom-1 -right-1 bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold border border-zinc-800"><i class="fas fa-crown"></i> KADIV</div>` : ''}
+                                    </div>
+                                    <h4 class="text-lg font-bold text-white text-center mb-0.5">${user.name}</h4>
+                                    <p class="text-sky-400 font-medium text-xs text-center mb-4">${user.jabatan ?? 'Staff'} - ${user.divisi}</p>
+                                    
+                                    <div class="w-full space-y-3">
+                                        <div class="bg-zinc-800/80 p-2.5 rounded border border-zinc-700/50">
+                                            <p class="text-[10px] text-gray-400 uppercase tracking-wider">Email Utama</p>
+                                            <p class="text-white text-xs break-all"><i class="fas fa-envelope text-gray-500 mr-1.5"></i>${user.email}</p>
+                                        </div>
+                                        <div class="bg-zinc-800/80 p-2.5 rounded border border-zinc-700/50">
+                                            <p class="text-[10px] text-gray-400 uppercase tracking-wider">No. Telepon / WA</p>
+                                            <p class="text-white text-xs"><i class="fas fa-phone text-gray-500 mr-1.5"></i>${user.nomor_telepon ?? '-'}</p>
+                                        </div>
+                                        <div class="bg-zinc-800/80 p-2.5 rounded border border-zinc-700/50">
+                                            <p class="text-[10px] text-gray-400 uppercase tracking-wider">Status / Tgl Gabung</p>
+                                            <p class="text-white text-xs"><i class="fas fa-calendar-alt text-gray-500 mr-1.5"></i>${tglGabung} (${user.status_karyawan ?? 'Aktif'})</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-span-2 p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[65vh] overflow-y-auto custom-scrollbar">
+                                    <div>
+                                        <h4 class="text-sm font-bold text-sky-400 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-user-circle mr-1.5"></i>Biodata Pribadi</h4>
+                                        <table class="w-full text-xs space-y-2">
+                                            <tr><td class="text-gray-400 py-1 w-28">NIK KTP</td><td class="text-white">: ${user.nik ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Tempat Lahir</td><td class="text-white">: ${user.tempat_lahir ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Tanggal Lahir</td><td class="text-white">: ${tglLahir}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Gender / Darah</td><td class="text-white">: ${user.jenis_kelamin ?? '-'} (${user.golongan_darah ?? '-'})</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Agama</td><td class="text-white">: ${user.agama ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Status Nikah</td><td class="text-white">: ${user.status_pernikahan ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Alamat KTP</td><td class="text-white break-words">: ${user.alamat_ktp ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Alamat Domisili</td><td class="text-white break-words">: ${user.alamat_domisili ?? '-'}</td></tr>
+                                        </table>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-sm font-bold text-emerald-400 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-briefcase mr-1.5"></i>Ketenagakerjaan & Kepegawaian</h4>
+                                        <table class="w-full text-xs space-y-2">
+                                            <tr><td class="text-gray-400 py-1 w-28">NIP Perusahaan</td><td class="text-white">: ${user.nip ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Lokasi Kerja</td><td class="text-white">: ${user.lokasi_kerja ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Mulai Kontrak</td><td class="text-white">: ${tglMulaiKontrak}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Akhir Kontrak</td><td class="text-white">: ${tglAkhirKontrak}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Jatah Cuti Tahunan</td><td class="text-white font-bold">: ${user.jatah_cuti ?? 12} Hari</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Sisa Kuota Cuti</td><td class="text-emerald-400 font-bold">: ${user.sisa_cuti ?? 0} Hari</td></tr>
+                                        </table>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-sm font-bold text-yellow-500 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-credit-card mr-1.5"></i>Finansial & Legalitasitas</h4>
+                                        <table class="w-full text-xs space-y-2">
+                                            <tr><td class="text-gray-400 py-1 w-28">Nama Bank</td><td class="text-white">: ${user.nama_bank ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">No. Rekening</td><td class="text-white">: ${user.nomor_rekening ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Pemilik Rekening</td><td class="text-white">: ${user.pemilik_rekening ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">NPWP</td><td class="text-white">: ${user.npwp ?? '-'} (PTKP: ${user.ptkp ?? '-'})</td></tr>
+                                            <tr><td class="text-gray-400 py-1">BPJS Kesehatan</td><td class="text-white">: ${user.bpjs_kesehatan ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">BPJS Ketenagakerjaan</td><td class="text-white">: ${user.bpjs_ketenagakerjaan ?? '-'}</td></tr>
+                                        </table>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="text-sm font-bold text-red-400 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-heartbeat mr-1.5"></i>Kontak Darurat</h4>
+                                        <table class="w-full text-xs space-y-2">
+                                            <tr><td class="text-gray-400 py-1 w-28">Nama Kontak</td><td class="text-white">: ${user.kontak_darurat_nama ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">No. Telepon / HP</td><td class="text-white">: ${user.kontak_darurat_nomor ?? '-'}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Hubungan Relasi</td><td class="text-white">: ${user.kontak_darurat_hubungan ?? '-'}</td></tr>
+                                        </table>
+                                    </div>
+
+                                    <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+                                        <div>
+                                            <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wider">Riwayat Pendidikan</h4>
+                                            ${pendHTML}
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wider">Pengalaman Kerja</h4>
+                                            ${pekjHTML}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        document.getElementById('detail-modal-body').innerHTML = bodyHTML;
+                    } catch (error) {
+                        modalBody.innerHTML = '<div class="flex justify-center items-center h-48 text-red-500 font-bold"><i class="fas fa-exclamation-triangle mr-2"></i> Gagal memuat profil</div>';
+                    }
                 });
             });
         });

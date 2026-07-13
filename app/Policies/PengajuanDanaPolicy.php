@@ -16,9 +16,8 @@ class PengajuanDanaPolicy
         if ($user->id === $pengajuanDana->user_id) return true; // Pemohon
         if ($user->id === $pengajuanDana->approver_1_id) return true; // Approver 1
         if ($user->id === $pengajuanDana->approver_2_id) return true; // Approver 2
-        if ($user->id === $pengajuanDana->user->manager_keuangan_id) return true; // Manager Keuangan yang ditugaskan
-
-        if ($user->id === $pengajuanDana->finance_id) return true; // Finance yg memproses
+        if ($user->id === $pengajuanDana->approver_3_id) return true; // Approver 3
+        if ($user->id === $pengajuanDana->approver_4_id) return true; // Approver 4
         return $user->role === 'admin'; // Admin
     }
 
@@ -27,40 +26,29 @@ class PengajuanDanaPolicy
      */
     public function approve(User $user, PengajuanDana $pengajuanDana): bool
     {
-        // Approver 1 saat status 'diajukan'
-        if ($user->id === $pengajuanDana->approver_1_id && $pengajuanDana->status === 'diajukan') {
-            return true;
-        }
-        // Approver 2 saat status 'diproses_appr_2'
-        if ($user->id === $pengajuanDana->approver_2_id && $pengajuanDana->status === 'diproses_appr_2') {
-            return true;
-        }
-
-        // Blok untuk Manager Keuangan REJECT sudah dihapus
-        
+        if ($user->id === $pengajuanDana->approver_1_id && $pengajuanDana->approver_1_status === 'menunggu') return true;
+        if ($user->id === $pengajuanDana->approver_2_id && $pengajuanDana->approver_2_status === 'menunggu') return true;
+        if ($user->id === $pengajuanDana->approver_3_id && $pengajuanDana->approver_3_status === 'menunggu') return true;
+        if ($user->id === $pengajuanDana->approver_4_id && $pengajuanDana->approver_4_status === 'menunggu') return true;
         return false;
     }
 
     /**
-     * Tentukan apakah user (Manager Keuangan yg ditugaskan) bisa menekan tombol "Proses Pembayaran".
+     * Tentukan apakah user (Approver 3) bisa menekan tombol "Proses Pembayaran".
+     * Tidak dipakai lagi di alur baru, namun dipertahankan demi kompatibilitas.
      */
     public function prosesPembayaran(User $user, PengajuanDana $pengajuanDana): bool
     {
-        // Hanya Manager Keuangan yg ditugaskan, saat status 'proses_pembayaran' DAN payment_status 'menunggu'
-        return $user->id === $pengajuanDana->user->manager_keuangan_id
-               && $pengajuanDana->status == 'proses_pembayaran'
-               && $pengajuanDana->payment_status == 'menunggu';
+        return false; // Dihapus karena Approver 3 langsung upload bukti transfer
     }
 
     /**
-     * Tentukan apakah user (Manager Keuangan yg ditugaskan) bisa upload bukti transfer.
+     * Tentukan apakah user (Approver 3) bisa upload bukti transfer.
      */
     public function uploadBuktiTransfer(User $user, PengajuanDana $pengajuanDana): bool
     {
-        // Hanya Manager Keuangan yg ditugaskan, saat status 'proses_pembayaran' DAN payment_status 'diproses'
-        return $user->id === $pengajuanDana->user->manager_keuangan_id
-               && $pengajuanDana->status == 'proses_pembayaran'
-               && $pengajuanDana->payment_status == 'diproses';
+        return $user->id === $pengajuanDana->approver_3_id
+               && $pengajuanDana->approver_3_status === 'menunggu';
     }
 
     /**
@@ -68,7 +56,7 @@ class PengajuanDanaPolicy
      */
     public function cancel(User $user, PengajuanDana $pengajuanDana): bool
     {
-        return $user->id === $pengajuanDana->user_id && in_array($pengajuanDana->status, ['diajukan', 'diproses_appr_2']);
+        return $user->id === $pengajuanDana->user_id && !in_array($pengajuanDana->status, ['selesai', 'dibatalkan', 'ditolak']);
     }
 
     /**

@@ -41,6 +41,8 @@ class User extends Authenticatable
         // Approver pengajuan dana
         'approver_1_id',
         'approver_2_id',
+        'approver_dana_3_id',
+        'approver_dana_4_id',
         'manager_keuangan_id',
 
         // approver pengajuan barang
@@ -114,6 +116,16 @@ class User extends Authenticatable
     public function approver2(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approver_2_id');
+    }
+
+    public function approverDana3(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approver_dana_3_id');
+    }
+
+    public function approverDana4(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approver_dana_4_id');
     }
 
     public function managerKeuangan(): BelongsTo

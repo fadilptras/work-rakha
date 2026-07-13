@@ -32,15 +32,7 @@ class RekapAbsenController extends Controller
             ->get()
             ->keyBy(fn($item) => Carbon::parse($item->tanggal)->toDateString());
 
-        // 2. Ambil Data Cuti (Disetujui)
-        $cutiDalamPeriode = Cuti::where('user_id', $user->id)
-            ->where('status', 'disetujui') 
-            ->where(function ($query) use ($startDate, $endDate) {
-                $query->where('tanggal_mulai', '<=', $endDate)
-                      ->where('tanggal_selesai', '>=', $startDate);
-            })
-            ->get();
-            
+
         // 3. Ambil Data Lembur
         $lemburDalamPeriode = Lembur::where('user_id', $user->id)
             ->whereBetween('tanggal', [$startDate, $endDate])
@@ -85,102 +77,32 @@ class RekapAbsenController extends Controller
             $recordAktivitas = $aktivitasDalamPeriode->get($tanggalFormatted);
             $holidayData     = $holidays->get($tanggalFormatted); 
             
-            $isOnLeaveRange = $cutiDalamPeriode->first(function ($cuti) use ($date) {
-                return $date->between(Carbon::parse($cuti->tanggal_mulai), Carbon::parse($cuti->tanggal_selesai));
-            });
+            $holidayString = $holidayData ? $holidayData->keterangan : null;
             
+            $dailyStatus = \App\Services\AttendanceService::calculateDailyStatus($date, $recordAbsensi, $recordLembur, $holidayString);
+
+            // Update Rekap Total
+            if ($dailyStatus->status_key === 'H' || strpos($dailyStatus->status_key, 'H ') === 0) $rekap['hadir']++;
+            if ($dailyStatus->status_key === 'S' || strpos($dailyStatus->status_key, 'S ') === 0) $rekap['sakit']++;
+            if ($dailyStatus->status_key === 'I' || strpos($dailyStatus->status_key, 'I ') === 0) $rekap['izin']++;
+            if ($dailyStatus->status_key === 'C' || strpos($dailyStatus->status_key, 'C ') === 0) $rekap['cuti']++;
+            if ($dailyStatus->status_key === 'A' || strpos($dailyStatus->status_key, 'A ') === 0) $rekap['alpa']++;
+            if (strpos($dailyStatus->status_key, 'L') !== false) $rekap['lembur']++;
+            
+            $rekap['terlambat'] += $dailyStatus->terlambat_menit;
+
+            $statusTampil = strtolower($dailyStatus->status_teks);
+            if ($statusTampil === 'alpa') $statusTampil = 'alpa'; // menjaga huruf kecil
+
             $dailyData = [
                 'tanggal' => $date,
-                'status' => '-',
-                'jam_masuk' => null,
-                'jam_keluar' => null,
-                'keterangan' => null,
-                'is_weekend' => $date->isWeekend(),
+                'status' => $statusTampil,
+                'jam_masuk' => $dailyStatus->jam_masuk,
+                'jam_keluar' => $dailyStatus->jam_keluar,
+                'keterangan' => $dailyStatus->keterangan,
+                'is_weekend' => $dailyStatus->is_libur_total,
                 'jumlah_aktivitas' => $recordAktivitas ? $recordAktivitas->total : 0
             ];
-
-            // --- [FIX LOGIC] OVERRIDE STATUS LIBUR ---
-            // Cek apakah hari ini Libur (Tanggal merah DB atau Weekend)
-            $isActualHoliday = $holidayData || $date->isWeekend();
-
-            // 1. Cek Data Absensi (Prioritas Utama)
-            if ($recordAbsensi) {
-                $status = strtolower($recordAbsensi->status);
-                
-                // [LOGIC BARU]: Override Alpa ATAU Cuti jika hari tersebut Libur
-                if ( ($status === 'alpa' || $status === 'tidak hadir' || $status === 'cuti') && $isActualHoliday ) {
-                    $dailyData['status'] = 'libur';
-                    $dailyData['keterangan'] = $holidayData ? 'Libur Nasional: ' . $holidayData->keterangan : 'Akhir Pekan';
-                    $dailyData['is_weekend'] = true;
-                    // Tidak dihitung ke rekap['alpa'] maupun rekap['cuti']
-                } 
-                else {
-                    // Hitung Normal (Hadir, Sakit, Izin, atau Cuti di hari kerja)
-                    if (array_key_exists($status, $rekap)) {
-                        $rekap[$status]++;
-                    } elseif ($status == 'tidak hadir') {
-                        $rekap['alpa']++;
-                    }
-                    
-                    $dailyData['status'] = $recordAbsensi->status;
-                    $dailyData['jam_masuk'] = $recordAbsensi->jam_masuk;
-                    $dailyData['jam_keluar'] = $recordAbsensi->jam_keluar;
-                    $dailyData['keterangan'] = $recordAbsensi->keterangan;
-                    
-                    if ($status === 'hadir' && $recordAbsensi->jam_masuk) {
-                        $jamMasuk = Carbon::parse($recordAbsensi->jam_masuk, 'Asia/Jakarta');
-                        if ($jamMasuk->gt($standardWorkHour)) {
-                            $diffInMinutes = abs($jamMasuk->diffInMinutes($standardWorkHour));
-                            $rekap['terlambat'] += $diffInMinutes;
-                        }
-                    }
-                }
-            } 
-            // 2. Jika Tidak Ada Absensi, Cek Hari Libur
-            elseif ($holidayData) {
-                $dailyData['status'] = 'libur';
-                $dailyData['keterangan'] = 'Libur Nasional: ' . $holidayData->keterangan;
-                $dailyData['is_weekend'] = true;
-            }
-            elseif ($date->isWeekend()) {
-                $dailyData['status'] = 'libur';
-                $dailyData['keterangan'] = 'Akhir Pekan';
-            }
-            // 3. Cek Range Cuti (Fallback)
-            elseif ($isOnLeaveRange) {
-                $rekap['cuti']++;
-                $dailyData['status'] = 'cuti';
-                $dailyData['keterangan'] = 'Cuti Tahunan';
-            }
-            // 4. Sisanya Alpa
-            else {
-                if ($date->isPast() && !$date->isToday()) {
-                    $rekap['alpa']++;
-                    $dailyData['status'] = 'alpa';
-                    $dailyData['keterangan'] = 'Tanpa Keterangan';
-                } else {
-                    $dailyData['keterangan'] = '-';
-                }
-            }
-
-            // --- LOGIKA LEMBUR ---
-            if ($recordLembur) {
-                $rekap['lembur']++;
-                
-                // Jika status akhirnya libur/kosong, ubah tampilan jadi lembur
-                if ($dailyData['status'] == 'libur' || $dailyData['status'] == '-') {
-                    $dailyData['status'] = 'lembur';
-                    $dailyData['keterangan'] = $recordLembur->keterangan ?: 'Lembur Hari Libur';
-                } else {
-                    $ketAwal = $dailyData['keterangan'] && $dailyData['keterangan'] != '-' ? $dailyData['keterangan'] . '. ' : '';
-                    $dailyData['keterangan'] = $ketAwal . '(Lembur: ' . \Carbon\Carbon::parse($recordLembur->jam_masuk_lembur)->format('H:i') . ' - ' . \Carbon\Carbon::parse($recordLembur->jam_keluar_lembur)->format('H:i') . ')';
-                }
-                
-                if ($dailyData['status'] == 'lembur') {
-                    $dailyData['jam_masuk'] = $recordLembur->jam_masuk_lembur;
-                    $dailyData['jam_keluar'] = $recordLembur->jam_keluar_lembur;
-                }
-            }
             
             $detailHarian[] = (object)$dailyData;
         }

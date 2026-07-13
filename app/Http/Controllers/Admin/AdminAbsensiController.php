@@ -26,7 +26,12 @@ class AdminAbsensiController extends Controller
         $year = intval($request->input('year', now()->year));
         $day = intval($request->input('day', now()->day));
         $divisi = $request->input('divisi');
-        $status = $request->input('status');
+        $status = $request->input('status', []);
+        if (!is_array($status)) {
+            $status = [$status]; // Ensure it's an array if someone passes a string
+        }
+        $status = array_filter($status); // Remove empty values
+
         $karyawanList = Cache::rememberForever('karyawan_list_dropdown', function () {
             return User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'divisi']);
         });
@@ -35,30 +40,28 @@ class AdminAbsensiController extends Controller
         
         $isWeekend = $date_for_page->isSunday();
 
-        $query = Absensi::with('user')
-                         ->whereDate('tanggal', $date_for_page->format('Y-m-d'));
+        $queryAbsensi = Absensi::with('user')
+                            ->whereDate('tanggal', $date_for_page->format('Y-m-d'));
 
         if ($divisi) {
-            $query->whereHas('user', function ($q) use ($divisi) {
+            $queryAbsensi->whereHas('user', function ($q) use ($divisi) {
                 $q->where('divisi', $divisi);
             });
         }
         
-        if ($status) {
-            $query->where('status', $status);
+        $absensi_harian = collect();
+        if (!empty($status)) {
+            $absensiStatuses = array_filter($status, function($s) { return $s !== 'lembur'; });
+            if (!empty($absensiStatuses)) {
+                $queryAbsensi->whereIn('status', $absensiStatuses);
+                $absensi_harian = $queryAbsensi->get();
+            }
+        } else {
+            $absensi_harian = $queryAbsensi->get();
         }
 
-        $absensi_harian = $query->get();
-
-        $userIds = $absensi_harian->pluck('user_id')->unique();
-        $lemburRecords = Lembur::whereIn('user_id', $userIds)
-                              ->where('tanggal', $date_for_page->format('Y-m-d'))
-                              ->get()
-                              ->keyBy('user_id');
-
         foreach ($absensi_harian as $absensi) {
-            $absensi->lembur = $lemburRecords->has($absensi->user_id);
-
+            $absensi->record_type = 'absensi';
             if ($absensi->jam_masuk && $absensi->jam_keluar) {
                 $tglKeluar = $absensi->tanggal_keluar ?? $absensi->tanggal;
                 $waktuMasuk = Carbon::parse($absensi->tanggal . ' ' . $absensi->jam_masuk);
@@ -74,11 +77,33 @@ class AdminAbsensiController extends Controller
                 $menitKerja = $totalMenit % 60;      
                 
                 $absensi->durasi_teks = "{$jamKerja} Jam {$menitKerja} Menit";
-
             } else {
                 $absensi->durasi_teks = '-';
             }
         }
+
+        $queryLembur = Lembur::with('user')
+                        ->where('tanggal', $date_for_page->format('Y-m-d'));
+
+        if ($divisi) {
+            $queryLembur->whereHas('user', function ($q) use ($divisi) {
+                $q->where('divisi', $divisi);
+            });
+        }
+
+        $lembur_harian = collect();
+        if (empty($status) || in_array('lembur', $status)) {
+            $lembur_harian = $queryLembur->get();
+            foreach ($lembur_harian as $lembur) {
+                $lembur->record_type = 'lembur';
+            }
+        }
+
+        // Gabungkan absensi dan lembur, lalu urutkan berdasarkan nama karyawan dan tipe record
+        $combined_records = $absensi_harian->concat($lembur_harian)->sortBy([
+            ['user.name', 'asc'],
+            ['record_type', 'asc']
+        ])->values();
 
         $months = collect(range(1, 12))->mapWithKeys(function ($bulan) {
             return [$bulan => Carbon::create()->month($bulan)->translatedFormat('F')];
@@ -86,7 +111,7 @@ class AdminAbsensiController extends Controller
         $years = range(now()->year, now()->year - 5);
         $daysInMonth = $date_for_page->daysInMonth;
 
-        return view('admin.absensi.index', compact('absensi_harian', 'month', 'year', 'day', 'divisi', 'status', 'divisions', 'months', 'years', 'daysInMonth', 'isWeekend'));
+        return view('admin.absensi.index', compact('combined_records', 'month', 'year', 'day', 'divisi', 'status', 'divisions', 'months', 'years', 'daysInMonth', 'isWeekend'));
     }
 
     /**
@@ -155,7 +180,7 @@ class AdminAbsensiController extends Controller
             })
             ->toArray();
 
-        $pdf = PDF::loadView('admin.absensi.pdf_rekap_bulanan', compact(
+        $pdf = PDF::loadView('admin.exports.pdf.absensi_rekap', compact(
             'rekapData', 'allDates', 'startDate', 'endDate', 'divisi', 'holidays'
         ));
         
@@ -181,10 +206,77 @@ class AdminAbsensiController extends Controller
         }
         $absensi_harian = $query->get();
         
-        $pdf = PDF::loadView('admin.absensi.pdf_harian', compact('absensi_harian', 'date_for_page'));
+        $pdf = PDF::loadView('admin.exports.pdf.absensi_harian', compact('absensi_harian', 'date_for_page'));
         
-        $filename = 'absensi_harian_' . $date_for_page->format('Y-m-d') . '.pdf';
+        $filename = 'Laporan_Absensi_Harian_' . $date_for_page->format('Ymd') . '.pdf';
         return $pdf->download($filename);
+    }
+
+    public function downloadExcelHarian(Request $request)
+    {
+        $month = intval($request->input('month', now()->month));
+        $year = intval($request->input('year', now()->year));
+        $day = intval($request->input('day', now()->day));
+        $divisi = $request->input('divisi');
+        $status = $request->input('status', []);
+        
+        if (!is_array($status)) $status = [$status];
+        $status = array_filter($status);
+
+        $date_for_page = now()->year($year)->month($month)->day($day);
+
+        $queryAbsensi = Absensi::with('user')->whereDate('tanggal', $date_for_page->format('Y-m-d'));
+        if ($divisi) {
+            $queryAbsensi->whereHas('user', function ($q) use ($divisi) { $q->where('divisi', $divisi); });
+        }
+        
+        $absensi_harian = collect();
+        if (!empty($status)) {
+            $absensiStatuses = array_filter($status, function($s) { return $s !== 'lembur'; });
+            if (!empty($absensiStatuses)) {
+                $queryAbsensi->whereIn('status', $absensiStatuses);
+                $absensi_harian = $queryAbsensi->get();
+            }
+        } else {
+            $absensi_harian = $queryAbsensi->get();
+        }
+
+        foreach ($absensi_harian as $absensi) {
+            $absensi->record_type = 'absensi';
+            if ($absensi->jam_masuk && $absensi->jam_keluar) {
+                $tglKeluar = $absensi->tanggal_keluar ?? $absensi->tanggal;
+                $waktuMasuk = Carbon::parse($absensi->tanggal . ' ' . $absensi->jam_masuk);
+                $waktuKeluar = Carbon::parse($tglKeluar . ' ' . $absensi->jam_keluar);
+                if (is_null($absensi->tanggal_keluar) && $waktuKeluar->lt($waktuMasuk)) {
+                    $waktuKeluar->addDay();
+                }
+                $totalMenit = $waktuMasuk->diffInMinutes($waktuKeluar);
+                $absensi->durasi_teks = floor($totalMenit / 60) . " Jam " . ($totalMenit % 60) . " Menit";
+            } else {
+                $absensi->durasi_teks = '-';
+            }
+        }
+
+        $queryLembur = Lembur::with('user')->where('tanggal', $date_for_page->format('Y-m-d'));
+        if ($divisi) {
+            $queryLembur->whereHas('user', function ($q) use ($divisi) { $q->where('divisi', $divisi); });
+        }
+
+        $lembur_harian = collect();
+        if (empty($status) || in_array('lembur', $status)) {
+            $lembur_harian = $queryLembur->get();
+            foreach ($lembur_harian as $lembur) {
+                $lembur->record_type = 'lembur';
+            }
+        }
+
+        $combined_records = $absensi_harian->concat($lembur_harian)->sortBy([
+            ['user.name', 'asc'],
+            ['record_type', 'asc']
+        ])->values();
+
+        $fileName = 'Laporan_Absensi_Harian_' . $date_for_page->format('Ymd') . '.xlsx';
+        return Excel::download(new \App\Exports\AbsensiHarianExport($combined_records, $date_for_page->format('Y-m-d')), $fileName);
     }
 
     public function downloadExcel(Request $request)
@@ -256,70 +348,22 @@ class AdminAbsensiController extends Controller
                 $dateString = $date->toDateString();
                 $record = $absensiRecords->get($dateString);
                 $lembur = $lemburRecords->get($dateString);
-                
-                // Cek Libur
-                $isWeekend = $date->isWeekend();
-                $isHoliday = isset($holidays[$dateString]);
-                $isLiburTotal = $isWeekend || $isHoliday;
+                $holidayString = $holidays[$dateString] ?? null;
 
-                $status = '-'; 
+                $dailyStatus = \App\Services\AttendanceService::calculateDailyStatus($date, $record, $lembur, $holidayString);
 
-                // SKENARIO 1: HARI LIBUR / MINGGU
-                if ($isLiburTotal) {
-                    // Jika ada data Hadir atau Lembur di hari libur, tandai 'L'
-                    if (($record && $record->status == 'hadir') || $lembur) {
-                        $status = 'L';
-                        $summary['L']++;
-                    } 
-                    // Jika ada status lain (misal user salah input sakit di hari minggu)
-                    elseif ($record) {
-                        $status = strtoupper(substr($record->status, 0, 1));
-                        if($record->status == 'cuti') $status = 'C';
-                    }
-                    // Jika kosong, biarkan '-' (Jangan hitung Alpa)
-                    else {
-                        $status = '-';
-                    }
-                } 
-                // SKENARIO 2: HARI KERJA
-                else {
-                    if ($record) {
-                        $statusAbsen = strtoupper(substr($record->status, 0, 1));
-                        if($record->status == 'cuti') $statusAbsen = 'C';
-                        
-                        $status = $statusAbsen;
-                        if (array_key_exists($statusAbsen, $summary)) {
-                            $summary[$statusAbsen]++;
-                        }
+                $statusKey = $dailyStatus->status_key;
+                $status = ($statusKey === 'Libur') ? '-' : $statusKey;
 
-                        if ($record->status === 'hadir') {
-                            $jamMasuk = Carbon::parse($record->jam_masuk, 'Asia/Jakarta');
-                            if ($jamMasuk->gt($standardWorkHour)) {
-                                $summary['terlambat'] += abs($jamMasuk->diffInMinutes($standardWorkHour));
-                            }
-                            if ($record->jam_keluar) {
-                                $tglKeluar = $record->tanggal_keluar ?? $record->tanggal;
-                                $waktuMasuk = Carbon::parse($record->tanggal . ' ' . $record->jam_masuk);
-                                $waktuKeluar = Carbon::parse($tglKeluar . ' ' . $record->jam_keluar);
-                                if (is_null($record->tanggal_keluar) && $waktuKeluar->lt($waktuMasuk)) {
-                                    $waktuKeluar->addDay();
-                                }
-                                $summary['total_menit_kerja'] += $waktuMasuk->diffInMinutes($waktuKeluar);
-                            }
-                        }
-                    } else {
-                        // Jika kosong & lewat hari ini -> Alpa
-                        if ($date->lt(now()->startOfDay())) {
-                            $status = 'A';
-                            $summary['A']++;
-                        }
-                    }
-                    
-                    if ($lembur) {
-                        $status = $status . ' L';
-                        $summary['L']++;
-                    }
-                }
+                if ($dailyStatus->status_key === 'H' || strpos($dailyStatus->status_key, 'H ') === 0) $summary['H']++;
+                if ($dailyStatus->status_key === 'S' || strpos($dailyStatus->status_key, 'S ') === 0) $summary['S']++;
+                if ($dailyStatus->status_key === 'I' || strpos($dailyStatus->status_key, 'I ') === 0) $summary['I']++;
+                if ($dailyStatus->status_key === 'C' || strpos($dailyStatus->status_key, 'C ') === 0) $summary['C']++;
+                if ($dailyStatus->status_key === 'A' || strpos($dailyStatus->status_key, 'A ') === 0) $summary['A']++;
+                if ($dailyStatus->status_key === 'L' || strpos($dailyStatus->status_key, ' L') !== false) $summary['L']++;
+
+                $summary['terlambat'] += $dailyStatus->terlambat_menit;
+                $summary['total_menit_kerja'] += $dailyStatus->kerja_menit;
                 
                 $dailyRecords[$dateString] = $status;
             }

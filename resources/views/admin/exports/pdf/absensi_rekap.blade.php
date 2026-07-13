@@ -13,23 +13,23 @@
             color: #333;
         }
 
-        /* HEADER DOKUMEN */
+        /* HEADER DOKUMEN (KOP) */
         .header-doc {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             border-bottom: 3px solid #1e3a8a;
             padding-bottom: 10px;
         }
         .header-doc h1 { 
             margin: 0; 
-            font-size: 18px; 
+            font-size: 22px; 
             text-transform: uppercase; 
-            color: #1e3a8a; 
+            color: #1e3a8a;
             font-weight: 800;
         }
         .header-doc p { 
             margin: 2px 0; 
-            font-size: 10px; 
+            font-size: 11px;
             color: #555; 
         }
 

@@ -104,7 +104,48 @@ class AdminAktivitasController extends Controller
             $filterInfo = 'Divisi ' . $divisi;
         }
 
-        $pdf = Pdf::loadView('admin.aktivitas.pdf', compact('aktivitas', 'filterInfo', 'startDate', 'endDate'));
-        return $pdf->download('laporan_aktivitas_' . now()->format('Ymd') . '.pdf');
+        $pdf = Pdf::loadView('admin.exports.pdf.aktivitas', compact('aktivitas', 'filterInfo', 'startDate', 'endDate'));
+        return $pdf->download('Laporan_Aktivitas_Karyawan_' . now()->format('Ymd') . '.pdf');
     }
-}
+
+    public function downloadExcel(Request $request)
+    {
+        $defaultStart = now()->subDays(6)->toDateString(); 
+        $defaultEnd   = now()->toDateString();
+
+        $startDate = $request->input('start_date', $defaultStart);
+        $endDate   = $request->input('end_date', $defaultEnd);
+
+        $divisi = $request->input('divisi');
+        $userId = $request->input('user_id');
+
+        $query = Aktivitas::with('user')
+                    ->whereDate('created_at', '>=', $startDate)
+                    ->whereDate('created_at', '<=', $endDate)
+                    ->orderBy('created_at', 'asc');
+
+        if ($divisi) {
+            $query->whereHas('user', function ($q) use ($divisi) {
+                $q->where('divisi', $divisi);
+            });
+        }
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+
+        $aktivitas = $query->get();
+
+        $filterInfo = 'Semua Karyawan';
+        if ($userId) {
+            $usersList = Cache::get('karyawan_list_dropdown', collect());
+            $user = $usersList->firstWhere('id', $userId);
+            $filterInfo = $user ? $user->name : '-';
+        } elseif ($divisi) {
+            $filterInfo = 'Divisi ' . $divisi;
+        }
+
+        $fileName = 'Laporan_Aktivitas_Karyawan_' . now()->format('Ymd') . '.xlsx';
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AktivitasExport($aktivitas, $filterInfo, $startDate, $endDate), $fileName);
+    }
+}

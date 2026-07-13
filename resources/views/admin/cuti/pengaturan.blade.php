@@ -60,9 +60,8 @@
                                         <input 
                                             type="number" 
                                             name="jatah_cuti[{{ $user->id }}]" 
-                                            {{-- LOGIC: Diubah menjadi default 12 agar aman saat disubmit --}}
                                             value="{{ $user->jatah_cuti ?? 12 }}" 
-                                            class="w-full max-w-xs bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
+                                            class="w-32 bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm text-center font-mono" 
                                             min="0"
                                             placeholder="12">
                                     </td>
@@ -80,7 +79,7 @@
                 </div>
 
                 <div class="px-6 py-4 bg-zinc-800 border-t border-zinc-700 flex justify-end rounded-b-lg">
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md flex items-center transition-transform duration-200 hover:scale-105">
+                    <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg shadow-md flex items-center transition-transform duration-200 hover:scale-105">
                         <i class="fas fa-save mr-2"></i>
                         Simpan Perubahan
                     </button>

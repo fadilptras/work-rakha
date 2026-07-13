@@ -47,7 +47,7 @@
                                             </div>
                                             {{-- Dropdown --}}
                                             <select name="approver_barang_{{ $i }}[{{ $employee->id }}]" 
-                                                    class="w-full appearance-none p-2 pr-8 bg-zinc-700 border border-zinc-600 rounded-lg text-xs text-white focus:ring-amber-500 focus:border-amber-500 approver-select">
+                                                    class="w-full appearance-none p-2 pr-8 bg-zinc-700 border border-zinc-600 rounded-lg text-xs text-white focus:ring-sky-500 focus:border-sky-500 approver-select">
                                                 <option value="">-- Tidak Ada --</option>
                                                 @foreach ($approvers as $approver)
                                                     <option value="{{ $approver->id }}" @selected($employee->{"approver_barang_{$i}_id"} == $approver->id)>
@@ -70,7 +70,7 @@
             </div>
 
             <div class="mt-6 flex justify-end">
-                <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-200">
+                <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-200">
                     Simpan Perubahan
                 </button>
             </div>

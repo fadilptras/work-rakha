@@ -68,9 +68,9 @@ class AdminCutiController extends Controller
             return User::orderBy('name')->get(['id', 'name', 'role']);
         });
         
-        $employees = Cache::rememberForever('karyawan_list_dropdown', function () {
-            return User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
-        });
+        $employees = User::where('role', 'user')
+            ->orderBy('name')
+            ->get(['id', 'name', 'divisi', 'approver_cuti_1_id', 'approver_cuti_2_id', 'approver_cuti_3_id', 'approver_cuti_4_id']);
 
         return view('admin.cuti.set-approvers', [
             'employees' => $employees,
@@ -166,18 +166,7 @@ class AdminCutiController extends Controller
             $cuti->update(['status' => 'disetujui']);
             $cuti->user->decrement('sisa_cuti', $cuti->total_hari);
             
-            $period = CarbonPeriod::create($cuti->tanggal_mulai, $cuti->tanggal_selesai);
-            foreach ($period as $date) {
-                Absensi::updateOrCreate(
-                    [
-                        'user_id' => $cuti->user_id,
-                        'tanggal' => $date->format('Y-m-d'),
-                    ],
-                    [
-                        'status' => 'cuti'
-                    ]
-                );
-            }
+
 
             Notification::send($cuti->user, new CutiNotification($cuti, 'disetujui'));
         }
@@ -211,7 +200,7 @@ class AdminCutiController extends Controller
     {
         $tahunIni = Carbon::now()->year;
 
-        $users = User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'jatah_cuti', 'sisa_cuti'])->map(function ($user) {
+        $users = User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'jabatan', 'jatah_cuti', 'sisa_cuti'])->map(function ($user) {
             $totalCuti = $user->jatah_cuti ?? 12;
             $sisaCuti = $user->sisa_cuti ?? 0;
             $user->cuti_terpakai = max(0, $totalCuti - $sisaCuti);
@@ -285,7 +274,7 @@ class AdminCutiController extends Controller
     {
         $tahunIni = Carbon::now()->year;
 
-        $users = User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'jatah_cuti', 'sisa_cuti'])->map(function ($user) {
+        $users = User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'jabatan', 'jatah_cuti', 'sisa_cuti'])->map(function ($user) {
             $totalCuti = $user->jatah_cuti ?? 12;
             $sisaCuti = $user->sisa_cuti ?? 0;
             $user->cuti_terpakai = max(0, $totalCuti - $sisaCuti);
@@ -313,10 +302,7 @@ class AdminCutiController extends Controller
         if ($cuti->status == 'disetujui') {
             $cuti->user->increment('sisa_cuti', $cuti->total_hari);
 
-            Absensi::where('user_id', $cuti->user_id)
-                ->where('status', 'cuti')
-                ->whereBetween('tanggal', [$cuti->tanggal_mulai, $cuti->tanggal_selesai])
-                ->delete();
+
         }
 
         $cuti->delete();

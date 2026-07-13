@@ -188,6 +188,7 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
         Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
         Route::post('/{user}/set-as-head', [AdminUserController::class, 'setAsDivisionHead'])->name('setAsHead');
         Route::get('/{user}/download-pdf', [AdminUserController::class, 'downloadProfilePdf'])->name('downloadProfilePdf');
+        Route::get('/{user}/ajax-detail', [AdminUserController::class, 'ajaxDetail'])->name('ajaxDetail');
     });
 
     Route::prefix('admins')->name('admins.')->group(function () {
@@ -208,9 +209,10 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
     
     // Kelola Absen
     Route::prefix('absensi')->name('absensi.')->group(function () {
-        // Aktivitas Harian & download PDF
+        // Aktivitas Harian & download PDF/Excel
         Route::get('/', [AdminAbsensiController::class, 'index'])->name('index');
         Route::get('/pdf/harian', [AdminAbsensiController::class, 'downloadPdfHarian'])->name('downloadPdfHarian');
+        Route::get('/excel/harian', [AdminAbsensiController::class, 'downloadExcelHarian'])->name('downloadExcelHarian');
         
         // Rekap Absensi Bulanan & download PDF
         Route::get('/rekap', [AdminAbsensiController::class, 'rekap'])->name('rekap');
@@ -274,6 +276,7 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
         
         // Tambahkan ini:
         Route::get('/download-pdf', [AdminAktivitasController::class, 'downloadPdf'])->name('downloadPdf');
+        Route::get('/download-excel', [AdminAktivitasController::class, 'downloadExcel'])->name('downloadExcel');
     });
 
     Route::controller(AdminCrmController::class)->prefix('crm')->name('crm.')->group(function () {

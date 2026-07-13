@@ -48,10 +48,8 @@ class AuthenticatedSessionController extends Controller
         RateLimiter::clear($this->throttleKey($request));
         $request->session()->regenerate();
 
-        // 5. Muat Notifikasi ke Session Flash (Sesuai alur bisnis aplikasimu)
+        // 5. (Dihapus karena memberatkan proses login dan tidak digunakan)
         $user = Auth::user();
-        session()->flash('notifications', $user->notifications()->take(5)->get());
-        session()->flash('unreadCount', $user->unreadNotifications->count());
 
         // 6. Redirect Sesuai Role
         if ($user->role === 'admin') {
