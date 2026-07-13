@@ -1,183 +1,375 @@
 <x-layout-users :title="$title">
 
-    <div class="min-h-screen bg-gradient-to-br from-sky-50 to-blue-100 font-sans text-sm pb-20">
-        
-        <div class="max-w-5xl mx-auto pt-0 px-0 md:px-0">
+    @push('styles')
+    <style>
+        /* ====== NOTIFIKASI PAGE - MOBILE FIRST STYLES ====== */
+
+        /* Back Button */
+        .notif-back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            background: #fff;
+            border: 1.5px solid #dbeafe;
+            border-radius: 999px;
+            color: #1d4ed8;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 1px 4px rgba(59,130,246,0.08);
+        }
+        .notif-back-btn:hover {
+            background: #eff6ff;
+            box-shadow: 0 2px 8px rgba(59,130,246,0.15);
+        }
+
+        /* Header Card */
+        .notif-header-card {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 60%, #3b82f6 100%);
+            border-radius: 1.25rem;
+            padding: 24px 22px 28px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .notif-header-card::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 160px; height: 160px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+        }
+        .notif-header-card::after {
+            content: '';
+            position: absolute;
+            bottom: -50px; left: -30px;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: rgba(99,179,237,0.15);
+        }
+        .notif-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 999px;
+            padding: 4px 14px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .notif-header-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 8px;
+            position: relative; z-index: 1;
+        }
+        .notif-header-desc {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.85);
+            line-height: 1.6;
+            position: relative; z-index: 1;
+            max-width: 280px;
+        }
+
+        /* Filter Chips */
+        .filter-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-right: 4px;
+            align-self: center;
+        }
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 16px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1.5px solid #e5e7eb;
+            background: #fff;
+            color: #374151;
+            text-decoration: none;
+            transition: all 0.18s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            white-space: nowrap;
+        }
+        .filter-chip:hover {
+            border-color: #93c5fd;
+            color: #1d4ed8;
+            background: #eff6ff;
+        }
+        .filter-chip.active {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(29,78,216,0.25);
+        }
+
+        /* Notifikasi List Card */
+        .notif-list-card {
+            background: #fff;
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid #f0f0f0;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        .notif-group-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .notif-group-header span {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: #94a3b8;
+        }
+        .notif-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid #f8fafc;
+            text-decoration: none;
+            transition: background 0.15s;
+            position: relative;
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover { background: #f0f7ff; }
+        .notif-item.unread { background: #f0f7ff; }
+        .notif-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: #2563eb;
+            border-radius: 0 2px 2px 0;
+        }
+        .notif-icon-box {
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            font-size: 1rem;
+        }
+        .notif-content { flex: 1; min-width: 0; }
+        .notif-title-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 3px;
+        }
+        .notif-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.3;
+            flex: 1;
+        }
+        .notif-time {
+            font-size: 0.68rem;
+            color: #9ca3af;
+            white-space: nowrap;
+            flex-shrink: 0;
+            padding-top: 2px;
+        }
+        .notif-message {
+            font-size: 0.78rem;
+            color: #6b7280;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .notif-unread-dot {
+            width: 8px; height: 8px;
+            background: #2563eb;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 6px;
+            box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+        }
+
+        /* Empty State */
+        .notif-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+            text-align: center;
+        }
+        .notif-empty-icon {
+            width: 72px; height: 72px;
+            background: #f3f4f6;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        /* Desktop overrides */
+        @media (min-width: 640px) {
+            .notif-header-title { font-size: 2rem; }
+            .notif-item { padding: 16px 20px; gap: 14px; }
+            .notif-icon-box { width: 46px; height: 46px; }
+            .notif-title { font-size: 0.9rem; }
+            .notif-message { font-size: 0.85rem; }
+        }
+    </style>
+    @endpush
+
+    <div class="min-h-screen bg-gray-50 sm:bg-gradient-to-br sm:from-sky-50 sm:to-blue-100 pb-8">
+        <div class="max-w-3xl mx-auto px-4 pt-5 sm:pt-8">
 
             {{-- TOMBOL KEMBALI --}}
-            <div class="mb-6">
-                <a href="{{ route('dashboard') }}" 
-                class="inline-flex items-center justify-center w-auto h-10 px-4 rounded-lg bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-md hover:shadow-lg hover:brightness-110 transition-all gap-2"
-                title="Kembali ke Dashboard">
-                    <i class="fas fa-arrow-left"></i>
-                    <span class="font-medium text-sm">Kembali</span>
+            <div class="mb-5">
+                <a href="{{ route('dashboard') }}" class="notif-back-btn">
+                    <i class="fas fa-arrow-left text-xs"></i>
+                    <span>Kembali</span>
                 </a>
             </div>
 
-            {{-- HEADER STYLE --}}
-            <div class="bg-[#001BB7] rounded-3xl shadow-xl shadow-blue-900/20 mb-8 overflow-hidden relative border border-blue-900/10">
-                
-                {{-- Dekorasi Background --}}
-                <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none z-0"></div>
-                <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-blue-400 opacity-20 rounded-full blur-2xl pointer-events-none z-0"></div>
-
-                <div class="p-8 relative z-10 text-white">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                        <div>
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/30 shadow-sm">
-                                    Pusat Informasi
-                                </span>
-                            </div>
-                            <h1 class="text-3xl font-extrabold tracking-tight text-white drop-shadow-sm mb-2">
-                                Notifikasi Anda
-                            </h1>
-                            <p class="text-blue-100 opacity-90 text-sm max-w-xl leading-relaxed">
-                                Pantau aktivitas terbaru, pengumuman, dan pembaruan sistem di sini.
-                            </p>
-                        </div>
-                        
-                        {{-- Icon Lonceng Besar --}}
-                        <div class="hidden md:block bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
-                            <i class="fas fa-bell text-4xl text-blue-200"></i>
-                        </div>
-                    </div>
+            {{-- HEADER CARD --}}
+            <div class="notif-header-card mb-5">
+                <div style="position:relative;z-index:1;">
+                    <div class="notif-badge">Pusat Informasi</div>
+                    <h1 class="notif-header-title">Notifikasi Anda</h1>
+                    <p class="notif-header-desc">
+                        Pantau aktivitas terbaru, pengumuman, dan pembaruan sistem di sini.
+                    </p>
                 </div>
             </div>
 
-            {{-- BAGIAN FILTER --}}
-            <div class="flex flex-wrap items-center gap-3 mb-6">
-                <span class="text-xs font-bold text-gray-500 uppercase tracking-wide mr-1">Filter:</span>
-                
-                {{-- Tombol Semua --}}
+            {{-- FILTER CHIPS --}}
+            <div class="flex flex-wrap items-center gap-2 mb-5">
+                <span class="filter-label">Filter:</span>
+
                 <a href="{{ route('notifikasi.index') }}"
-                   class="px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 shadow-sm border
-                          {{ $filterType === 'semua' 
-                             ? 'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-200' 
-                             : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300' }}">
+                   class="filter-chip {{ $filterType === 'semua' ? 'active' : '' }}">
                     Semua
                 </a>
 
-                {{-- Tombol Tipe Lainnya --}}
                 @foreach ($availableTypes as $type)
                     <a href="{{ route('notifikasi.index', ['type' => $type]) }}"
-                       class="px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 shadow-sm border capitalize
-                              {{ $filterType === $type 
-                                 ? 'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-200' 
-                                 : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300' }}">
+                       class="filter-chip {{ $filterType === $type ? 'active' : '' }} capitalize">
                         {{ $type }}
                     </a>
                 @endforeach
             </div>
 
-            {{-- CONTAINER LIST NOTIFIKASI --}}
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden relative min-h-[300px]">
-                
+            {{-- DAFTAR NOTIFIKASI --}}
+            <div class="notif-list-card">
+
                 @forelse ($groupOrder as $groupName)
                     @if (isset($groupedNotifications[$groupName]) && $groupedNotifications[$groupName]->isNotEmpty())
 
-                        {{-- Header Grup Waktu --}}
-                        <div class="px-6 py-3 bg-gray-50/80 border-b border-gray-100 sticky top-0 backdrop-blur-sm z-10 flex items-center">
-                            <i class="far fa-folder-open text-gray-400 mr-2 text-xs"></i>
-                            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">{{ $groupName }}</h3>
+                        {{-- Header Grup --}}
+                        <div class="notif-group-header">
+                            <i class="far fa-clock text-slate-300 text-xs"></i>
+                            <span>{{ $groupName }}</span>
                         </div>
 
-                        <div class="divide-y divide-gray-50">
-                            @foreach ($groupedNotifications[$groupName] as $notification)
-                                @php
-                                    $isUnread = !$notification->read_at;
-                                    // Tentukan warna icon background
-                                    $iconBg = 'bg-blue-100 text-blue-600';
-                                    if(str_contains(strtolower($notification->data['title'] ?? ''), 'error') || str_contains(strtolower($notification->data['title'] ?? ''), 'gagal')) {
-                                        $iconBg = 'bg-red-100 text-red-600';
-                                    } elseif(str_contains(strtolower($notification->data['title'] ?? ''), 'sukses') || str_contains(strtolower($notification->data['title'] ?? ''), 'berhasil')) {
-                                        $iconBg = 'bg-emerald-100 text-emerald-600';
-                                    } elseif(str_contains(strtolower($notification->data['title'] ?? ''), 'warning') || str_contains(strtolower($notification->data['title'] ?? ''), 'peringatan')) {
-                                        $iconBg = 'bg-orange-100 text-orange-600';
-                                    }
-                                @endphp
+                        @foreach ($groupedNotifications[$groupName] as $notification)
+                            @php
+                                $isUnread = !$notification->read_at;
+                                // Tentukan warna icon
+                                $titleLower = strtolower($notification->data['title'] ?? '');
+                                if (str_contains($titleLower, 'error') || str_contains($titleLower, 'gagal')) {
+                                    $iconBg = 'background:#fee2e2;';
+                                    $iconColor = 'color:#dc2626;';
+                                } elseif (str_contains($titleLower, 'sukses') || str_contains($titleLower, 'berhasil') || str_contains($titleLower, 'disetujui')) {
+                                    $iconBg = 'background:#d1fae5;';
+                                    $iconColor = 'color:#059669;';
+                                } elseif (str_contains($titleLower, 'warning') || str_contains($titleLower, 'peringatan') || str_contains($titleLower, 'ditolak')) {
+                                    $iconBg = 'background:#ffedd5;';
+                                    $iconColor = 'color:#ea580c;';
+                                } else {
+                                    $iconBg = 'background:#dbeafe;';
+                                    $iconColor = 'color:#2563eb;';
+                                }
+                                $timeStr = \Carbon\Carbon::parse($notification->created_at)->translatedFormat('d M, H:i');
+                            @endphp
 
-                                <a href="{{ $notification->data['url'] ?? '#' }}" class="group block p-5 transition-all duration-200 hover:bg-blue-50/40 relative {{ $isUnread ? 'bg-blue-50/20' : '' }}">
-                                    
-                                    {{-- Indikator Unread (Garis Kiri) --}}
-                                    @if ($isUnread)
-                                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r"></div>
-                                    @endif
+                            <a href="{{ $notification->data['url'] ?? '#' }}"
+                               class="notif-item {{ $isUnread ? 'unread' : '' }}">
 
-                                    <div class="flex items-start gap-4">
-                                        {{-- Icon Box --}}
-                                        <div class="flex-shrink-0">
-                                            <div class="w-10 h-10 rounded-xl {{ $iconBg }} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-200">
-                                                <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }} text-lg"></i>
-                                            </div>
-                                        </div>
+                                {{-- Icon --}}
+                                <div class="notif-icon-box" style="{{ $iconBg }}">
+                                    <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}" style="{{ $iconColor }}"></i>
+                                </div>
 
-                                        {{-- Konten Text --}}
-                                        <div class="flex-1 min-w-0 pt-0.5">
-                                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
-                                                <h4 class="text-sm font-bold text-gray-800 group-hover:text-blue-700 transition-colors leading-tight">
-                                                    {{ $notification->data['title'] ?? 'Notifikasi Baru' }}
-                                                </h4>
-                                                
-                                                {{-- WAKTU & TANGGAL (FIXED: Hari, Tanggal, Jam) --}}
-                                                <span class="text-[10px] font-medium text-gray-500 whitespace-nowrap bg-gray-50 px-2 py-1 rounded-md border border-gray-200 flex items-center gap-1.5 w-fit">
-                                                    <i class="far fa-clock text-blue-500"></i>
-                                                    {{ \Carbon\Carbon::parse($notification->created_at)->translatedFormat('l, d F Y - H:i') }} WIB
-                                                </span>
-                                            </div>
-                                            
-                                            <p class="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed">
-                                                {{ $notification->data['message'] ?? '-' }}
-                                            </p>
-                                        </div>
-
-                                        {{-- Indikator Dot Unread (Kanan) --}}
-                                        @if ($isUnread)
-                                            <div class="flex-shrink-0 self-center hidden sm:block">
-                                                <span class="block w-2.5 h-2.5 bg-blue-500 rounded-full shadow ring-2 ring-blue-50" title="Belum dibaca"></span>
-                                            </div>
-                                        @endif
+                                {{-- Konten --}}
+                                <div class="notif-content">
+                                    <div class="notif-title-row">
+                                        <span class="notif-title">{{ $notification->data['title'] ?? 'Notifikasi Baru' }}</span>
+                                        <span class="notif-time">{{ $timeStr }}</span>
                                     </div>
-                                </a>
-                            @endforeach
-                        </div>
+                                    <p class="notif-message">{{ $notification->data['message'] ?? '-' }}</p>
+                                </div>
+
+                                {{-- Dot unread --}}
+                                @if ($isUnread)
+                                    <div class="notif-unread-dot"></div>
+                                @endif
+
+                            </a>
+                        @endforeach
+
                     @endif
                 @empty
-                    {{-- Loop kosong --}}
+                    {{-- loop kosong --}}
                 @endforelse
 
                 {{-- STATE KOSONG --}}
                 @if($groupedNotifications->isEmpty())
-                    <div class="flex flex-col items-center justify-center py-16 text-center">
-                        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 shadow-inner">
-                            <i class="fas fa-bell-slash text-3xl text-gray-300"></i>
+                    <div class="notif-empty">
+                        <div class="notif-empty-icon">
+                            <i class="fas fa-bell-slash text-2xl text-gray-300"></i>
                         </div>
-                        <h3 class="text-lg font-bold text-gray-700">Tidak ada notifikasi</h3>
-                        <p class="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
+                        <h3 class="text-base font-bold text-gray-700 mb-1">Tidak ada notifikasi</h3>
+                        <p class="text-sm text-gray-400 max-w-xs">
                             @if($filterType !== 'semua')
-                                Tidak ada notifikasi untuk kategori "<span class="font-bold text-gray-600">{{ $filterType }}</span>".
+                                Tidak ada notifikasi untuk kategori "<strong class="text-gray-500">{{ $filterType }}</strong>".
                             @else
                                 Anda sudah melihat semua pembaruan terbaru.
                             @endif
                         </p>
-                        
                         @if($filterType !== 'semua')
-                            <a href="{{ route('notifikasi.index') }}" class="mt-6 px-6 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition shadow-sm">
-                                Reset Filter
+                            <a href="{{ route('notifikasi.index') }}"
+                               class="mt-5 px-5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-full hover:bg-blue-700 transition shadow-sm">
+                                Lihat Semua
                             </a>
                         @endif
                     </div>
                 @endif
 
             </div>
-            
-            {{-- Footer info kecil --}}
-            <div class="mt-6 text-center">
-                <p class="text-xs text-blue-300/80">
-                    Menampilkan notifikasi 30 hari terakhir.
-                </p>
+
+            {{-- Footer --}}
+            <div class="mt-5 text-center">
+                <p class="text-xs text-gray-400">Menampilkan notifikasi 30 hari terakhir.</p>
             </div>
 
         </div>
     </div>
+
 </x-layout-users>

@@ -1,8 +1,151 @@
 <x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
 
-    <div class="bg-gradient-to-br from-sky-50 to-blue-100 p-0 md:p-0 min-h-screen">
-        <div class="max-w-6xl mx-auto">
+    @push('styles')
+    <style>
+        /* ===== ABSEN PAGE MOBILE STYLES ===== */
+
+        /* Wrapper */
+        .absen-page-wrapper { padding: 16px 16px 40px; }
+        @media (min-width: 768px) {
+            .absen-page-wrapper { padding: 24px 24px 48px; }
+        }
+
+        /* Back Button */
+        .absen-back-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 16px;
+            background: #fff;
+            border: 1.5px solid #dbeafe;
+            border-radius: 999px;
+            color: #1d4ed8;
+            font-size: 0.82rem; font-weight: 600;
+            text-decoration: none;
+            transition: all 0.18s;
+            margin-bottom: 16px;
+        }
+        .absen-back-btn:hover { background: #eff6ff; }
+
+        /* Alert Card (Libur / Sabtu) */
+        .absen-alert-card {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            margin-bottom: 16px;
+            border: 1.5px solid;
+        }
+        .absen-alert-icon {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 1rem;
+        }
+        .absen-alert-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 2px; }
+        .absen-alert-desc  { font-size: 0.8rem; line-height: 1.5; color: #374151; }
+
+        /* Section Card (putih) */
+        .absen-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 18px 16px;
+            margin-bottom: 14px;
+        }
+        .absen-card-title {
+            font-size: 1rem; font-weight: 800; color: #111827;
+            margin-bottom: 4px;
+        }
+        .absen-card-subtitle {
+            font-size: 0.8rem; color: #6b7280; margin-bottom: 16px;
+        }
+
+        /* Rekap Grid */
+        .rekap-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .rekap-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 10px;
+        }
+        .rekap-item-label { font-size: 0.78rem; font-weight: 600; }
+        .rekap-item-value { font-size: 0.9rem; font-weight: 800; }
+        .rekap-item.wide { grid-column: span 2; }
+        .rekap-item.hadir   { background:#dcfce7; }
+        .rekap-item.sakit   { background:#fee2e2; }
+        .rekap-item.izin    { background:#fef9c3; }
+        .rekap-item.cuti    { background:#dbeafe; }
+        .rekap-item.alpa    { background:#f3f4f6; }
+        .rekap-item.lembur  { background:#e0e7ff; }
+        .rekap-item.terlambat { background:#ffedd5; }
+
+        /* Terlambat row */
+        .rekap-terlambat-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 12px; border-radius: 10px;
+            background: #ffedd5;
+            margin-top: 4px;
+        }
+
+        /* Tim Absensi */
+        .tim-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .tim-item:last-child { border-bottom: none; }
+        .tim-avatar {
+            width: 38px; height: 38px;
+            border-radius: 50%; object-fit: cover;
+            margin-right: 10px; flex-shrink: 0;
+        }
+        .tim-name { font-size: 0.85rem; font-weight: 600; color: #1f2937; }
+        .tim-badge {
+            font-size: 0.7rem; font-weight: 700;
+            padding: 3px 10px; border-radius: 999px;
+            text-transform: capitalize;
+        }
+
+        /* Lembur Button */
+        .absen-lembur-btn {
+            display: block; width: 100%;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff;
+            font-size: 0.95rem; font-weight: 700;
+            text-align: center;
+            border: none; border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(109,40,217,0.35);
+            transition: all 0.2s;
+            letter-spacing: 0.01em;
+        }
+        .absen-lembur-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+
+        /* Absen Time Card */
+        .absen-time-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            margin-bottom: 14px;
+        }
+        .absen-time-card {
+            border-radius: 12px; padding: 12px 14px;
+        }
+        .absen-time-label { font-size: 0.72rem; font-weight: 600; margin-bottom: 2px; }
+        .absen-time-value { font-size: 1.6rem; font-weight: 800; line-height: 1.2; }
+        .absen-time-sub   { font-size: 0.7rem; }
+
+        /* Status Buttons */
+        .status-btn-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+            margin-bottom: 16px;
+        }
+    </style>
+    @endpush
+
+    <div class="bg-gray-50 sm:bg-gradient-to-br sm:from-sky-50 sm:to-blue-100 min-h-screen">
+        <div class="max-w-6xl mx-auto absen-page-wrapper">
             
             {{-- ALERT MESSAGES --}}
             @if(session('success'))
@@ -28,18 +171,18 @@
             
             {{-- KONDISI 1: LIBUR TOTAL (Minggu / Tanggal Merah) --}}
             @if($isHoliday)
-                <div class="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-4 shadow-sm animate-fade-in-down">
-                    <div class="p-3 bg-red-500/20 rounded-full text-red-500 shrink-0">
-                        <i class="fas fa-calendar-times text-xl"></i>
+                <div class="absen-alert-card" style="background:#fff1f2; border-color:#fecaca;">
+                    <div class="absen-alert-icon" style="background:#fee2e2;">
+                        <i class="fas fa-calendar-times" style="color:#dc2626;"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-red-600 text-lg">Hari Libur</h3>
-                        <p class="text-zinc-600 dark:text-zinc-400 mt-1">
-                            Hari ini adalah 
+                        <p class="absen-alert-title" style="color:#dc2626;">Hari Libur</p>
+                        <p class="absen-alert-desc">
+                            Hari ini adalah
                             @if($holidayDb)
-                                <span class="font-semibold text-red-600">{{ $holidayDb->keterangan }}</span>.
+                                <span class="font-semibold" style="color:#dc2626;">{{ $holidayDb->keterangan }}</span>.
                             @else
-                                <span class="font-semibold text-red-600">Hari Minggu</span>.
+                                <span class="font-semibold" style="color:#dc2626;">Hari Minggu</span>.
                             @endif
                             Absensi tetap dibuka khusus untuk petugas piket atau lembur.
                         </p>
@@ -48,25 +191,24 @@
 
             {{-- KONDISI 2: SABTU OPSIONAL --}}
             @elseif($isSaturdayOpen)
-                <div class="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-4 shadow-sm animate-fade-in-down">
-                    <div class="p-3 bg-blue-500/20 rounded-full text-blue-600 shrink-0">
-                        <i class="fas fa-umbrella-beach text-xl"></i>
+                <div class="absen-alert-card" style="background:#eff6ff; border-color:#bfdbfe;">
+                    <div class="absen-alert-icon" style="background:#dbeafe;">
+                        <i class="fas fa-umbrella-beach" style="color:#2563eb;"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-blue-600 text-lg">Hari Sabtu (Opsional)</h3>
-                        <p class="text-zinc-600 dark:text-zinc-400 mt-1">
+                        <p class="absen-alert-title" style="color:#1d4ed8;">Hari Sabtu (Opsional)</p>
+                        <p class="absen-alert-desc">
                             Kehadiran hari ini bersifat opsional. Tidak tercatat sebagai Alpha jika tidak hadir.
                         </p>
                     </div>
                 </div>
             @endif
 
-            {{-- TOMBOL KEMBALI KE DASHBOARD (POSISI: ATAS KIRI) --}}
-            <div class="mb-4">
-                <a href="{{ route('dashboard') }}" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold transition-colors">
-                    <i class="fas fa-arrow-left mr-2"></i> Kembali ke Dashboard
-                </a>
-            </div>
+            {{-- TOMBOL KEMBALI KE DASHBOARD --}}
+            <a href="{{ route('dashboard') }}" class="absen-back-btn">
+                <i class="fas fa-arrow-left text-xs"></i>
+                Kembali ke Dashboard
+            </a>
 
             @if ($absensiHariIni)
                 {{-- ========================================================= --}}
@@ -143,61 +285,62 @@
                     </div>
                     
                     {{-- SIDEBAR REKAP --}}
-                    <div class="w-full lg:w-1/3 space-y-6">
-                        <div class="bg-white p-4 rounded-xl shadow-sm">
-                            <h2 class="text-lg font-bold text-gray-800 text-center mb-1">Rekap Bulan Ini</h2>
-                            <p class="text-center text-gray-500 text-xs mb-3">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                <div class="bg-green-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                    <p class="font-semibold text-xs text-green-700">Hadir</p>
-                                    <div class="text-sm font-bold text-green-700">{{ $rekapAbsen['hadir'] }}</div>
+                    <div class="w-full lg:w-1/3 space-y-4">
+                        <div class="absen-card">
+                            <h2 class="text-base font-bold text-gray-800 text-center mb-0.5">Rekap Bulan Ini</h2>
+                            <p class="text-center text-gray-400 text-xs mb-3">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
+                            <div class="rekap-grid">
+                                <div class="rekap-item hadir">
+                                    <span class="rekap-item-label" style="color:#15803d;">Hadir</span>
+                                    <span class="rekap-item-value" style="color:#15803d;">{{ $rekapAbsen['hadir'] }}</span>
                                 </div>
-                                <div class="bg-red-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                    <p class="font-semibold text-xs text-red-700">Sakit</p>
-                                    <div class="text-sm font-bold text-red-700">{{ $rekapAbsen['sakit'] }}</div>
+                                <div class="rekap-item sakit">
+                                    <span class="rekap-item-label" style="color:#dc2626;">Sakit</span>
+                                    <span class="rekap-item-value" style="color:#dc2626;">{{ $rekapAbsen['sakit'] }}</span>
                                 </div>
-                                <div class="bg-yellow-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                    <p class="font-semibold text-xs text-yellow-700">Izin</p>
-                                    <div class="text-sm font-bold text-yellow-700">{{ $rekapAbsen['izin'] }}</div>
+                                <div class="rekap-item izin">
+                                    <span class="rekap-item-label" style="color:#b45309;">Izin</span>
+                                    <span class="rekap-item-value" style="color:#b45309;">{{ $rekapAbsen['izin'] }}</span>
                                 </div>
-                                <div class="bg-blue-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                    <p class="font-semibold text-xs text-blue-700">Cuti</p>
-                                    <div class="text-sm font-bold text-blue-700">{{ $rekapAbsen['cuti'] }}</div>
+                                <div class="rekap-item cuti">
+                                    <span class="rekap-item-label" style="color:#1d4ed8;">Cuti</span>
+                                    <span class="rekap-item-value" style="color:#1d4ed8;">{{ $rekapAbsen['cuti'] }}</span>
                                 </div>
-                                <div class="bg-gray-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                    <p class="font-semibold text-xs text-gray-700">Alpa</p>
-                                    <div class="text-sm font-bold text-gray-700">{{ $rekapAbsen['tidak hadir'] }}</div>
+                                <div class="rekap-item alpa">
+                                    <span class="rekap-item-label" style="color:#374151;">Alpa</span>
+                                    <span class="rekap-item-value" style="color:#374151;">{{ $rekapAbsen['tidak hadir'] }}</span>
                                 </div>
-                                <div class="bg-indigo-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                    <p class="font-semibold text-xs text-indigo-700">Lembur</p>
-                                    <div class="text-sm font-bold text-indigo-700">{{ $rekapAbsen['lembur'] }}</div>
+                                <div class="rekap-item lembur">
+                                    <span class="rekap-item-label" style="color:#4338ca;">Lembur</span>
+                                    <span class="rekap-item-value" style="color:#4338ca;">{{ $rekapAbsen['lembur'] }}</span>
                                 </div>
-                                <div class="bg-orange-100 px-3 py-2 rounded-lg flex items-center justify-between col-span-2 md:col-span-3">
-                                    <p class="font-semibold text-xs text-orange-700">Terlambat</p>
-                                    <div class="text-sm font-bold text-orange-700">{{ $rekapAbsen['terlambat'] }}</div>
-                                </div>
+                            </div>
+                            <div class="rekap-terlambat-row mt-2">
+                                <span class="rekap-item-label" style="color:#c2410c;">Terlambat</span>
+                                <span class="rekap-item-value" style="color:#c2410c;">{{ $rekapAbsen['terlambat'] }}</span>
                             </div>
                         </div>
 
                         @if(isset($daftarRekan) && count($daftarRekan) > 0)
-                        <div class="bg-white p-4 rounded-xl shadow-sm">
-                            <h2 class="text-lg font-bold text-gray-800 text-center mb-3">
-                                Absensi Tim 
-                            </h2>
-                            <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                        <div class="absen-card">
+                            <h2 class="text-base font-bold text-gray-800 text-center mb-3">Absensi Tim</h2>
+                            <div>
                                 @foreach($daftarRekan as $rekan)
-                                <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+                                @php
+                                    $badgeStyle = match($rekan->status) {
+                                        'hadir'  => 'background:#dcfce7; color:#15803d;',
+                                        'sakit'  => 'background:#fee2e2; color:#dc2626;',
+                                        'izin'   => 'background:#fef9c3; color:#b45309;',
+                                        default  => 'background:#f3f4f6; color:#374151;',
+                                    };
+                                @endphp
+                                <div class="tim-item">
                                     <div class="flex items-center">
-                                        <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=32' }}" alt="{{ $rekan->user->name ?? '' }}" class="w-8 h-8 rounded-full object-cover mr-3">
-                                        <p class="font-semibold text-gray-700 text-sm">{{ $rekan->user->name }}</p>
+                                        <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
+                                             alt="{{ $rekan->user->name ?? '' }}" class="tim-avatar">
+                                        <span class="tim-name">{{ $rekan->user->name }}</span>
                                     </div>
-                                    <span class="px-2 py-0.5 text-xs font-semibold leading-tight rounded-full capitalize
-                                        @switch($rekan->status)
-                                            @case('hadir') bg-green-100 text-green-800 @break
-                                            @case('sakit') bg-red-100 text-red-800 @break
-                                            @case('izin') bg-yellow-100 text-yellow-800 @break
-                                            @default bg-gray-100 text-gray-800
-                                        @endswitch">
+                                    <span class="tim-badge" style="{{ $badgeStyle }}">
                                         {{ str_replace('_', ' ', $rekan->status) }}
                                     </span>
                                 </div>
@@ -246,62 +389,43 @@
                         </div>
                         
                         {{-- SIDEBAR UNTUK UNFINISHED --}}
-                        <div class="w-full lg:w-1/3 space-y-6">
-                            <div class="bg-white p-4 rounded-xl shadow-sm">
-                                <h2 class="text-lg font-bold text-gray-800 text-center mb-1">Rekap Bulan Ini</h2>
-                                <p class="text-center text-gray-500 text-xs mb-3">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
-                                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                    <div class="bg-green-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-green-700">Hadir</p>
-                                        <div class="text-sm font-bold text-green-700">{{ $rekapAbsen['hadir'] }}</div>
-                                    </div>
-                                    <div class="bg-red-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-red-700">Sakit</p>
-                                        <div class="text-sm font-bold text-red-700">{{ $rekapAbsen['sakit'] }}</div>
-                                    </div>
-                                    <div class="bg-yellow-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-yellow-700">Izin</p>
-                                        <div class="text-sm font-bold text-yellow-700">{{ $rekapAbsen['izin'] }}</div>
-                                    </div>
-                                    <div class="bg-blue-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-blue-700">Cuti</p>
-                                        <div class="text-sm font-bold text-blue-700">{{ $rekapAbsen['cuti'] }}</div>
-                                    </div>
-                                    <div class="bg-gray-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-gray-700">Alpa</p>
-                                        <div class="text-sm font-bold text-gray-700">{{ $rekapAbsen['tidak hadir'] }}</div>
-                                    </div>
-                                    <div class="bg-indigo-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-indigo-700">Lembur</p>
-                                        <div class="text-sm font-bold text-indigo-700">{{ $rekapAbsen['lembur'] }}</div>
-                                    </div>
-                                    <div class="bg-orange-100 px-3 py-2 rounded-lg flex items-center justify-between col-span-2 md:col-span-3">
-                                        <p class="font-semibold text-xs text-orange-700">Terlambat</p>
-                                        <div class="text-sm font-bold text-orange-700">{{ $rekapAbsen['terlambat'] }}</div>
-                                    </div>
+                        <div class="w-full lg:w-1/3 space-y-4">
+                            <div class="absen-card">
+                                <h2 class="text-base font-bold text-gray-800 text-center mb-0.5">Rekap Bulan Ini</h2>
+                                <p class="text-center text-gray-400 text-xs mb-3">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
+                                <div class="rekap-grid">
+                                    <div class="rekap-item hadir"><span class="rekap-item-label" style="color:#15803d;">Hadir</span><span class="rekap-item-value" style="color:#15803d;">{{ $rekapAbsen['hadir'] }}</span></div>
+                                    <div class="rekap-item sakit"><span class="rekap-item-label" style="color:#dc2626;">Sakit</span><span class="rekap-item-value" style="color:#dc2626;">{{ $rekapAbsen['sakit'] }}</span></div>
+                                    <div class="rekap-item izin"><span class="rekap-item-label" style="color:#b45309;">Izin</span><span class="rekap-item-value" style="color:#b45309;">{{ $rekapAbsen['izin'] }}</span></div>
+                                    <div class="rekap-item cuti"><span class="rekap-item-label" style="color:#1d4ed8;">Cuti</span><span class="rekap-item-value" style="color:#1d4ed8;">{{ $rekapAbsen['cuti'] }}</span></div>
+                                    <div class="rekap-item alpa"><span class="rekap-item-label" style="color:#374151;">Alpa</span><span class="rekap-item-value" style="color:#374151;">{{ $rekapAbsen['tidak hadir'] }}</span></div>
+                                    <div class="rekap-item lembur"><span class="rekap-item-label" style="color:#4338ca;">Lembur</span><span class="rekap-item-value" style="color:#4338ca;">{{ $rekapAbsen['lembur'] }}</span></div>
+                                </div>
+                                <div class="rekap-terlambat-row mt-2">
+                                    <span class="rekap-item-label" style="color:#c2410c;">Terlambat</span>
+                                    <span class="rekap-item-value" style="color:#c2410c;">{{ $rekapAbsen['terlambat'] }}</span>
                                 </div>
                             </div>
                             @if(isset($daftarRekan) && count($daftarRekan) > 0)
-                            <div class="bg-white p-4 rounded-xl shadow-sm">
-                                <h2 class="text-lg font-bold text-gray-800 text-center mb-3">
-                                    Absensi Tim 
-                                </h2>
-                                <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                            <div class="absen-card">
+                                <h2 class="text-base font-bold text-gray-800 text-center mb-3">Absensi Tim</h2>
+                                <div>
                                     @foreach($daftarRekan as $rekan)
-                                    <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+                                    @php
+                                        $badgeStyle = match($rekan->status) {
+                                            'hadir'  => 'background:#dcfce7; color:#15803d;',
+                                            'sakit'  => 'background:#fee2e2; color:#dc2626;',
+                                            'izin'   => 'background:#fef9c3; color:#b45309;',
+                                            default  => 'background:#f3f4f6; color:#374151;',
+                                        };
+                                    @endphp
+                                    <div class="tim-item">
                                         <div class="flex items-center">
-                                            <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=32' }}" alt="{{ $rekan->user->name ?? '' }}" class="w-8 h-8 rounded-full object-cover mr-3">
-                                            <p class="font-semibold text-gray-700 text-sm">{{ $rekan->user->name }}</p>
+                                            <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
+                                                 alt="{{ $rekan->user->name ?? '' }}" class="tim-avatar">
+                                            <span class="tim-name">{{ $rekan->user->name }}</span>
                                         </div>
-                                        <span class="px-2 py-0.5 text-xs font-semibold leading-tight rounded-full capitalize
-                                            @switch($rekan->status)
-                                                @case('hadir') bg-green-100 text-green-800 @break
-                                                @case('sakit') bg-red-100 text-red-800 @break
-                                                @case('izin') bg-yellow-100 text-yellow-800 @break
-                                                @default bg-gray-100 text-gray-800
-                                            @endswitch">
-                                            {{ str_replace('_', ' ', $rekan->status) }}
-                                        </span>
+                                        <span class="tim-badge" style="{{ $badgeStyle }}">{{ str_replace('_', ' ', $rekan->status) }}</span>
                                     </div>
                                     @endforeach
                                 </div>
@@ -371,31 +495,32 @@
                         
                         @if ($isHoliday)
                             {{-- TAMPILAN KHUSUS WEEKEND (BELUM ABSEN LEMBUR) --}}
-                            <div class="w-full lg:w-2/3 bg-white p-6 md:p-8 rounded-xl shadow-sm">
-                                <h2 class="text-2xl font-bold text-gray-800">Absensi Lembur Akhir Pekan</h2>
-                                <p class="text-gray-600 mt-1">
-                                    Notifikasi akhir pekan Anda tetap muncul. Anda dapat melakukan absensi lembur di bawah ini.
-                                </p>
-                                <div class="mt-6 border-t pt-6">
+                            <div class="w-full lg:w-2/3">
+                                <div class="absen-card">
+                                    <h2 class="absen-card-title">Absensi Lembur Akhir Pekan</h2>
+                                    <p class="absen-card-subtitle">
+                                        Notifikasi akhir pekan Anda tetap muncul. Anda dapat melakukan absensi lembur di bawah ini.
+                                    </p>
                                     @if (is_null($lemburHariIni))
-                                        <button type="button" id="btn-absen-lembur" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 transition">
+                                        <button type="button" id="btn-absen-lembur" class="absen-lembur-btn">
                                             Absen Lembur Sekarang
                                         </button>
                                     @elseif (is_null($lemburHariIni->jam_keluar_lembur))
-                                        <div class="mb-4 bg-purple-50 p-4 rounded-lg border border-purple-200">
-                                            <p class="font-semibold text-lg text-purple-800">Anda Sudah Masuk Lembur</p>
-                                            <p class="text-3xl font-bold text-gray-800 mt-1">{{ \Carbon\Carbon::parse($lemburHariIni->jam_masuk_lembur)->format('H:i') }} <span class="text-lg font-medium">WIB</span></p>
+                                        <div class="mb-4 p-4 rounded-xl border" style="background:#f5f3ff; border-color:#ddd6fe;">
+                                            <p class="font-bold text-sm" style="color:#6d28d9;">Anda Sudah Masuk Lembur</p>
+                                            <p class="text-3xl font-black mt-1" style="color:#1f2937;">{{ \Carbon\Carbon::parse($lemburHariIni->jam_masuk_lembur)->format('H:i') }} <span class="text-base font-medium">WIB</span></p>
                                             @if($lemburHariIni->keterangan)
-                                                <p class="text-gray-600 text-sm mt-1">Keterangan: {{ $lemburHariIni->keterangan }}</p>
+                                                <p class="text-xs mt-1" style="color:#6b7280;">Keterangan: {{ $lemburHariIni->keterangan }}</p>
                                             @endif
                                         </div>
-                                        <button type="button" id="btn-absen-keluar-lembur" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 transition">
+                                        <button type="button" id="btn-absen-keluar-lembur" class="w-full bg-red-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-red-700 transition">
                                             Absen Keluar Lembur Sekarang
                                         </button>
                                     @else
-                                        <div class="p-4 rounded-lg bg-green-100 text-green-700 font-semibold text-center">
-                                            Absensi Lembur Hari Ini Selesai.
-                                            <p class="text-xs font-normal">Waktu Lembur: {{ \Carbon\Carbon::parse($lemburHariIni->jam_masuk_lembur)->format('H:i') }} - {{ \Carbon\Carbon::parse($lemburHariIni->jam_keluar_lembur)->format('H:i') }}</p>
+                                        <div class="p-4 rounded-xl text-center" style="background:#dcfce7; color:#15803d;">
+                                            <i class="fas fa-check-circle text-2xl mb-2"></i>
+                                            <p class="font-bold">Absensi Lembur Hari Ini Selesai.</p>
+                                            <p class="text-xs font-normal mt-1">Waktu Lembur: {{ \Carbon\Carbon::parse($lemburHariIni->jam_masuk_lembur)->format('H:i') }} - {{ \Carbon\Carbon::parse($lemburHariIni->jam_keluar_lembur)->format('H:i') }}</p>
                                         </div>
                                     @endif
                                 </div>
@@ -496,69 +621,51 @@
         </form>                        
         @endif {{-- End of $isWeekend check --}}
                         
-                        {{-- SIDEBAR REKAP UNTUK BELUM ABSEN --}}
-                        <div class="w-full lg:w-1/3 space-y-6">
-                            <div class="bg-white p-4 rounded-xl shadow-sm relative">
-                                <h2 class="text-lg font-bold text-gray-800 text-center mb-1">Rekap Bulan Ini</h2>
-                                <p class="text-center text-gray-500 text-xs mb-3">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
-                                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                    <div class="bg-green-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-green-700">Hadir</p>
-                                        <div class="text-sm font-bold text-green-700">{{ $rekapAbsen['hadir'] }}</div>
-                                    </div>
-                                    <div class="bg-red-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-red-700">Sakit</p>
-                                        <div class="text-sm font-bold text-red-700">{{ $rekapAbsen['sakit'] }}</div>
-                                    </div>
-                                    <div class="bg-yellow-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-yellow-700">Izin</p>
-                                        <div class="text-sm font-bold text-yellow-700">{{ $rekapAbsen['izin'] }}</div>
-                                    </div>
-                                    <div class="bg-blue-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-blue-700">Cuti</p>
-                                        <div class="text-sm font-bold text-blue-700">{{ $rekapAbsen['cuti'] }}</div>
-                                    </div>
-                                    <div class="bg-gray-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-gray-700">Alpa</p>
-                                        <div class="text-sm font-bold text-gray-700">{{ $rekapAbsen['tidak hadir'] }}</div>
-                                    </div>
-                                    <div class="bg-indigo-100 px-3 py-2 rounded-lg flex items-center justify-between">
-                                        <p class="font-semibold text-xs text-indigo-700">Lembur</p>
-                                        <div class="text-sm font-bold text-indigo-700">{{ $rekapAbsen['lembur'] }}</div>
-                                    </div>
-                                    <div class="bg-orange-100 px-3 py-2 rounded-lg flex items-center justify-between col-span-2 md:col-span-3">
-                                        <p class="font-semibold text-xs text-orange-700">Terlambat</p>
-                                        <div class="text-sm font-bold text-orange-700">{{ $rekapAbsen['terlambat'] }}</div>
-                                    </div>
+        {{-- SIDEBAR REKAP UNTUK BELUM ABSEN --}}
+                        <div class="w-full lg:w-1/3 space-y-4">
+                            <div class="absen-card">
+                                <h2 class="text-base font-bold text-gray-800 text-center mb-0.5">Rekap Bulan Ini</h2>
+                                <p class="text-center text-gray-400 text-xs mb-3">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
+                                <div class="rekap-grid">
+                                    <div class="rekap-item hadir"><span class="rekap-item-label" style="color:#15803d;">Hadir</span><span class="rekap-item-value" style="color:#15803d;">{{ $rekapAbsen['hadir'] }}</span></div>
+                                    <div class="rekap-item sakit"><span class="rekap-item-label" style="color:#dc2626;">Sakit</span><span class="rekap-item-value" style="color:#dc2626;">{{ $rekapAbsen['sakit'] }}</span></div>
+                                    <div class="rekap-item izin"><span class="rekap-item-label" style="color:#b45309;">Izin</span><span class="rekap-item-value" style="color:#b45309;">{{ $rekapAbsen['izin'] }}</span></div>
+                                    <div class="rekap-item cuti"><span class="rekap-item-label" style="color:#1d4ed8;">Cuti</span><span class="rekap-item-value" style="color:#1d4ed8;">{{ $rekapAbsen['cuti'] }}</span></div>
+                                    <div class="rekap-item alpa"><span class="rekap-item-label" style="color:#374151;">Alpa</span><span class="rekap-item-value" style="color:#374151;">{{ $rekapAbsen['tidak hadir'] }}</span></div>
+                                    <div class="rekap-item lembur"><span class="rekap-item-label" style="color:#4338ca;">Lembur</span><span class="rekap-item-value" style="color:#4338ca;">{{ $rekapAbsen['lembur'] }}</span></div>
+                                </div>
+                                <div class="rekap-terlambat-row mt-2">
+                                    <span class="rekap-item-label" style="color:#c2410c;">Terlambat</span>
+                                    <span class="rekap-item-value" style="color:#c2410c;">{{ $rekapAbsen['terlambat'] }}</span>
                                 </div>
                             </div>
                             @if(isset($daftarRekan) && count($daftarRekan) > 0)
-                                <div class="bg-white p-4 rounded-xl shadow-sm">
-                                    <h2 class="text-lg font-bold text-gray-800 text-center mb-3">
-                                        Absensi Tim 
-                                    </h2>
-                                    <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                                <div class="absen-card">
+                                    <h2 class="text-base font-bold text-gray-800 text-center mb-3">Absensi Tim</h2>
+                                    <div>
                                         @foreach($daftarRekan as $rekan)
-                                        <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+                                        @php
+                                            $badgeStyle = match($rekan->status) {
+                                                'hadir'  => 'background:#dcfce7; color:#15803d;',
+                                                'sakit'  => 'background:#fee2e2; color:#dc2626;',
+                                                'izin'   => 'background:#fef9c3; color:#b45309;',
+                                                default  => 'background:#f3f4f6; color:#374151;',
+                                            };
+                                        @endphp
+                                        <div class="tim-item">
                                             <div class="flex items-center">
-                                                <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=32' }}" alt="{{ $rekan->user->name ?? '' }}" class="w-8 h-8 rounded-full object-cover mr-3">
-                                                <p class="font-semibold text-gray-700 text-sm">{{ $rekan->user->name }}</p>
+                                                <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
+                                                     alt="{{ $rekan->user->name ?? '' }}" class="tim-avatar">
+                                                <span class="tim-name">{{ $rekan->user->name }}</span>
                                             </div>
-                                            <span class="px-2 py-0.5 text-xs font-semibold leading-tight rounded-full capitalize
-                                                @switch($rekan->status)
-                                                    @case('hadir') bg-green-100 text-green-800 @break
-                                                    @case('sakit') bg-red-100 text-red-800 @break
-                                                    @case('izin') bg-yellow-100 text-yellow-800 @break
-                                                    @default bg-gray-100 text-gray-800
-                                                @endswitch">
-                                                {{ str_replace('_', ' ', $rekan->status) }}
-                                            </span>
+                                            <span class="tim-badge" style="{{ $badgeStyle }}">{{ str_replace('_', ' ', $rekan->status) }}</span>
                                         </div>
                                         @endforeach
                                     </div>
                                 </div>
                             @endif
                         </div>
+
                     </div>
                 @endif
             @endif
