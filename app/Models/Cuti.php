@@ -63,4 +63,17 @@ class Cuti extends Model
     {
         return $this->belongsTo(User::class, 'approver_cuti_4_id');
     }
+
+    /**
+     * Accessor untuk nomor pengajuan dinamis
+     */
+    public function getNomorPengajuanAttribute()
+    {
+        $prefix = 'CUTI';
+        $userId = str_pad($this->user_id, 3, '0', STR_PAD_LEFT);
+        $tanggal = $this->created_at ? $this->created_at->format('dmY') : date('dmY');
+        $urutan = str_pad($this->id, 3, '0', STR_PAD_LEFT);
+        
+        return "{$prefix}-{$userId}-{$tanggal}-{$urutan}";
+    }
 }

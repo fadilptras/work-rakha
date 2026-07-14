@@ -98,8 +98,7 @@ class AdminPengajuanDanaController extends Controller
         $pengajuanDana->load(['user', 'approver1', 'approver2', 'financeProcessor', 'user.managerKeuangan']);
         
         $pdf = PDF::loadView('pdf.pdf_pengajuan_dana', compact('pengajuanDana'));
-        $namaJudul = \Illuminate\Support\Str::slug($pengajuanDana->judul_pengajuan, '-');
-        $filename = "pengajuan-dana-{$pengajuanDana->id}-{$namaJudul}.pdf";
+        $filename = "{$pengajuanDana->nomor_pengajuan}.pdf";
         return $pdf->download($filename);
     }
 

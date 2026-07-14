@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulir Pengajuan Dana - {{ str_pad($pengajuanDana->id, 4, '0', STR_PAD_LEFT) }}</title>
+    <title>Formulir Pengajuan Dana - {{ $pengajuanDana->nomor_pengajuan }}</title>
     <style>
         /* Gaya Inti */
         body { font-family: 'Helvetica', sans-serif; font-size: 9px; color: #333; line-height: 1.2; }
@@ -127,7 +127,7 @@
         <div class="header">
             <h1>PT RAKHA NUSANTARA MEDIKA</h1>
             <p style="font-weight: bold;">FORMULIR PENGAJUAN DANA</p>
-            <p style="font-size: 10px; font-weight: bold;">ID Pengajuan: {{ str_pad($pengajuanDana->id, 4, '0', STR_PAD_LEFT) }}</p>
+            <p style="font-size: 10px; font-weight: bold;">Nomor Dokumen: {{ $pengajuanDana->nomor_pengajuan }}</p>
         </div>
 
         {{-- I. DETAIL PENGAJUAN --}}

@@ -193,7 +193,7 @@ class AdminCutiController extends Controller
         ]);
         
         $pdf->setPaper('a4', 'portrait');
-        return $pdf->download('ADMIN_Formulir-Cuti-' . $cuti->user->name . '.pdf');
+        return $pdf->download($cuti->nomor_pengajuan . '.pdf');
     }
 
     public function pengaturanCuti()

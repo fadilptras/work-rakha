@@ -66,27 +66,20 @@
                     <div class="flex items-center">
                         <button id="sidebar-toggle" class="mr-3 p-2 rounded-md hover:bg-blue-800/50 focus:outline-none"><i class="fas fa-bars text-xl"></i></button>
                         <div class="flex items-center">
-                            <img src="{{ asset('asset/images/logorakha.png') }}" alt="Logo" class="h-8 w-8 mr-2 sm:h-10 sm:w-10 sm:mr-3">
+                            <img src="{{ asset('asset/images/logorakha.png') }}" alt="Logo" class="hidden sm:block h-8 w-8 mr-2 sm:h-10 sm:w-10 sm:mr-3">
                             <div>
                                 <h1 class="text-sm sm:text-lg font-bold leading-tight tracking-wide">PT RAKHA NUSANTARA MEDIKA</h1>
                                 <p class="text-xs text-blue-200 font-semibold leading-tight hidden sm:block">{{ $title }}</p>
                             </div>
                         </div>
                     </div>
-                    {{-- Foto profil di navbar (hanya mobile) --}}
-                    <a href="{{ route('profil.index') }}" class="sm:hidden flex-shrink-0">
-                        <div class="w-9 h-9 rounded-full border-2 border-white/50 overflow-hidden shadow-md">
-                            <img class="w-full h-full object-cover"
-                                 src="{{ Auth::user()->profile_picture ? asset('storage/' . Auth::user()->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode(Auth::user()->name).'&background=random&color=fff&size=128' }}"
-                                 alt="Foto Profil">
-                        </div>
-                    </a>
+                    {{-- Foto profil di navbar telah dihapus untuk mobile --}}
                 </div>
             </div>
         </header>
 
         {{-- Main Content --}}
-        <main class="flex-1 p-0 sm:p-6 relative z-0">
+        <main class="flex-1 relative z-0">
             {{ $slot }}
         </main>
     </div>

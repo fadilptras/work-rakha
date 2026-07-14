@@ -190,8 +190,7 @@ class AdminPengajuanBarangController extends Controller
     {
         $pengajuan = PengajuanBarang::with(['user', 'approver1', 'approver2', 'approver3', 'approver4'])->findOrFail($id);
         $pdf = Pdf::loadView('pdf.pengajuan-barang', ['pengajuanBarang' => $pengajuan])->setPaper('a4', 'portrait');
-        $userName = str_replace(' ', '_', $pengajuan->user->name ?? 'User');
-        return $pdf->download('Pengajuan_Barang_' . $userName . '_' . str_pad($pengajuan->id, 4, '0', STR_PAD_LEFT) . '.pdf');
+        return $pdf->download($pengajuan->nomor_pengajuan . '.pdf');
     }       
 
     /**

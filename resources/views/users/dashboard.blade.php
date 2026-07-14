@@ -533,11 +533,48 @@
         }
         .detail-label { font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
         .detail-value { font-size: 0.85rem; font-weight: 800; color: #1e293b; }
+
+        /* == Modern Mesh Background == */
+        .mesh-bg {
+            background-color: #f0f6fc;
+            background-image: 
+                radial-gradient(at 40% 20%, rgba(147, 197, 253, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, rgba(167, 139, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, rgba(191, 219, 254, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
+                radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* Float animation for decorative elements */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float {
+            animation: float 8s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+            animation: float 10s ease-in-out infinite;
+            animation-delay: 2s;
+        }
     </style>
     @endpush
 
-    <div class="flex flex-col h-full bg-gradient-to-br from-sky-50 to-blue-100">
-        <main class="flex-1 overflow-y-auto min-h-screen p-0 lg:p-6">
+    <div class="flex flex-col flex-1 h-full mesh-bg relative overflow-hidden">
+        {{-- Dekorasi Latar Belakang Tambahan --}}
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
+            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
+            <div class="absolute top-[40%] right-[30%] w-16 h-16 bg-white/40 backdrop-blur-sm border border-white/50 rounded-full animate-float" style="animation-delay: 1s;"></div>
+            
+            {{-- Pola Dot Grid --}}
+            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
+        </div>
+        <main class="flex-1 p-0 sm:p-6 lg:p-8 relative z-10">
 
             @if (session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-6 mx-6 lg:mx-0" role="alert">
@@ -556,212 +593,11 @@
                 </div>
             @endif
 
-            {{-- ===== TAMPILAN MOBILE (tersembunyi di desktop) ===== --}}
-            <div class="sm:hidden flex flex-col bg-gray-50 pb-4">
+            {{-- ===== TAMPILAN MOBILE ===== --}}
+            @include('users.dashboard.partials.mobile')
 
-                {{-- Welcome Card --}}
-                <div class="px-4 pt-4 pb-3">
-                    <div class="mobile-welcome-card">
-                        <div style="position:relative;z-index:1;">
-                            <p class="text-sm text-blue-100 font-medium mb-0.5">Selamat datang kembali,</p>
-                            <h2 class="text-2xl font-bold text-white leading-tight">{{ Auth::user()->name }}</h2>
-                        </div>
-                        <div class="avatar-circle">
-                            <i class="fas fa-user-tie text-2xl text-white/80"></i>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Divisi Info --}}
-                <div class="px-4 pb-3">
-                    <div class="flex items-center gap-2 bg-white rounded-xl px-4 py-2.5 shadow-sm border border-blue-50">
-                        <i class="fas fa-briefcase text-blue-500 text-sm"></i>
-                        <span class="text-sm text-gray-600">Divisi: <span class="font-semibold text-gray-800">{{ Auth::user()->divisi ?? '-' }}</span></span>
-                    </div>
-                </div>
-
-                {{-- Absensi Section --}}
-                <div class="px-4 pb-4">
-                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                        <h3 class="font-bold text-gray-800 text-base mb-3">Absensi</h3>
-                        <div class="absensi-grid-mobile">
-                            <a href="{{ route('absen') }}" class="absensi-btn-mobile active-btn">
-                                <div class="btn-icon">
-                                    <i class="fas fa-fingerprint"></i>
-                                </div>
-                                <span>Absen</span>
-                            </a>
-                            <a href="{{ route('aktivitas.index') }}" class="absensi-btn-mobile">
-                                <div class="btn-icon" style="background:#f3f0ff;">
-                                    <i class="fas fa-tasks" style="color:#7c3aed;"></i>
-                                </div>
-                                <span>Aktivitas</span>
-                            </a>
-                            <a href="{{ route('cuti.create') }}" class="absensi-btn-mobile">
-                                <div class="btn-icon" style="background:#f0fdf4;">
-                                    <i class="fas fa-calendar-times" style="color:#16a34a;"></i>
-                                </div>
-                                <span>Cuti</span>
-                            </a>
-                            <a href="{{ route('rekap_absen.index') }}" class="absensi-btn-mobile">
-                                <div class="btn-icon" style="background:#fffbeb;">
-                                    <i class="fas fa-history" style="color:#d97706;"></i>
-                                </div>
-                                <span>Rekap</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Weekly Calendar Strip --}}
-                <div class="px-4 pb-4">
-                    <div class="weekly-strip">
-                        <div class="week-header">
-                            <button class="week-nav-btn" id="mobile-prev-week"><i class="fas fa-chevron-left"></i></button>
-                            <div class="week-title" id="mobile-week-title">Memuat...</div>
-                            <button class="week-nav-btn" id="mobile-next-week"><i class="fas fa-chevron-right"></i></button>
-                        </div>
-                        <div class="days-row" id="mobile-days-labels">
-                            <div class="day-label">Min</div>
-                            <div class="day-label">Sen</div>
-                            <div class="day-label">Sel</div>
-                            <div class="day-label">Rab</div>
-                            <div class="day-label">Kam</div>
-                            <div class="day-label">Jum</div>
-                            <div class="day-label">Sab</div>
-                        </div>
-                        <div class="days-row" id="mobile-days-nums"></div>
-                    </div>
-                </div>
-
-                {{-- Agenda Hari Ini --}}
-                <div class="px-4 pb-4">
-                    <div class="mobile-agenda-card">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="font-bold text-gray-800 text-base">Agenda Hari Ini</h3>
-                            <button id="mobile-add-agenda-btn" class="w-9 h-9 rounded-full bg-gray-900 hover:bg-gray-800 text-white flex items-center justify-center shadow-md transition-all duration-200 hover:scale-105">
-                                <i class="fas fa-plus text-xs"></i>
-                            </button>
-                        </div>
-                        <div id="mobile-agenda-today-container">
-                            <div class="mobile-agenda-empty">
-                                <i class="fas fa-calendar-alt text-3xl text-blue-300 mb-3"></i>
-                                <p class="font-semibold text-blue-700 text-sm">Tidak ada agenda</p>
-                                <p class="text-xs text-blue-400 mt-1">Tap + untuk menambah jadwal.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Notifikasi Bar --}}
-                <div class="px-4 pb-2">
-                    <div class="mobile-notif-bar">
-                        <i class="fas fa-bell text-gray-400 flex-shrink-0 mr-1"></i>
-                        @php
-                            $latestNotif = Auth::user()->notifications->first();
-                        @endphp
-                        <span class="notif-text">
-                            @if($latestNotif)
-                                {{ $latestNotif->data['title'] ?? 'Notifikasi baru' }}
-                            @else
-                                Tidak ada notifikasi baru.
-                            @endif
-                        </span>
-                        <a href="{{ route('notifikasi.index') }}" class="notif-lihat">Lihat &rsaquo;</a>
-                    </div>
-                </div>
-
-            </div>
-            {{-- ===== AKHIR TAMPILAN MOBILE ===== --}}
-
-            {{-- ===== TAMPILAN DESKTOP (tersembunyi di mobile) ===== --}}
-            <div class="hidden sm:block">
-                <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-
-                    {{-- KOLOM PROFIL: Sangat Compact, Hanya Foto, Nama, dan Divisi --}}
-                    <div class="lg:col-span-1 space-y-4">
-                        <div class="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-4 rounded-2xl shadow-xl shadow-blue-500/20">
-                            <h2 class="text-xl font-bold">Welcome Back, {{ Auth::user()->name }}!</h2>
-                            <p class="text-xs mt-1 text-blue-100">Semoga harimu produktif.</p>
-                        </div>
-                        
-                        <div class="bg-white/60 backdrop-blur-lg border border-white/30 shadow-xl shadow-blue-500/20 p-4 rounded-2xl">
-                            {{-- Bagian Header Profil (Horizontal) --}}
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 shrink-0 aspect-square overflow-hidden rounded-full border-2 border-white/50 shadow-sm">
-                                    <img class="w-full h-full object-cover" src="{{ Auth::user()->profile_picture ? asset('storage/' . Auth::user()->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode(Auth::user()->name).'&background=random&color=fff&size=128' }}" alt="Foto Profil">
-                                </div>
-                                <div class="overflow-hidden">
-                                    <p class="font-bold text-lg text-gray-800 leading-tight truncate">{{ Auth::user()->name }}</p>
-                                    <p class="text-xs font-semibold text-blue-600 mt-0.5 truncate">Divisi: {{ Auth::user()->divisi ?? '-' }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="lg:col-span-2 xl:col-span-3 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-white/60 backdrop-blur-lg border border-white/30 shadow-xl shadow-blue-500/20 p-6 rounded-2xl flex flex-col">
-                                <h3 class="font-bold text-gray-900 mb-8 text-xl">Absensi</h3>
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        <a href="{{ route('absen') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-blue-200 hover:border-blue-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-fingerprint text-2xl text-blue-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Absen</span></a>
-                                        <a href="{{ route('aktivitas.index') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-purple-200 hover:border-purple-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-tasks text-2xl text-purple-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Aktivitas</span></a>
-                                        <a href="{{ route('cuti.create') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-green-200 hover:border-green-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-calendar-alt text-2xl text-green-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Cuti</span></a>
-                                        <a href="{{ route('rekap_absen.index') }}" class="bg-white/80 hover:bg-white p-4 rounded-xl text-center flex flex-col items-center justify-center aspect-square transition-all duration-300 border border-yellow-200 hover:border-yellow-400 hover:shadow-lg hover:-translate-y-1"><i class="fas fa-history text-2xl text-yellow-600 mb-2"></i><span class="font-semibold text-sm text-gray-700">Rekap</span></a>
-                                    </div>
-                            </div>
-                            <div class="bg-gradient-to-br from-gray-900 to-slate-800 text-white p-6 rounded-2xl shadow-xl shadow-slate-900/40 border border-slate-700 flex flex-col">
-                                <div class="flex justify-between items-center mb-4 flex-shrink-0">
-                                    <h3 class="font-bold text-white text-xl">Notifikasi</h3>
-                                    <a href="{{ route('notifikasi.index') }}" class="relative flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200">
-                                        <span class="text-sm font-semibold">Lihat Semua</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
-                                        @if (Auth::user()->unreadNotifications->count() > 0)
-                                            <span class="absolute top-0 right-0 inline-flex items-center justify-center h-4 w-4 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                                                {{ Auth::user()->unreadNotifications->count() }}
-                                            </span>
-                                        @endif
-                                    </a>
-                                </div>
-                                <div class="space-y-3 flex-grow flex flex-col justify-center">
-                                    @forelse(Auth::user()->notifications->take(2) as $notification)
-                                    <a href="{{ $notification->data['url'] ?? '#' }}" class="block p-3 rounded-lg {{ $notification->read_at ? 'bg-gray-800/50' : 'bg-blue-800' }} hover:bg-gray-700/70 transition-colors duration-150">
-                                        <div class="flex items-start">
-                                            <i class="fas {{ $notification->data['icon'] ?? 'fa-info-circle' }} text-xl text-white mt-1 mr-3"></i>
-                                            <div>
-                                                <p class="font-semibold text-sm text-gray-100">{{ $notification->data['title'] ?? 'Notifikasi Baru' }}</p>
-                                                <p class="text-xs text-gray-300 line-clamp-1">{{ $notification->data['message'] ?? 'Tidak ada detail' }}</p>
-                                            </div>
-                                        </div>
-                                    </a>
-                                    @empty
-                                    <div class="flex-grow flex items-center justify-center"><p class="text-center text-gray-400 py-4 text-sm">Tidak ada notifikasi baru.</p></div>
-                                    @endforelse
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white/60 backdrop-blur-lg border border-white/30 shadow-xl shadow-blue-500/20 md:p-6 rounded-2xl">
-                            <div class="flex flex-col md:flex-row gap-4 md:gap-8">
-                                <div class="w-full lg:w-3/5">
-                                    <div id="mini-calendar"></div>
-                                </div>
-                                <div class="hidden lg:block w-1 bg-blue-200"></div>
-                                <div class="w-full lg:w-2/5 flex flex-col px-4 pb-4 md:px-0 md:pb-0">
-                                    <div class="flex justify-between items-center mb-4 flex-shrink-0">
-                                        <h3 id="agenda-list-title" class="font-bold text-gray-900 text-lg">Agenda Minggu Ini</h3>
-                                        <button id="add-agenda-btn" class="bg-gray-900 hover:bg-gray-800 text-white font-bold w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center shadow-md hover:scale-105">
-                                            <i class="fas fa-plus text-sm"></i>
-                                        </button>
-                                    </div>
-                                    <div id="agenda-list-container" class="h-80 overflow-y-auto pr-2 space-y-3 -mr-2"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {{-- ===== AKHIR TAMPILAN DESKTOP ===== --}}
+            {{-- ===== TAMPILAN DESKTOP ===== --}}
+            @include('users.dashboard.partials.desktop')
 
         </main>
     </div>
