@@ -141,9 +141,10 @@
     <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
         {{-- Background Decorations --}}
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
-            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
-            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
+            <div class="absolute -top-[10%] -left-[5%] w-[40vw] h-[40vw] max-w-[600px] max-h-[600px] bg-blue-400/20 blur-[100px] rounded-full animate-float mix-blend-multiply"></div>
+            <div class="absolute top-[30%] -right-[10%] w-[35vw] h-[35vw] max-w-[500px] max-h-[500px] bg-purple-400/20 blur-[100px] rounded-full animate-float-delayed mix-blend-multiply"></div>
+            <div class="absolute -bottom-[10%] left-[20%] w-[45vw] h-[45vw] max-w-[700px] max-h-[700px] bg-cyan-400/20 blur-[120px] rounded-full animate-float mix-blend-multiply" style="animation-delay: 2s;"></div>
+            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.15) 1px, transparent 1px); background-size: 24px 24px;"></div>
         </div>
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col absen-page-wrapper">
@@ -219,10 +220,10 @@
                 {{-- ========================================================= --}}
                 <div class="flex flex-col lg:flex-row gap-6 items-stretch">
                     {{-- Main Card --}}
-                    <div class="w-full lg:w-2/3 glass-card flex flex-col justify-between">
+                    <div class="w-full lg:w-2/3 bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-200/50 rounded-3xl flex flex-col justify-between p-6 md:p-8">
                         <div>
-                            <div class="flex items-center gap-3 mb-6">
-                                <div class="w-10 h-10 rounded-xl bg-blue-100/70 text-blue-600 flex items-center justify-center flex-shrink-0">
+                            <div class="flex items-center gap-4 mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30">
                                     <i class="fas fa-check-double text-lg"></i>
                                 </div>
                                 <div>
@@ -302,55 +303,29 @@
                     </div>
                     
                     {{-- SIDEBAR REKAP --}}
-                    <div class="w-full lg:w-1/3 flex flex-col gap-6 self-stretch min-h-full">
-                        <div class="glass-card flex flex-col justify-between">
-                            <h3 class="glass-card-title mb-1.5 justify-center">
-                                <i class="fas fa-calendar-alt text-blue-500"></i>
-                                <span>Rekap Bulan Ini</span>
-                            </h3>
-                            <p class="text-center text-slate-400 text-[10px] mb-4 uppercase font-bold tracking-wider">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
-                            
-                            <div class="grid grid-cols-2 gap-2.5">
-                                <div class="bg-rekap-hadir rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-emerald-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                    <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Hadir</span>
-                                    <span class="text-lg font-black mt-1">{{ $rekapAbsen['hadir'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
+                    <div class="w-full lg:w-1/3 flex flex-col gap-4 self-stretch min-h-full">
+                        <button type="button" onclick="openRekapModal()" class="bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-200/50 rounded-3xl p-5 md:p-6 flex items-center justify-between group hover:bg-blue-50/50 transition-all duration-300 w-full text-left">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/40">
+                                    <i class="fas fa-calendar-alt text-xl group-hover:scale-110 transition-transform"></i>
                                 </div>
-                                <div class="bg-rekap-sakit rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-rose-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                    <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Sakit</span>
-                                    <span class="text-lg font-black mt-1">{{ $rekapAbsen['sakit'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                </div>
-                                <div class="bg-rekap-izin rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-amber-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                    <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Izin</span>
-                                    <span class="text-lg font-black mt-1">{{ $rekapAbsen['izin'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                </div>
-                                <div class="bg-rekap-cuti rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-blue-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                    <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Cuti</span>
-                                    <span class="text-lg font-black mt-1">{{ $rekapAbsen['cuti'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                </div>
-                                <div class="bg-rekap-alpa rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-slate-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                    <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Alpa</span>
-                                    <span class="text-lg font-black mt-1">{{ $rekapAbsen['tidak hadir'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                </div>
-                                <div class="bg-rekap-lembur rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-purple-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                    <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Lembur</span>
-                                    <span class="text-lg font-black mt-1">{{ $rekapAbsen['lembur'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
+                                <div>
+                                    <h3 class="font-extrabold text-slate-800 text-sm">Rekap Bulan Ini</h3>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
                                 </div>
                             </div>
-                            <div class="bg-rekap-terlambat rounded-2xl p-3 flex items-center justify-between mt-3.5 shadow-lg shadow-orange-500/10 border-0 transition-transform duration-300 hover:scale-[1.02]">
-                                <span class="text-[10px] uppercase font-extrabold tracking-wider flex items-center gap-1.5 opacity-90">
-                                    <i class="fas fa-exclamation-circle text-xs"></i> Terlambat
-                                </span>
-                                <span class="text-xs font-black">{{ $rekapAbsen['terlambat'] }} Kali</span>
+                            <div class="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                <i class="fas fa-chevron-right text-xs"></i>
                             </div>
-                        </div>
+                        </button>
 
                         @if(isset($daftarRekan) && count($daftarRekan) > 0)
-                        <div class="glass-card flex flex-col flex-grow min-h-0">
+                        <div class="bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-200/50 rounded-3xl flex flex-col flex-grow min-h-0 p-5 md:p-6">
                             <h3 class="glass-card-title mb-4">
                                 <i class="fas fa-users text-blue-500"></i>
                                 <span>Absensi Tim</span>
                             </h3>
-                            <div class="space-y-3 overflow-y-auto pr-1 flex-grow scrollbar-thin" style="max-height: 250px;">
+                            <div class="space-y-3 overflow-y-auto pr-1 flex-grow scrollbar-thin" style="max-height: 450px;">
                                 @foreach($daftarRekan as $rekan)
                                 @php
                                     $badgeClass = match($rekan->status) {
@@ -360,7 +335,7 @@
                                         default  => 'bg-slate-500/10 text-slate-700 border-slate-200/50',
                                     };
                                 @endphp
-                                <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white/50 transition-all duration-200 hover:bg-white hover:shadow-sm">
+                                <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white/50 transition-all duration-300 hover:bg-gradient-to-r hover:from-white hover:to-blue-50/50 hover:border-blue-200 hover:shadow-md hover:shadow-blue-500/5">
                                     <div class="flex items-center gap-3">
                                         <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
                                              alt="{{ $rekan->user->name ?? '' }}" class="w-9 h-9 rounded-full object-cover border border-slate-100 flex-shrink-0">
@@ -384,10 +359,10 @@
                     {{-- ========================================================= --}}
                     <div class="flex flex-col lg:flex-row gap-6 items-stretch">
                         {{-- Main Card --}}
-                        <div class="w-full lg:w-2/3 glass-card flex flex-col justify-between">
+                        <div class="w-full lg:w-2/3 bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-200/50 rounded-3xl flex flex-col justify-between p-6 md:p-8">
                             <div>
-                                <div class="flex items-center gap-3 mb-6">
-                                    <div class="w-10 h-10 rounded-xl bg-amber-100/70 text-amber-600 flex items-center justify-center flex-shrink-0">
+                                <div class="flex items-center gap-4 mb-8">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber-500/30">
                                         <i class="fas fa-exclamation-triangle text-lg"></i>
                                     </div>
                                     <div>
@@ -424,56 +399,29 @@
                             </div>
                         </div>
                         
-                        {{-- SIDEBAR UNTUK UNFINISHED --}}
-                        <div class="w-full lg:w-1/3 flex flex-col gap-6 self-stretch min-h-full">
-                            <div class="glass-card flex flex-col justify-between">
-                                <h3 class="glass-card-title mb-1.5 justify-center">
-                                    <i class="fas fa-calendar-alt text-blue-500"></i>
-                                    <span>Rekap Bulan Ini</span>
-                                </h3>
-                                <p class="text-center text-slate-400 text-[10px] mb-4 uppercase font-bold tracking-wider">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
-                                
-                                <div class="grid grid-cols-2 gap-2.5">
-                                    <div class="bg-rekap-hadir rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-emerald-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Hadir</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['hadir'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
+                        <div class="w-full lg:w-1/3 flex flex-col gap-4 self-stretch min-h-full">
+                            <button type="button" onclick="openRekapModal()" class="bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-200/50 rounded-3xl p-5 md:p-6 flex items-center justify-between group hover:bg-blue-50/50 transition-all duration-300 w-full text-left">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/40">
+                                        <i class="fas fa-calendar-alt text-xl group-hover:scale-110 transition-transform"></i>
                                     </div>
-                                    <div class="bg-rekap-sakit rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-rose-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Sakit</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['sakit'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                    </div>
-                                    <div class="bg-rekap-izin rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-amber-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Izin</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['izin'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                    </div>
-                                    <div class="bg-rekap-cuti rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-blue-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Cuti</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['cuti'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                    </div>
-                                    <div class="bg-rekap-alpa rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-slate-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Alpa</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['tidak hadir'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                    </div>
-                                    <div class="bg-rekap-lembur rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-purple-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Lembur</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['lembur'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
+                                    <div>
+                                        <h3 class="font-extrabold text-slate-800 text-sm">Rekap Bulan Ini</h3>
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
                                     </div>
                                 </div>
-                                <div class="bg-rekap-terlambat rounded-2xl p-3 flex items-center justify-between mt-3.5 shadow-lg shadow-orange-500/10 border-0 transition-transform duration-300 hover:scale-[1.02]">
-                                    <span class="text-[10px] uppercase font-extrabold tracking-wider flex items-center gap-1.5 opacity-90">
-                                        <i class="fas fa-exclamation-circle text-xs"></i> Terlambat
-                                    </span>
-                                    <span class="text-xs font-black">{{ $rekapAbsen['terlambat'] }} Kali</span>
+                                <div class="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    <i class="fas fa-chevron-right text-xs"></i>
                                 </div>
-                            </div>
+                            </button>
 
                             @if(isset($daftarRekan) && count($daftarRekan) > 0)
-                            <div class="glass-card flex flex-col flex-grow min-h-0">
+                            <div class="bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-200/50 rounded-3xl flex flex-col flex-grow min-h-0 p-5 md:p-6">
                                 <h3 class="glass-card-title mb-4">
                                     <i class="fas fa-users text-blue-500"></i>
                                     <span>Absensi Tim</span>
                                 </h3>
-                                <div class="space-y-3 overflow-y-auto pr-1 flex-grow scrollbar-thin" style="max-height: 250px;">
+                                <div class="space-y-3 overflow-y-auto pr-1 flex-grow scrollbar-thin" style="max-height: 450px;">
                                     @foreach($daftarRekan as $rekan)
                                     @php
                                         $badgeClass = match($rekan->status) {
@@ -483,7 +431,7 @@
                                             default  => 'bg-slate-500/10 text-slate-700 border-slate-200/50',
                                         };
                                     @endphp
-                                    <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white/50 transition-all duration-200 hover:bg-white hover:shadow-sm">
+                                    <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white/50 transition-all duration-300 hover:bg-gradient-to-r hover:from-white hover:to-blue-50/50 hover:border-blue-200 hover:shadow-md hover:shadow-blue-500/5">
                                         <div class="flex items-center gap-3">
                                             <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
                                                  alt="{{ $rekan->user->name ?? '' }}" class="w-9 h-9 rounded-full object-cover border border-slate-100 flex-shrink-0">
@@ -563,8 +511,8 @@
                         
                         @if ($isHoliday)
                             {{-- TAMPILAN KHUSUS WEEKEND (BELUM ABSEN LEMBUR) --}}
-                            <div class="w-full lg:w-2/3 glass-card">
-                                <div class="flex items-center gap-3 mb-6">
+                            <div class="w-full lg:w-2/3 bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-200/50 rounded-3xl p-6 md:p-8">
+                                <div class="flex items-center gap-4 mb-8">
                                     <div class="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-600 flex items-center justify-center flex-shrink-0">
                                         <i class="fas fa-umbrella-beach text-lg"></i>
                                     </div>
@@ -608,9 +556,9 @@
                                  <input type="hidden" name="longitude" id="longitude">
 
                                  {{-- KONTAINER UTAMA --}}
-                                 <div class="glass-card">
+                                 <div class="bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-200/50 rounded-3xl p-6 md:p-8">
                                      {{-- Title Header --}}
-                                     <div class="flex items-center gap-3.5 mb-6 border-b border-slate-100/70 pb-4">
+                                     <div class="flex items-center gap-4 mb-8 border-b border-slate-100/70 pb-5">
                                          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 flex-shrink-0">
                                              <i class="fas fa-fingerprint text-xl"></i>
                                          </div>
@@ -622,15 +570,15 @@
 
                                      {{-- 1. TANGGAL & JAM (FRESH SEGMENTED LAYOUT) --}}
                                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                                         <div class="bg-slate-50/70 border border-slate-100 rounded-2xl p-3.5 flex items-center gap-3.5 transition-all duration-300 hover:bg-slate-100/50">
-                                             <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center text-sm shadow-sm shadow-blue-500/5"><i class="fas fa-calendar-alt"></i></div>
+                                         <div class="bg-white/80 border border-slate-100 rounded-2xl p-3.5 flex items-center gap-3.5 transition-all duration-300 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-0.5">
+                                             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center text-sm shadow-md shadow-blue-500/30"><i class="fas fa-calendar-alt"></i></div>
                                              <div>
                                                  <p class="text-[9px] uppercase font-extrabold text-slate-400 tracking-wider">Hari & Tanggal</p>
                                                  <p class="font-black text-xs text-slate-700 mt-0.5">{{ \Carbon\Carbon::now()->translatedFormat('l, j F Y') }}</p>
                                              </div>
                                          </div>
-                                         <div class="bg-slate-50/70 border border-slate-100 rounded-2xl p-3.5 flex items-center gap-3.5 transition-all duration-300 hover:bg-slate-100/50">
-                                             <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center text-sm shadow-sm shadow-indigo-500/5"><i class="fas fa-clock"></i></div>
+                                         <div class="bg-white/80 border border-slate-100 rounded-2xl p-3.5 flex items-center gap-3.5 transition-all duration-300 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5">
+                                             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white flex items-center justify-center text-sm shadow-md shadow-indigo-500/30"><i class="fas fa-clock"></i></div>
                                              <div>
                                                  <p class="text-[9px] uppercase font-extrabold text-slate-400 tracking-wider">Jam Real-time</p>
                                                  <p class="font-black text-xs text-slate-700 mt-0.5" id="jam-realtime"></p>
@@ -667,7 +615,7 @@
                                          <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
                                              {{-- KAMERA --}}
                                              <div class="md:col-span-3">
-                                                 <div id="camera-container" class="relative aspect-square md:aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md border border-slate-100">
+                                                 <div id="camera-container" class="relative aspect-video rounded-3xl overflow-hidden bg-slate-900 shadow-md border border-slate-100">
                                                      <video id="video" class="w-full h-full object-cover" style="transform: scaleX(-1);" autoplay></video>
                                                      <canvas id="canvas" class="hidden"></canvas>
                                                      <div id="snap-ui" class="absolute inset-0 flex items-end justify-center p-4 bg-gradient-to-t from-black/60 to-transparent">
@@ -684,7 +632,7 @@
                                                      </div>
                                                  </div>
 
-                                                 <label for="lampiran" id="upload-label" class="flex flex-col items-center justify-center w-full h-full border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-2xl cursor-pointer bg-slate-50/50 hover:bg-slate-50 transition-all aspect-square md:aspect-video hidden relative p-4">
+                                                 <label for="lampiran" id="upload-label" class="flex flex-col items-center justify-center w-full h-full border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-3xl cursor-pointer bg-slate-50/50 hover:bg-slate-50 transition-all aspect-video hidden relative p-4">
                                                      <div class="flex flex-col items-center justify-center text-center p-2" id="upload-ui">
                                                          <div class="w-14 h-14 bg-blue-500/10 text-blue-600 rounded-full flex items-center justify-center mb-3 shadow-inner">
                                                              <i id="upload-icon" class="fas fa-cloud-upload-alt text-2xl"></i>
@@ -698,7 +646,7 @@
 
                                              {{-- KETERANGAN --}}
                                              <div class="md:col-span-2">
-                                                 <textarea name="keterangan" id="keterangan" class="modern-input h-full resize-none min-h-[140px] md:min-h-full placeholder:text-slate-400/80 text-xs" placeholder="Ketik alasan atau catatan kehadiran di sini jika diperlukan... (Wajib diisi jika Anda memilih status Izin atau Sakit)">{{ old('keterangan') }}</textarea>
+                                                 <textarea name="keterangan" id="keterangan" class="modern-input h-full resize-none min-h-[140px] md:min-h-full placeholder:text-slate-400/70 text-xs placeholder:text-[11px]" placeholder="Mohon tuliskan alasan atau keterangan kehadiran Anda secara jelas... (Wajib diisi jika Anda memilih status Izin atau Sakit)">{{ old('keterangan') }}</textarea>
                                              </div>
                                          </div>
                                      </div>
@@ -714,54 +662,28 @@
                          @endif
                          
          {{-- SIDEBAR REKAP UNTUK BELUM ABSEN --}}
-                        <div class="w-full lg:w-1/3 flex flex-col gap-6 self-stretch min-h-full">
-                            <div class="glass-card flex flex-col justify-between">
-                                <h3 class="glass-card-title mb-1.5 justify-center">
-                                    <i class="fas fa-calendar-alt text-blue-500"></i>
-                                    <span>Rekap Bulan Ini</span>
-                                </h3>
-                                <p class="text-center text-slate-400 text-[10px] mb-4 uppercase font-bold tracking-wider">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
-                                
-                                <div class="grid grid-cols-2 gap-2.5">
-                                    <div class="bg-rekap-hadir rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-emerald-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Hadir</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['hadir'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
+                        <div class="w-full lg:w-1/3 flex flex-col gap-4 self-stretch min-h-full">
+                            <button type="button" onclick="openRekapModal()" class="bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-200/50 rounded-3xl p-5 md:p-6 flex items-center justify-between group hover:bg-blue-50/50 transition-all duration-300 w-full text-left">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/40">
+                                        <i class="fas fa-calendar-alt text-xl group-hover:scale-110 transition-transform"></i>
                                     </div>
-                                    <div class="bg-rekap-sakit rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-rose-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Sakit</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['sakit'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                    </div>
-                                    <div class="bg-rekap-izin rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-amber-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Izin</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['izin'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                    </div>
-                                    <div class="bg-rekap-cuti rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-blue-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Cuti</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['cuti'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                    </div>
-                                    <div class="bg-rekap-alpa rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-slate-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Alpa</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['tidak hadir'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
-                                    </div>
-                                    <div class="bg-rekap-lembur rounded-2xl p-3 flex flex-col justify-between min-h-[70px] shadow-lg shadow-purple-500/10 border-0 transition-transform duration-300 hover:scale-[1.03]">
-                                        <span class="text-[9px] uppercase font-bold tracking-wider opacity-85">Lembur</span>
-                                        <span class="text-lg font-black mt-1">{{ $rekapAbsen['lembur'] }} <span class="text-[10px] font-bold opacity-80">Hari</span></span>
+                                    <div>
+                                        <h3 class="font-extrabold text-slate-800 text-sm">Rekap Bulan Ini</h3>
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
                                     </div>
                                 </div>
-                                <div class="bg-rekap-terlambat rounded-2xl p-3 flex items-center justify-between mt-3.5 shadow-lg shadow-orange-500/10 border-0 transition-transform duration-300 hover:scale-[1.02]">
-                                    <span class="text-[10px] uppercase font-extrabold tracking-wider flex items-center gap-1.5 opacity-90">
-                                        <i class="fas fa-exclamation-circle text-xs"></i> Terlambat
-                                    </span>
-                                    <span class="text-xs font-black">{{ $rekapAbsen['terlambat'] }} Kali</span>
+                                <div class="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    <i class="fas fa-chevron-right text-xs"></i>
                                 </div>
-                            </div>
+                            </button>
                             @if(isset($daftarRekan) && count($daftarRekan) > 0)
-                                <div class="glass-card flex flex-col flex-grow min-h-0">
+                                <div class="bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-200/50 rounded-3xl flex flex-col flex-grow min-h-0 p-5 md:p-6">
                                     <h3 class="glass-card-title mb-4">
                                         <i class="fas fa-users text-blue-500"></i>
                                         <span>Absensi Tim</span>
                                     </h3>
-                                    <div class="space-y-3 overflow-y-auto pr-1 flex-grow scrollbar-thin" style="max-height: 250px;">
+                                    <div class="space-y-3 overflow-y-auto pr-1 flex-grow scrollbar-thin" style="max-height: 450px;">
                                         @foreach($daftarRekan as $rekan)
                                         @php
                                             $badgeClass = match($rekan->status) {
@@ -771,7 +693,7 @@
                                                 default  => 'bg-slate-500/10 text-slate-700 border-slate-200/50',
                                             };
                                         @endphp
-                                        <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white/50 transition-all duration-200 hover:bg-white hover:shadow-sm">
+                                        <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white/50 transition-all duration-300 hover:bg-gradient-to-r hover:from-white hover:to-blue-50/50 hover:border-blue-200 hover:shadow-md hover:shadow-blue-500/5">
                                             <div class="flex items-center gap-3">
                                                 <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
                                                      alt="{{ $rekan->user->name ?? '' }}" class="w-9 h-9 rounded-full object-cover border border-slate-100 flex-shrink-0">
@@ -967,8 +889,90 @@
     </div>
     @endif
 
+    {{-- MODAL REKAP BULAN INI --}}
+    <div id="modal-rekap" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeRekapModal()"></div>
+        <!-- Modal Content -->
+        <div id="modal-rekap-content" class="relative bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden transform scale-95 opacity-0 transition-all duration-300">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white/50 backdrop-blur-md">
+                <h3 class="font-extrabold text-slate-800 text-lg flex items-center gap-2">
+                    <i class="fas fa-calendar-alt text-blue-500"></i> Rekap Bulan Ini
+                </h3>
+                <button type="button" onclick="closeRekapModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-100 hover:text-red-600 transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 bg-slate-50/50">
+                <p class="text-center text-slate-400 text-xs mb-5 uppercase font-bold tracking-wider">{{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-rekap-hadir rounded-2xl p-4 flex flex-col justify-between min-h-[80px] shadow-lg shadow-emerald-500/10 border-0 transition-transform duration-300 hover:scale-[1.02]">
+                        <span class="text-[10px] uppercase font-bold tracking-wider opacity-85">Hadir</span>
+                        <div class="flex items-baseline gap-1 mt-1"><span class="text-3xl font-black">{{ $rekapAbsen['hadir'] }}</span> <span class="text-[10px] font-bold opacity-80">Hari</span></div>
+                    </div>
+                    <div class="bg-rekap-sakit rounded-2xl p-4 flex flex-col justify-between min-h-[80px] shadow-lg shadow-rose-500/10 border-0 transition-transform duration-300 hover:scale-[1.02]">
+                        <span class="text-[10px] uppercase font-bold tracking-wider opacity-85">Sakit</span>
+                        <div class="flex items-baseline gap-1 mt-1"><span class="text-3xl font-black">{{ $rekapAbsen['sakit'] }}</span> <span class="text-[10px] font-bold opacity-80">Hari</span></div>
+                    </div>
+                    <div class="bg-rekap-izin rounded-2xl p-4 flex flex-col justify-between min-h-[80px] shadow-lg shadow-amber-500/10 border-0 transition-transform duration-300 hover:scale-[1.02]">
+                        <span class="text-[10px] uppercase font-bold tracking-wider opacity-85">Izin</span>
+                        <div class="flex items-baseline gap-1 mt-1"><span class="text-3xl font-black">{{ $rekapAbsen['izin'] }}</span> <span class="text-[10px] font-bold opacity-80">Hari</span></div>
+                    </div>
+                    <div class="bg-rekap-cuti rounded-2xl p-4 flex flex-col justify-between min-h-[80px] shadow-lg shadow-blue-500/10 border-0 transition-transform duration-300 hover:scale-[1.02]">
+                        <span class="text-[10px] uppercase font-bold tracking-wider opacity-85">Cuti</span>
+                        <div class="flex items-baseline gap-1 mt-1"><span class="text-3xl font-black">{{ $rekapAbsen['cuti'] }}</span> <span class="text-[10px] font-bold opacity-80">Hari</span></div>
+                    </div>
+                    <div class="bg-rekap-alpa rounded-2xl p-4 flex flex-col justify-between min-h-[80px] shadow-lg shadow-slate-500/10 border-0 transition-transform duration-300 hover:scale-[1.02]">
+                        <span class="text-[10px] uppercase font-bold tracking-wider opacity-85">Alpa</span>
+                        <div class="flex items-baseline gap-1 mt-1"><span class="text-3xl font-black">{{ $rekapAbsen['tidak hadir'] }}</span> <span class="text-[10px] font-bold opacity-80">Hari</span></div>
+                    </div>
+                    <div class="bg-rekap-lembur rounded-2xl p-4 flex flex-col justify-between min-h-[80px] shadow-lg shadow-purple-500/10 border-0 transition-transform duration-300 hover:scale-[1.02]">
+                        <span class="text-[10px] uppercase font-bold tracking-wider opacity-85">Lembur</span>
+                        <div class="flex items-baseline gap-1 mt-1"><span class="text-3xl font-black">{{ $rekapAbsen['lembur'] }}</span> <span class="text-[10px] font-bold opacity-80">Hari</span></div>
+                    </div>
+                </div>
+                <div class="bg-rekap-terlambat rounded-2xl p-3.5 flex items-center justify-between mt-5 shadow-lg shadow-orange-500/10 border-0 transition-transform duration-300 hover:scale-[1.01]">
+                    <span class="text-[11px] uppercase font-extrabold tracking-wider flex items-center gap-2 opacity-90 mb-1">
+                        <i class="fas fa-exclamation-circle text-sm"></i> Terlambat
+                    </span>
+                    <span class="text-sm font-black">{{ $rekapAbsen['terlambat'] }}</span>
+                </div>
+            </div>
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 text-center">
+                <button type="button" onclick="closeRekapModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-xl text-sm shadow-md shadow-blue-500/20 transition duration-200">
+                    Tutup Rekap
+                </button>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
     <script>
+    window.openRekapModal = function() {
+        const modalContent = document.getElementById('modal-rekap-content');
+        const modal = document.getElementById('modal-rekap');
+        if(modalContent && modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+            }, 10);
+        }
+    };
+
+    window.closeRekapModal = function() {
+        const modalContent = document.getElementById('modal-rekap-content');
+        const modal = document.getElementById('modal-rekap');
+        if(modalContent && modal) {
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden'); 
+                modal.classList.remove('flex');
+            }, 300);
+        }
+    };
+    
     document.addEventListener('DOMContentLoaded', function() {
         const jamElement = document.getElementById('jam-realtime');
         if(jamElement) {

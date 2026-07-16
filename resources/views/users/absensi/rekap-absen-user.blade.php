@@ -637,57 +637,70 @@
                                 };
                             @endphp
                             
-                            <div class="riwayat-item absen-row" data-status="{{ $status }}">
-                                {{-- Status Icon --}}
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center {{ $iconBox }} flex-shrink-0">
-                                    <i class="{{ $iconClass }}"></i>
+                            <div class="riwayat-item absen-row flex flex-col md:flex-row md:items-center gap-3 md:gap-4 p-4 bg-white/80 hover:bg-white border border-slate-100 hover:border-blue-200 transition-all rounded-2xl shadow-sm hover:shadow-md" data-status="{{ $status }}">
+                                {{-- Header Row (Icon, Date, Badge for Mobile) --}}
+                                <div class="flex items-center justify-between w-full md:w-auto">
+                                    <div class="flex items-center gap-3">
+                                        {{-- Status Icon --}}
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center {{ $iconBox }} flex-shrink-0 shadow-inner">
+                                            <i class="{{ $iconClass }}"></i>
+                                        </div>
+                                        {{-- Date --}}
+                                        <div>
+                                            <p class="font-extrabold text-slate-800 text-sm tracking-tight">
+                                                {{ $item->tanggal->translatedFormat('l, d F Y') }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    {{-- Right badge status (Mobile only) --}}
+                                    <span class="riwayat-badge {{ $badgeStyle }} md:hidden text-[10px] font-black py-1 px-2.5 rounded-full uppercase tracking-wider">
+                                        {{ $item->status }}
+                                    </span>
                                 </div>
                                 
-                                {{-- Main Info --}}
-                                <div class="flex-grow min-w-0 md:flex md:items-center md:justify-between md:gap-4">
-                                    <div>
-                                        <p class="font-bold text-slate-800 text-sm">
-                                            {{ $item->tanggal->translatedFormat('l, d F Y') }}
-                                        </p>
+                                {{-- Content / Details Row (Times, Activity Logs) --}}
+                                <div class="flex-grow min-w-0 pl-[52px] md:pl-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full md:w-auto">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        @if(in_array($status, ['hadir', 'lembur']) && ($item->jam_masuk || $item->jam_keluar))
+                                            <span class="text-xs text-slate-500 flex flex-wrap items-center gap-1.5">
+                                                <span class="bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100/50 text-emerald-800">
+                                                    Masuk: <strong class="font-mono text-emerald-900 font-extrabold">{{ $item->jam_masuk ? \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') : '--:--' }}</strong>
+                                                </span>
+                                                <span class="bg-rose-50 px-2.5 py-1 rounded-md border border-rose-100/50 text-rose-800">
+                                                    Keluar: <strong class="font-mono text-rose-900 font-extrabold">{{ $item->jam_keluar ? \Carbon\Carbon::parse($item->jam_keluar)->format('H:i') : '--:--' }}</strong>
+                                                </span>
+                                            </span>
+                                        @else
+                                            <span class="text-xs text-slate-400 font-medium italic">
+                                                @if($status === 'libur')
+                                                    {{ $item->keterangan ?? 'Hari Libur / Akhir Pekan' }}
+                                                @elseif($status === 'cuti')
+                                                    Cuti Tahunan
+                                                @elseif($status === 'sakit')
+                                                    Sakit / Istirahat
+                                                @elseif($status === 'izin')
+                                                    Izin Tidak Masuk
+                                                @elseif($status === 'alpa')
+                                                    Alpa (Tanpa Keterangan)
+                                                @else
+                                                    -
+                                                @endif
+                                            </span>
+                                        @endif
                                         
-                                        {{-- Subtext/Keterangan --}}
-                                        <div class="flex flex-wrap items-center gap-2 mt-1">
-                                            @if(in_array($status, ['hadir', 'lembur']) && ($item->jam_masuk || $item->jam_keluar))
-                                                <span class="text-xs text-slate-500">
-                                                    Masuk: <strong class="text-slate-700 font-mono">{{ $item->jam_masuk ? \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') : '--:--' }}</strong> 
-                                                    | Keluar: <strong class="text-slate-700 font-mono">{{ $item->jam_keluar ? \Carbon\Carbon::parse($item->jam_keluar)->format('H:i') : '--:--' }}</strong>
-                                                </span>
-                                            @else
-                                                <span class="text-xs text-slate-400 italic">
-                                                    @if($status === 'libur')
-                                                        {{ $item->keterangan ?? 'Hari Libur / Akhir Pekan' }}
-                                                    @elseif($status === 'cuti')
-                                                        Cuti Tahunan
-                                                    @elseif($status === 'sakit')
-                                                        Sakit / Istirahat
-                                                    @elseif($status === 'izin')
-                                                        Izin Tidak Masuk
-                                                    @elseif($status === 'alpa')
-                                                        Alpa (Tanpa Keterangan)
-                                                    @else
-                                                        -
-                                                    @endif
-                                                </span>
-                                            @endif
-                                            
-                                            {{-- Keterangan Terlambat --}}
-                                            @if($isLate)
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200">
-                                                    Terlambat
-                                                </span>
-                                            @endif
-                                        </div>
+                                        {{-- Keterangan Terlambat --}}
+                                        @if($isLate)
+                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200">
+                                                Terlambat
+                                            </span>
+                                        @endif
                                     </div>
 
                                     {{-- Activity Logs link --}}
-                                    <div class="mt-2 md:mt-0">
+                                    <div class="mt-1 sm:mt-0">
                                         @if($item->jumlah_aktivitas > 0)
-                                            <button type="button" onclick="openModalAktivitas('{{ $item->tanggal->toDateString() }}')" class="inline-flex items-center gap-1.5 text-xs text-blue-600 font-bold hover:underline bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100 cursor-pointer">
+                                            <button type="button" onclick="openModalAktivitas('{{ $item->tanggal->toDateString() }}')" class="inline-flex items-center gap-1.5 text-xs text-blue-600 font-bold hover:underline bg-blue-50/50 hover:bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100 transition-all cursor-pointer">
                                                 <i class="fas fa-clipboard-list text-[10px]"></i>
                                                 Lihat {{ $item->jumlah_aktivitas }} Aktivitas
                                             </button>
@@ -695,8 +708,10 @@
                                     </div>
                                 </div>
                                 
-                                {{-- Right badge status --}}
-                                <span class="riwayat-badge {{ $badgeStyle }}">{{ $item->status }}</span>
+                                {{-- Right badge status (Desktop only) --}}
+                                <span class="riwayat-badge {{ $badgeStyle }} hidden md:inline-block text-[10px] font-black py-1 px-3 rounded-full uppercase tracking-wider">
+                                    {{ $item->status }}
+                                </span>
                             </div>
                         @empty
                             <div class="riwayat-empty" style="background:#fff; border: 2px dashed #e2e8f0; border-radius: 16px; padding: 32px 16px; text-align: center;">

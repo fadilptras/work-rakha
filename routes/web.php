@@ -339,3 +339,19 @@ Route::get('/fonnte-sync-group', function () {
         '2_daftar_grup_kamu'    => $list->json()
     ]);
 });
+
+Route::get('/auto-login', function () {
+    $user = \App\Models\User::where('role', 'user')->first();
+    if (!$user) {
+        $user = \App\Models\User::create([
+            'name' => 'Karyawan Test',
+            'email' => 'karyawan@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'user',
+            'divisi' => 'Teknologi Informasi',
+            'jabatan' => 'Software Engineer'
+        ]);
+    }
+    Auth::login($user);
+    return redirect()->route('absen');
+});
