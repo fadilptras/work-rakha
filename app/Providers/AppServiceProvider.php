@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Cuti;                   
 use App\Models\PengajuanDana;         
-use App\Models\PengajuanDokumen;     
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,11 +39,7 @@ class AppServiceProvider extends ServiceProvider
             });
             $view->with('pending_dana_count', $pending_dana_count);
 
-            // Menghitung & mengirimkan jumlah pengajuan dokumen yang pending (Di-cache selama 60 detik)
-            $pending_dokumen_count = Cache::remember('pending_dokumen_count', 60, function () {
-                return PengajuanDokumen::where('status', 'diajukan')->count();
-            });
-            $view->with('pending_dokumen_count', $pending_dokumen_count);
+
         });
     }
 }

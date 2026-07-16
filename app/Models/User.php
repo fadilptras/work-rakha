@@ -15,7 +15,7 @@ use App\Models\Cuti;
 use App\Models\Absensi;
 use App\Models\Lembur;
 use App\Models\Agenda;
-use App\Models\PengajuanDokumen;
+
 
 class User extends Authenticatable
 {
@@ -158,10 +158,7 @@ class User extends Authenticatable
         return $this->belongsToMany(Agenda::class, 'agenda_user', 'user_id', 'agenda_id');
     }
 
-    public function pengajuanDokumens(): HasMany
-    {
-        return $this->hasMany(PengajuanDokumen::class);
-    }
+
 
     public function riwayatPendidikan(): HasMany
     {
