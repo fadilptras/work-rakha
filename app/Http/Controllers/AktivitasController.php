@@ -61,7 +61,7 @@ class AktivitasController extends Controller
         }
 
         // 4. Kirim semua data ke view
-        return view('users.aktivitas', [
+        return view('users.aktivitas.aktivitas-user', [
             'title' => 'Catat Aktivitas', //
             'user' => $user,
             'aktivitasHariIni' => $aktivitasHariIni, //

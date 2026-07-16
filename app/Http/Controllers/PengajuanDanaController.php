@@ -15,14 +15,24 @@ class PengajuanDanaController extends Controller
 {
     public function index(Request $request)
     {
+        $totalPengajuan = Auth::user()->pengajuanDanas()->count();
+
+        return view('users.pengajuan-dana.pengajuan-dana-form', [
+            'title' => 'Pengajuan Dana',
+            'totalPengajuan' => $totalPengajuan,
+        ]);
+    }
+
+    public function history(Request $request)
+    {
         $query = Auth::user()->pengajuanDanas()->latest();
         if ($request->filled('status') && $request->status != 'semua') {
             $query->where('status', $request->status);
         }
-        $pengajuanDanas = $query->paginate(10)->appends($request->query());
+        $pengajuanDanas = $query->paginate(15)->appends($request->query());
 
-        return view('users.pengajuan-dana', [
-            'title' => 'Pengajuan Dana',
+        return view('users.pengajuan-dana.pengajuan-dana-riwayat', [
+            'title' => 'Riwayat Pengajuan Dana',
             'pengajuanDanas' => $pengajuanDanas,
         ]);
     }
@@ -32,7 +42,7 @@ class PengajuanDanaController extends Controller
         // $this->authorize('view', $pengajuanDana);
         $pengajuanDana->load(['user', 'approver1', 'approver2', 'approver3', 'approver4']); 
         
-        return view('users.detail-pengajuan-dana', [
+        return view('users.pengajuan-dana.pengajuan-dana-detail', [
             'title' => 'Detail Pengajuan Dana',
             'pengajuanDana' => $pengajuanDana,
         ]);

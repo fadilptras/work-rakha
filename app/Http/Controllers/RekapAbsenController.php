@@ -118,7 +118,7 @@ class RekapAbsenController extends Controller
         });
         $daftarTahun = range(now()->year, now()->year - 5);
 
-        return view('users.rekap_absen', compact(
+        return view('users.absensi.rekap-absen-user', compact(
             'title',
             'detailHarian',
             'rekap',

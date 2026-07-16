@@ -99,7 +99,7 @@ class NotifikasiController extends Controller
             'Lainnya',
         ];
 
-        return view('users.notifikasi', compact(
+        return view('users.notifikasi.notifikasi-daftar', compact(
             'groupedNotifications', 
             'groupOrder', 
             'title', 

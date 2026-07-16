@@ -73,7 +73,7 @@ class AbsenController extends Controller
             'holidayDb' 
         );
 
-        return view('users.absen', $data);
+        return view('users.absensi.absen-user', $data);
     }
 
     protected function rekapAbsensiBulanan(User $user, Carbon $date): array

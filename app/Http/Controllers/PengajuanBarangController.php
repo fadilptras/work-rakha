@@ -15,8 +15,22 @@ class PengajuanBarangController extends Controller
     public function index()
     {
         $title = 'Pengajuan Barang';
-        $pengajuanBarangs = Auth::user()->pengajuanBarangs()->orderBy('created_at', 'desc')->get();
-        return view('users.pengajuan-barang', compact('title', 'pengajuanBarangs'));
+        $totalPengajuan = Auth::user()->pengajuanBarangs()->count();
+        return view('users.pengajuan-barang.pengajuan-barang-form', compact('title', 'totalPengajuan'));
+    }
+
+    public function history(Request $request)
+    {
+        $query = Auth::user()->pengajuanBarangs()->latest();
+        if ($request->filled('status') && $request->status != 'semua') {
+            $query->where('status', $request->status);
+        }
+        $pengajuanBarangs = $query->paginate(15)->appends($request->query());
+
+        return view('users.pengajuan-barang.pengajuan-barang-riwayat', [
+            'title' => 'Riwayat Pengajuan Barang',
+            'pengajuanBarangs' => $pengajuanBarangs,
+        ]);
     }
 
     /**
@@ -89,7 +103,7 @@ class PengajuanBarangController extends Controller
     {
         // Load relasi agar view tidak error saat menampilkan detail approver
         $pengajuanBarang->load(['user', 'approver1', 'approver2', 'approver3', 'approver4']);
-        return view('users.detail-pengajuan-barang', compact('pengajuanBarang'));
+        return view('users.pengajuan-barang.pengajuan-barang-detail', compact('pengajuanBarang'));
     }
 
     /**

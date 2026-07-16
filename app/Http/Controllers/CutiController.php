@@ -31,7 +31,7 @@ class CutiController extends Controller
             ->latest()
             ->get();
 
-        return view('users.cuti', compact('title', 'sisaCuti', 'terpakaiTahunan', 'cutiRequests'));
+        return view('users.cuti.cuti-pengajuan', compact('title', 'sisaCuti', 'terpakaiTahunan', 'cutiRequests'));
     }
 
     public function store(Request $request)
@@ -113,7 +113,7 @@ class CutiController extends Controller
         $title = 'Detail Pengajuan Cuti';
         $sisaCuti = $cuti->user->sisa_cuti ?? 0;
 
-        return view('users.detail-cuti', compact('cuti', 'sisaCuti', 'title'));
+        return view('users.cuti.cuti-detail', compact('cuti', 'sisaCuti', 'title'));
     }
 
     public function updateStatus(Request $request, $id)

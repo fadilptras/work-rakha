@@ -10,7 +10,7 @@ use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\AbsenController;
 use App\Http\Controllers\PengajuanDanaController;
-use App\Http\Controllers\PengajuanDokumenController;
+
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\CutiController;
 use App\Http\Controllers\Admin\AdminAbsensiController;
@@ -20,7 +20,7 @@ use App\Http\Controllers\Admin\AdminPengajuanDanaController;
 use App\Http\Controllers\Admin\AdminLemburController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AgendaController;
-use App\Http\Controllers\Admin\AdminPengajuanDokumenController;
+
 use App\Http\Controllers\Admin\AdminAgendaController;
 use App\Http\Controllers\CrmController;
 use App\Http\Controllers\AktivitasController;
@@ -51,7 +51,7 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     
     // Dasboard
     Route::get('/dashboard', function () {
-        return view('users.dashboard', ['title' => 'Dashboard']);
+        return view('users.dashboard.dashboard-user', ['title' => 'Dashboard']);
     })->name('dashboard');
 
     // Absensi
@@ -92,6 +92,7 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     Route::get('/profile/download-pdf', [ProfileController::class, 'downloadPdf'])->name('profile.downloadPdf');
 
     // Pengajuan Dana
+    Route::get('/pengajuan-dana/history', [PengajuanDanaController::class, 'history'])->name('pengajuan_dana.history');
     Route::get('/pengajuan-dana', [PengajuanDanaController::class, 'index'])->name('pengajuan_dana.index');
     Route::post('/pengajuan-dana', [PengajuanDanaController::class, 'store'])->name('pengajuan_dana.store');
     Route::get('/pengajuan-dana/{pengajuanDana}', [PengajuanDanaController::class, 'show'])->name('pengajuan_dana.show');
@@ -104,10 +105,7 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     Route::get('/pengajuan-dana/{pengajuanDana}/download', [PengajuanDanaController::class, 'downloadPDF'])->name('pengajuan_dana.download');
     Route::post('/pengajuan-dana/{pengajuanDana}/cancel', [PengajuanDanaController::class, 'cancel'])->name('pengajuan_dana.cancel');
 
-    // Pengajuan Dokumen
-    Route::get('/pengajuan-dokumen', [PengajuanDokumenController::class, 'index'])->name('pengajuan_dokumen.index');
-    Route::post('/pengajuan-dokumen', [PengajuanDokumenController::class, 'store'])->name('pengajuan_dokumen.store');
-    Route::get('/pengajuan-dokumen/{dokumen}/download', [PengajuanDokumenController::class, 'download'])->name('pengajuan_dokumen.download');
+
 
     // Rekap Absensi 
     Route::get('/rekap-absen', [RekapAbsenController::class, 'index'])->name('rekap_absen.index');
@@ -157,6 +155,8 @@ Route::controller(CrmController::class)->group(function () {
             Route::get('/', 'index')->name('index');
             Route::post('/', 'store')->name('store');
             
+            Route::get('/history', 'history')->name('history');
+
             // Halaman Detail
             Route::get('/{pengajuanBarang}', 'show')->name('show');
             
@@ -254,12 +254,7 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
              ->name('markAsPaid');
     });
 
-    // Pengajuan Dokumen
-    Route::prefix('pengajuan-dokumen')->name('pengajuan-dokumen.')->group(function() {
-        Route::get('/', [AdminPengajuanDokumenController::class, 'index'])->name('index');
-        Route::get('/{dokumen}', [AdminPengajuanDokumenController::class, 'show'])->name('show');
-        Route::put('/{dokumen}', [AdminPengajuanDokumenController::class, 'update'])->name('update');
-    });
+
 
     // Agenda
     Route::prefix('agenda')->name('agenda.')->group(function () {
