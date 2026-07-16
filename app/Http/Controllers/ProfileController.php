@@ -21,7 +21,7 @@ class ProfileController extends Controller
     {
         $title = 'Edit Profil';
         $user = Auth::user()->load('riwayatPendidikan', 'riwayatPekerjaan');
-        return view('users.profile', compact('title', 'user'));
+        return view('users.profile.profile-edit', compact('title', 'user'));
     }
 
     public function update(Request $request)
@@ -34,6 +34,7 @@ class ProfileController extends Controller
             'email'             => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password'          => ['nullable', 'string', 'min:8', 'confirmed'],
             'profile_picture'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'cropped_image'     => 'nullable|string',
             'file_ktp'          => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'file_npwp'         => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'file_bpjs_kesehatan' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
@@ -49,7 +50,7 @@ class ProfileController extends Controller
             DB::transaction(function () use ($request, $user) {
                 // 1. Update Data Dasar (Kecuali File & Relasi)
                 $userData = $request->except([
-                    'profile_picture', 'file_ktp', 'file_npwp', 
+                    'profile_picture', 'cropped_image', 'file_ktp', 'file_npwp', 
                     'file_bpjs_kesehatan', 'file_bpjs_ketenagakerjaan', 
                     'pendidikan', 'pekerjaan', 'password', 'password_confirmation'
                 ]);
@@ -59,7 +60,16 @@ class ProfileController extends Controller
                 }
 
                 // 2. Handle Foto Profil
-                if ($request->hasFile('profile_picture')) {
+                if ($request->filled('cropped_image')) {
+                    if ($user->profile_picture) {
+                        Storage::disk('public')->delete($user->profile_picture);
+                    }
+                    $image_parts = explode(";base64,", $request->cropped_image);
+                    $image_base64 = base64_decode($image_parts[1]);
+                    $fileName = 'profile_pictures/' . uniqid() . '.png';
+                    Storage::disk('public')->put($fileName, $image_base64);
+                    $userData['profile_picture'] = $fileName;
+                } elseif ($request->hasFile('profile_picture')) {
                     if ($user->profile_picture) {
                         Storage::disk('public')->delete($user->profile_picture);
                     }

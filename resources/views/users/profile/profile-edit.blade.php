@@ -1,7 +1,48 @@
 <x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
 
-    <main class="bg-gradient-to-br from-sky-50 to-blue-100 p-0 md:p-0 min-h-screen" x-data="{ 
+    @push('styles')
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <style>
+        .mesh-bg {
+            background-color: #f0f6fc;
+            background-image:
+                radial-gradient(at 40% 20%, rgba(147, 197, 253, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, rgba(167, 139, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, rgba(191, 219, 254, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
+                radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        @keyframes float {
+            0%   { transform: translateY(0px) rotate(0deg); }
+            50%  { transform: translateY(-20px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float         { animation: float 8s ease-in-out infinite; }
+        .animate-float-delayed { animation: float 10s ease-in-out infinite; animation-delay: 2s; }
+
+        .btn-back-modern {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 8px 18px 8px 8px;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.9); border-radius: 9999px;
+            color: #1e293b; font-size: 0.9rem; font-weight: 700;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 24px; width: fit-content;
+        }
+        .btn-back-modern:hover { background: rgba(255,255,255,0.95); box-shadow: 0 10px 15px -3px rgba(59,130,246,0.15); transform: translateY(-2px); color: #1d4ed8; }
+        .btn-back-modern .icon-circle { width: 32px; height: 32px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(0,0,0,0.06); transition: transform 0.3s ease; }
+        .btn-back-modern:hover .icon-circle { transform: translateX(-3px); background: #EFF6FF; }
+    </style>
+    @endpush
+
+    <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden" x-data="{ 
         openIdentitas: true, 
         openPribadi: false, 
         openPayroll: false, 
@@ -10,11 +51,19 @@
         openPendidikan: false, 
         openKerja: false 
     }">
-        <div class="max-w-6xl mx-auto px-4">
+        {{-- BG Animations --}}
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
+            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
+            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
+        </div>
+
+        <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
             
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <a href="{{ route('dashboard') }}" class="flex items-center text-blue-600 hover:underline font-bold">
-                    <i class="fas fa-arrow-left mr-2"></i> Kembali ke Dashboard
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4" style="margin-bottom: 24px;">
+                <a href="{{ route('dashboard') }}" class="btn-back-modern" style="margin-bottom: 0px;">
+                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                    Kembali ke Dashboard
                 </a>
                 <a href="{{ route('profile.downloadPdf') }}" class="bg-red-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-red-700 transition w-full sm:w-auto text-center">
                     <i class="fas fa-file-pdf mr-2"></i> Cetak CV / Profil
@@ -52,9 +101,10 @@
                 </div>
             @endif
 
-            <form action="{{ route('profil.update') }}" id="profile-form" method="POST" enctype="multipart/form-data">
+             <form action="{{ route('profil.update') }}" id="profile-form" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="cropped_image" id="cropped_image">
 
                 {{-- CARD 1: HEADER & FOTO --}}
                 <div class="bg-white shadow-xl rounded-3xl overflow-hidden mb-6 border border-slate-200">
@@ -64,7 +114,7 @@
                                  class="w-32 h-32 rounded-full border-4 border-white shadow-2xl object-cover">
                             <label class="absolute bottom-1 right-1 bg-white p-2.5 rounded-full shadow-lg cursor-pointer hover:scale-110 transition-transform">
                                 <i class="fas fa-camera text-blue-600"></i>
-                                <input type="file" name="profile_picture" class="hidden" onchange="previewImage(event)">
+                                <input type="file" id="profile_picture_input" name="profile_picture" class="hidden" accept="image/*">
                             </label>
                         </div>
                         <div class="text-white text-center md:text-left">
@@ -438,7 +488,21 @@
                 </div>
             </form>
         </div>
-    </main>
+    </div>
+
+    {{-- POPUP KANVAS CROPPER (BASED ON STANDAR INDUSTRI) --}}
+    <div id="crop-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center hidden z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center"><i class="fas fa-crop-alt text-blue-600 mr-2"></i>Sesuaikan Dimensi Foto</h3>
+            <div class="w-full h-80 bg-slate-900 overflow-hidden rounded-xl flex justify-center items-center">
+                <img id="image_to_crop" src="" class="max-w-full max-h-full">
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" id="btn-cancel-crop" class="px-4 py-2 bg-slate-200 text-slate-700 text-sm rounded-xl hover:bg-slate-300 transition">Batal</button>
+                <button type="button" id="btn-save-crop" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-xl hover:bg-blue-700 font-bold shadow-lg transition">Potong & Gunakan</button>
+            </div>
+        </div>
+    </div>
 
     {{-- TEMPLATES --}}
     <template id="pendidikan-template">
@@ -491,12 +555,6 @@
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     
     <script>
-        function previewImage(event) {
-            const reader = new FileReader();
-            reader.onload = function() { document.getElementById('preview-img').src = reader.result; }
-            reader.readAsDataURL(event.target.files[0]);
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             function setupDynamicForm(containerId, btnId, templateId, deleteClass) {
                 const container = document.getElementById(containerId);
@@ -521,4 +579,68 @@
             setupDynamicForm('pekerjaan-container', 'add-pekerjaan-btn', 'pekerjaan-template', '.delete-riwayat-btn');
         });
     </script>
+
+    @push('scripts')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let cropper = null;
+            const imageUpload = document.getElementById('profile_picture_input');
+            const cropModal = document.getElementById('crop-modal');
+            const imageToCrop = document.getElementById('image_to_crop');
+            const btnSaveCrop = document.getElementById('btn-save-crop');
+            const btnCancelCrop = document.getElementById('btn-cancel-crop');
+            const profilePreview = document.getElementById('preview-img');
+            const hiddenCroppedImage = document.getElementById('cropped_image');
+
+            if (imageUpload) {
+                imageUpload.addEventListener('change', function(e) {
+                    const files = e.target.files;
+                    if (files && files.length > 0) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            imageToCrop.src = event.target.result;
+                            cropModal.classList.remove('hidden');
+                            
+                            if (cropper) { cropper.destroy(); }
+                            
+                            cropper = new Cropper(imageToCrop, {
+                                aspectRatio: 1, // Memaksa rasio 1:1
+                                viewMode: 1,
+                                autoCropArea: 1,
+                                background: false
+                            });
+                        };
+                        reader.readAsDataURL(files[0]);
+                    }
+                });
+            }
+
+            if (btnCancelCrop) {
+                btnCancelCrop.addEventListener('click', function() {
+                    cropModal.classList.add('hidden');
+                    imageUpload.value = '';
+                    if (cropper) { cropper.destroy(); }
+                });
+            }
+
+            if (btnSaveCrop) {
+                btnSaveCrop.addEventListener('click', function() {
+                    const canvas = cropper.getCroppedCanvas({
+                        width: 300,
+                        height: 300,
+                    });
+                    
+                    const base64Image = canvas.toDataURL('image/png');
+                    
+                    profilePreview.src = base64Image;
+                    hiddenCroppedImage.value = base64Image;
+                    
+                    cropModal.classList.add('hidden');
+                    if (cropper) { cropper.destroy(); }
+                });
+            }
+        });
+    </script>
+    @endpush
 </x-layout-users>
