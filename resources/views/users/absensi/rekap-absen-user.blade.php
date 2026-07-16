@@ -15,20 +15,66 @@
             .rekap-page-wrapper { padding: 24px 24px 56px; }
         }
 
-        /* Back Button */
-        .rekap-back-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 7px 18px;
-            background: #fff;
-            border: 1.5px solid #dbeafe;
-            border-radius: 999px;
-            color: #1d4ed8;
-            font-size: 0.82rem; font-weight: 600;
-            text-decoration: none;
-            transition: all 0.18s;
-            margin-bottom: 16px;
+        /* == Modern Mesh Background == */
+        .mesh-bg {
+            background-color: #f0f6fc;
+            background-image: 
+                radial-gradient(at 40% 20%, rgba(147, 197, 253, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, rgba(167, 139, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, rgba(191, 219, 254, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
+                radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
+            background-attachment: fixed;
         }
-        .rekap-back-btn:hover { background: #eff6ff; }
+
+        /* Float animation */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float { animation: float 8s ease-in-out infinite; }
+        .animate-float-delayed { animation: float 10s ease-in-out infinite; animation-delay: 2s; }
+
+        /* == Modern Back Button == */
+        .btn-back-modern {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 8px 18px 8px 8px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 9999px;
+            color: #1e293b;
+            font-size: 0.9rem; font-weight: 700;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            margin-bottom: 24px;
+            width: fit-content;
+        }
+        .btn-back-modern:hover { 
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+            color: #1d4ed8;
+        }
+        .btn-back-modern .icon-circle {
+            width: 32px; height: 32px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #3b82f6;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            transition: transform 0.3s ease;
+        }
+        .btn-back-modern:hover .icon-circle {
+            transform: translateX(-3px);
+            background: #EFF6FF;
+        }
 
         /* Header Card */
         .rekap-header-card {
@@ -39,7 +85,8 @@
             position: relative;
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0, 27, 183, 0.15);
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         @media (min-width: 768px) {
             .rekap-header-card { padding: 32px; }
@@ -58,11 +105,11 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 20px;
         }
         @media (min-width: 768px) {
             .stats-grid {
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(3, 1fr);
                 gap: 16px;
             }
         }
@@ -74,86 +121,144 @@
 
         /* Stats Card */
         .stats-card {
-            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 1);
+            border-radius: 20px;
             padding: 16px;
-            color: #fff;
+            color: #1e293b;
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 94px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
+            min-height: 100px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .stats-card:hover { transform: translateY(-2px); }
+        .stats-card:hover { 
+            transform: translateY(-4px); 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            background: #fff;
+        }
         .stats-card::after {
             content: '';
             position: absolute;
-            top: -10px; right: -10px;
-            width: 50px; height: 50px;
+            top: -15px; right: -15px;
+            width: 65px; height: 65px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.12);
+            background: rgba(0,0,0,0.02);
+            pointer-events: none;
         }
         .stats-card-label {
             font-size: 0.72rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.05em;
-            opacity: 0.9;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            color: #64748b;
         }
         .stats-card-value {
-            font-size: 2.2rem; font-weight: 900;
-            line-height: 1;
+            font-size: 2rem; font-weight: 800;
+            line-height: 1.1;
+            color: #1e293b;
+            margin-top: 4px;
         }
         .stats-card-icon {
             position: absolute;
-            bottom: 12px; right: 12px;
-            font-size: 1.6rem;
-            opacity: 0.35;
+            bottom: 14px; right: 14px;
+            font-size: 1.8rem;
+            transition: all 0.25s;
+        }
+        .stats-card:hover .stats-card-icon {
+            transform: scale(1.15) rotate(-5deg);
         }
 
-        /* Card Colors */
-        .stats-hadir   { background: #10b981; }
-        .stats-sakit   { background: #f43f5e; }
-        .stats-izin    { background: #f59e0b; }
-        .stats-cuti    { background: #9333ea; }
-        .stats-lembur  { background: #4f46e5; }
-        .stats-alpa    { background: #64748b; }
+        /* Card Colors & Hover states */
+        .stats-hadir { border-left: 4px solid #10b981; }
+        .stats-hadir .stats-card-icon { color: #10b981; opacity: 0.25; }
+        .stats-hadir:hover { border-color: #10b981; }
+        
+        .stats-sakit { border-left: 4px solid #f43f5e; }
+        .stats-sakit .stats-card-icon { color: #f43f5e; opacity: 0.25; }
+        .stats-sakit:hover { border-color: #f43f5e; }
+        
+        .stats-izin { border-left: 4px solid #f59e0b; }
+        .stats-izin .stats-card-icon { color: #f59e0b; opacity: 0.25; }
+        .stats-izin:hover { border-color: #f59e0b; }
+        
+        .stats-cuti { border-left: 4px solid #9333ea; }
+        .stats-cuti .stats-card-icon { color: #9333ea; opacity: 0.25; }
+        .stats-cuti:hover { border-color: #9333ea; }
+        
+        .stats-lembur { border-left: 4px solid #4f46e5; }
+        .stats-lembur .stats-card-icon { color: #4f46e5; opacity: 0.25; }
+        .stats-lembur:hover { border-color: #4f46e5; }
+        
+        .stats-alpa { border-left: 4px solid #e11d48; }
+        .stats-alpa .stats-card-icon { color: #e11d48; opacity: 0.25; }
+        .stats-alpa:hover { border-color: #e11d48; }
 
-        /* Terlambat Bar */
-        .terlambat-bar {
-            background: linear-gradient(90deg, #f97316 0%, #ea580c 100%);
-            border-radius: 16px;
-            padding: 14px 20px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+        /* Glass Cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 1);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            padding: 24px;
             margin-bottom: 20px;
-            transition: all 0.2s;
         }
-        .terlambat-label {
-            font-size: 0.78rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.05em;
+        .glass-card-title {
+            font-size: 1.05rem; font-weight: 800; color: #1e293b;
+            margin-bottom: 16px;
             display: flex; align-items: center; gap: 8px;
-        }
-        .terlambat-value {
-            font-size: 1.3rem; font-weight: 900;
         }
 
-        /* Container Card */
-        .rekap-card {
-            background: #fff;
-            border-radius: 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            padding: 20px;
-            margin-bottom: 16px;
-            border: 1px solid #f1f5f9;
+        /* == Subpage Navigation Buttons == */
+        .subpage-nav-btn {
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            border: none;
+            outline: none;
+            transition: all 0.2s ease;
         }
-        .rekap-card-title {
-            font-size: 1rem; font-weight: 800; color: #111827;
-            margin-bottom: 14px;
-            display: flex; align-items: center; gap: 8px;
+        .subpage-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.6);
+            color: #1e293b;
+        }
+        .subpage-nav-btn.active {
+            background: #2563eb;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        }
+
+        /* Tab Filter Buttons */
+        .tab-btn {
+            background: #fff;
+            color: #64748b;
+            border: 1.5px solid #e2e8f0;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .tab-btn:hover {
+            background: #f8fafc;
+            color: #1e293b;
+            border-color: #cbd5e1;
+        }
+        .tab-btn.active {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
         /* Filter Form Controls */
@@ -182,412 +287,429 @@
         }
         .filter-btn:hover { background: #2563eb; }
 
-        /* Daily Logs */
-        .log-item {
-            background: #fff;
-            border-radius: 16px;
-            border: 1.5px solid #f1f5f9;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            margin-bottom: 12px;
-            position: relative;
-            overflow: hidden;
-            transition: border-color 0.15s;
+        /* == Riwayat Item == */
+        .riwayat-item {
+            display: flex; align-items: center; gap: 14px; padding: 16px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 1);
+            border-radius: 18px;
+            text-decoration: none; margin-bottom: 12px; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.01);
         }
-        .log-item:hover { border-color: #bfdbfe; }
-        .log-indicator {
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 5px;
+        .riwayat-item:hover { 
+            border-color: #bfdbfe; 
+            background: #fff; 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.08); 
         }
-        .log-header {
-            padding: 14px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #f8fafc;
-        }
-        .log-date-box {
-            display: flex; align-items: baseline; gap: 6px;
-        }
-        .log-day {
-            font-size: 1.15rem; font-weight: 800; color: #1f2937;
-        }
-        .log-month {
-            font-size: 0.78rem; font-weight: 600; color: #6b7280;
-            text-transform: uppercase;
-        }
-        .log-weekday {
-            font-size: 0.72rem; font-weight: 700;
-            text-transform: uppercase;
-        }
-        .log-badge {
-            font-size: 0.7rem; font-weight: 800;
-            padding: 4px 10px; border-radius: 999px;
+        .riwayat-badge { 
+            font-size: 0.75rem; 
+            font-weight: 800; 
+            padding: 6px 12px; 
+            border-radius: 999px; 
+            white-space: nowrap; 
+            margin-left: auto; 
             text-transform: uppercase;
             letter-spacing: 0.02em;
         }
-
-        /* Log Body */
-        .log-body {
-            padding: 14px 16px;
-        }
-        .log-time-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1px;
-            background: #f1f5f9;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-        }
-        .log-time-card {
-            background: #fff;
-            padding: 10px;
-            text-align: center;
-        }
-        .log-time-label {
-            display: block;
-            font-size: 0.65rem; font-weight: 700; color: #94a3b8;
-            text-transform: uppercase; margin-bottom: 2px;
-        }
-        .log-time-val {
-            font-size: 0.95rem; font-weight: 800; font-family: monospace;
-        }
-
-        /* Log Info */
-        .log-info-box {
-            margin-top: 10px;
-            padding: 10px 12px;
-            background: #f8fafc;
-            border-radius: 10px;
-            border: 1px solid #f1f5f9;
-            font-size: 0.78rem; color: #475569;
-            display: flex; align-items: flex-start; gap: 8px;
-            line-height: 1.4;
-        }
-
-        .log-action-btn {
-            width: 100%;
-            margin-top: 10px;
-            padding: 10px;
-            border: 1px solid #dbeafe;
-            background: #eff6ff;
-            color: #1d4ed8;
-            font-size: 0.78rem; font-weight: 700;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .log-action-btn:hover { background: #dbeafe; }
     </style>
     @endpush
 
-    <div class="bg-gray-50 sm:bg-gradient-to-br sm:from-sky-50 sm:to-blue-100 min-h-screen">
-        <div class="max-w-5xl mx-auto rekap-page-wrapper">
+    <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
+        {{-- Background Decorations --}}
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
+            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
+            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
+        </div>
 
-            {{-- TOMBOL KEMBALI --}}
-            <a href="{{ route('dashboard') }}" class="rekap-back-btn">
-                <i class="fas fa-arrow-left text-xs"></i>
-                Kembali
+        <div class="relative z-10 w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col rekap-page-wrapper">
+
+            {{-- TOMBOL KEMBALI MODERN --}}
+            <a href="{{ route('dashboard') }}" class="btn-back-modern">
+                <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                Kembali ke Dashboard
             </a>
 
-            {{-- 2. HEADER CARD --}}
-            <div class="rekap-header-card">
-                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 relative z-10">
-                    <div>
-                        <div class="mb-2">
-                            <span class="bg-white/20 backdrop-blur-md text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/20">
-                                Rekapitulasi
-                            </span>
-                        </div>
-                        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-1">
-                            Riwayat Absensi
-                        </h1>
-                        <p class="text-blue-100 opacity-90 text-[12px] md:text-sm max-w-md leading-relaxed">
-                            Pantau catatan kehadiran, keterlambatan, lembur, dan aktivitas harian Anda dalam satu periode.
-                        </p>
-                    </div>
+            {{-- Navigasi Halaman (Sub-tabs) --}}
+            <div class="flex items-center gap-2 mb-6 bg-white/60 backdrop-blur-md p-1.5 rounded-2xl border border-white max-w-sm shadow-sm relative z-20">
+                <button type="button" onclick="switchSubPage('ringkasan')" class="subpage-nav-btn active flex-1 py-2.5 text-xs font-bold rounded-xl transition duration-200" id="subnav-ringkasan">
+                    <i class="fas fa-chart-line mr-1.5"></i> Ringkasan
+                </button>
+                <button type="button" onclick="switchSubPage('riwayat')" class="subpage-nav-btn flex-1 py-2.5 text-xs font-bold rounded-xl transition duration-200" id="subnav-riwayat">
+                    <i class="fas fa-history mr-1.5"></i> Detail Riwayat
+                </button>
+            </div>
 
-                    {{-- Form Filter --}}
-                    <div class="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl w-full lg:w-auto min-w-[280px]">
-                        <form method="GET" action="{{ route('rekap_absen.index') }}">
-                            <div class="space-y-3">
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label class="block text-[9px] uppercase font-bold text-blue-200 mb-1">Bulan</label>
-                                        <select name="bulan" class="filter-select">
-                                            @foreach($daftarBulan as $num => $nama)
-                                                <option value="{{ $num }}" {{ $num == $bulanDipilih ? 'selected' : '' }}>{{ $nama }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[9px] uppercase font-bold text-blue-200 mb-1">Tahun</label>
-                                        <select name="tahun" class="filter-select">
-                                            @foreach($daftarTahun as $tahun)
-                                                <option value="{{ $tahun }}" {{ $tahun == $tahunDipilih ? 'selected' : '' }}>{{ $tahun }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <button type="submit" class="filter-btn">
-                                    <i class="fas fa-filter text-xs"></i> Tampilkan Data
-                                </button>
+            {{-- SUB-PAGE CONTENT: RINGKASAN --}}
+            <div id="subpage-content-ringkasan" class="space-y-6">
+                {{-- 2. HEADER CARD --}}
+                <div class="rekap-header-card">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 relative z-10">
+                        <div>
+                            <div class="mb-2">
+                                <span class="bg-white/20 backdrop-blur-md text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/20">
+                                    Rekapitulasi
+                                </span>
                             </div>
-                        </form>
+                            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-1">
+                                Riwayat Absensi
+                            </h1>
+                            <p class="text-blue-100 opacity-90 text-[12px] md:text-sm max-w-md leading-relaxed">
+                                Pantau catatan kehadiran, keterlambatan, lembur, dan aktivitas harian Anda dalam satu periode.
+                            </p>
+                        </div>
+
+                        {{-- Form Filter --}}
+                        <div class="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl w-full lg:w-auto min-w-[280px]">
+                            <form method="GET" action="{{ route('rekap_absen.index') }}">
+                                <div class="space-y-3">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-[9px] uppercase font-bold text-blue-200 mb-1">Bulan</label>
+                                            <select name="bulan" class="filter-select">
+                                                @foreach($daftarBulan as $num => $nama)
+                                                    <option value="{{ $num }}" {{ $num == $bulanDipilih ? 'selected' : '' }}>{{ $nama }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[9px] uppercase font-bold text-blue-200 mb-1">Tahun</label>
+                                            <select name="tahun" class="filter-select">
+                                                @foreach($daftarTahun as $tahun)
+                                                    <option value="{{ $tahun }}" {{ $tahun == $tahunDipilih ? 'selected' : '' }}>{{ $tahun }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="w-full py-2.5 bg-white text-blue-700 font-bold text-xs rounded-xl shadow-md hover:bg-blue-50 transition duration-200 flex items-center justify-center gap-2 border-none cursor-pointer">
+                                        <i class="fas fa-filter text-[10px]"></i> Tampilkan Data
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {{-- 3. GRID STATISTIK --}}
-            <div class="stats-grid">
-                {{-- Card Hadir --}}
-                <div class="stats-card stats-hadir">
-                    <p class="stats-card-label">Hadir</p>
-                    <span class="stats-card-value">{{ $rekap['hadir'] }}</span>
-                    <i class="fas fa-check-circle stats-card-icon"></i>
+                {{-- 3. GRID STATISTIK --}}
+                <div class="stats-grid">
+                    {{-- Card Hadir --}}
+                    <div class="stats-card stats-hadir">
+                        <p class="stats-card-label">Hadir</p>
+                        <span class="stats-card-value">{{ $rekap['hadir'] }}</span>
+                        <i class="fas fa-check-circle stats-card-icon"></i>
+                    </div>
+                    {{-- Card Sakit --}}
+                    <div class="stats-card stats-sakit">
+                        <p class="stats-card-label">Sakit</p>
+                        <span class="stats-card-value">{{ $rekap['sakit'] }}</span>
+                        <i class="fas fa-clinic-medical stats-card-icon"></i>
+                    </div>
+                    {{-- Card Izin --}}
+                    <div class="stats-card stats-izin">
+                        <p class="stats-card-label">Izin</p>
+                        <span class="stats-card-value">{{ $rekap['izin'] }}</span>
+                        <i class="fas fa-envelope-open-text stats-card-icon"></i>
+                    </div>
+                    {{-- Card Cuti --}}
+                    <div class="stats-card stats-cuti">
+                        <p class="stats-card-label">Cuti</p>
+                        <span class="stats-card-value">{{ $rekap['cuti'] }}</span>
+                        <i class="fas fa-plane-departure stats-card-icon"></i>
+                    </div>
+                    {{-- Card Lembur --}}
+                    <div class="stats-card stats-lembur">
+                        <p class="stats-card-label">Lembur</p>
+                        <span class="stats-card-value">{{ $rekap['lembur'] }}</span>
+                        <i class="fas fa-business-time stats-card-icon"></i>
+                    </div>
+                    {{-- Card Alpa --}}
+                    <div class="stats-card stats-alpa">
+                        <p class="stats-card-label">Alpa</p>
+                        <span class="stats-card-value">{{ $rekap['alpa'] }}</span>
+                        <i class="fas fa-user-slash stats-card-icon"></i>
+                    </div>
                 </div>
-                {{-- Card Sakit --}}
-                <div class="stats-card stats-sakit">
-                    <p class="stats-card-label">Sakit</p>
-                    <span class="stats-card-value">{{ $rekap['sakit'] }}</span>
-                    <i class="fas fa-clinic-medical stats-card-icon"></i>
-                </div>
-                {{-- Card Izin --}}
-                <div class="stats-card stats-izin">
-                    <p class="stats-card-label">Izin</p>
-                    <span class="stats-card-value">{{ $rekap['izin'] }}</span>
-                    <i class="fas fa-envelope-open-text stats-card-icon"></i>
-                </div>
-                {{-- Card Cuti --}}
-                <div class="stats-card stats-cuti">
-                    <p class="stats-card-label">Cuti</p>
-                    <span class="stats-card-value">{{ $rekap['cuti'] }}</span>
-                    <i class="fas fa-plane-departure stats-card-icon"></i>
-                </div>
-                {{-- Card Lembur --}}
-                <div class="stats-card stats-lembur">
-                    <p class="stats-card-label">Lembur</p>
-                    <span class="stats-card-value">{{ $rekap['lembur'] }}</span>
-                    <i class="fas fa-business-time stats-card-icon"></i>
-                </div>
-                {{-- Card Alpa --}}
-                <div class="stats-card stats-alpa">
-                    <p class="stats-card-label">Alpa</p>
-                    <span class="stats-card-value">{{ $rekap['alpa'] }}</span>
-                    <i class="fas fa-user-slash stats-card-icon"></i>
-                </div>
-            </div>
 
-            {{-- Card Terlambat (Orange Bar) --}}
-            <div class="terlambat-bar">
-                <div class="terlambat-label">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Total Terlambat</span>
-                </div>
                 @php
                     $parts = explode(' ', $rekap['terlambat_formatted']);
                     $jam = isset($parts[0]) ? $parts[0] : 0;
                     $menit = isset($parts[2]) ? $parts[2] : 0;
+                    $hariKerjaAktif = collect($detailHarian)->filter(fn($item) => !in_array(strtolower($item->status), ['libur']))->count();
                 @endphp
-                <span class="terlambat-value">{{ $jam }}j {{ $menit }}m</span>
-            </div>
 
-            {{-- 4. CHART SECTION --}}
-            <div class="rekap-card">
-                <h3 class="rekap-card-title">
-                    <i class="fas fa-chart-pie text-blue-500"></i>
-                    <span>Visualisasi Kehadiran</span>
-                </h3>
-                <div class="w-full h-60 relative mt-4">
-                    <canvas id="rekapAbsensiChart"></canvas>
-                </div>
-            </div>
+                {{-- 4. CHART & SUMMARY BLOCK --}}
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                    {{-- Chart Card --}}
+                    <div class="glass-card lg:col-span-2 mb-0 flex flex-col justify-between h-full">
+                        <h3 class="glass-card-title mb-2">
+                            <i class="fas fa-chart-pie text-blue-500"></i>
+                            <span>Visualisasi Kehadiran</span>
+                        </h3>
+                        <div class="w-full h-44 relative mt-2">
+                            <canvas id="rekapAbsensiChart"></canvas>
+                        </div>
+                    </div>
 
-            {{-- 5. DETAIL HARIAN --}}
-            <div class="rekap-card" style="padding: 0; overflow: hidden; background: transparent; box-shadow: none; border: none;">
-                <div class="flex items-center justify-between mb-3 px-1">
-                    <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
-                        <span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg text-xs"><i class="fas fa-list"></i></span>
-                        Detail Harian
-                    </h3>
-                </div>
+                    {{-- Informasi & Ringkasan Kehadiran --}}
+                    <div class="glass-card mb-0 flex flex-col justify-between h-full">
+                        <div>
+                            <h3 class="glass-card-title mb-3">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                                <span>Informasi Kehadiran</span>
+                            </h3>
+                            
+                            {{-- Row Widgets --}}
+                            <div class="grid grid-cols-2 gap-3 mt-2">
+                                {{-- Akumulasi Terlambat --}}
+                                <div class="bg-orange-50/60 border border-orange-100 rounded-xl p-3 flex flex-col justify-between min-h-[90px] shadow-sm">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[9px] uppercase font-bold text-orange-700 tracking-wider">Terlambat</span>
+                                        <span class="text-orange-500 text-xs"><i class="fas fa-clock"></i></span>
+                                    </div>
+                                    <div>
+                                        <span class="text-base font-extrabold text-slate-800">{{ $jam }}</span> <span class="text-[10px] font-bold text-slate-400">J</span>
+                                        <span class="text-base font-extrabold text-slate-800 ml-1">{{ $menit }}</span> <span class="text-[10px] font-bold text-slate-400">M</span>
+                                    </div>
+                                    <p class="text-[8px] text-orange-600 font-semibold">Bulan ini</p>
+                                </div>
 
-                {{-- DESKTOP VIEW (TABLE) --}}
-                <div class="hidden md:block bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-gray-50 text-gray-500 uppercase font-bold text-[10px] tracking-widest border-b border-gray-100">
-                            <tr>
-                                <th class="px-6 py-4">Tanggal</th>
-                                <th class="px-6 py-4 text-center">Status</th>
-                                <th class="px-6 py-4 text-center">Jam Kerja</th>
-                                <th class="px-6 py-4 text-center">Aktivitas</th>
-                                <th class="px-6 py-4">Keterangan</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 bg-white">
-                            @forelse($detailHarian as $item)
-                                @php
-                                    $isLate = false;
-                                    if ($item->status == 'hadir' && $item->jam_masuk) {
+                                {{-- Total Hari Kerja --}}
+                                <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-3 flex flex-col justify-between min-h-[90px] shadow-sm">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[9px] uppercase font-bold text-blue-700 tracking-wider">Hari Kerja</span>
+                                        <span class="text-blue-500 text-xs"><i class="fas fa-calendar-alt"></i></span>
+                                    </div>
+                                    <div>
+                                        <span class="text-base font-extrabold text-slate-800">{{ $hariKerjaAktif }}</span> <span class="text-[10px] font-bold text-slate-400">Hari</span>
+                                    </div>
+                                    <p class="text-[8px] text-blue-600 font-semibold">Periode ini</p>
+                                </div>
+                            </div>
+
+                            @php
+                                $hadirLembur = $rekap['hadir'] + $rekap['lembur'];
+                                $persentaseKehadiran = $hariKerjaAktif > 0 ? min(100, round(($hadirLembur / $hariKerjaAktif) * 100)) : 0;
+
+                                // Hitung data jam masuk rata-rata
+                                $checkIns = collect($detailHarian)->filter(fn($item) => $item->jam_masuk && in_array(strtolower($item->status), ['hadir', 'lembur']));
+                                $terlambatCount = 0;
+                                $rataMasuk = '-';
+                                if ($checkIns->isNotEmpty()) {
+                                    $totalMinutes = $checkIns->map(function($item) {
+                                        $time = \Carbon\Carbon::parse($item->jam_masuk);
+                                        return ($time->hour * 60) + $time->minute;
+                                    })->average();
+                                    $avgHour = floor($totalMinutes / 60);
+                                    $avgMin = round($totalMinutes % 60);
+                                    $rataMasuk = sprintf('%02d:%02d WIB', $avgHour, $avgMin);
+                                    
+                                    // Hitung keterlambatan riil
+                                    $terlambatCount = $checkIns->filter(function($item) {
                                          $waktuMasuk = \Carbon\Carbon::parse($item->jam_masuk, 'Asia/Jakarta');
                                          $batas = \Carbon\Carbon::createFromTimeString('08:00:00', 'Asia/Jakarta');
-                                         $isLate = $waktuMasuk->gt($batas);
-                                    }
+                                         return $waktuMasuk->gt($batas);
+                                    })->count();
+                                }
+                                $tepatWaktuCount = max(0, $rekap['hadir'] - $terlambatCount);
+                            @endphp
+
+                            {{-- Persentase Kehadiran --}}
+                            <div class="mt-4 bg-gray-50/50 border border-gray-100 rounded-xl p-3">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Tingkat Kehadiran</span>
+                                    <span class="text-xs font-extrabold text-blue-600">{{ $persentaseKehadiran }}%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: {{ $persentaseKehadiran }}%"></div>
+                                </div>
+                            </div>
+
+                            {{-- Analisis Ketepatan Waktu --}}
+                            <div class="mt-4">
+                                <span class="text-[9px] uppercase font-extrabold text-slate-400 tracking-wider block mb-2">Analisis Ketepatan Waktu</span>
+                                <div class="space-y-2">
+                                    {{-- Rata-rata jam masuk --}}
+                                    <div class="flex items-center justify-between bg-slate-50/60 px-3 py-2 rounded-xl border border-slate-100">
+                                        <span class="text-[10px] font-bold text-slate-500 flex items-center gap-1.5">
+                                            <i class="fas fa-business-time text-slate-400"></i> Rata-rata Jam Masuk
+                                        </span>
+                                        <span class="text-xs font-black text-slate-700 font-mono">{{ $rataMasuk }}</span>
+                                    </div>
                                     
-                                    $rowClass = $item->is_weekend ? 'bg-slate-50/70' : 'hover:bg-blue-50/20 transition';
-                                    
-                                    $statusStyle = match(strtolower($item->status)) {
-                                        'hadir'  => 'background:#dcfce7; color:#16a34a; border-color:#bbf7d0;',
-                                        'sakit'  => 'background:#fee2e2; color:#dc2626; border-color:#fecaca;',
-                                        'izin'   => 'background:#fef9c3; color:#ca8a04; border-color:#fef08a;',
-                                        'cuti'   => 'background:#f3e8ff; color:#9333ea; border-color:#e9d5ff;',
-                                        'lembur' => 'background:#e0e7ff; color:#4f46e5; border-color:#c7d2fe;',
-                                        default  => 'background:#f3f4f6; color:#4b5563; border-color:#e5e7eb;',
-                                    };
-                                @endphp
-                                <tr class="{{ $rowClass }}">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-bold text-gray-800">{{ $item->tanggal->format('d') }}</span>
-                                            <span class="text-xs text-gray-400 font-medium">{{ $item->tanggal->translatedFormat('F Y') }}</span>
-                                            <span class="text-[9px] font-bold uppercase mt-0.5 {{ $item->is_weekend ? 'text-red-400' : 'text-blue-500' }}">
-                                                {{ $item->tanggal->translatedFormat('l') }}
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="flex items-center justify-between bg-emerald-50/40 px-2.5 py-1.5 rounded-lg border border-emerald-100/30">
+                                            <span class="text-[10px] font-semibold text-emerald-700 flex items-center gap-1.5">
+                                                <i class="fas fa-check-circle text-[8px]"></i> Tepat Waktu
                                             </span>
+                                            <span class="text-[10px] font-bold text-emerald-700">{{ $tepatWaktuCount }} Hari</span>
                                         </div>
-                                    </td>
-                                    <td class="px-6 py-4 text-center align-middle">
-                                        <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border" style="{{ $statusStyle }}">
-                                            {{ $item->status }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-center align-middle">
-                                        <div class="inline-flex items-center bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100 shadow-sm">
-                                            <span class="font-mono font-bold text-emerald-600 text-xs">{{ $item->jam_masuk ? \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') : '--:--' }}</span>
-                                            <span class="text-gray-300 mx-2">|</span>
-                                            <span class="font-mono font-bold text-red-500 text-xs">{{ $item->jam_keluar ? \Carbon\Carbon::parse($item->jam_keluar)->format('H:i') : '--:--' }}</span>
+                                        <div class="flex items-center justify-between bg-orange-50/40 px-2.5 py-1.5 rounded-lg border border-orange-100/30">
+                                            <span class="text-[10px] font-semibold text-orange-700 flex items-center gap-1.5">
+                                                <i class="fas fa-exclamation-circle text-[8px]"></i> Terlambat
+                                            </span>
+                                            <span class="text-[10px] font-bold text-orange-700">{{ $terlambatCount }} Kali</span>
                                         </div>
-                                    </td>
-                                    <td class="px-6 py-4 text-center align-middle">
-                                        @if($item->jumlah_aktivitas > 0)
-                                            <button onclick="openModalAktivitas('{{ $item->tanggal->toDateString() }}')" class="group inline-flex items-center px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all">
-                                                <i class="fas fa-clipboard-list mr-1.5"></i> {{ $item->jumlah_aktivitas }} Log
-                                            </button>
-                                        @else
-                                            <span class="text-gray-300 text-xs italic">-</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 align-middle">
-                                        <div class="text-xs text-gray-600 truncate max-w-xs" title="{{ $item->keterangan }}">
-                                            @if($isLate)
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 mr-1 border border-orange-200">Terlambat</span>
-                                            @endif
-                                            {{ $item->keterangan ?? '-' }}
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400">
-                                        <div class="flex flex-col items-center">
-                                            <i class="far fa-calendar-times text-2xl mb-2 opacity-50"></i>
-                                            <span>Tidak ada data absensi untuk periode ini.</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-[9px] text-slate-400 leading-relaxed border-t border-slate-100 pt-2 mt-4">
+                            Hari kerja aktif mengecualikan akhir pekan & libur nasional.
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                {{-- MOBILE VIEW (CLEAN COMPACT CARDS) --}}
-                <div class="block md:hidden space-y-3">
-                    @forelse($detailHarian as $item)
-                        @php
-                            $isLate = false;
-                            if ($item->status == 'hadir' && $item->jam_masuk) {
-                                $waktuMasuk = \Carbon\Carbon::parse($item->jam_masuk, 'Asia/Jakarta');
-                                $batas = \Carbon\Carbon::createFromTimeString('08:00:00', 'Asia/Jakarta');
-                                $isLate = $waktuMasuk->gt($batas);
-                            }
-
-                            $logColor = match(strtolower($item->status)) {
-                                'hadir'  => '#10b981',
-                                'sakit'  => '#f43f5e',
-                                'izin'   => '#f59e0b',
-                                'cuti'   => '#9333ea',
-                                'lembur' => '#4f46e5',
-                                default  => '#64748b',
-                            };
-
-                            $badgeStyle = match(strtolower($item->status)) {
-                                'hadir'  => 'background:#dcfce7; color:#16a34a;',
-                                'sakit'  => 'background:#fee2e2; color:#dc2626;',
-                                'izin'   => 'background:#fef9c3; color:#ca8a04;',
-                                'cuti'   => 'background:#f3e8ff; color:#9333ea;',
-                                'lembur' => 'background:#e0e7ff; color:#4f46e5;',
-                                default  => 'background:#f3f4f6; color:#4b5563;',
-                            };
-                        @endphp
+            {{-- SUB-PAGE CONTENT: RIWAYAT --}}
+            <div id="subpage-content-riwayat" class="hidden space-y-6">
+                {{-- 5. DETAIL HARIAN --}}
+                <div class="glass-card" style="padding: 24px; overflow: hidden;">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
+                        <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
+                            <span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg text-xs"><i class="fas fa-list"></i></span>
+                            Detail Harian
+                        </h3>
                         
-                        <div class="log-item">
-                            <div class="log-indicator" style="background: {{ $logColor }}"></div>
+                        {{-- Tabs Filter --}}
+                        <div class="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent -mx-4 px-4 md:mx-0 md:px-0 max-w-full">
+                            <button type="button" onclick="filterAbsen('semua')" class="tab-btn active shrink-0" id="tab-semua">
+                                <i class="fas fa-calendar-days text-[10px]"></i> Semua ({{ count($detailHarian) }})
+                            </button>
+                            <button type="button" onclick="filterAbsen('hadir')" class="tab-btn shrink-0" id="tab-hadir">
+                                <i class="fas fa-user-check text-[10px]"></i> Hadir/Lembur ({{ $rekap['hadir'] + $rekap['lembur'] }})
+                            </button>
+                            <button type="button" onclick="filterAbsen('izin')" class="tab-btn shrink-0" id="tab-izin">
+                                <i class="fas fa-file-signature text-[10px]"></i> Izin/Sakit/Cuti ({{ $rekap['izin'] + $rekap['sakit'] + $rekap['cuti'] }})
+                            </button>
+                            <button type="button" onclick="filterAbsen('alpa')" class="tab-btn shrink-0" id="tab-alpa">
+                                <i class="fas fa-user-times text-[10px]"></i> Alpa ({{ $rekap['alpa'] }})
+                            </button>
+                            <button type="button" onclick="filterAbsen('libur')" class="tab-btn shrink-0" id="tab-libur">
+                                <i class="fas fa-mug-hot text-[10px]"></i> Libur ({{ collect($detailHarian)->filter(fn($item) => strtolower($item->status) === 'libur')->count() }})
+                            </button>
+                        </div>
+                    </div>
+                         {{-- UNIFIED RIWAYAT LIST (DESKTOP & MOBILE) --}}
+                    <div class="space-y-3 mt-4">
+                        @forelse($detailHarian as $item)
+                            @php
+                                $status = strtolower($item->status);
+                                $isLate = false;
+                                if ($status === 'hadir' && $item->jam_masuk) {
+                                     $waktuMasuk = \Carbon\Carbon::parse($item->jam_masuk, 'Asia/Jakarta');
+                                     $batas = \Carbon\Carbon::createFromTimeString('08:00:00', 'Asia/Jakarta');
+                                     $isLate = $waktuMasuk->gt($batas);
+                                }
+                                
+                                $iconClass = match($status) {
+                                    'hadir'  => 'fas fa-check text-xs',
+                                    'lembur' => 'fas fa-business-time text-xs',
+                                    'sakit'  => 'fas fa-briefcase-medical text-xs',
+                                    'izin'   => 'fas fa-envelope text-xs',
+                                    'cuti'   => 'fas fa-plane text-xs',
+                                    'alpa'   => 'fas fa-user-slash text-xs',
+                                    'libur'  => 'fas fa-bed text-xs',
+                                    default  => 'fas fa-info text-xs',
+                                };
+                                $iconBox = match($status) {
+                                    'hadir'  => 'bg-emerald-100 text-emerald-600',
+                                    'lembur' => 'bg-indigo-100 text-indigo-600',
+                                    'sakit'  => 'bg-rose-100 text-rose-600',
+                                    'izin'   => 'bg-amber-100 text-amber-600',
+                                    'cuti'   => 'bg-purple-100 text-purple-600',
+                                    'alpa'   => 'bg-red-100 text-red-600',
+                                    'libur'  => 'bg-slate-100 text-slate-500',
+                                    default  => 'bg-slate-100 text-slate-600',
+                                };
+                                $badgeStyle = match($status) {
+                                    'hadir'  => 'bg-emerald-100 text-emerald-700 border border-emerald-200',
+                                    'lembur' => 'bg-indigo-100 text-indigo-700 border border-indigo-200',
+                                    'sakit'  => 'bg-rose-100 text-rose-700 border border-rose-200',
+                                    'izin'   => 'bg-amber-100 text-amber-700 border border-amber-200',
+                                    'cuti'   => 'bg-purple-100 text-purple-700 border border-purple-200',
+                                    'alpa'   => 'bg-red-100 text-red-700 border border-red-200',
+                                    'libur'  => 'bg-slate-100 text-slate-700 border border-slate-200',
+                                    default  => 'bg-slate-100 text-slate-700 border border-slate-200',
+                                };
+                            @endphp
                             
-                            {{-- Header --}}
-                            <div class="log-header">
-                                <div class="log-date-box">
-                                    <span class="log-day">{{ $item->tanggal->format('d') }}</span>
-                                    <span class="log-month">{{ $item->tanggal->translatedFormat('M Y') }}</span>
-                                    <span class="log-weekday {{ $item->is_weekend ? 'text-red-500' : 'text-blue-600' }}">
-                                        &bull; {{ $item->tanggal->translatedFormat('l') }}
-                                    </span>
+                            <div class="riwayat-item absen-row" data-status="{{ $status }}">
+                                {{-- Status Icon --}}
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center {{ $iconBox }} flex-shrink-0">
+                                    <i class="{{ $iconClass }}"></i>
                                 </div>
-                                <span class="log-badge" style="{{ $badgeStyle }}">
-                                    {{ $item->status }}
-                                </span>
-                            </div>
-
-                            {{-- Body --}}
-                            <div class="log-body">
-                                <div class="log-time-grid">
-                                    <div class="log-time-card">
-                                        <span class="log-time-label">Masuk</span>
-                                        <span class="log-time-val text-emerald-600">
-                                            {{ $item->jam_masuk ? \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') : '--:--' }}
-                                        </span>
-                                    </div>
-                                    <div class="log-time-card">
-                                        <span class="log-time-label">Keluar</span>
-                                        <span class="log-time-val text-red-500">
-                                            {{ $item->jam_keluar ? \Carbon\Carbon::parse($item->jam_keluar)->format('H:i') : '--:--' }}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                @if($item->keterangan || $isLate)
-                                    <div class="log-info-box">
-                                        <i class="fas fa-info-circle text-blue-400 mt-0.5"></i>
-                                        <div>
-                                            @if($isLate) <span class="text-orange-600 font-bold block mb-0.5">Terlambat</span> @endif
-                                            {{ $item->keterangan ?? 'Tidak ada keterangan.' }}
+                                
+                                {{-- Main Info --}}
+                                <div class="flex-grow min-w-0 md:flex md:items-center md:justify-between md:gap-4">
+                                    <div>
+                                        <p class="font-bold text-slate-800 text-sm">
+                                            {{ $item->tanggal->translatedFormat('l, d F Y') }}
+                                        </p>
+                                        
+                                        {{-- Subtext/Keterangan --}}
+                                        <div class="flex flex-wrap items-center gap-2 mt-1">
+                                            @if(in_array($status, ['hadir', 'lembur']) && ($item->jam_masuk || $item->jam_keluar))
+                                                <span class="text-xs text-slate-500">
+                                                    Masuk: <strong class="text-slate-700 font-mono">{{ $item->jam_masuk ? \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') : '--:--' }}</strong> 
+                                                    | Keluar: <strong class="text-slate-700 font-mono">{{ $item->jam_keluar ? \Carbon\Carbon::parse($item->jam_keluar)->format('H:i') : '--:--' }}</strong>
+                                                </span>
+                                            @else
+                                                <span class="text-xs text-slate-400 italic">
+                                                    @if($status === 'libur')
+                                                        {{ $item->keterangan ?? 'Hari Libur / Akhir Pekan' }}
+                                                    @elseif($status === 'cuti')
+                                                        Cuti Tahunan
+                                                    @elseif($status === 'sakit')
+                                                        Sakit / Istirahat
+                                                    @elseif($status === 'izin')
+                                                        Izin Tidak Masuk
+                                                    @elseif($status === 'alpa')
+                                                        Alpa (Tanpa Keterangan)
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </span>
+                                            @endif
+                                            
+                                            {{-- Keterangan Terlambat --}}
+                                            @if($isLate)
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200">
+                                                    Terlambat
+                                                </span>
+                                            @endif
                                         </div>
                                     </div>
-                                @endif
 
-                                @if($item->jumlah_aktivitas > 0)
-                                    <button onclick="openModalAktivitas('{{ $item->tanggal->toDateString() }}')" class="log-action-btn">
-                                        <i class="fas fa-eye text-xs"></i> Lihat {{ $item->jumlah_aktivitas }} Catatan Aktivitas
-                                    </button>
-                                @endif
+                                    {{-- Activity Logs link --}}
+                                    <div class="mt-2 md:mt-0">
+                                        @if($item->jumlah_aktivitas > 0)
+                                            <button type="button" onclick="openModalAktivitas('{{ $item->tanggal->toDateString() }}')" class="inline-flex items-center gap-1.5 text-xs text-blue-600 font-bold hover:underline bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100 cursor-pointer">
+                                                <i class="fas fa-clipboard-list text-[10px]"></i>
+                                                Lihat {{ $item->jumlah_aktivitas }} Aktivitas
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                                
+                                {{-- Right badge status --}}
+                                <span class="riwayat-badge {{ $badgeStyle }}">{{ $item->status }}</span>
                             </div>
-                        </div>
-                    @empty
-                        <div class="riwayat-empty" style="background:#fff; border: 2px dashed #e2e8f0; border-radius: 16px; padding: 32px 16px; text-align: center;">
+                        @empty
+                            <div class="riwayat-empty" style="background:#fff; border: 2px dashed #e2e8f0; border-radius: 16px; padding: 32px 16px; text-align: center;">
+                                <i class="far fa-calendar-times text-3xl text-gray-300 mb-2 block"></i>
+                                <p class="text-gray-500 text-sm font-medium">Tidak ada data absensi untuk periode ini.</p>
+                            </div>
+                        @endforelse
+                        
+                        <div id="empty-state-row" class="hidden riwayat-empty" style="background:#fff; border: 2px dashed #e2e8f0; border-radius: 16px; padding: 32px 16px; text-align: center;">
                             <i class="far fa-calendar-times text-3xl text-gray-300 mb-2 block"></i>
-                            <p class="text-gray-500 text-sm font-medium">Tidak ada data absensi untuk periode ini.</p>
+                            <p class="text-gray-500 text-sm font-medium">Tidak ada data absensi untuk filter ini.</p>
                         </div>
-                    @endforelse
+                    </div>
                 </div>
             </div>
 
@@ -714,6 +836,76 @@
             function closeModalAktivitas() {
                 modal.classList.add('hidden');
                 document.body.style.overflow = 'auto';
+            }
+
+            function switchSubPage(tabName) {
+                // 1. Update navigation tab active class
+                document.querySelectorAll('.subpage-nav-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                const activeNav = document.getElementById('subnav-' + tabName);
+                if (activeNav) {
+                    activeNav.classList.add('active');
+                }
+
+                // 2. Hide/Show page contents
+                const ringkasanContent = document.getElementById('subpage-content-ringkasan');
+                const riwayatContent = document.getElementById('subpage-content-riwayat');
+                
+                if (tabName === 'ringkasan') {
+                    ringkasanContent.classList.remove('hidden');
+                    riwayatContent.classList.add('hidden');
+                } else if (tabName === 'riwayat') {
+                    ringkasanContent.classList.add('hidden');
+                    riwayatContent.classList.remove('hidden');
+                }
+            }
+
+            function filterAbsen(type) {
+                // 1. Update active tab styling
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                const activeBtn = document.getElementById('tab-' + type);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+                
+                // 2. Filter unified list items
+                const rows = document.querySelectorAll('.absen-row');
+                let visibleRows = 0;
+                rows.forEach(row => {
+                    const status = row.getAttribute('data-status');
+                    let show = false;
+                    if (type === 'semua') {
+                        show = true;
+                    } else if (type === 'hadir') {
+                        show = (status === 'hadir' || status === 'lembur');
+                    } else if (type === 'izin') {
+                        show = (status === 'izin' || status === 'sakit' || status === 'cuti');
+                    } else if (type === 'alpa') {
+                        show = (status === 'alpa');
+                    } else if (type === 'libur') {
+                        show = (status === 'libur');
+                    }
+                    
+                    if (show) {
+                        row.style.display = 'flex';
+                        visibleRows++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const emptyRow = document.getElementById('empty-state-row');
+                if (emptyRow) {
+                    if (visibleRows === 0 && rows.length > 0) {
+                        emptyRow.classList.remove('hidden');
+                    } else {
+                        emptyRow.classList.add('hidden');
+                    }
+                }
             }
         </script>
         <style>
