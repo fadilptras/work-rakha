@@ -13,41 +13,45 @@
         ::-webkit-scrollbar-thumb { background: #93c5fd; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #60a5fa; }
         
-        /* == Kalender (Ukuran Asli Dipertahankan) == */
+        /* == Kalender (Ukuran Kompak Dinonaktifkan Baris Ekstra) == */
         .fc {
             border: none !important;
-            background: #F0F9FF; /* bg-blue-50 */
+            background: transparent !important;
             border-radius: 1rem;
-            padding: 1rem;
+            padding: 0.25rem;
         }
-        .fc .fc-toolbar-title { font-size: 1.3rem; font-weight: 700; color: #111827; }
+        .fc .fc-toolbar {
+            margin-bottom: 0.25rem !important;
+        }
+        .fc .fc-toolbar-title { font-size: 1rem; font-weight: 800; color: #0f172a; }
         .fc .fc-button {
-            background: transparent !important; border: none !important; box-shadow: none !important;
-            color: #6B7280; transition: all 0.2s; padding: 0 !important;
-            width: 38px; height: 38px; display: flex; justify-content: center; align-items: center; border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.8) !important; border: 1px solid rgba(0, 0, 0, 0.08) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.01) !important;
+            color: #334155 !important; transition: all 0.2s; padding: 0 !important;
+            width: 28px; height: 28px; display: flex; justify-content: center; align-items: center; border-radius: 9999px;
         }
-        .fc .fc-button:hover { color: #111827; background: #DBEAFE !important; transform: scale(1.1); }
-        .fc .fc-button .fc-icon { font-size: 1.25rem; }
-        .fc .fc-col-header-cell { border: none !important; padding: 6px 0; }
-        .fc .fc-col-header-cell-cushion { color: #6b7280; font-weight: 600; font-size: 0.9rem; }
+        .fc .fc-button:hover { color: #166534 !important; background: #dcfce7 !important; transform: scale(1.1); }
+        .fc .fc-button .fc-icon { font-size: 0.85rem; }
+        .fc .fc-col-header-cell { border: none !important; padding: 2px 0; }
+        .fc .fc-col-header-cell-cushion { color: #166534; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; }
         .fc .fc-daygrid-day-frame {
-            display: flex; /* Aktifkan flexbox untuk kontrol layout lebih baik */
+            display: flex; 
             flex-direction: column;
             align-items: center;
-            padding-top: 4px;
+            padding-top: 1px;
+            min-height: unset !important;
         }
         .fc .fc-daygrid-day-number {
-            width: 34px; height: 34px; line-height: 34px; text-align: center; border-radius: 9999px;
-            font-weight: 500; transition: all 0.2s; font-size: 0.9rem; color: #374151;
-            flex-shrink: 0; /* Pastikan nomor tidak mengecil */
+            width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 9999px;
+            font-weight: 600; transition: all 0.2s; font-size: 0.7rem; color: #1e293b;
+            flex-shrink: 0; 
         }
-        .fc .fc-day-other .fc-daygrid-day-number { color: #d1d5db; }
-        .fc .fc-daygrid-day:not(.fc-day-other):hover .fc-daygrid-day-number { background-color: #DBEAFE; }
+        .fc .fc-day-other .fc-daygrid-day-number { color: #94a3b8; }
+        .fc .fc-daygrid-day:not(.fc-day-other):hover .fc-daygrid-day-number { background-color: rgba(22, 101, 52, 0.1); color: #166534; }
         .fc .fc-day-today .fc-daygrid-day-number {
-            font-weight: 700; color: #1D4ED8; background: #BFDBFE;
-            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
+            font-weight: 700; color: #ffffff !important; background: linear-gradient(135deg, #15803d, #166534) !important;
+            box-shadow: 0 1px 4px rgba(22, 101, 52, 0.15);
         }
-        .fc .selected-date .fc-daygrid-day-number { background: #111827; color: #fff !important; font-weight: 700; }
+        .fc .selected-date .fc-daygrid-day-number { background: #0f172a !important; color: #fff !important; font-weight: 700; }
         
         /* Jarak Scrollbar Kalender dibuat seimbang */
         .fc .fc-view-harness {
@@ -202,11 +206,13 @@
 
         /* == Weekly Strip Kalender Mobile == */
         .weekly-strip {
-            background: #fff;
-            border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 1.5rem;
             padding: 14px 16px;
-            box-shadow: 0 2px 12px rgba(59,130,246,0.08);
-            border: 1px solid #e0e7ef;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 1);
         }
         .weekly-strip .week-header {
             display: flex;
@@ -318,8 +324,8 @@
 
         /* == Welcome Card Mobile == */
         .mobile-welcome-card {
-            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 60%, #3b82f6 100%);
-            border-radius: 1rem;
+            background: linear-gradient(135deg, #001BB7 0%, #1d4ed8 60%, #3b82f6 100%);
+            border-radius: 1.5rem;
             padding: 18px 20px;
             color: #fff;
             display: flex;
@@ -370,11 +376,31 @@
             border: 1px solid #dbeafe;
         }
 
+        /* == Add Agenda Button Override == */
+        #add-agenda-btn, #mobile-add-agenda-btn {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+            color: #ffffff !important;
+            border: none !important;
+            box-shadow: 0 4px 12px rgba(4, 120, 87, 0.25) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        #add-agenda-btn:hover, #mobile-add-agenda-btn:hover {
+            background: linear-gradient(135deg, #047857 0%, #065f46 100%) !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 6px 16px rgba(4, 120, 87, 0.4) !important;
+        }
+        #add-agenda-btn i, #mobile-add-agenda-btn i {
+            color: #ffffff !important;
+        }
+
         /* == Modern Agenda & Detail Modals == */
         #agenda-modal, #agenda-detail-modal {
             z-index: 1000 !important;
-            backdrop-filter: blur(12px);
-            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            background: rgba(15, 23, 42, 0.3);
         }
 
         .modal-card {
@@ -561,6 +587,69 @@
             animation: float 10s ease-in-out infinite;
             animation-delay: 2s;
         }
+
+        /* == Custom Card Classes == */
+        .card-pastel-green-cal {
+            background: linear-gradient(135deg, #f7fdf9 0%, #e6f7ec 100%) !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03) !important;
+        }
+        .card-pastel-green-age {
+            background: linear-gradient(135deg, #f7fdf9 0%, #e6f7ec 100%) !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03) !important;
+        }
+        .card-navy-blue {
+            background: linear-gradient(135deg, #010825 0%, #06154c 100%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: 0 10px 30px rgba(2, 11, 48, 0.25) !important;
+        }
+
+        /* == Custom Soft Pastel Buttons for Absensi == */
+        .btn-absen-soft {
+            background: #eff6ff !important;
+            border: 1.5px solid #dbeafe !important;
+            color: #1d4ed8 !important;
+            box-shadow: 0 4px 10px rgba(29, 78, 216, 0.04) !important;
+        }
+        .btn-absen-soft:hover {
+            background: #dbeafe !important;
+            border-color: #bfdbfe !important;
+            box-shadow: 0 6px 15px rgba(29, 78, 216, 0.08) !important;
+        }
+        .btn-aktivitas-soft {
+            background: #faf5ff !important;
+            border: 1.5px solid #e9d5ff !important;
+            color: #7e22ce !important;
+            box-shadow: 0 4px 10px rgba(126, 34, 206, 0.04) !important;
+        }
+        .btn-aktivitas-soft:hover {
+            background: #f3e8ff !important;
+            border-color: #d8b4fe !important;
+            box-shadow: 0 6px 15px rgba(126, 34, 206, 0.08) !important;
+        }
+        .btn-cuti-soft {
+            background: #f0fdf4 !important;
+            border: 1.5px solid #bbf7d0 !important;
+            color: #15803d !important;
+            box-shadow: 0 4px 10px rgba(21, 128, 61, 0.04) !important;
+        }
+        .btn-cuti-soft:hover {
+            background: #dcfce7 !important;
+            border-color: #86efac !important;
+            box-shadow: 0 6px 15px rgba(21, 128, 61, 0.08) !important;
+        }
+        .btn-rekap-soft {
+            background: #fffbeb !important;
+            border: 1.5px solid #fde68a !important;
+            color: #b45309 !important;
+            box-shadow: 0 4px 10px rgba(180, 83, 9, 0.04) !important;
+        }
+        .btn-rekap-soft:hover {
+            background: #fef3c7 !important;
+            border-color: #fcd34d !important;
+            box-shadow: 0 6px 15px rgba(180, 83, 9, 0.08) !important;
+        }
     </style>
     @endpush
 
@@ -593,18 +682,23 @@
                 </div>
             @endif
 
-            {{-- ===== TAMPILAN MOBILE ===== --}}
-            @include('users.dashboard.partials.mobile')
-
-            {{-- ===== TAMPILAN DESKTOP ===== --}}
-            @include('users.dashboard.partials.desktop')
+            @php
+                $agent = new \Jenssegers\Agent\Agent();
+            @endphp
+            @if($agent->isMobile() || $agent->isTablet())
+                {{-- ===== TAMPILAN MOBILE ===== --}}
+                @include('users.dashboard.partials.mobile')
+            @else
+                {{-- ===== TAMPILAN DESKTOP ===== --}}
+                @include('users.dashboard.partials.desktop')
+            @endif
 
         </main>
     </div>
 
     {{-- KONTEN MODAL --}}
     <div id="agenda-modal" class="fixed inset-0 bg-black bg-opacity-60 z-40 hidden flex items-center justify-center p-4">
-        <div class="modal-card max-w-2xl w-full max-h-[90vh]" id="agenda-modal-content">
+        <div class="modal-card max-w-3xl w-full max-h-[90vh]" id="agenda-modal-content">
             
             <div class="modal-header">
                 <h4 class="modal-title" id="modal-agenda-title-text">Buat Agenda Baru</h4>
@@ -613,51 +707,55 @@
 
             <form id="agenda-form" method="POST" class="flex flex-col flex-grow overflow-hidden">
                 @csrf
-                <div class="modal-body space-y-4 flex-grow custom-scrollbar">
-                    {{-- Judul Agenda --}}
-                    <div>
-                        <label for="title" class="modal-label">Judul Agenda <span class="text-red-500">*</span></label>
-                        <input type="text" id="title" name="title" required class="modal-input" placeholder="Contoh: Rapat Evaluasi Bulanan">
-                        <small id="title-error" class="text-red-500 text-xs mt-1 hidden"></small>
-                    </div>
-
-                    {{-- Deskripsi --}}
-                    <div>
-                        <label for="description" class="modal-label">Deskripsi</label>
-                        <textarea id="description" name="description" rows="3" class="modal-input" placeholder="Jelaskan detail agenda di sini..."></textarea>
-                    </div>
-
-                    {{-- Waktu Acara (Tanggal & Jam Side-by-Side) --}}
-                    <div>
-                        <label class="modal-label">Waktu Acara <span class="text-red-500">*</span></label>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div class="sm:col-span-1">
-                                <label for="agenda_date" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tanggal</label>
-                                <input type="text" id="agenda_date" required class="modal-input" placeholder="Pilih Tanggal">
-                            </div>
+                <div class="modal-body flex-grow custom-scrollbar">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        {{-- Sisi Kiri: Detail Informasi & Waktu --}}
+                        <div class="space-y-4">
+                            {{-- Judul Agenda --}}
                             <div>
-                                <label for="start_hour" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Mulai</label>
-                                <input type="text" id="start_hour" required class="modal-input" placeholder="Jam">
+                                <label for="title" class="modal-label">Judul Agenda <span class="text-red-500">*</span></label>
+                                <input type="text" id="title" name="title" required class="modal-input" placeholder="Contoh: Rapat Evaluasi Bulanan">
+                                <small id="title-error" class="text-red-500 text-xs mt-1 hidden"></small>
                             </div>
-                            <div>
-                                <label for="end_hour" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Selesai</label>
-                                <input type="text" id="end_hour" required class="modal-input" placeholder="Jam">
-                            </div>
-                        </div>
-                        <small id="start_time-error" class="text-red-500 text-xs mt-1 hidden"></small>
-                        <small id="end_time-error" class="text-red-500 text-xs mt-1 hidden"></small>
-                    </div>
 
-                    {{-- Grid Tamu & Lokasi --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="modal-label">Undang Karyawan</label>
-                            <div id="guest-list-container" class="guest-list-card custom-scrollbar">
-                                <p class="text-gray-400 text-xs italic">Memuat karyawan...</p>
+                            {{-- Deskripsi --}}
+                            <div>
+                                <label for="description" class="modal-label">Deskripsi</label>
+                                <textarea id="description" name="description" rows="3" class="modal-input" placeholder="Jelaskan detail agenda di sini..."></textarea>
+                            </div>
+
+                            {{-- Waktu Acara (Tanggal & Jam Side-by-Side) --}}
+                            <div>
+                                <label class="modal-label">Waktu Acara <span class="text-red-500">*</span></label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label for="agenda_date" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tanggal</label>
+                                        <input type="text" id="agenda_date" required class="modal-input text-xs" placeholder="Tanggal">
+                                    </div>
+                                    <div>
+                                        <label for="start_hour" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Mulai</label>
+                                        <input type="text" id="start_hour" required class="modal-input text-xs" placeholder="Jam">
+                                    </div>
+                                    <div>
+                                        <label for="end_hour" class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Selesai</label>
+                                        <input type="text" id="end_hour" required class="modal-input text-xs" placeholder="Jam">
+                                    </div>
+                                </div>
+                                <small id="start_time-error" class="text-red-500 text-xs mt-1 hidden"></small>
+                                <small id="end_time-error" class="text-red-500 text-xs mt-1 hidden"></small>
                             </div>
                         </div>
 
-                        <div class="space-y-3">
+                        {{-- Sisi Kanan: Undang Tamu & Lokasi/Warna --}}
+                        <div class="space-y-4">
+                            <div>
+                                <label class="modal-label">Undang Karyawan</label>
+                                <div id="guest-list-container" class="guest-list-card custom-scrollbar" style="height: 148px;">
+                                    <p class="text-gray-400 text-xs italic">Memuat karyawan...</p>
+                                </div>
+                            </div>
+
                             <div>
                                 <label for="location" class="modal-label">Lokasi</label>
                                 <input type="text" id="location" name="location" class="modal-input" placeholder="Contoh: Ruang Meeting Lt. 2">
@@ -670,6 +768,7 @@
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
@@ -682,7 +781,7 @@
     </div>
 
     <div id="agenda-detail-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center p-4">
-        <div class="modal-card max-w-xl w-full max-h-[85vh] overflow-hidden" id="agenda-detail-content">
+        <div class="modal-card max-w-md w-full max-h-[85vh] overflow-hidden" id="agenda-detail-content">
             {{-- KONTEN DETAIL AKAN DIISI OLEH JAVASCRIPT --}}
         </div>
     </div>
@@ -743,16 +842,16 @@
                         const startTime = event.allDay ? 'Seharian' : formatTime(event.start);
                         const endTime = (!event.allDay && event.end) ? formatTime(event.end) : '';
                         
-                        const agendaHTML = `
-                            <div data-event-id="${event.id}" class="agenda-item-clickable flex items-center gap-4 p-4 rounded-xl bg-white/80 shadow-md shadow-blue-500/10 border border-blue-200 transition-all duration-200 hover:shadow-xl hover:border-blue-400 hover:bg-white cursor-pointer">
-                                <div class="flex-shrink-0 text-center bg-blue-100 text-blue-800 rounded-lg px-3 py-2 w-20">
+                         const agendaHTML = `
+                            <div data-event-id="${event.id}" class="agenda-item-clickable flex items-center gap-4 p-4 rounded-xl bg-white/90 border border-emerald-100 text-slate-800 transition-all duration-300 hover:bg-white hover:border-emerald-300 hover:shadow-lg cursor-pointer shadow-sm">
+                                <div class="flex-shrink-0 text-center bg-emerald-50 text-emerald-800 rounded-lg px-3 py-2 w-20 border border-emerald-100">
                                     <p class="font-bold text-sm">${startTime}</p>
-                                    ${endTime ? `<p class="text-xs">${endTime}</p>` : ''}
+                                    ${endTime ? `<p class="text-xs opacity-75">${endTime}</p>` : ''}
                                 </div>
-                                <div class="flex-grow border-l-4 pl-4" style="border-color: ${event.backgroundColor || '#3B82F6'}">
-                                    <p class="font-semibold text-gray-900 text-base">${event.extendedProps.fullTitle}</p>
-                                    <p class="text-xs text-gray-500">${formatFullDate(event.start)}</p>
-                                    ${event.extendedProps.location ? `<p class="text-sm text-gray-500 mt-1">${event.extendedProps.location}</p>` : ''}
+                                <div class="flex-grow border-l-4 pl-4" style="border-color: ${event.backgroundColor || '#10B981'}">
+                                    <p class="font-bold text-slate-800 text-base leading-snug">${event.extendedProps.fullTitle}</p>
+                                    <p class="text-xs text-slate-500 mt-0.5">${formatFullDate(event.start)}</p>
+                                    ${event.extendedProps.location ? `<p class="text-sm text-slate-600 mt-1"><i class="fas fa-map-marker-alt mr-1 text-xs text-emerald-600"></i> ${event.extendedProps.location}</p>` : ''}
                                     ${event.extendedProps.type === 'holiday' ? `<p class="text-sm font-bold mt-1" style="color: ${event.backgroundColor};">${event.extendedProps.description}</p>` : ''}
                                 </div>
                             </div>`;
@@ -760,12 +859,12 @@
                     });
                 } else {
                      agendaListContainer.innerHTML = `
-                        <div class="flex flex-col items-center justify-center h-full text-center text-blue-700 p-4 bg-blue-100/70 rounded-xl border border-blue-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-50 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <div class="flex flex-col items-center justify-center h-full text-center text-emerald-800 p-6 bg-white/60 rounded-xl border border-emerald-100/50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-60 mb-2 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            <p class="font-semibold">Tidak ada agenda</p>
-                            <p class="text-sm opacity-80">Pilih tanggal di kalender untuk melihat.</p>
+                            <p class="font-bold text-sm">Tidak ada agenda</p>
+                            <p class="text-xs opacity-70 mt-1 text-emerald-700">Pilih tanggal di kalender untuk melihat.</p>
                         </div>`;
                 }
                 
@@ -784,7 +883,8 @@
                 locale: 'id',
                 buttonText: { today: 'hari ini' },
                 events: "{{ route('agendas.index') }}",
-                height: 450, 
+                height: 275, 
+                fixedWeekCount: false,
                 dayMaxEvents: true,
 
                 eventDidMount: function(info) {

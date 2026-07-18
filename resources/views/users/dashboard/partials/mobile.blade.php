@@ -1,7 +1,4 @@
-<div class="sm:hidden flex flex-col pb-4 min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-    {{-- Decorative Background Elements for Mobile --}}
-    <div class="absolute top-0 right-0 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl -z-10 transform translate-x-1/3 -translate-y-1/3"></div>
-    <div class="absolute bottom-40 left-0 w-48 h-48 bg-purple-400/20 rounded-full blur-3xl -z-10 transform -translate-x-1/3"></div>
+<div class="flex flex-col pb-4 min-h-screen bg-transparent relative overflow-hidden">
 
     {{-- Welcome Card --}}
     <div class="px-4 pt-4 pb-3">
@@ -18,7 +15,7 @@
 
     {{-- Divisi Info --}}
     <div class="px-4 pb-3">
-        <div class="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-sm border border-white/60">
+        <div class="flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-2xl px-4 py-2.5 shadow-xl shadow-blue-900/5 border border-white">
             <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
                 <i class="fas fa-briefcase text-blue-600 text-xs"></i>
             </div>
@@ -28,7 +25,7 @@
 
     {{-- Absensi Section --}}
     <div class="px-4 pb-4">
-        <div class="bg-white/70 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-white">
+        <div class="bg-white/80 backdrop-blur-md rounded-3xl p-4 shadow-xl shadow-blue-900/5 border border-white">
             <h3 class="font-bold text-gray-800 text-base mb-3 flex items-center gap-2">
                 <i class="fas fa-clock text-indigo-500"></i> Absensi
             </h3>
@@ -84,12 +81,12 @@
 
     {{-- Agenda Hari Ini --}}
     <div class="px-4 pb-4">
-        <div class="mobile-agenda-card bg-white/70 backdrop-blur-md shadow-sm border border-white rounded-2xl p-4">
+        <div class="mobile-agenda-card bg-white/80 backdrop-blur-md border border-white rounded-3xl p-4 shadow-xl shadow-blue-900/5">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
                     <i class="fas fa-calendar-check text-rose-500"></i> Agenda Hari Ini
                 </h3>
-                <button id="mobile-add-agenda-btn" class="w-9 h-9 rounded-full bg-gray-900 hover:bg-gray-800 text-white flex items-center justify-center shadow-md transition-all duration-200 hover:scale-105">
+                <button id="mobile-add-agenda-btn" class="w-9 h-9 rounded-full bg-gradient-to-r from-blue-700 to-indigo-600 hover:brightness-110 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 transition-all duration-200 hover:scale-105">
                     <i class="fas fa-plus text-xs"></i>
                 </button>
             </div>
@@ -105,7 +102,7 @@
 
     {{-- Notifikasi Bar --}}
     <div class="px-4 pb-4">
-        <div class="mobile-notif-bar bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl p-3 flex items-center justify-between shadow-lg shadow-blue-500/30">
+        <div class="mobile-notif-bar bg-gradient-to-r from-[#001BB7] to-blue-600 text-white rounded-2xl p-3 flex items-center justify-between shadow-xl shadow-blue-900/10">
             <div class="flex items-center gap-3 overflow-hidden">
                 <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
                     <i class="fas fa-bell text-white text-sm"></i>
