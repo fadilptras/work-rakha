@@ -10,33 +10,57 @@ use App\Models\Lembur;
 use App\Notifications\Channels\WhatsAppChannel;
 use Carbon\Carbon;
 
+/**
+ * Notifikasi Absensi & Lembur
+ * 
+ * Sifat: Broadcast (Pengumuman ke Grup Perusahaan).
+ * Menggunakan proteksi Target Group agar pesan tidak nyasar ke chat personal.
+ */
 class AbsensiNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public $data; 
-    public $tipe; 
+    /**
+     * @var object $data Model Absensi atau Lembur
+     */
+    public object $data; 
 
-    public function __construct($data, string $tipe)
+    /**
+     * @var string $tipe Jenis aksi absensi
+     */
+    public string $tipe; 
+
+    /**
+     * Konstruktor Notifikasi Absensi
+     *
+     * @param object $data
+     * @param string $tipe (contoh: 'masuk', 'keluar', 'izin', dll)
+     */
+    public function __construct(object $data, string $tipe)
     {
         $this->data = $data;
         $this->tipe = $tipe;
     }
 
-    public function via($notifiable)
+    /**
+     * Menentukan channel pengiriman
+     */
+    public function via(object $notifiable): array
     {
         return ['database', WhatsAppChannel::class];
     }
 
-    public function toWhatsApp($notifiable)
+    /**
+     * Format pengiriman via WhatsApp.
+     */
+    public function toWhatsApp(object $notifiable): array
     {
         $nama = $notifiable->name;
         $waktu = now()->translatedFormat('d F Y H:i');
         
-        // Ambil keterangan jika ada
-        $keterangan = $this->data->keterangan ? $this->data->keterangan : '-';
+        // Ambil keterangan jika tersedia (khusus izin/sakit)
+        $keterangan = !empty($this->data->keterangan) ? $this->data->keterangan : '-';
         
-        // Pesan disesuaikan dengan gaya bahasa pengumuman grup
         switch ($this->tipe) {
             case 'masuk':
                 $pesan = "📢 *INFO ABSENSI*\n\n✅ Karyawan a.n. *{$nama}* telah melakukan *Absen Masuk* pada {$waktu}.\n\nSelamat bekerja dan semangat! 💪";
@@ -60,13 +84,24 @@ class AbsensiNotification extends Notification implements ShouldQueue
                 $pesan = "📢 *INFO ABSENSI*\n\nAbsensi a.n. *{$nama}* berhasil dicatat pada {$waktu}.";
         }
 
+        $targetGroupId = config('services.fonnte.group_id');
+        
+        // PROTEKSI: Jika Group ID di .env kosong, sistem akan membatalkan pengiriman pesan ini.
+        // Mencegah pengumuman absensi nyasar ke nomor pribadi karyawan.
+        if (empty($targetGroupId)) {
+            return [];
+        }
+
         return [
             'message' => $pesan,
-            'target'  => '120363242834102956@g.us', // ID Grup WhatsApp Fonnte
+            'target'  => $targetGroupId,
         ];
     }
 
-    public function toArray($notifiable)
+    /**
+     * Menyimpan data notifikasi ke dalam tabel 'notifications' (Database)
+     */
+    public function toArray(object $notifiable): array
     {
         $pesanPendek = '';
         $icon = '';

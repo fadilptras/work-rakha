@@ -4,24 +4,35 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Models\PengajuanDana;
 use App\Notifications\Channels\WhatsAppChannel;
 
+/**
+ * Notifikasi Pengajuan Dana
+ * 
+ * Sifat: Transaksional (Japri / Direct Message).
+ * Pesan akan dikirim secara spesifik kepada pemohon atau approver terkait (Finance/Atasan).
+ */
 class PengajuanDanaNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public $pengajuanDana;
-    public $tipe;
+    /**
+     * @var \App\Models\PengajuanDana $pengajuanDana Data pengajuan dana
+     */
+    public PengajuanDana $pengajuanDana;
 
     /**
-     * Buat instance notifikasi baru.
+     * @var string $tipe Tipe status/tahap pengajuan
+     */
+    public string $tipe;
+
+    /**
+     * Konstruktor Notifikasi Pengajuan Dana
      *
      * @param \App\Models\PengajuanDana $pengajuanDana
      * @param string $tipe Konteks notifikasi
-     * @return void
      */
     public function __construct(PengajuanDana $pengajuanDana, string $tipe = 'baru')
     {
@@ -29,12 +40,19 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
         $this->tipe = $tipe;
     }
 
+    /**
+     * Menentukan channel pengiriman
+     */
     public function via(object $notifiable): array
     {
         return ['database', WhatsAppChannel::class];
     }
 
-    public function toWhatsApp($notifiable)
+    /**
+     * Format pengiriman via WhatsApp.
+     * Karena tidak mendefinisikan 'target', pesan otomatis dikirim secara personal.
+     */
+    public function toWhatsApp(object $notifiable): array
     {
         $judul = $this->pengajuanDana->judul_pengajuan;
         $pemohon = $this->pengajuanDana->user->name;
@@ -70,7 +88,7 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the array representation of the notification.
+     * Menyimpan data notifikasi ke dalam tabel 'notifications' (Database)
      */
     public function toArray(object $notifiable): array
     {
@@ -106,16 +124,12 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
                 $icon = 'fas fa-receipt';
                 $color = 'text-indigo-600';
                 break;
-
-            // =================== KODE BARU DIMULAI DI SINI ===================
             case 'dibatalkan':
                 $title = 'Pengajuan Dibatalkan';
                 $message = "Pengajuan dana '$judulPengajuan' oleh $pemohon telah dibatalkan.";
-                $icon = 'fas fa-ban'; // Ikon untuk pembatalan
-                $color = 'text-slate-500'; // Warna netral
+                $icon = 'fas fa-ban'; 
+                $color = 'text-slate-500'; 
                 break;
-            // ==================== KODE BARU SELESAI DI SINI ====================
-
             case 'baru':
             default:
                 $title = 'Pengajuan Dana Baru';

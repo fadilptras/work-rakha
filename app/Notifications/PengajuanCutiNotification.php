@@ -6,20 +6,34 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Models\Cuti;
-// IMPORT WAJIB CHANNEL
 use App\Notifications\Channels\WhatsAppChannel;
 use Carbon\Carbon;
 
-class CutiNotification extends Notification implements ShouldQueue
+/**
+ * Notifikasi Pengajuan Cuti
+ * 
+ * Sifat: Transaksional (Japri / Direct Message).
+ * Pesan akan dikirim secara spesifik kepada pemohon atau approver.
+ */
+class PengajuanCutiNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public $cuti;
-    public $tipe;
+    /**
+     * @var \App\Models\Cuti $cuti Data pengajuan cuti
+     */
+    public Cuti $cuti;
 
     /**
-     * @param Cuti $cuti
-     * @param string $tipe ('baru', 'disetujui', 'ditolak', 'dibatalkan')
+     * @var string $tipe Tipe notifikasi ('baru', 'disetujui', 'ditolak', 'dibatalkan')
+     */
+    public string $tipe;
+
+    /**
+     * Konstruktor Notifikasi Cuti
+     *
+     * @param \App\Models\Cuti $cuti
+     * @param string $tipe
      */
     public function __construct(Cuti $cuti, string $tipe = 'baru')
     {
@@ -28,9 +42,9 @@ class CutiNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Tentukan channel pengiriman.
+     * Menentukan channel pengiriman
      */
-    public function via($notifiable)
+    public function via(object $notifiable): array
     {
         return [
             'database', 
@@ -39,9 +53,10 @@ class CutiNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Format notifikasi untuk WhatsApp.
+     * Format notifikasi untuk pengiriman via WhatsApp.
+     * Karena tidak mendefinisikan 'target', pesan otomatis dikirim secara personal.
      */
-    public function toWhatsApp($notifiable)
+    public function toWhatsApp(object $notifiable): array
     {
         $pemohon = $this->cuti->user->name ?? 'Karyawan';
         $tanggal = Carbon::parse($this->cuti->tanggal_mulai)->translatedFormat('d F Y');
@@ -62,7 +77,7 @@ class CutiNotification extends Notification implements ShouldQueue
                 break;
             case 'baru':
             default:
-                // Digunakan untuk Approver 1, 2, dan 3
+                // Biasanya dikirim ke Approver (HRD, Atasan) untuk direview
                 $header = "🆕 *PENGAJUAN CUTI*";
                 $pesan = "Halo {$notifiable->name}, ada pengajuan cuti yang memerlukan persetujuan Anda.\n\n*Pemohon:* {$pemohon}\n*Tanggal:* {$tanggal}\n\nMohon segera diperiksa melalui sistem.";
                 break;
@@ -74,9 +89,9 @@ class CutiNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Simpan notifikasi ke tabel 'notifications' di database.
+     * Menyimpan data notifikasi ke dalam tabel 'notifications' (Database)
      */
-    public function toArray($notifiable)
+    public function toArray(object $notifiable): array
     {
         $pemohon = $this->cuti->user->name ?? 'Karyawan';
         $tanggal = Carbon::parse($this->cuti->tanggal_mulai)->translatedFormat('d F Y');

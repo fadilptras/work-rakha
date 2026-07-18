@@ -8,35 +8,67 @@ use Illuminate\Notifications\Notification;
 use App\Models\User;
 use App\Notifications\Channels\WhatsAppChannel;
 
+/**
+ * Notifikasi Ulang Tahun Karyawan
+ * 
+ * Sifat: Broadcast (Pengumuman ke Grup Perusahaan).
+ * Menggunakan proteksi Target Group agar pesan tidak nyasar ke chat personal.
+ */
 class BirthdayNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public $user; 
-    public $isWaBroadcast;
-    public $waGroupId;
+    /**
+     * @var \App\Models\User $user Karyawan yang berulang tahun
+     */
+    public User $user; 
 
-    // tambah parameter default false untuk isWaBroadcast
-    public function __construct(User $user, $isWaBroadcast = false, $waGroupId = null)
+    /**
+     * @var bool $isWaBroadcast Menentukan apakah notifikasi dikirim via WA
+     */
+    public bool $isWaBroadcast;
+
+    /**
+     * @var string|null $waGroupId Target spesifik pengiriman grup
+     */
+    public ?string $waGroupId;
+
+    /**
+     * Konstruktor Notifikasi Ulang Tahun
+     *
+     * @param \App\Models\User $user
+     * @param bool $isWaBroadcast (Default: false)
+     * @param string|null $waGroupId
+     */
+    public function __construct(User $user, bool $isWaBroadcast = false, ?string $waGroupId = null)
     {
         $this->user = $user;
         $this->isWaBroadcast = $isWaBroadcast;
         $this->waGroupId = $waGroupId;
     }
 
+    /**
+     * Menentukan channel pengiriman
+     */
     public function via(object $notifiable): array
     {
         return $this->isWaBroadcast ? [WhatsAppChannel::class] : ['database'];
     }
 
-    private function getWhatsAppLink($name)
+    /**
+     * Membuat tautan WhatsApp instan untuk mengucapkan selamat
+     */
+    private function getWhatsAppLink(string $name): ?string
     {
         $noHp = $this->user->nomor_telepon;
 
-        if (!$noHp) return null;
+        if (empty($noHp)) {
+            return null;
+        }
 
+        // Normalisasi Format ke 62
         $noHp = preg_replace('/[^0-9]/', '', $noHp);
-        if (substr($noHp, 0, 1) === '0') {
+        if (str_starts_with($noHp, '0')) {
             $noHp = '62' . substr($noHp, 1);
         }
 
@@ -44,10 +76,20 @@ class BirthdayNotification extends Notification implements ShouldQueue
         return "https://wa.me/{$noHp}?text={$text}";
     }
 
-    public function toWhatsApp($notifiable)
+    /**
+     * Format pengiriman via WhatsApp.
+     */
+    public function toWhatsApp(object $notifiable): array
     {
         $yangUltah = $this->user->name;
         $waLink    = $this->getWhatsAppLink($yangUltah);
+        
+        $targetGroupId = $this->waGroupId ?? config('services.fonnte.group_id');
+
+        // PROTEKSI: Mencegah pengumuman ulang tahun nyasar ke WA pribadi jika Group ID kosong
+        if (empty($targetGroupId)) {
+            return [];
+        }
 
         $pesan = "🎂 *HARI INI ADA YANG ULANG TAHUN!* 🎂\n\n" .
                  "Hari ini adalah hari spesial untuk rekan kita: *{$yangUltah}*\n\n" .
@@ -61,12 +103,16 @@ class BirthdayNotification extends Notification implements ShouldQueue
 
         return [
             'message' => $pesan,
-            'target'  => $this->waGroupId ?? config('services.fonnte.group_id') 
+            'target'  => $targetGroupId 
         ];
     }
 
+    /**
+     * Menyimpan data notifikasi ke dalam tabel 'notifications' (Database)
+     */
     public function toArray(object $notifiable): array
     {
+        // Jika yang menerima notifikasi adalah yang berulang tahun itu sendiri
         if ($notifiable->id === $this->user->id) {
             return [
                 'id'      => $this->user->id, 
@@ -78,6 +124,7 @@ class BirthdayNotification extends Notification implements ShouldQueue
             ];
         }
 
+        // Untuk rekan kerja lainnya
         $yangUltah = $this->user->name;
 
         return [

@@ -22,12 +22,12 @@ class ClientBirthdayNotification extends Notification implements ShouldQueue
         $this->client = $client;
     }
 
-    public function via($notifiable)
+    public function via(object $notifiable)
     {
         return ['database', WhatsAppChannel::class];
     }
 
-    public function toWhatsApp($notifiable)
+    public function toWhatsApp(object $notifiable)
     {
         // Ambil data dari model Client
         $namaClient = $this->client->nama_user;
@@ -43,7 +43,7 @@ class ClientBirthdayNotification extends Notification implements ShouldQueue
         ];
     }
 
-    public function toArray($notifiable)
+    public function toArray(object $notifiable)
     {
         $namaClient = $this->client->nama_user;
         $perusahaan = $this->client->nama_perusahaan;

@@ -8,25 +8,51 @@ use Illuminate\Notifications\Notification;
 use App\Models\PengajuanBarang;
 use App\Notifications\Channels\WhatsAppChannel;
 
+/**
+ * Notifikasi Pengajuan Barang
+ * 
+ * Sifat: Transaksional (Japri / Direct Message).
+ * Pesan akan dikirim secara spesifik kepada pemohon atau approver terkait.
+ */
 class PengajuanBarangNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public $pengajuanBarang;
-    public $tipe;
+    /**
+     * @var \App\Models\PengajuanBarang $pengajuanBarang Data pengajuan barang
+     */
+    public PengajuanBarang $pengajuanBarang;
 
+    /**
+     * @var string $tipe Tipe status/tahap pengajuan
+     */
+    public string $tipe;
+
+    /**
+     * Konstruktor Notifikasi Pengajuan Barang
+     *
+     * @param \App\Models\PengajuanBarang $pengajuanBarang
+     * @param string $tipe Default: 'baru'
+     */
     public function __construct(PengajuanBarang $pengajuanBarang, string $tipe = 'baru')
     {
         $this->pengajuanBarang = $pengajuanBarang;
         $this->tipe = $tipe;
     }
 
+    /**
+     * Menentukan channel pengiriman
+     */
     public function via(object $notifiable): array
     {
         return ['database', WhatsAppChannel::class];
     }
 
-    public function toWhatsApp($notifiable)
+    /**
+     * Format pengiriman via WhatsApp.
+     * Karena tidak mendefinisikan 'target', pesan otomatis dikirim secara personal.
+     */
+    public function toWhatsApp(object $notifiable): array
     {
         $judul = $this->pengajuanBarang->judul_pengajuan;
         $pemohon = $this->pengajuanBarang->user->name;
@@ -55,6 +81,9 @@ class PengajuanBarangNotification extends Notification implements ShouldQueue
         return ['message' => "{$header}\n\nHalo {$notifiable->name},\n{$pesan}\n\n🔗 Link: {$link}"];
     }
 
+    /**
+     * Menyimpan data notifikasi ke dalam tabel 'notifications' (Database)
+     */
     public function toArray(object $notifiable): array
     {
         $title = '';
@@ -84,12 +113,16 @@ class PengajuanBarangNotification extends Notification implements ShouldQueue
                 $color = 'text-red-600';
                 break;
             case 'lanjut_final':
-                $header = "🔔 *PENGAJUAN BARANG: PERLU FINALISASI*";
-                $pesan = "Pengajuan *'{$judul}'* dari *{$pemohon}* telah disetujui di tahap 2. Mohon lakukan review final.";
+                $title = 'Perlu Finalisasi Barang';
+                $message = "Pengajuan '$judulPengajuan' perlu direview final.";
+                $icon = 'fas fa-bell';
+                $color = 'text-yellow-600';
                 break;
             case 'disetujui_final':
-                $header = "✅ *PENGAJUAN BARANG SELESAI*";
-                $pesan = "Selamat! Pengajuan barang *'{$judul}'* Anda telah disetujui sepenuhnya.";
+                $title = 'Pengajuan Barang Selesai';
+                $message = "Pengajuan barang '$judulPengajuan' Anda telah disetujui sepenuhnya.";
+                $icon = 'fas fa-check-double';
+                $color = 'text-green-700';
                 break;
             case 'baru':
             default:

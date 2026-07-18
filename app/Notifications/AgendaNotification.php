@@ -5,43 +5,68 @@ namespace App\Notifications;
 use App\Models\Agenda;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Notifications\Channels\WhatsAppChannel;
+use Carbon\Carbon;
 
+/**
+ * Notifikasi Agenda
+ * 
+ * Sifat: Transaksional (Dikirim secara Japri / Direct Message ke Peserta).
+ * Fitur ini tidak menggunakan Group ID.
+ */
 class AgendaNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected $agenda;
-    protected $type;
-    protected $creatorName;
+    /**
+     * @var \App\Models\Agenda $agenda Data agenda yang terkait
+     */
+    public Agenda $agenda;
 
     /**
-     * Create a new notification instance.
-     *
-     * @return void
+     * @var string $type Tipe notifikasi ('undangan_baru', 'agenda_diperbarui', 'agenda_dibatalkan')
      */
-    public function __construct(Agenda $agenda, $type, $creatorName)
+    public string $type;
+
+    /**
+     * @var string $creatorName Nama pembuat/pengundang agenda
+     */
+    public string $creatorName;
+
+    /**
+     * Konstruktor Notifikasi Agenda
+     *
+     * @param \App\Models\Agenda $agenda
+     * @param string $type Konteks pengiriman
+     * @param string $creatorName
+     */
+    public function __construct(Agenda $agenda, string $type, string $creatorName)
     {
         $this->agenda = $agenda;
         $this->type = $type;
         $this->creatorName = $creatorName;
     }
 
-    public function via($notifiable)
+    /**
+     * Menentukan channel pengiriman (Database & WhatsApp)
+     */
+    public function via(object $notifiable): array
     {
         return ['database', WhatsAppChannel::class]; 
     }
 
-
-    public function toWhatsApp($notifiable)
+    /**
+     * Format notifikasi untuk pengiriman via WhatsApp.
+     * Karena tidak mendefinisikan 'target', pesan otomatis dikirim secara personal.
+     */
+    public function toWhatsApp(object $notifiable): array
     {
         $judul = $this->agenda->title;
-        $waktu = \Carbon\Carbon::parse($this->agenda->start_time)->translatedFormat('l, d F Y H:i');
+        $waktu = Carbon::parse($this->agenda->start_time)->translatedFormat('l, d F Y H:i');
         $lokasi = $this->agenda->location ?? 'Online/Tidak ditentukan';
         $pembuat = $this->creatorName;
-        $link = route('dashboard'); // Atau link detail agenda jika ada
+        $link = route('dashboard'); 
 
         switch ($this->type) {
             case 'undangan_baru':
@@ -65,12 +90,9 @@ class AgendaNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Get the array representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return array
+     * Menyimpan data notifikasi ke dalam tabel 'notifications' (Database)
      */
-    public function toArray($notifiable)
+    public function toArray(object $notifiable): array
     {
         $title = '';
         $message = '';
@@ -101,8 +123,6 @@ class AgendaNotification extends Notification implements ShouldQueue
             'message' => $message,
             'icon' => $icon,
             'color' => $color,
-            // --- PERUBAHAN DI SINI ---
-            // Menggunakan route helper untuk membuat URL dengan parameter
             'url' => route('dashboard', ['agenda_id' => $this->agenda->id]),
         ];
     }
