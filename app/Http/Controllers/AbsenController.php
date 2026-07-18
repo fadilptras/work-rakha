@@ -73,7 +73,9 @@ class AbsenController extends Controller
             'holidayDb' 
         );
 
-        return view('users.absensi.absen-user', $data);
+        $agent = new \Jenssegers\Agent\Agent();
+        $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
+        return view("users.absensi.absen_{$viewSuffix}", $data);
     }
 
     protected function rekapAbsensiBulanan(User $user, Carbon $date): array
