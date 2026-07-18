@@ -668,12 +668,7 @@
         </div>
         <main class="flex-1 p-0 sm:p-6 lg:p-8 relative z-10">
 
-            @if (session('success'))
-                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-6 mx-6 lg:mx-0" role="alert">
-                    <p class="font-bold">Sukses!</p>
-                    <p>{{ session('success') }}</p>
-                </div>
-            @endif
+            
             @if ($errors->any())
                 <div class="mb-6 mx-6 lg:mx-0 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 text-sm rounded-md" role="alert">
                     <p class="font-bold">Terjadi Kesalahan</p>
@@ -700,12 +695,12 @@
                     $firstName = explode(' ', Auth::user()->name)[0];
                 @endphp
                 <p class="text-[10px] font-bold text-blue-200 tracking-widest uppercase mb-1.5 opacity-90">
-                    <i class="far fa-calendar-alt mr-1"></i> {{ \Carbon\Carbon::now()->translatedFormat('d M Y') }}
+                    <i class="far fa-calendar-alt mr-1"></i> {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
                 </p>
                 <h2 class="text-2xl font-extrabold text-white leading-tight mb-1">
                     {{ $greeting }},<br>{{ $firstName }}!
                 </h2>
-                <p class="text-xs text-blue-100 font-medium opacity-90">Tetap semangat hari ini!</p>
+                <p class="text-xs text-blue-100 font-medium opacity-90">Semoga harimu menyenangkan dan produktif!</p>
             </div>
             <div class="avatar-circle">
                 @if(Auth::user()->profile_picture)
@@ -1116,7 +1111,7 @@
                         const csrfToken = document.querySelector('form#agenda-form input[name="_token"]').value;
                         const deleteUrl = "{{ route('agendas.destroy', ['agenda' => ':id']) }}".replace(':id', realId);
                         const deleteForm = `
-                            <form action="${deleteUrl}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus agenda ini?')" class="ml-2">
+                            <form action="${deleteUrl}" method="POST" onsubmit="confirmSubmit(event, 'Apakah Anda yakin ingin menghapus agenda ini?')" class="ml-2">
                                 <input type="hidden" name="_token" value="${csrfToken}">
                                 <input type="hidden" name="_method" value="DELETE">
                                 <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition">Hapus</button>
@@ -1339,7 +1334,7 @@
             today.setHours(0, 0, 0, 0);
 
             // Awal minggu berdasarkan Senin (ISO Week) - gambar mulai dari Min
-            // Kita pakai Sunday-based week seperti gambar referensi (Min–Sab)
+            // Kita pakai Sunday-based week seperti gambar referensi (Minâ€“Sab)
             let currentWeekStart = getSundayOfWeek(today);
 
             // Nama bulan singkat
