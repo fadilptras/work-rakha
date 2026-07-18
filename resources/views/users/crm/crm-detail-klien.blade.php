@@ -1,16 +1,85 @@
 <x-layout-users :title="'Detail Klien & Sales'">
 
-    <div class="w-full max-w-7xl mx-auto px-0 sm:px-0 lg:px-0 py-0 relative">
-        
-        {{-- Tombol Kembali --}}
-        <div class="mb-6">
-            <a href="{{ route('crm.index') }}" 
-            class="inline-flex items-center justify-center w-10 h-10 sm:w-auto sm:h-10 sm:px-4 rounded-lg bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-md hover:shadow-lg hover:brightness-110 transition-all gap-2"
-            title="Kembali ke Data Sales">
-                <i class="fas fa-arrow-left"></i>
-                <span class="hidden sm:inline font-medium text-sm">Kembali</span>
-            </a>
+    @push('styles')
+    <style>
+        /* == Modern Mesh Background == */
+        .mesh-bg {
+            background-color: #f0f6fc;
+            background-image: 
+                radial-gradient(at 40% 20%, rgba(147, 197, 253, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, rgba(167, 139, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, rgba(191, 219, 254, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
+                radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* Float animation */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float { animation: float 8s ease-in-out infinite; }
+        .animate-float-delayed { animation: float 10s ease-in-out infinite; animation-delay: 2s; }
+
+        /* == Modern Back Button == */
+        .btn-back-modern {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 8px 18px 8px 8px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 9999px;
+            color: #1e293b;
+            font-size: 0.9rem; font-weight: 700;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            margin-bottom: 24px;
+            width: fit-content;
+        }
+        .btn-back-modern:hover { 
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+            color: #1d4ed8;
+        }
+        .btn-back-modern .icon-circle {
+            width: 32px; height: 32px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #3b82f6;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            transition: transform 0.3s ease;
+        }
+        .btn-back-modern:hover .icon-circle {
+            transform: translateX(-3px);
+            background: #EFF6FF;
+        }
+    </style>
+    @endpush
+
+    <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
+        {{-- Background Animations --}}
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
+            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
+            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
         </div>
+
+        <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
+            
+            {{-- Tombol Kembali --}}
+            <a href="{{ route('crm.index') }}" class="btn-back-modern">
+                <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                Kembali ke Data Sales
+            </a>
 
         {{-- BAGIAN 1: HEADER PROFIL --}}
         <div class="bg-[#001BB7] rounded-2xl shadow-xl shadow-blue-900/10 border border-blue-900/10 mb-6 overflow-hidden relative">
@@ -518,6 +587,8 @@
             </div>
         </div>
     </div>
+</div>
+</div>
 
     {{-- MODAL EDIT DATA KLIEN --}}
     @push('modals')

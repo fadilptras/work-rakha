@@ -1,207 +1,247 @@
 <x-layout-users :title="'Sistem Informasi Sales (CRM)'">
 
-    {{-- Notifikasi Sukses --}}
-    @if (session('success'))
-        <div class="mb-6 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-r shadow-sm flex items-center animate-fade-in-down">
-            <i class="fas fa-check-circle mr-3 text-lg"></i>
-            <div>
-                <p class="font-bold">Berhasil</p>
-                <p class="text-sm">{{ session('success') }}</p>
-            </div>
+    @push('styles')
+    <style>
+        /* == Modern Mesh Background == */
+        .mesh-bg {
+            background-color: #f0f6fc;
+            background-image: 
+                radial-gradient(at 40% 20%, rgba(147, 197, 253, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, rgba(167, 139, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, rgba(191, 219, 254, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
+                radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* Float animation */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float { animation: float 8s ease-in-out infinite; }
+        .animate-float-delayed { animation: float 10s ease-in-out infinite; animation-delay: 2s; }
+    </style>
+    @endpush
+
+    <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
+        {{-- Background Animations --}}
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
+            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
+            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
         </div>
-    @endif
 
-    {{-- BAGIAN 1: HERO HEADER --}}
-    <div class="bg-[#001BB7] rounded-3xl shadow-xl shadow-blue-900/20 mb-10 overflow-hidden relative">
-        
-        {{-- Dekorasi Background --}}
-        <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-blue-400 opacity-20 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
 
-        <div class="p-8 relative z-10">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            {{-- Notifikasi Sukses --}}
+            @if (session('success'))
+                <div class="mb-6 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-r shadow-sm flex items-center animate-fade-in-down">
+                    <i class="fas fa-check-circle mr-3 text-lg"></i>
+                    <div>
+                        <p class="font-bold">Berhasil</p>
+                        <p class="text-sm">{{ session('success') }}</p>
+                    </div>
+                </div>
+            @endif
+
+            {{-- BAGIAN 1: HERO HEADER --}}
+            <div class="bg-[#001BB7] rounded-3xl shadow-xl shadow-blue-900/20 mb-10 overflow-hidden relative">
                 
-                {{-- Judul & Deskripsi --}}
-                <div class="text-white">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/30">
-                            Dashboard CRM
-                        </span>
-                    </div>
-                    <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight drop-shadow-sm mb-2">
-                        Overview Sales & Klien
-                    </h2>
-                    <p class="text-blue-100 opacity-90 text-sm max-w-xl leading-relaxed">
-                        Monitor performa area, PIC, dan database customer relationship management.
-                    </p>
-                </div>
+                {{-- Dekorasi Background --}}
+                <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-blue-400 opacity-20 rounded-full blur-2xl pointer-events-none"></div>
 
-                {{-- Action Buttons (Tanpa Animasi Naik) --}}
-                <div class="flex flex-wrap gap-3">
-                    <a href="{{ route('crm.matrix') }}" class="bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-colors flex items-center">
-                        <i class="fas fa-table mr-2"></i> Matrix Laporan
-                    </a>
-                    <button onclick="toggleModal('createClientModal')" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-900/20 transition-colors flex items-center border border-orange-400">
-                        <i class="fas fa-plus mr-2"></i> Tambah Klien
-                    </button>
-                </div>
-            </div>
-
-            {{-- Mini Stats Cards --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                {{-- Stat 1: Total Klien --}}
-                <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4 flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center text-white text-xl">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div>
-                        <p class="text-blue-200 text-xs font-bold uppercase tracking-wider">Total Klien Aktif</p>
-                        <p class="text-white text-2xl font-extrabold">{{ $clients->count() }}</p>
-                    </div>
-                </div>
-
-                {{-- Stat 2: Top Area --}}
-                <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4 flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-lg bg-purple-500/80 flex items-center justify-center text-white text-xl shadow-lg">
-                        <i class="fas fa-map-marked-alt"></i>
-                    </div>
-                    <div>
-                        <p class="text-blue-200 text-xs font-bold uppercase tracking-wider">Total Nilai Sales</p>
-                        <p class="text-emerald-300 text-2xl font-mono font-bold">
-                            Rp {{ number_format($totalGrossSales, 0, ',', '.') }}
-                        </p>
-                    </div>
-                </div>
-
-                 {{-- Stat 3: Total Saldo (NET) --}}
-                 <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4 flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-lg bg-emerald-500/80 flex items-center justify-center text-white text-xl shadow-lg">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div>
-                        {{-- Ubah Label --}}
-                        <p class="text-blue-200 text-xs font-bold uppercase tracking-wider">
-                            Total Saldo 
-                        </p>
+                <div class="p-8 relative z-10">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                         
-                        {{-- Ubah Value ke variabel baru --}}
-                        <p class="text-emerald-300 text-2xl font-mono font-bold">
-                            Rp {{ number_format($totalAllBalance, 0, ',', '.') }}
-                        </p>
+                        {{-- Judul & Deskripsi --}}
+                        <div class="text-white">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/30">
+                                    Dashboard CRM
+                                </span>
+                            </div>
+                            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight drop-shadow-sm mb-2">
+                                Overview Sales & Klien
+                            </h2>
+                            <p class="text-blue-100 opacity-90 text-sm max-w-xl leading-relaxed">
+                                Monitor performa area, PIC, dan database customer relationship management.
+                            </p>
+                        </div>
+
+                        {{-- Action Buttons (Tanpa Animasi Naik) --}}
+                        <div class="flex flex-wrap gap-3">
+                            <a href="{{ route('crm.matrix') }}" class="bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-colors flex items-center">
+                                <i class="fas fa-table mr-2"></i> Matrix Laporan
+                            </a>
+                            <button onclick="toggleModal('createClientModal')" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-900/20 transition-colors flex items-center border border-orange-400">
+                                <i class="fas fa-plus mr-2"></i> Tambah Klien
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Mini Stats Cards --}}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                        {{-- Stat 1: Total Klien --}}
+                        <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4 flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center text-white text-xl">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div>
+                                <p class="text-blue-200 text-xs font-bold uppercase tracking-wider">Total Klien Aktif</p>
+                                <p class="text-white text-2xl font-extrabold">{{ $clients->count() }}</p>
+                            </div>
+                        </div>
+
+                        {{-- Stat 2: Top Area --}}
+                        <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4 flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-lg bg-purple-500/80 flex items-center justify-center text-white text-xl shadow-lg">
+                                <i class="fas fa-map-marked-alt"></i>
+                            </div>
+                            <div>
+                                <p class="text-blue-200 text-xs font-bold uppercase tracking-wider">Total Nilai Sales</p>
+                                <p class="text-emerald-300 text-2xl font-mono font-bold">
+                                    Rp {{ number_format($totalGrossSales, 0, ',', '.') }}
+                                </p>
+                            </div>
+                        </div>
+
+                         {{-- Stat 3: Total Saldo (NET) --}}
+                         <div class="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4 flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-lg bg-emerald-500/80 flex items-center justify-center text-white text-xl shadow-lg">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <div>
+                                {{-- Ubah Label --}}
+                                <p class="text-blue-200 text-xs font-bold uppercase tracking-wider">
+                                    Total Saldo 
+                                </p>
+                                
+                                {{-- Ubah Value ke variabel baru --}}
+                                <p class="text-emerald-300 text-2xl font-mono font-bold">
+                                    Rp {{ number_format($totalAllBalance, 0, ',', '.') }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    {{-- BAGIAN 2: DATA LIST --}}
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden -mt-6 relative z-20 mx-2 md:mx-0">
-        {{-- Header Tabel & Search --}}
-        <div class="px-8 py-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
-            <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
-                <i class="fas fa-list-ul text-blue-600"></i> Database Klien
-            </h3>
-            
-            {{-- Search Bar Fungsional --}}
-            <div class="relative w-full md:w-72">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                    <i class="fas fa-search text-sm"></i>
-                </span>
-                <input type="text" id="searchInput" placeholder="Cari nama, RS, atau area..." class="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 transition-colors">
-            </div>
-        </div>
+            {{-- BAGIAN 2: DATA LIST --}}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden -mt-6 relative z-20 mx-2 md:mx-0">
+                {{-- Header Tabel & Search --}}
+                <div class="px-8 py-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
+                    <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
+                        <i class="fas fa-list-ul text-blue-600"></i> Database Klien
+                    </h3>
+                    
+                    {{-- Search Bar Fungsional --}}
+                    <div class="relative w-full md:w-72">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <i class="fas fa-search text-sm"></i>
+                        </span>
+                        <input type="text" id="searchInput" placeholder="Cari nama, RS, atau area..." class="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 transition-colors">
+                    </div>
+                </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse" id="clientTable">
-                <thead class="bg-gray-50/50 text-gray-500 uppercase font-bold text-[11px] tracking-widest border-b border-gray-100">
-                    <tr>
-                        <th class="px-6 py-4">Profil Instansi & User</th>
-                        <th class="px-6 py-4">Area & PIC</th>
-                        <th class="px-6 py-4">Kontak</th>
-                        <th class="px-6 py-4 text-right">Total Saldo</th>
-                        <th class="px-6 py-4 text-center">Opsi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50" id="clientTableBody">
-                    @forelse ($clients as $client)
-                    <tr class="group hover:bg-blue-50/40 transition duration-200">
-                        {{-- Kolom 1: Profil (Tanpa Avatar) --}}
-                        <td class="px-6 py-4 align-middle">
-                            <div class="flex flex-col">
-                                <div class="font-bold text-gray-800 text-base group-hover:text-blue-700 transition mb-1">
-                                    {{ $client->nama_perusahaan }}
-                                </div>
-                                <div class="text-xs text-gray-500 font-medium flex items-center gap-1">
-                                    <i class="fas fa-user-md text-blue-400"></i> {{ $client->nama_user }}
-                                </div>
-                            </div>
-                        </td>
-
-                        {{-- Kolom 2: Area --}}
-                        <td class="px-6 py-4 align-middle">
-                            <div class="flex flex-col items-start gap-1.5">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
-                                    {{ $client->area ?? 'Non-Area' }}
-                                </span>
-                                <span class="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">
-                                    PIC: {{ $client->pic ?? '-' }}
-                                </span>
-                            </div>
-                        </td>
-
-                        {{-- Kolom 3: Kontak --}}
-                        <td class="px-6 py-4 align-middle">
-                            <div class="space-y-1">
-                                @if($client->no_telpon)
-                                    <div class="flex items-center gap-2 text-xs text-gray-600">
-                                        <i class="fab fa-whatsapp text-emerald-500 w-4 text-center"></i> 
-                                        <span>{{ $client->no_telpon }}</span>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse" id="clientTable">
+                        <thead class="bg-gray-50/50 text-gray-500 uppercase font-bold text-[11px] tracking-widest border-b border-gray-100">
+                            <tr>
+                                <th class="px-6 py-4">Profil Instansi & User</th>
+                                <th class="px-6 py-4">Area & PIC</th>
+                                <th class="px-6 py-4">Kontak</th>
+                                <th class="px-6 py-4 text-right">Total Saldo</th>
+                                <th class="px-6 py-4 text-center">Opsi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50" id="clientTableBody">
+                            @forelse ($clients as $client)
+                            <tr class="group hover:bg-blue-50/40 transition duration-200">
+                                {{-- Kolom 1: Profil (Tanpa Avatar) --}}
+                                <td class="px-6 py-4 align-middle">
+                                    <div class="flex flex-col">
+                                        <div class="font-bold text-gray-800 text-base group-hover:text-blue-700 transition mb-1">
+                                            {{ $client->nama_perusahaan }}
+                                        </div>
+                                        <div class="text-xs text-gray-500 font-medium flex items-center gap-1">
+                                            <i class="fas fa-user-md text-blue-400"></i> {{ $client->nama_user }}
+                                        </div>
                                     </div>
-                                @endif
-                                @if($client->email)
-                                    <div class="flex items-center gap-2 text-xs text-gray-600">
-                                        <i class="fas fa-envelope text-blue-400 w-4 text-center"></i> 
-                                        <span>{{ \Illuminate\Support\Str::limit($client->email, 25) }}</span>
+                                </td>
+
+                                {{-- Kolom 2: Area --}}
+                                <td class="px-6 py-4 align-middle">
+                                    <div class="flex flex-col items-start gap-1.5">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                                            {{ $client->area ?? 'Non-Area' }}
+                                        </span>
+                                        <span class="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">
+                                            PIC: {{ $client->pic ?? '-' }}
+                                        </span>
                                     </div>
-                                @endif
-                            </div>
-                        </td>
+                                </td>
 
-                        {{-- Kolom 4: Sales (Tanpa Teks 'Lifetime Sales') --}}
-                        <td class="px-6 py-4 align-middle text-right">
-                            <span class="font-mono font-bold text-emerald-600 text-sm">
-                                Rp {{ number_format($client->current_balance, 0, ',', '.') }}
-                            </span>
-                        </td>
+                                {{-- Kolom 3: Kontak --}}
+                                <td class="px-6 py-4 align-middle">
+                                    <div class="space-y-1">
+                                        @if($client->no_telpon)
+                                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                                <i class="fab fa-whatsapp text-emerald-500 w-4 text-center"></i> 
+                                                <span>{{ $client->no_telpon }}</span>
+                                            </div>
+                                        @endif
+                                        @if($client->email)
+                                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                                <i class="fas fa-envelope text-blue-400 w-4 text-center"></i> 
+                                                <span>{{ \Illuminate\Support\Str::limit($client->email, 25) }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </td>
 
-                        {{-- Kolom 5: Aksi --}}
-                        <td class="px-6 py-4 align-middle text-center">
-                            <a href="{{ route('crm.show', $client->id) }}" class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-400 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition shadow-sm group-hover:border-blue-200" title="Lihat Detail">
-                                <i class="fas fa-arrow-right text-xs"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center bg-gray-50/30">
-                            <div class="flex flex-col items-center justify-center text-gray-400">
-                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                                    <i class="fas fa-folder-open text-2xl opacity-50"></i>
-                                </div>
-                                <span class="font-medium">Belum ada data klien.</span>
-                                <p class="text-xs mt-1">Silahkan tambahkan klien baru.</p>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-            
-            {{-- Pesan jika pencarian tidak ditemukan --}}
-            <div id="noResult" class="hidden px-6 py-12 text-center bg-gray-50/30 text-gray-400">
-                <i class="fas fa-search text-2xl opacity-50 mb-2"></i>
-                <p>Data tidak ditemukan.</p>
+                                {{-- Kolom 4: Sales (Tanpa Teks 'Lifetime Sales') --}}
+                                <td class="px-6 py-4 align-middle text-right">
+                                    <span class="font-mono font-bold text-emerald-600 text-sm">
+                                        Rp {{ number_format($client->current_balance, 0, ',', '.') }}
+                                    </span>
+                                </td>
+
+                                {{-- Kolom 5: Aksi --}}
+                                <td class="px-6 py-4 align-middle text-center">
+                                    <a href="{{ route('crm.show', $client->id) }}" class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-400 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition shadow-sm group-hover:border-blue-200" title="Lihat Detail">
+                                        <i class="fas fa-arrow-right text-xs"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="px-6 py-12 text-center bg-gray-50/30">
+                                    <div class="flex flex-col items-center justify-center text-gray-400">
+                                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                                            <i class="fas fa-folder-open text-2xl opacity-50"></i>
+                                        </div>
+                                        <span class="font-medium">Belum ada data klien.</span>
+                                        <p class="text-xs mt-1">Silahkan tambahkan klien baru.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                    
+                    {{-- Pesan jika pencarian tidak ditemukan --}}
+                    <div id="noResult" class="hidden px-6 py-12 text-center bg-gray-50/30 text-gray-400">
+                        <i class="fas fa-search text-2xl opacity-50 mb-2"></i>
+                        <p>Data tidak ditemukan.</p>
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
 

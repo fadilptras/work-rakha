@@ -1,9 +1,42 @@
 <x-layout-users :title="'Laporan Sales Contribution (' . $year . ')'">
 
-    <div class="min-h-screen bg-gradient-to-br from-sky-50 to-blue-100 font-sans text-sm pb-20">
+    @push('styles')
+    <style>
+        /* == Modern Mesh Background == */
+        .mesh-bg {
+            background-color: #f0f6fc;
+            background-image: 
+                radial-gradient(at 40% 20%, rgba(147, 197, 253, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, rgba(167, 139, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, rgba(191, 219, 254, 0.45) 0px, transparent 50%),
+                radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
+                radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* Float animation */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float { animation: float 8s ease-in-out infinite; }
+        .animate-float-delayed { animation: float 10s ease-in-out infinite; animation-delay: 2s; }
+    </style>
+    @endpush
+
+    <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden text-sm pb-20">
+        {{-- Background Animations --}}
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
+            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
+            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
+        </div>
 
         {{-- CONTAINER UTAMA --}}
-        <div class="max-w-[95%] mx-auto pt-6">
+        <div class="relative z-10 w-full max-w-[95%] mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
 
             {{-- BAGIAN 1: HEADER --}}
             <div class="bg-[#001BB7] rounded-3xl shadow-xl shadow-blue-900/20 mb-8 overflow-hidden relative border border-blue-900/10">
