@@ -48,21 +48,16 @@ class SendClientBirthdayNotifications extends Command
             
             $this->info("Memproses Client: {$namaClient} ({$perusahaan})");
 
-            // A. Mulai dengan daftar Management
-            // Gunakan 'unique' untuk memastikan tidak ada duplikat ID
-            $recipients = $managementUsers->unique('id'); 
+            // A. Kumpulkan Manajemen dan PIC Internal (Sales) secara fungsional (tanpa mutasi collection asli)
+            $finalRecipients = $managementUsers->concat(
+                $client->user ? collect([$client->user]) : collect([])
+            )->unique('id');
 
-            // B. Tambahkan PIC Internal (Sales) dari relasi 'user'
             if ($client->user) {
-                // Method 'push' menambahkan item ke collection
-                $recipients->push($client->user);
                 $this->info(" - PIC (Sales) ditemukan: " . $client->user->name);
             } else {
                 $this->info(" - Client ini tidak memiliki Sales/User internal yang terhubung.");
             }
-
-            // C. Filter Duplikat Terakhir (Jaga-jaga jika PIC juga seorang Direktur/Kadiv)
-            $finalRecipients = $recipients->unique('id');
 
             if ($finalRecipients->isNotEmpty()) {
                 // Kirim Notifikasi

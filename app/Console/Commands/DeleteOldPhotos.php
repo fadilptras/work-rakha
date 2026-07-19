@@ -17,9 +17,12 @@ class DeleteOldPhotos extends Command
         // Cari batas waktu (2 bulan yang lalu)
         $twoMonthsAgo = Carbon::now()->subMonths(2);
 
-        // Ambil data absensi yang usianya lebih dari 2 bulan DAN memiliki lampiran masuk
+        // Ambil data absensi yang usianya lebih dari 2 bulan DAN memiliki lampiran masuk/keluar
         $oldRecords = Absensi::where('created_at', '<', $twoMonthsAgo)
-                             ->whereNotNull('lampiran') 
+                             ->where(function($query) {
+                                 $query->whereNotNull('lampiran')
+                                       ->orWhereNotNull('lampiran_keluar');
+                             })
                              ->get();
 
         $count = 0;

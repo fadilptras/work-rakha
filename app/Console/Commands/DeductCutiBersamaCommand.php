@@ -45,11 +45,21 @@ class DeductCutiBersamaCommand extends Command
                     // JIKA BELUM PERNAH DIPOTONG
                     if (!$isDeducted) {
                         
+                        // JANGAN POTONG JIKA USER BERGABUNG SETELAH TANGGAL CUTI BERSAMA
+                        if ($user->created_at > $holiday->tanggal->endOfDay()) {
+                            CutiBersamaLedger::create([
+                                'user_id'    => $user->id,
+                                'holiday_id' => $holiday->id
+                            ]);
+                            $this->line("<comment>[SKIP]</comment> User: {$user->name} (Bergabung setelah cuti bersama)");
+                            DB::commit();
+                            continue;
+                        }
+
                         // Cek apakah sisa cuti masih ada
                         if ($user->sisa_cuti > 0) {
                             
                             // 1. Buat record di tabel cutis (Riwayat)
-                            // Catatan: 'jenis_cuti' saya ubah ke 'Tahunan' agar tidak truncated
                             Cuti::create([
                                 'user_id'           => $user->id,
                                 'jenis_cuti'        => 'cuti bersama', 
