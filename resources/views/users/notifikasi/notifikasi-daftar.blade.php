@@ -36,7 +36,13 @@
             text-decoration: none;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            margin-bottom: 24px; width: fit-content;
+            margin-bottom: 24px; 
+            width: 100%;
+            justify-content: center;
+            min-height: 44px;
+        }
+        @media (min-width: 768px) {
+            .btn-back-modern { width: fit-content; justify-content: flex-start; }
         }
         .btn-back-modern:hover { background: rgba(255,255,255,0.95); box-shadow: 0 10px 15px -3px rgba(59,130,246,0.15); transform: translateY(-2px); color: #1d4ed8; }
         .btn-back-modern .icon-circle { width: 32px; height: 32px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(0,0,0,0.06); transition: transform 0.3s ease; }
@@ -46,15 +52,18 @@
             background: rgba(255,255,255,0.85);
             backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255,255,255,1);
-            border-radius: 24px;
+            border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.04);
-            padding: 28px;
+            padding: 16px;
+        }
+        @media (min-width: 768px) {
+            .glass-card { border-radius: 24px; padding: 28px; }
         }
 
         /* Filter Chips */
         .filter-chip {
-            display: inline-flex; align-items: center;
-            padding: 7px 18px; border-radius: 9999px;
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 8px 16px; border-radius: 9999px;
             font-size: 0.75rem; font-weight: 800;
             border: 2px solid #e2e8f0;
             background: rgba(255,255,255,0.9);
@@ -63,14 +72,18 @@
             letter-spacing: 0.03em;
             text-transform: uppercase;
             white-space: nowrap;
+            min-height: 44px;
+        }
+        @media (min-width: 768px) {
+            .filter-chip { padding: 7px 18px; min-height: auto; }
         }
         .filter-chip:hover { border-color: #93c5fd; color: #1d4ed8; background: #eff6ff; }
         .filter-chip.active { background: #1d4ed8; border-color: #1d4ed8; color: #fff; box-shadow: 0 4px 12px rgba(29,78,216,0.25); }
 
         /* Notif item */
         .notif-item {
-            display: flex; align-items: flex-start; gap: 14px;
-            padding: 16px 20px;
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px 16px;
             border-bottom: 1px solid rgba(241,245,249,0.8);
             text-decoration: none;
             transition: background 0.15s;
@@ -95,9 +108,11 @@
         }
         .notif-content { flex: 1; min-width: 0; }
         .notif-title-row {
-            display: flex; align-items: flex-start;
-            justify-content: space-between; gap: 8px;
-            margin-bottom: 4px;
+            display: flex; flex-direction: column; align-items: flex-start;
+            gap: 4px; margin-bottom: 4px;
+        }
+        @media (min-width: 480px) {
+            .notif-title-row { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 8px; }
         }
         .notif-title {
             font-size: 0.85rem; font-weight: 800;
@@ -165,18 +180,18 @@
 
                 <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="flex items-center gap-5">
-                        <div class="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                            <i class="fas fa-bell text-2xl text-white"></i>
+                        <div class="h-12 w-12 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
+                            <i class="fas fa-bell text-xl sm:text-2xl text-white"></i>
                         </div>
                         <div>
                             <h1 class="text-xl md:text-2xl font-black tracking-tight text-white uppercase">Notifikasi Anda</h1>
-                            <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
+                            <p class="text-blue-100 text-[10px] sm:text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
                                 Pantau aktivitas terbaru, pengumuman, dan pembaruan status pengajuan Anda.
                             </p>
                         </div>
                     </div>
-                    <div>
-                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider bg-white/90 border border-white text-blue-700 shadow-sm">
+                    <div class="w-full sm:w-auto mt-2 sm:mt-0 text-center sm:text-right">
+                        <span class="inline-flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider bg-white/90 border border-white text-blue-700 shadow-sm">
                             <i class="fas fa-bell text-blue-500"></i>
                             Pusat Informasi
                         </span>
@@ -189,16 +204,16 @@
 
                 {{-- Filter Chips --}}
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60" style="padding-bottom: 18px; margin-bottom: 24px;">
-                    <div class="flex items-center gap-5">
-                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl">
+                    <div class="flex items-center gap-3 sm:gap-5 mb-2 sm:mb-0">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg sm:text-xl">
                             <i class="fas fa-filter"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-black text-slate-800">Daftar Notifikasi</h3>
-                            <p class="text-xs text-slate-500 font-semibold" style="margin-top: 6px;">Filter berdasarkan kategori notifikasi yang ingin ditampilkan.</p>
+                            <h3 class="text-sm sm:text-base font-black text-slate-800">Daftar Notifikasi</h3>
+                            <p class="text-[10px] sm:text-xs text-slate-500 font-semibold mt-1">Filter berdasarkan kategori notifikasi yang ingin ditampilkan.</p>
                         </div>
                     </div>
-                    <div class="flex flex-wrap items-center justify-end gap-2">
+                    <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2 w-full sm:w-auto">
                         <a href="{{ route('notifikasi.index') }}"
                            class="filter-chip {{ $filterType === 'semua' ? 'active' : '' }}">
                             <i class="fas fa-th-large mr-1.5 text-[10px]"></i> Semua
@@ -281,7 +296,7 @@
                             </p>
                             @if($filterType !== 'semua')
                                 <a href="{{ route('notifikasi.index') }}"
-                                   class="mt-4 inline-flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 text-white text-[11px] font-black rounded-full hover:bg-blue-700 transition shadow-sm uppercase tracking-wider">
+                                   class="mt-4 inline-flex w-full md:w-auto min-h-[44px] justify-center items-center gap-1.5 px-4 py-1.5 bg-blue-600 text-white text-[11px] font-black rounded-full hover:bg-blue-700 transition shadow-sm uppercase tracking-wider">
                                     <i class="fas fa-th-large text-[9px]"></i> Lihat Semua
                                 </a>
                             @endif
