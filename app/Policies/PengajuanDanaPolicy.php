@@ -23,15 +23,19 @@ class PengajuanDanaPolicy
 
     /**
      * Tentukan apakah user bisa menyetujui/menolak pengajuan.
+     * CATATAN: Approver 3 TIDAK termasuk di sini karena tugasnya adalah
+     * upload bukti transfer (bukan approval biasa). Mereka ditangani
+     * oleh policy uploadBuktiTransfer() di bawah.
      */
     public function approve(User $user, PengajuanDana $pengajuanDana): bool
     {
         if ($user->id === $pengajuanDana->approver_1_id && $pengajuanDana->approver_1_status === 'menunggu') return true;
         if ($user->id === $pengajuanDana->approver_2_id && $pengajuanDana->approver_2_status === 'menunggu') return true;
-        if ($user->id === $pengajuanDana->approver_3_id && $pengajuanDana->approver_3_status === 'menunggu') return true;
+        // Approver 3 SENGAJA dikecualikan — gunakan uploadBuktiTransfer()
         if ($user->id === $pengajuanDana->approver_4_id && $pengajuanDana->approver_4_status === 'menunggu') return true;
         return false;
     }
+
 
     /**
      * Tentukan apakah user (Approver 3) bisa menekan tombol "Proses Pembayaran".

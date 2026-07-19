@@ -23,7 +23,8 @@
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-zinc-400 uppercase tracking-wider">APPROVER DANA 1</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-zinc-400 uppercase tracking-wider">APPROVER DANA 2</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-zinc-400 uppercase tracking-wider">APPROVER DANA 3</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-zinc-400 uppercase tracking-wider">ADMIN</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-zinc-400 uppercase tracking-wider">APPROVER DANA 4</th>
+
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-700">

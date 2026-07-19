@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# SQL backup files - jangan di-commit ke repo
+database/*.sql
+database/*.sql.gz
+

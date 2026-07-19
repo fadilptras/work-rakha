@@ -240,12 +240,19 @@ class AdminPengajuanDanaController extends Controller
                 }
             }
             DB::commit();
+
+            // Invalidasi cache dropdown agar perubahan langsung terlihat
+            Cache::forget('karyawan_list_dropdown');
+            Cache::forget('approvers_list_dropdown');
+            Cache::forget('admins_list_dropdown');
+
             return redirect()->route('admin.pengajuan_dana.set_approvers.index')->with('success', 'Pengaturan alur persetujuan berhasil diperbarui!');
         } catch (\Exception $e) {
             DB::rollBack();
             \Illuminate\Support\Facades\Log::error('Gagal simpan approver pengajuan dana: ' . $e->getMessage());
             return redirect()->route('admin.pengajuan_dana.set_approvers.index')->with('error', 'Terjadi kesalahan. Perubahan dibatalkan.');
         }
+
     }
 
     /**
