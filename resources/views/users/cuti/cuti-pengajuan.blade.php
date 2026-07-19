@@ -43,7 +43,15 @@
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             margin-bottom: 24px;
-            width: fit-content;
+            width: 100%;
+            justify-content: center;
+            min-height: 44px;
+        }
+        @media (min-width: 768px) {
+            .btn-back-modern {
+                width: fit-content;
+                justify-content: flex-start;
+            }
         }
         .btn-back-modern:hover { 
             background: rgba(255, 255, 255, 0.95);
@@ -72,17 +80,20 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 1);
-            border-radius: 24px;
+            border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
-            padding: 24px;
+            padding: 16px;
+        }
+        @media (min-width: 768px) {
+            .glass-card { border-radius: 24px; padding: 24px; }
         }
 
         /* == Highlight Card Sisa Cuti == */
         .card-sisa-cuti {
             background: linear-gradient(135deg, #1d4ed8, #3b82f6);
             color: white;
-            border-radius: 24px;
-            padding: 24px;
+            border-radius: 16px;
+            padding: 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -90,6 +101,9 @@
             overflow: hidden;
             box-shadow: 0 12px 30px rgba(37, 99, 235, 0.25);
             border: 1px solid rgba(255,255,255,0.2);
+        }
+        @media (min-width: 768px) {
+            .card-sisa-cuti { border-radius: 24px; padding: 24px; }
         }
         .card-sisa-cuti::after {
             content: ''; position: absolute; top: -30%; right: -10%;
@@ -125,34 +139,50 @@
         
         .btn-gradient {
             background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-            color: white; border: none; padding: 16px 24px; border-radius: 14px;
-            font-weight: 700; font-size: 1rem;
+            color: white; border: none; padding: 12px 16px; border-radius: 14px;
+            font-weight: 700; font-size: 0.9rem;
             display: flex; align-items: center; justify-content: center; gap: 10px;
             width: 100%; transition: all 0.2s;
             box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3); cursor: pointer;
+            min-height: 44px;
+        }
+        @media (min-width: 768px) {
+            .btn-gradient { padding: 16px 24px; font-size: 1rem; }
         }
         .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4); }
 
         /* == Ringkasan Item == */
         .ringkasan-item {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 16px; background: rgba(248, 250, 252, 0.8);
-            border-radius: 14px; margin-bottom: 12px; border: 1px solid #e2e8f0;
+            padding: 12px 14px; background: rgba(248, 250, 252, 0.8);
+            border-radius: 12px; margin-bottom: 10px; border: 1px solid #e2e8f0;
+        }
+        @media (min-width: 768px) {
+            .ringkasan-item { padding: 14px 16px; border-radius: 14px; margin-bottom: 12px; }
         }
         .ringkasan-icon {
-            width: 36px; height: 36px; border-radius: 10px; background: #eff6ff;
+            width: 32px; height: 32px; border-radius: 8px; background: #eff6ff;
             display: flex; align-items: center; justify-content: center;
-            color: #3b82f6; font-size: 0.95rem; margin-right: 12px; flex-shrink: 0;
+            color: #3b82f6; font-size: 0.85rem; margin-right: 10px; flex-shrink: 0;
+        }
+        @media (min-width: 768px) {
+            .ringkasan-icon { width: 36px; height: 36px; border-radius: 10px; font-size: 0.95rem; margin-right: 12px; }
         }
 
         /* == Riwayat Item == */
         .riwayat-item {
-            display: flex; align-items: center; gap: 14px; padding: 16px;
+            display: flex; flex-direction: column; gap: 10px; padding: 14px;
             background: rgba(255,255,255,0.8); border: 1.5px solid #e2e8f0; border-radius: 16px;
             text-decoration: none; margin-bottom: 12px; transition: all 0.2s;
         }
+        @media (min-width: 640px) {
+            .riwayat-item { flex-direction: row; align-items: center; gap: 14px; padding: 16px; }
+        }
         .riwayat-item:hover { border-color: #bfdbfe; background: #eff6ff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        .riwayat-badge { font-size: 0.75rem; font-weight: 800; padding: 6px 12px; border-radius: 999px; white-space: nowrap; margin-left: auto; }
+        .riwayat-badge { font-size: 0.75rem; font-weight: 800; padding: 6px 12px; border-radius: 999px; white-space: nowrap; width: fit-content; }
+        @media (min-width: 640px) {
+            .riwayat-badge { margin-left: auto; }
+        }
     </style>
     @endpush
 
@@ -179,12 +209,12 @@
                 {{-- KOLOM KIRI (Form Pengajuan) --}}
                 <div class="lg:col-span-7 space-y-6">
                     <div class="glass-card">
-                        <div class="flex items-center justify-between mb-6">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-file-signature text-xl"></i></div>
-                                <h3 class="text-xl font-bold text-slate-800">Form Pengajuan Cuti</h3>
+                        <div class="flex items-center justify-between mb-5 md:mb-6">
+                            <div class="flex items-center gap-2 md:gap-3">
+                                <div class="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-file-signature text-lg md:text-xl"></i></div>
+                                <h3 class="text-lg md:text-xl font-bold text-slate-800">Form Pengajuan Cuti</h3>
                             </div>
-                            <a href="#riwayat-card" class="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100">
+                            <a href="#riwayat-card" class="text-[10px] md:text-xs text-blue-600 font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-2 md:px-3 py-1.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100">
                                 <i class="fas fa-history"></i>
                                 Lihat Riwayat
                             </a>
@@ -212,13 +242,13 @@
 
                             <div>
                                 <label class="modern-label">Lampiran Pendukung <span class="text-slate-400 font-normal">(Opsional)</span></label>
-                                <label for="lampiran" class="modern-file-label">
-                                    <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 flex-shrink-0">
+                                <label for="lampiran" class="modern-file-label w-full flex-col sm:flex-row text-center sm:text-left">
+                                    <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 flex-shrink-0 mx-auto sm:mx-0">
                                         <i class="fas fa-cloud-upload-alt"></i>
                                     </div>
-                                    <div class="flex-1">
-                                        <p id="file-name-label" class="font-semibold text-slate-700">Pilih File</p>
-                                        <p class="text-xs text-slate-400 mt-1">Format didukung: JPG, PNG, PDF (Maks 2MB)</p>
+                                    <div class="flex-1 w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                                        <p id="file-name-label" class="font-semibold text-slate-700 truncate">Pilih File</p>
+                                        <p class="text-[10px] md:text-xs text-slate-400 mt-1 whitespace-normal">Format didukung: JPG, PNG, PDF (Maks 2MB)</p>
                                     </div>
                                     <input type="file" id="lampiran" name="lampiran" class="hidden" accept="image/*,application/pdf" onchange="document.getElementById('file-name-label').textContent = this.files[0]?.name || 'Pilih File'">
                                 </label>
@@ -249,20 +279,20 @@
                     {{-- Card Sisa Cuti --}}
                     <div class="card-sisa-cuti">
                         <div class="relative z-10">
-                            <p class="text-blue-100 font-semibold mb-1 text-sm uppercase tracking-wider">Sisa Cuti Tahunan</p>
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-5xl font-black">{{ $sisaCuti ?? 0 }}</span>
-                                <span class="text-xl font-medium text-blue-200">/ {{ $totalCuti ?? 0 }} Hari</span>
+                            <p class="text-blue-100 font-semibold mb-1 text-xs md:text-sm uppercase tracking-wider">Sisa Cuti Tahunan</p>
+                            <div class="flex items-baseline gap-1.5 md:gap-2">
+                                <span class="text-4xl md:text-5xl font-black">{{ $sisaCuti ?? 0 }}</span>
+                                <span class="text-lg md:text-xl font-medium text-blue-200">/ {{ $totalCuti ?? 0 }} Hari</span>
                             </div>
                         </div>
-                        <div class="relative z-10 w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-3xl">
+                        <div class="relative z-10 w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-2xl md:text-3xl">
                             <i class="fas fa-calendar-check"></i>
                         </div>
                     </div>
 
                     {{-- Card Estimasi Durasi --}}
                     <div class="glass-card">
-                        <h4 class="font-bold text-slate-800 mb-4">Estimasi Durasi</h4>
+                        <h4 class="font-bold text-slate-800 mb-3 md:mb-4 text-sm md:text-base">Estimasi Durasi</h4>
                         
                         <div class="ringkasan-item">
                             <div class="flex items-center">
@@ -283,7 +313,7 @@
                                 <div class="ringkasan-icon bg-blue-600 text-white"><i class="fas fa-stopwatch"></i></div>
                                 <span class="text-sm font-semibold text-blue-800">Total Durasi</span>
                             </div>
-                            <span id="total-hari" class="font-black text-blue-700 text-lg">- Hari</span>
+                            <span id="total-hari" class="font-black text-blue-700 text-base md:text-lg">- Hari</span>
                         </div>
                         <div class="flex items-start gap-3 p-3 mt-3 bg-amber-50 rounded-xl border border-amber-100">
                             <i class="fas fa-info-circle text-amber-500 mt-0.5"></i>
@@ -293,8 +323,8 @@
 
                     {{-- Card Riwayat Terakhir --}}
                     <div id="riwayat-card" class="glass-card border-t-4 border-t-blue-500 scroll-mt-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                        <div class="flex items-center justify-between mb-3 md:mb-4">
+                            <h4 class="font-bold text-slate-800 flex items-center gap-2 text-sm md:text-base">
                                 <i class="fas fa-history text-blue-600"></i> Riwayat Terbaru
                             </h4>
                             <a href="javascript:void(0)" onclick="window.location.reload()" class="text-sm text-blue-600 font-semibold hover:underline">Muat Ulang</a>
@@ -324,16 +354,18 @@
                                     };
                                 @endphp
                                 <a href="{{ route('cuti.show', $cuti) }}" class="riwayat-item">
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center {{ $iconBox }} flex-shrink-0">
-                                        <i class="{{ $iconClass }}"></i>
+                                    <div class="flex items-center gap-3 w-full">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center {{ $iconBox }} flex-shrink-0">
+                                            <i class="{{ $iconClass }}"></i>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-bold text-slate-800 text-sm truncate">
+                                                {{ \Carbon\Carbon::parse($cuti->tanggal_mulai)->format('d M y') }} - {{ \Carbon\Carbon::parse($cuti->tanggal_selesai)->format('d M y') }}
+                                            </p>
+                                            <p class="text-xs text-slate-400 mt-0.5 truncate">Diajukan: {{ \Carbon\Carbon::parse($cuti->created_at)->format('d M Y') }}</p>
+                                        </div>
                                     </div>
-                                    <div class="flex-1 min-w-0">
-                                        <p class="font-bold text-slate-800 text-sm truncate">
-                                            {{ \Carbon\Carbon::parse($cuti->tanggal_mulai)->format('d M y') }} - {{ \Carbon\Carbon::parse($cuti->tanggal_selesai)->format('d M y') }}
-                                        </p>
-                                        <p class="text-xs text-slate-400 mt-0.5">Diajukan: {{ \Carbon\Carbon::parse($cuti->created_at)->format('d M Y') }}</p>
-                                    </div>
-                                    <span class="riwayat-badge {{ $badgeStyle }}">{{ ucfirst($status) }}</span>
+                                    <span class="riwayat-badge {{ $badgeStyle }} w-full sm:w-auto text-center">{{ ucfirst($status) }}</span>
                                 </a>
                             @empty
                                 <div class="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl">

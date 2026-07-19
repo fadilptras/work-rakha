@@ -42,7 +42,12 @@
             text-decoration: none;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            width: fit-content;
+            width: 100%;
+            justify-content: center;
+            min-height: 44px;
+        }
+        @media (min-width: 768px) {
+            .btn-back-modern { width: fit-content; justify-content: flex-start; }
         }
         .btn-back-modern:hover { 
             background: rgba(255, 255, 255, 0.95);
@@ -77,7 +82,12 @@
             text-decoration: none;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 10px 20px rgba(220, 38, 38, 0.25);
-            width: fit-content;
+            width: 100%;
+            justify-content: center;
+            min-height: 44px;
+        }
+        @media (min-width: 768px) {
+            .btn-pdf-modern { width: fit-content; justify-content: flex-start; }
         }
         .btn-pdf-modern:hover { 
             background: linear-gradient(135deg, #b91c1c, #dc2626);
@@ -105,9 +115,12 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 1);
-            border-radius: 24px;
+            border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
-            padding: 24px;
+            padding: 16px;
+        }
+        @media (min-width: 768px) {
+            .glass-card { border-radius: 24px; padding: 24px; }
         }
 
         /* Pulse animation for actions */
@@ -133,7 +146,7 @@
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
             
             {{-- 1. NAVIGASI & AKSI --}}
-            <div class="flex items-center justify-between gap-4 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6">
                 <a href="{{ route('cuti.create') }}" class="btn-back-modern">
                     <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                     Kembali ke Riwayat
@@ -146,27 +159,27 @@
             </div>
 
             {{-- 2. HEADER UTAMA --}}
-            <div class="mb-6 overflow-hidden rounded-3xl shadow-xl border border-white/20">
-                <div class="p-6 md:p-8 bg-gradient-to-r from-blue-700 to-indigo-600 text-white relative">
+            <div class="mb-6 overflow-hidden rounded-2xl md:rounded-3xl shadow-xl border border-white/20">
+                <div class="p-5 md:p-8 bg-gradient-to-r from-blue-700 to-indigo-600 text-white relative">
                     {{-- Decorative circles --}}
                     <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
                     <div class="absolute right-20 -bottom-10 w-24 h-24 bg-white/10 rounded-full blur-lg pointer-events-none"></div>
                     
                     <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div class="flex items-center gap-5">
-                            <div class="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20">
-                                <i class="fas fa-calendar-alt text-2xl text-white"></i>
+                        <div class="flex items-center gap-4 md:gap-5">
+                            <div class="h-12 w-12 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
+                                <i class="fas fa-calendar-alt text-xl md:text-2xl text-white"></i>
                             </div>
                             <div>
-                                <h1 class="text-2xl font-black tracking-tight uppercase">Pengajuan Cuti {{ $cuti->jenis_cuti }}</h1>
-                                <p class="text-blue-100 text-sm mt-1 font-medium flex items-center gap-2">
+                                <h1 class="text-xl md:text-2xl font-black tracking-tight uppercase leading-tight">Pengajuan Cuti {{ $cuti->jenis_cuti }}</h1>
+                                <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium flex flex-wrap items-center gap-1 md:gap-2">
                                     <i class="far fa-clock"></i>
-                                    Diajukan pada {{ $cuti->created_at->translatedFormat('d F Y, H:i') }} WIB
+                                    Diajukan pada {{ $cuti->created_at->translatedFormat('d M Y, H:i') }} WIB
                                 </p>
                             </div>
                         </div>
 
-                        <div>
+                        <div class="w-full md:w-auto text-center md:text-right mt-2 md:mt-0">
                             @php
                             $statusBg = match($cuti->status) {
                                 'disetujui'  => 'bg-green-100 text-green-700 border-green-200',
@@ -182,7 +195,7 @@
                             };
                             $label = str_replace('_', ' ', $cuti->status);
                             @endphp
-                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider bg-white/90 border border-white {{ $statusBg }} shadow-sm">
+                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider bg-white/90 border border-white {{ $statusBg }} shadow-sm w-full md:w-auto justify-center">
                                 <i class="{{ $statusIcon }}"></i>
                                 {{ $label }}
                             </span>
@@ -197,38 +210,38 @@
                 <div class="lg:col-span-1">
                     <div class="glass-card h-full flex flex-col justify-between">
                         <div>
-                            <div class="flex items-center gap-3 mb-6">
-                                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-info-circle text-xl"></i></div>
-                                <h3 class="text-lg font-black text-slate-800">Detail Pengajuan</h3>
+                            <div class="flex items-center gap-2 md:gap-3 mb-5 md:mb-6">
+                                <div class="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-info-circle text-lg md:text-xl"></i></div>
+                                <h3 class="text-base md:text-lg font-black text-slate-800">Detail Pengajuan</h3>
                             </div>
                             
                             <div class="space-y-4">
                                 <div>
-                                    <span class="text-slate-400 text-[10px] font-extrabold uppercase tracking-widest block mb-1">Pemohon</span>
-                                    <span class="font-bold text-slate-800 text-base">{{ $cuti->user->name ?? 'N/A' }}</span>
+                                    <span class="text-slate-400 text-[10px] md:text-xs font-extrabold uppercase tracking-widest block mb-1">Pemohon</span>
+                                    <span class="font-bold text-slate-800 text-sm md:text-base">{{ $cuti->user->name ?? 'N/A' }}</span>
                                 </div>
                                 <hr class="border-slate-100">
                                 <div>
-                                    <span class="text-slate-400 text-[10px] font-extrabold uppercase tracking-widest block mb-1">Rentang Tanggal</span>
-                                    <span class="font-bold text-slate-800 text-sm">
-                                        {{ \Carbon\Carbon::parse($cuti->tanggal_mulai)->format('d F Y') }} - {{ \Carbon\Carbon::parse($cuti->tanggal_selesai)->format('d F Y') }}
+                                    <span class="text-slate-400 text-[10px] md:text-xs font-extrabold uppercase tracking-widest block mb-1">Rentang Tanggal</span>
+                                    <span class="font-bold text-slate-800 text-xs md:text-sm">
+                                        {{ \Carbon\Carbon::parse($cuti->tanggal_mulai)->format('d M Y') }} - {{ \Carbon\Carbon::parse($cuti->tanggal_selesai)->format('d M Y') }}
                                     </span>
-                                    <div class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 font-extrabold text-xs border border-blue-100">
+                                    <div class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 font-extrabold text-[10px] md:text-xs border border-blue-100">
                                         <i class="far fa-calendar"></i>
                                         {{ $cuti->total_hari }} Hari Kerja
                                     </div>
                                 </div>
                                 <hr class="border-slate-100">
                                 <div>
-                                    <span class="text-slate-400 text-[10px] font-extrabold uppercase tracking-widest block mb-1">Alasan Cuti</span>
-                                    <p class="text-slate-700 italic text-sm leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100">"{{ $cuti->alasan }}"</p>
+                                    <span class="text-slate-400 text-[10px] md:text-xs font-extrabold uppercase tracking-widest block mb-1">Alasan Cuti</span>
+                                    <p class="text-slate-700 italic text-xs md:text-sm leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100">"{{ $cuti->alasan }}"</p>
                                 </div>
                             </div>
                         </div>
 
                         @if($cuti->lampiran)
                         <div class="mt-6 pt-4 border-t border-slate-100">
-                            <a href="{{ asset('storage/' . $cuti->lampiran) }}" target="_blank" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold text-xs transition-colors">
+                            <a href="{{ asset('storage/' . $cuti->lampiran) }}" target="_blank" class="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 min-h-[44px] rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold text-xs transition-colors">
                                 <i class="fas fa-paperclip"></i>
                                 Lihat Lampiran Dokumen
                             </a>
@@ -239,10 +252,10 @@
 
                 {{-- TIMELINE PROGRESS (4 TAHAP DINAMIS) --}}
                 <div class="lg:col-span-2">
-                    <div class="glass-card h-full flex flex-col">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-tasks text-xl"></i></div>
-                            <h3 class="text-lg font-black text-slate-800">Timeline Persetujuan</h3>
+                    <div class="glass-card h-full flex flex-col mt-6 lg:mt-0">
+                        <div class="flex items-center gap-2 md:gap-3 mb-5 md:mb-6">
+                            <div class="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-tasks text-lg md:text-xl"></i></div>
+                            <h3 class="text-base md:text-lg font-black text-slate-800">Timeline Persetujuan</h3>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
@@ -301,9 +314,9 @@
 
             @if($showForm)
             <div class="glass-card border-t-4 border-t-blue-500 mb-8 animate-pulse-subtle">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-gavel text-xl"></i></div>
-                    <h3 class="text-xl font-bold text-slate-800">Tindakan Persetujuan <span class="text-blue-600 text-sm font-semibold">(Giliran Anda)</span></h3>
+                <div class="flex items-center gap-2 md:gap-3 mb-5 md:mb-6">
+                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-gavel text-lg md:text-xl"></i></div>
+                    <h3 class="text-lg md:text-xl font-bold text-slate-800 flex flex-wrap items-center gap-1">Tindakan Persetujuan <span class="text-blue-600 text-xs md:text-sm font-semibold">(Giliran Anda)</span></h3>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -344,10 +357,10 @@
 
             {{-- 5. BATALKAN (JIKA PEMILIK) --}}
             @if(Auth::id() == $cuti->user_id && in_array($cuti->status, ['diajukan', 'proses_finalisasi']))
-            <div class="text-center mb-10 mt-6">
-                <form action="{{ route('cuti.cancel', $cuti) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pengajuan cuti ini?');" class="inline-block">
+            <div class="text-center mb-10 mt-6 px-0 md:px-4">
+                <form action="{{ route('cuti.cancel', $cuti) }}" method="POST" onsubmit="confirmSubmit(event, 'Yakin ingin membatalkan pengajuan cuti ini?');" class="block w-full md:inline-block md:w-auto">
                     @csrf
-                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-100 text-red-700 text-xs font-bold transition-all uppercase tracking-widest shadow-sm">
+                    <button type="submit" class="inline-flex w-full md:w-auto min-h-[44px] justify-center items-center gap-2 px-5 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-100 text-red-700 text-xs font-bold transition-all uppercase tracking-widest shadow-sm">
                         <i class="fas fa-trash-alt"></i> Batalkan Pengajuan Cuti Saya
                     </button>
                 </form>
