@@ -60,31 +60,26 @@
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
             
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4" style="margin-bottom: 24px;">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <a href="{{ route('dashboard') }}" class="btn-back-modern" style="margin-bottom: 0px;">
                     <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                    Kembali ke Dashboard
+                    Kembali
                 </a>
-                <a href="{{ route('profile.downloadPdf') }}" class="bg-red-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-red-700 transition w-full sm:w-auto text-center">
-                    <i class="fas fa-file-pdf mr-2"></i> Cetak CV / Profil
-                </a>
+                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <button type="reset" form="profile-form" class="whitespace-nowrap px-5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-bold text-slate-600 shadow-sm hover:bg-slate-50 transition flex-1 sm:flex-none text-center">
+                        <i class="fas fa-undo mr-1.5"></i> Batal
+                    </button>
+                    <button type="submit" form="profile-form" class="whitespace-nowrap px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold shadow-md hover:bg-emerald-700 hover:-translate-y-0.5 transition flex-1 sm:flex-none text-center">
+                        <i class="fas fa-save mr-1.5"></i> Update Semua Data
+                    </button>
+                </div>
             </div>
 
             {{-- ALERT SUCCESS --}}
-            @if(session('success'))
-                <div class="bg-emerald-100 border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-xl mb-6 shadow-sm flex items-center">
-                    <i class="fas fa-check-circle mr-3 text-emerald-500 text-xl"></i> 
-                    <span class="font-semibold">{{ session('success') }}</span>
-                </div>
-            @endif
+            
 
             {{-- ALERT ERROR SYSTEM --}}
-            @if(session('error'))
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-xl mb-6 shadow-sm flex items-center">
-                    <i class="fas fa-times-circle mr-3 text-red-500 text-xl"></i> 
-                    <span class="font-semibold">{{ session('error') }}</span>
-                </div>
-            @endif
+            
 
             {{-- ALERT VALIDATION ERRORS --}}
             @if ($errors->any())
@@ -117,7 +112,7 @@
                                 <input type="file" id="profile_picture_input" name="profile_picture" class="hidden" accept="image/*">
                             </label>
                         </div>
-                        <div class="text-white text-center md:text-left">
+                        <div class="text-white text-center md:text-left flex-1">
                             <h2 class="text-3xl font-black">{{ $user->name }}</h2>
                             <p class="text-blue-100 text-lg font-medium">{{ $user->jabatan ?? '-' }} • {{ $user->divisi ?? '-' }}</p>
                             <div class="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
@@ -125,6 +120,11 @@
                                 <span class="bg-white/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">Status: {{ $user->status_karyawan ?? '-' }}</span>
                                 <span class="bg-white/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">Lokasi: {{ $user->lokasi_kerja ?? '-' }}</span>
                             </div>
+                        </div>
+                        <div class="flex-shrink-0 mt-4 md:mt-0">
+                            <a href="{{ route('profile.downloadPdf') }}" class="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/30 backdrop-blur-sm text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg transition hover:-translate-y-0.5">
+                                <i class="fas fa-file-pdf text-red-200 text-lg"></i> Export CV
+                            </a>
                         </div>
                     </div>
 
@@ -479,13 +479,7 @@
                     </div>
                 </div>
 
-                {{-- SUBMIT --}}
-                <div class="flex justify-end gap-4 pb-16">
-                    <button type="reset" class="px-10 py-4 rounded-2xl border border-slate-300 font-bold text-slate-600 hover:bg-slate-100 transition">Batal</button>
-                    <button type="submit" class="px-10 py-4 rounded-2xl bg-blue-600 text-white font-bold shadow-2xl hover:bg-blue-700 hover:-translate-y-1 transition active:scale-95">
-                        <i class="fas fa-save mr-2"></i> Update Semua Data
-                    </button>
-                </div>
+                <div class="pb-16"></div>
             </form>
         </div>
     </div>
