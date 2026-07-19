@@ -38,7 +38,6 @@ class CrmController extends Controller
         // 3. CEK JABATAN / POSISI
         $allowedJabatan = [
             'Direktur', 
-            'test', 
             'Kepala Operasional',
             'kepala marketing'
         ];
@@ -91,7 +90,10 @@ class CrmController extends Controller
             $totalGrossSales += $clientSales;
         }
 
-        return view('users.crm.crm-daftar-klien', [
+        $agent = new \Jenssegers\Agent\Agent();
+        $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
+
+        return view("users.crm.crm_daftar_klien_{$viewSuffix}", [
             'title' => 'Sistem Informasi Sales (CRM)', 
             'clients' => $clients,
             'totalAllBalance' => $totalAllBalance,
@@ -162,7 +164,10 @@ class CrmController extends Controller
 
         $currentBalance = $this->calculateRealTimeBalance($client);
 
-        return view('users.crm.crm-detail-klien', [
+        $agent = new \Jenssegers\Agent\Agent();
+        $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
+
+        return view("users.crm.crm_detail_klien_{$viewSuffix}", [
             'title' => 'Detail Sales: ' . $client->nama_user,
             'client' => $client,
             'interactions' => $interactions,
@@ -182,7 +187,9 @@ class CrmController extends Controller
     public function edit(Client $client)
     {
         if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
-        return view('users.crm.crm-detail-klien', ['title' => 'Edit Data Klien', 'client' => $client]);
+        $agent = new \Jenssegers\Agent\Agent();
+        $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
+        return view("users.crm.crm_detail_klien_{$viewSuffix}", ['title' => 'Edit Data Klien', 'client' => $client]);
     }
 
     public function update(Request $request, Client $client)
@@ -420,7 +427,10 @@ class CrmController extends Controller
             $grandTotalYear += $sumMonth;
         }
 
-        return view('users.crm.crm-matriks-data', [
+        $agent = new \Jenssegers\Agent\Agent();
+        $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
+
+        return view("users.crm.crm_matriks_data_{$viewSuffix}", [
             'title' => 'Matrix Sales ' . $year, 'clients' => $clients, 'year' => $year,
             'months' => $months, 'monthlyTotals' => $monthlyTotals, 'grandTotalYear' => $grandTotalYear
         ]);

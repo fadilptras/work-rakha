@@ -10,25 +10,9 @@
     </div>
 
     {{-- [BARU] Notifikasi Sukses/Gagal --}}
-    @if (session('success'))
-        <div class="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg flex items-center gap-3 shadow-lg fade-in">
-            <i class="fas fa-check-circle text-xl"></i>
-            <div>
-                <span class="font-bold">Berhasil!</span>
-                <span class="block text-sm opacity-90">{{ session('success') }}</span>
-            </div>
-        </div>
-    @endif
+    
 
-    @if (session('error'))
-        <div class="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg flex items-center gap-3 shadow-lg">
-            <i class="fas fa-exclamation-circle text-xl"></i>
-            <div>
-                <span class="font-bold">Gagal!</span>
-                <span class="block text-sm opacity-90">{{ session('error') }}</span>
-            </div>
-        </div>
-    @endif
+    
 
     <div class="bg-zinc-800 rounded-xl shadow-lg border border-zinc-700">
         
@@ -175,7 +159,7 @@
                                 </a>
 
                                 {{-- Tombol Hapus --}}
-                                <form action="{{ route('admin.pengajuan_dana.destroy', $pengajuan->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data pengajuan ini? Tindakan ini tidak dapat dibatalkan.');">
+                                <form action="{{ route('admin.pengajuan_dana.destroy', $pengajuan->id) }}" method="POST" onsubmit="confirmSubmit(event, 'Apakah Anda yakin ingin menghapus data pengajuan ini? Tindakan ini tidak dapat dibatalkan.');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-zinc-400 hover:text-red-600 transition" title="Hapus Data">

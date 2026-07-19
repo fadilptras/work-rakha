@@ -68,9 +68,9 @@
     <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
         {{-- Background Animations --}}
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
-            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
-            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
+            
+            
+            
         </div>
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
@@ -83,8 +83,8 @@
 
         {{-- BAGIAN 1: HEADER PROFIL --}}
         <div class="bg-[#001BB7] rounded-2xl shadow-xl shadow-blue-900/10 border border-blue-900/10 mb-6 overflow-hidden relative">
-            <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-blue-400 opacity-20 rounded-full blur-2xl pointer-events-none"></div>
+            
+            
 
             <div class="p-6 md:p-8 text-white relative z-10">
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6">
@@ -117,7 +117,7 @@
                         <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
                             {{-- TOTAL SALES --}}
                             <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 min-w-[220px] text-right shadow-lg relative overflow-hidden group hover:bg-white/15 transition-all flex-1 md:flex-none">
-                                <div class="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-transparent opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                                
                                 <p class="text-blue-100 text-[10px] font-bold uppercase tracking-widest mb-1 relative z-10">Total Sales (Gross)</p>
                                 <div class="text-2xl md:text-3xl font-extrabold text-white drop-shadow-md relative z-10 flex items-start justify-end">
                                     <span class="text-sm opacity-70 font-medium mr-1 mt-1">Rp</span>
@@ -126,7 +126,7 @@
                             </div>
                             {{-- TOTAL SALDO --}}
                             <div class="bg-emerald-500/20 backdrop-blur-md rounded-2xl p-5 border border-emerald-400/30 min-w-[220px] text-right shadow-lg relative overflow-hidden group hover:bg-emerald-500/30 transition-all flex-1 md:flex-none">
-                                <div class="absolute inset-0 bg-gradient-to-br from-emerald-400/20 to-transparent opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                                
                                 <i class="fas fa-wallet absolute bottom-2 left-3 text-emerald-300/30 text-4xl transform -rotate-12 pointer-events-none"></i>
                                 <p class="text-emerald-100 text-[10px] font-bold uppercase tracking-widest mb-1 relative z-10">Total Saldo</p>
                                 <div class="text-2xl md:text-3xl font-extrabold text-emerald-50 drop-shadow-md relative z-10 flex items-start justify-end">
@@ -159,8 +159,8 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             {{-- INFO CLIENT --}}
             <div class="bg-blue-600 p-8 rounded-2xl shadow-lg text-white relative overflow-hidden group hover:shadow-xl transition-all h-full">
-                <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-                <div class="absolute -left-6 -bottom-6 w-20 h-20 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                
+                
                 <h4 class="text-blue-100 text-[11px] font-bold uppercase tracking-widest mb-4 flex items-center relative z-10 border-b border-white/20 pb-2">
                     <i class="fas fa-user mr-2 text-white"></i> Informasi Client
                 </h4>
@@ -198,7 +198,7 @@
 
             {{-- INFO PERUSAHAAN --}}
             <div class="bg-orange-500 p-8 rounded-2xl shadow-lg text-white relative overflow-hidden group hover:shadow-xl transition-all h-full">
-                <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                
                 <h4 class="text-orange-100 text-[11px] font-bold uppercase tracking-widest mb-4 flex items-center relative z-10 border-b border-white/20 pb-2">
                     <i class="fas fa-building mr-2 text-white"></i> Informasi Perusahaan
                 </h4>
@@ -229,8 +229,8 @@
 
             {{-- INFO BANK --}}
             <div class="bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900 p-6 rounded-2xl shadow-lg border border-gray-700 text-white relative overflow-hidden flex flex-col h-full group hover:shadow-2xl transition duration-500">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500 opacity-10 rounded-full -mr-16 -mt-16 blur-2xl pointer-events-none group-hover:opacity-20 transition duration-500"></div>
-                <div class="absolute bottom-0 left-0 w-24 h-24 bg-blue-500 opacity-10 rounded-full -ml-12 -mb-12 blur-2xl pointer-events-none group-hover:opacity-20 transition duration-500"></div>
+                
+                
                 <div class="flex justify-between items-start mb-2 relative z-10 border-b border-gray-700 pb-2">
                     <h4 class="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center">
                         <span class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center mr-3 text-emerald-400"><i class="fas fa-wallet"></i></span> Informasi Bank

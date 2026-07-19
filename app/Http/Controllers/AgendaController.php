@@ -57,7 +57,8 @@ class AgendaController extends Controller
         }
 
         // --- 2. MENGAMBIL DATA HOLIDAYS ---
-        $holidays = Holiday::all(); 
+        // Hanya load holidays tahun ini dan tahun depan agar tidak boros memory
+        $holidays = Holiday::whereYear('tanggal', '>=', now()->year)->get();
 
         foreach ($holidays as $holiday) {
             $color = $holiday->is_cuti_bersama ? '#F59E0B' : '#EF4444'; 

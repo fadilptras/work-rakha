@@ -48,12 +48,19 @@ class ProfileController extends Controller
 
         try {
             DB::transaction(function () use ($request, $user) {
-                // 1. Update Data Dasar (Kecuali File & Relasi)
-                $userData = $request->except([
-                    'profile_picture', 'cropped_image', 'file_ktp', 'file_npwp', 
-                    'file_bpjs_kesehatan', 'file_bpjs_ketenagakerjaan', 
-                    'pendidikan', 'pekerjaan', 'password', 'password_confirmation'
-                ]);
+                // 1. Whitelist field yang BOLEH diupdate oleh karyawan sendiri
+                // (Menghindari mass assignment: role, sisa_cuti, approver_X_id, dll tidak bisa diubah)
+                $allowedFields = [
+                    'name', 'email',
+                    'nomor_telepon', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin',
+                    'agama', 'golongan_darah', 'status_pernikahan',
+                    'alamat_ktp', 'alamat_domisili',
+                    'kontak_darurat_nama', 'kontak_darurat_nomor', 'kontak_darurat_hubungan',
+                    'npwp', 'bpjs_kesehatan', 'bpjs_ketenagakerjaan',
+                    'nama_bank', 'nomor_rekening', 'pemilik_rekening',
+                    'nip', 'nik',
+                ];
+                $userData = $request->only($allowedFields);
 
                 if ($request->filled('password')) {
                     $userData['password'] = Hash::make($request->password);

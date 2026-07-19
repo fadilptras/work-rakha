@@ -5,16 +5,8 @@
         {{-- TOMBOL KEMBALI --}}
         <x-back-button href="{{ route('admin.pengajuan_barang.index') }}">Kembali ke Rekap Barang</x-back-button>
 
-        @if (session('success'))
-            <div class="bg-emerald-500/10 border-l-4 border-emerald-500 text-emerald-400 p-4 rounded-md mb-6" role="alert">
-                <p>{{ session('success') }}</p>
-            </div>
-        @endif
-        @if (session('error'))
-            <div class="bg-red-500/10 border-l-4 border-red-500 text-red-400 p-4 rounded-md mb-6" role="alert">
-                <p>{{ session('error') }}</p>
-            </div>
-        @endif
+        
+        
 
         <div class="bg-zinc-800 rounded-lg shadow-lg p-6 md:p-8 text-zinc-300 border border-zinc-700">
             

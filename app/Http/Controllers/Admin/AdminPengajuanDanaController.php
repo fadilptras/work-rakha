@@ -29,8 +29,8 @@ class AdminPengajuanDanaController extends Controller
 
         switch ($activeTab) {
             case 'pending':
-                // Menampilkan yang sedang berjalan
-                $query->whereIn('status', ['diajukan', 'diproses_appr_2', 'proses_pembayaran']);
+                // Menampilkan yang sedang berjalan (status diset di approve/reject controller)
+                $query->whereIn('status', ['diajukan', 'diproses']);
                 break;
             case 'approved':
                 // Menampilkan yang sudah sukses
@@ -116,7 +116,7 @@ class AdminPengajuanDanaController extends Controller
         switch ($activeTab) {
             case 'pending':
                 // Hanya yang sedang berjalan
-                $query->whereIn('status', ['diajukan', 'diproses_appr_2', 'proses_pembayaran']);
+                $query->whereIn('status', ['diajukan', 'diproses']);
                 break;
             case 'approved':
                 // Hanya yang selesai
@@ -220,21 +220,22 @@ class AdminPengajuanDanaController extends Controller
 
         $approver1Data = $request->input('approver_1');
         $approver2Data = $request->input('approver_2');
-        $approver3Data = $request->input('approver_3'); 
-        $approver4Data = $request->input('approver_4'); 
+        $approver3Data = $request->input('approver_3');
+        $approver4Data = $request->input('approver_4');
+
+        // Load semua user yang relevan sekaligus (anti N+1 query)
+        $userIds = array_keys($approver1Data);
+        $users   = User::whereIn('id', $userIds)->get()->keyBy('id');
 
         DB::beginTransaction();
         try {
             foreach ($approver1Data as $userId => $approver1Id) {
-                $user = User::find($userId);
+                $user = $users->get($userId);
                 if ($user) {
-                    $user->approver_1_id = $approver1Id; // Akan null jika "-- Tidak Ada --"
-
-                    // Pastikan key ada sebelum mengakses
-                    $user->approver_2_id = $approver2Data[$userId] ?? null; 
+                    $user->approver_1_id     = $approver1Id;
+                    $user->approver_2_id     = $approver2Data[$userId] ?? null;
                     $user->approver_dana_3_id = $approver3Data[$userId] ?? null;
                     $user->approver_dana_4_id = $approver4Data[$userId] ?? null;
-                    
                     $user->save();
                 }
             }
@@ -242,8 +243,7 @@ class AdminPengajuanDanaController extends Controller
             return redirect()->route('admin.pengajuan_dana.set_approvers.index')->with('success', 'Pengaturan alur persetujuan berhasil diperbarui!');
         } catch (\Exception $e) {
             DB::rollBack();
-            // Sebaiknya log error ini
-            // Log::error('Gagal simpan approver: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Gagal simpan approver pengajuan dana: ' . $e->getMessage());
             return redirect()->route('admin.pengajuan_dana.set_approvers.index')->with('error', 'Terjadi kesalahan. Perubahan dibatalkan.');
         }
     }
@@ -253,8 +253,8 @@ class AdminPengajuanDanaController extends Controller
      */
     public function markAsPaid(Request $request, PengajuanDana $pengajuanDana)
     {
-        // Validasi status harus dalam tahap pembayaran
-        if (!in_array($pengajuanDana->status, ['proses_pembayaran', 'diproses_appr_2'])) {
+        // Validasi status harus dalam tahap pembayaran (status 'diproses' diset oleh approve flow)
+        if ($pengajuanDana->status !== 'diproses') {
              return back()->with('error', 'Pengajuan ini tidak dalam status menunggu pembayaran.');
         }
 

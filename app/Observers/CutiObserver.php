@@ -16,21 +16,23 @@ class CutiObserver
     {
         if ($cuti->isDirty('status') && $cuti->status === 'disetujui') {
             try {
-                $period = CarbonPeriod::create($cuti->tanggal_mulai, $cuti->tanggal_selesai);
-                foreach ($period as $date) {
-                    Absensi::updateOrCreate(
-                        [
-                            'user_id' => $cuti->user_id,
-                            'tanggal' => $date->format('Y-m-d'),
-                        ],
-                        [
-                            'status' => 'cuti',
-                            'jam_masuk' => '07:00:00',
-                            'jam_keluar' => '17:00:00',
-                            'keterangan' => 'Cuti: ' . $cuti->jenis_cuti . ($cuti->alasan ? ' - ' . $cuti->alasan : '')
-                        ]
-                    );
-                }
+                \Illuminate\Support\Facades\DB::transaction(function () use ($cuti) {
+                    $period = CarbonPeriod::create($cuti->tanggal_mulai, $cuti->tanggal_selesai);
+                    foreach ($period as $date) {
+                        Absensi::updateOrCreate(
+                            [
+                                'user_id' => $cuti->user_id,
+                                'tanggal' => $date->format('Y-m-d'),
+                            ],
+                            [
+                                'status' => 'cuti',
+                                'jam_masuk' => '07:00:00',
+                                'jam_keluar' => '17:00:00',
+                                'keterangan' => 'Cuti: ' . $cuti->jenis_cuti . ($cuti->alasan ? ' - ' . $cuti->alasan : '')
+                            ]
+                        );
+                    }
+                });
             } catch (\Exception $e) {
                 Log::error('CutiObserver Error (updated): ' . $e->getMessage());
             }

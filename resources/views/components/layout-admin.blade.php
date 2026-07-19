@@ -246,5 +246,48 @@
     </div>
 
     @stack('scripts')
+    <x-toast />
+    
+    {{-- SweetAlert2 CDN & Global Confirm Function (Dark Theme) --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function confirmSubmit(event, message) {
+            event.preventDefault();
+            const form = event.target;
+            
+            Swal.fire({
+                position: 'center',
+                title: 'Konfirmasi',
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Lanjutkan',
+                cancelButtonText: 'Batal',
+                customClass: {
+                    popup: 'bg-white shadow-[0_15px_50px_rgba(0,0,0,0.15)] border border-gray-100 rounded-3xl p-6 text-center',
+                    title: 'text-lg font-black text-slate-800 tracking-tight mt-2 m-0',
+                    htmlContainer: 'text-sm text-slate-500 font-medium leading-relaxed m-0 mt-3 mb-6',
+                    icon: 'scale-75 m-0 mx-auto border-0 text-amber-500 -mt-2',
+                    actions: 'flex justify-center gap-3 w-full m-0',
+                    confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 m-0',
+                    cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold px-5 py-2.5 rounded-xl transition-all m-0'
+                },
+                width: '340px',
+                buttonsStyling: false,
+                background: '#ffffff',
+                backdrop: 'rgba(0,0,0,0.5)',
+                showClass: {
+                    popup: 'animate__animated animate__zoomIn animate__faster'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__zoomOut animate__faster'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+    </script>
 </body>
 </html>

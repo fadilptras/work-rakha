@@ -102,157 +102,48 @@
     @stack('modals')
     @stack('scripts')
 
-   {{-- KOMPONEN NOTIFIKASI POP-UP (RESPONSIF MOBILE) --}}
-    <div id="custom-notification" 
-         class="fixed top-4 left-4 right-4 md:left-auto md:right-5 md:w-96 z-[9999] hidden bg-white rounded-lg shadow-2xl border-l-4 border-blue-600 transform transition-all duration-300 -translate-y-full md:translate-x-full cursor-pointer hover:bg-gray-50"
-         onclick="window.location.href='{{ route('notifikasi.index') }}'">
-        <div class="p-4 flex items-start">
-            <div class="flex-shrink-0 pt-0.5">
-                <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    <i class="fas fa-bell text-blue-600 text-lg"></i>
-                </div>
-            </div>
-            <div class="ml-3 w-0 flex-1">
-                <p id="notif-title" class="text-sm font-bold text-gray-900">Judul Notifikasi</p>
-                <p id="notif-body" class="mt-1 text-sm text-gray-600 leading-snug">Isi pesan...</p>
-                <p class="mt-1 text-xs text-blue-500 font-semibold">Klik untuk melihat</p>
-            </div>
-            <div class="ml-4 flex-shrink-0 flex">
-                <button onclick="event.stopPropagation(); closeNotification()" class="inline-flex text-gray-400 hover:text-gray-500 focus:outline-none">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    {{-- =============== [MULAI] SCRIPT FIREBASE NOTIFIKASI (FIXED + POPUP) =============== --}}
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
+    <x-toast />
+    
+    {{-- SweetAlert2 CDN & Global Confirm Function (Light Theme) --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAipKu1aZwvZaOFR_FbCtkD6jtPYI2e4XE",
-            authDomain: "rakha-workflow.firebaseapp.com",
-            projectId: "rakha-workflow",
-            storageBucket: "rakha-workflow.firebasestorage.app",
-            messagingSenderId: "1024207088181",
-            appId: "1:1024207088181:web:cc835edf846ac65cf59f7c",
-            measurementId: "G-3T6QNML81B"
-        };
-
-        // Inisialisasi Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-
-        const messaging = firebase.messaging();
-
-        function initFirebase() {
-            Notification.requestPermission().then((permission) => {
-                if (permission === 'granted') {
-                    console.log('Notifikasi diizinkan.');
-                    
-                    // PENTING: VAPID Key Anda
-                    return messaging.getToken({ 
-                        vapidKey: 'BOK-BCvGay-ZsQG-Gr1XmrHwvMJhwoU8J758XEEkBiLMuk1gva2z21pN03afQYtj7xsCAh-8Dv4j68R89mbwjr0' 
-                    });
-                } else {
-                    console.warn('Izin notifikasi ditolak.');
-                    return null;
+        function confirmSubmit(event, message) {
+            event.preventDefault();
+            const form = event.target;
+            
+            Swal.fire({
+                position: 'center',
+                title: 'Konfirmasi',
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Lanjutkan',
+                cancelButtonText: 'Batal',
+                customClass: {
+                    popup: 'bg-white shadow-[0_15px_50px_rgba(0,0,0,0.15)] border border-gray-100 rounded-3xl p-6 text-center',
+                    title: 'text-lg font-black text-slate-800 tracking-tight mt-2 m-0',
+                    htmlContainer: 'text-sm text-slate-500 font-medium leading-relaxed m-0 mt-3 mb-6',
+                    icon: 'scale-75 m-0 mx-auto border-0 text-amber-500 -mt-2',
+                    actions: 'flex justify-center gap-3 w-full m-0',
+                    confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 m-0',
+                    cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold px-5 py-2.5 rounded-xl transition-all m-0'
+                },
+                width: '340px',
+                buttonsStyling: false,
+                background: '#ffffff',
+                backdrop: 'rgba(0,0,0,0.5)',
+                showClass: {
+                    popup: 'animate__animated animate__zoomIn animate__faster'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__zoomOut animate__faster'
                 }
-            }).then((currentToken) => {
-                if (currentToken) {
-                    console.log('Token FCM didapat:', currentToken);
-                    saveTokenToServer(currentToken);
-                } else {
-                    console.log('Tidak ada token instance ID yang tersedia. Minta izin untuk generate.');
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
                 }
-            }).catch((err) => {
-                console.error('Terjadi error saat mengambil token:', err);
             });
         }
-
-        function saveTokenToServer(token) {
-            // Mengambil CSRF token dari meta tag
-            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-            const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
-
-            if (!csrfToken) {
-                console.error('CSRF Token tidak ditemukan di meta tag!');
-                return;
-            }
-
-            fetch("{{ route('fcm.update') }}", { 
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                // [FIX] Mengirim sebagai 'fcm_token'
-                body: JSON.stringify({ fcm_token: token }) 
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => { throw new Error(text) });
-                }
-                return response.json();
-            })
-            .then(data => console.log('Token berhasil disimpan ke DB:', data))
-            .catch(err => console.error('Gagal simpan token ke server:', err));
-        }
-
-        // [BARU] Handler Notifikasi Masuk (Foreground)
-        messaging.onMessage((payload) => {
-            console.log('Pesan masuk (Foreground):', payload);
-            const { title, body } = payload.notification;
-            
-            // Panggil fungsi tampilkan notifikasi pop-up
-            showCustomNotification(title, body);
-            
-            // Opsional: Mainkan suara jika ada
-            // playNotificationSound(); 
-        });
-
-        // --- Logika Tampilan Notifikasi Pop-up ---
-        let notifTimeout;
-
-        function showCustomNotification(title, body) {
-            const notifBox = document.getElementById('custom-notification');
-            const notifTitle = document.getElementById('notif-title');
-            const notifBody = document.getElementById('notif-body');
-
-            notifTitle.innerText = title;
-            notifBody.innerText = body;
-
-            notifBox.classList.remove('hidden');
-            
-            // Animasi Masuk (Delay sedikit biar smooth)
-            setTimeout(() => {
-                // Hapus class yang menyembunyikan (Reset posisi ke normal)
-                notifBox.classList.remove('-translate-y-full'); // Untuk Mobile
-                notifBox.classList.remove('md:translate-x-full'); // Untuk Desktop
-            }, 50);
-
-            if (notifTimeout) clearTimeout(notifTimeout);
-            notifTimeout = setTimeout(() => {
-                closeNotification();
-            }, 5000);
-        }
-
-        function closeNotification() {
-            const notifBox = document.getElementById('custom-notification');
-            
-            // Animasi Keluar
-            notifBox.classList.add('-translate-y-full'); // Mobile naik ke atas
-            notifBox.classList.add('md:translate-x-full'); // Desktop geser ke kanan
-            
-            setTimeout(() => {
-                notifBox.classList.add('hidden');
-            }, 300);
-        }
-
-        initFirebase();
     </script>
-    {{-- =============== [SELESAI] SCRIPT FIREBASE NOTIFIKASI =============== --}}
-
 </body>
 </html>

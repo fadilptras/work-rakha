@@ -165,7 +165,8 @@ class AdminUserController extends Controller
         ]);
 
         if ($request->filled('password')) {
-            $validated['password'] = bcrypt($request->password);
+            // Gunakan Hash::make() konsisten dengan pengaturan bcrypt_rounds dari .env
+            $validated['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
         } else {
             unset($validated['password']);
         }

@@ -51,7 +51,9 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     
     // Dasboard
     Route::get('/dashboard', function () {
-        return view('users.dashboard.dashboard-user', ['title' => 'Dashboard']);
+        $agent = new \Jenssegers\Agent\Agent();
+        $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
+        return view("users.dashboard.dashboard_{$viewSuffix}", ['title' => 'Dashboard']);
     })->name('dashboard');
 
     // Absensi
@@ -143,7 +145,6 @@ Route::controller(CrmController::class)->group(function () {
     Route::get('/aktivitas/json', [AktivitasController::class, 'getAktivitasJson'])
         ->name('aktivitas.json')
         ->middleware('auth');
-    Route::get('/aktivitas/json', [AktivitasController::class, 'getAktivitasJson'])->name('aktivitas.getJson');
 
     Route::get('/kirim-ulang-tahun', [NotifikasiController::class, 'kirimUlangTahun'])
         ->name('notifikasi.ulangtahun');
@@ -315,43 +316,27 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
     });
     
     Route::resource('holidays', AdminHolidayController::class);
-    
-});
 
+    // [SECURITY] Route sinkronisasi Fonnte — hanya admin yang bisa akses
+    Route::get('/fonnte-sync-group', function () {
+        $token = env('FONNTE_TOKEN');
 
-Route::get('/fonnte-sync-group', function () {
-    // Gunakan token Fonnte milikmu
-    $token = 'MP8iwGyRDCKJVgNs5ejZ'; 
+        if (!$token) {
+            return response()->json(['error' => 'FONNTE_TOKEN tidak dikonfigurasi di .env'], 500);
+        }
 
-    // 1. Fetch Group (Perintah ke Fonnte untuk mensinkronkan daftar grup dari HP kamu)
-    $sync = Http::withHeaders([
-        'Authorization' => $token,
-    ])->post('https://api.fonnte.com/fetch-group');
+        $sync = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => $token,
+        ])->post('https://api.fonnte.com/fetch-group');
 
-    // 2. Get Group (Ambil daftar grup yang berhasil disinkronkan)
-    $list = Http::withHeaders([
-        'Authorization' => $token,
-    ])->post('https://api.fonnte.com/get-whatsapp-group');
+        $list = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => $token,
+        ])->post('https://api.fonnte.com/get-whatsapp-group');
 
-    // Menampilkan hasilnya ke layar browser
-    return response()->json([
-        '1_status_sinkronisasi' => $sync->json(),
-        '2_daftar_grup_kamu'    => $list->json()
-    ]);
-});
-
-Route::get('/auto-login', function () {
-    $user = \App\Models\User::where('role', 'user')->first();
-    if (!$user) {
-        $user = \App\Models\User::create([
-            'name' => 'Karyawan Test',
-            'email' => 'karyawan@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'user',
-            'divisi' => 'Teknologi Informasi',
-            'jabatan' => 'Software Engineer'
+        return response()->json([
+            '1_status_sinkronisasi' => $sync->json(),
+            '2_daftar_grup_kamu'    => $list->json()
         ]);
-    }
-    Auth::login($user);
-    return redirect()->route('absen');
+    })->name('admin.fonnte.sync');
+    
 });

@@ -1,4 +1,4 @@
-<x-layout-users :title="'Sistem Informasi Sales (CRM)'">
+﻿<x-layout-users :title="'Sistem Informasi Sales (CRM)'">
 
     @push('styles')
     <style>
@@ -30,9 +30,9 @@
     <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
         {{-- Background Animations --}}
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
-            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
-            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
+            
+            
+            
         </div>
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
@@ -44,8 +44,8 @@
             <div class="bg-[#001BB7] rounded-3xl shadow-xl shadow-blue-900/20 mb-10 overflow-hidden relative">
                 
                 {{-- Dekorasi Background --}}
-                <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-blue-400 opacity-20 rounded-full blur-2xl pointer-events-none"></div>
+                
+                
 
                 <div class="p-8 relative z-10">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">

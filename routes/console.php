@@ -5,10 +5,9 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
+        $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Jadwal diubah sementara menjadi setiap menit untuk keperluan testing
 Schedule::command('app:send-birthday-notifications')
         ->dailyAt('06:00')
         ->timezone('Asia/Jakarta');
@@ -18,9 +17,28 @@ Schedule::command('app:send-holiday-info')
         ->timezone('Asia/Jakarta');
 
 Schedule::command('app:send-client-birthday')
-        ->dailyAt('06:00')
+        ->dailyAt('06:10')
         ->timezone('Asia/Jakarta');
         
-Schedule::command('cuti:deduct-bersama')->dailyAt('00:01');
+Schedule::command('cuti:deduct-bersama')
+        ->dailyAt('00:01');
 
-Schedule::command('photos:clean-old')->daily('05.00');
+Schedule::command('photos:clean-old')
+        ->daily('01:00');
+
+Schedule::command('cuti:reset-tahunan')
+        ->yearlyOn(1, 1, '00:01')
+        ->timezone('Asia/Jakarta');
+
+Schedule::command('absensi:remind-morning')
+        ->dailyAt('07:30')
+        ->weekdays()
+        ->timezone('Asia/Jakarta');
+
+Schedule::command('absensi:remind-checkout')
+        ->dailyAt('21:00')
+        ->timezone('Asia/Jakarta');
+
+Schedule::command('pengajuan:cleanup-stale')
+        ->dailyAt('00:05')
+        ->timezone('Asia/Jakarta');

@@ -39,9 +39,25 @@ class PengajuanDanaController extends Controller
 
     public function show(PengajuanDana $pengajuanDana)
     {
-        // $this->authorize('view', $pengajuanDana);
-        $pengajuanDana->load(['user', 'approver1', 'approver2', 'approver3', 'approver4']); 
-        
+        $userId = Auth::id();
+        $user   = Auth::user();
+
+        // Hanya pemilik, approver yang ditugaskan, manager keuangan, atau admin yang boleh akses
+        $isOwner    = $pengajuanDana->user_id === $userId;
+        $isApprover = in_array($userId, array_filter([
+            $pengajuanDana->approver_1_id,
+            $pengajuanDana->approver_2_id,
+            $pengajuanDana->approver_3_id,
+            $pengajuanDana->approver_4_id,
+        ]));
+        $isAdmin    = $user->role === 'admin';
+
+        if (!$isOwner && !$isApprover && !$isAdmin) {
+            abort(403, 'Anda tidak memiliki akses ke pengajuan dana ini.');
+        }
+
+        $pengajuanDana->load(['user', 'approver1', 'approver2', 'approver3', 'approver4']);
+
         return view('users.pengajuan-dana.pengajuan-dana-detail', [
             'title' => 'Detail Pengajuan Dana',
             'pengajuanDana' => $pengajuanDana,

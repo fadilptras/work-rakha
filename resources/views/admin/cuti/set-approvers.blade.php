@@ -9,11 +9,7 @@
             </div>
         </div>
 
-        @if (session('success'))
-            <div class="mb-4 p-4 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20">
-                {{ session('success') }}
-            </div>
-        @endif
+        
 
         <form action="{{ route('admin.cuti.set_approvers.save') }}" method="POST">
             @csrf

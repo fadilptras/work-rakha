@@ -52,15 +52,7 @@
         </div>
 
         {{-- NOTIFIKASI SUKSES --}}
-        @if(session('success'))
-        <div x-data="{ show: true }" x-show="show" class="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-between shadow-lg">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-check-circle text-xl"></i>
-                <span class="font-medium text-sm">{{ session('success') }}</span>
-            </div>
-            <button @click="show = false" class="text-emerald-400 hover:text-emerald-300"><i class="fas fa-times"></i></button>
-        </div>
-        @endif
+        
 
         {{-- ERROR VALIDASI --}}
         @if ($errors->any())
@@ -149,7 +141,7 @@
 
                                     {{-- TOMBOL HAPUS --}}
                                     <form action="{{ route('admin.holidays.destroy', $holiday->id) }}" method="POST" 
-                                          onsubmit="return confirm('Apakah Anda yakin ingin menghapus data libur ini?');">
+                                          onsubmit="confirmSubmit(event, 'Apakah Anda yakin ingin menghapus data libur ini?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 

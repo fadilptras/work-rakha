@@ -1,4 +1,4 @@
-<x-layout-users>
+﻿<x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
 
     @push('styles')
@@ -141,10 +141,10 @@
     <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
         {{-- Background Decorations --}}
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div class="absolute -top-[10%] -left-[5%] w-[40vw] h-[40vw] max-w-[600px] max-h-[600px] bg-blue-400/20 blur-[100px] rounded-full animate-float mix-blend-multiply"></div>
-            <div class="absolute top-[30%] -right-[10%] w-[35vw] h-[35vw] max-w-[500px] max-h-[500px] bg-purple-400/20 blur-[100px] rounded-full animate-float-delayed mix-blend-multiply"></div>
-            <div class="absolute -bottom-[10%] left-[20%] w-[45vw] h-[45vw] max-w-[700px] max-h-[700px] bg-cyan-400/20 blur-[120px] rounded-full animate-float mix-blend-multiply" style="animation-delay: 2s;"></div>
-            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.15) 1px, transparent 1px); background-size: 24px 24px;"></div>
+            
+            
+            
+            
         </div>
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col absen-page-wrapper">
@@ -882,7 +882,7 @@
     {{-- MODAL REKAP BULAN INI --}}
     <div id="modal-rekap" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeRekapModal()"></div>
+        
         <!-- Modal Content -->
         <div id="modal-rekap-content" class="relative bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden transform scale-95 opacity-0 transition-all duration-300">
             <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white/50 backdrop-blur-md">

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cuti;
 use App\Models\User;
 use App\Models\Absensi;
-use App\Notifications\CutiNotification;
+use App\Notifications\PengajuanCutiNotification;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -85,10 +85,10 @@ class CutiController extends Controller
         elseif ($cuti->approver4) $firstApprover = $cuti->approver4;
 
         if ($firstApprover) {
-            Notification::send($firstApprover, new CutiNotification($cuti, 'baru'));
+            Notification::send($firstApprover, new PengajuanCutiNotification($cuti, 'baru'));
         }
 
-        return redirect()->route('cuti.create')->with('success', 'Pengajuan cuti berhasil dikirim.');
+        return redirect()->route('cuti.create')->with('success', "Pengajuan cuti Anda untuk tanggal " . \Carbon\Carbon::parse($request->tanggal_mulai)->format('d M Y') . " berhasil dikirim ke sistem. Mohon pantau status persetujuannya.");
     }
 
     public function show($id)
@@ -123,63 +123,68 @@ class CutiController extends Controller
             'catatan' => 'nullable|string|max:255'
         ]);
 
-        $cuti = Cuti::with(['user', 'approver1', 'approver2', 'approver3', 'approver4'])->findOrFail($id);
-        $user = Auth::user();
-        $statusInput = $request->status;
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $id) {
+            // lockForUpdate mencegah race condition jika dua approver approve bersamaan
+            $cuti = \App\Models\Cuti::with(['user', 'approver1', 'approver2', 'approver3', 'approver4'])
+                ->lockForUpdate()
+                ->findOrFail($id);
 
-        $currentStage = null;
-        if ($user->id == $cuti->approver_cuti_1_id && $cuti->status_approver_1 == 'menunggu') {
-            $currentStage = 1;
-        } elseif ($user->id == $cuti->approver_cuti_2_id && $cuti->status_approver_2 == 'menunggu') {
-            if ($cuti->status_approver_1 == 'menunggu') return redirect()->back()->with('error', 'Menunggu persetujuan dari Approver sebelumnya.');
-            $currentStage = 2;
-        } elseif ($user->id == $cuti->approver_cuti_3_id && $cuti->status_approver_3 == 'menunggu') {
-            if (in_array('menunggu', [$cuti->status_approver_1, $cuti->status_approver_2])) return redirect()->back()->with('error', 'Menunggu persetujuan dari Approver sebelumnya.');
-            $currentStage = 3;
-        } elseif ($user->id == $cuti->approver_cuti_4_id && $cuti->status_approver_4 == 'menunggu') {
-            if (in_array('menunggu', [$cuti->status_approver_1, $cuti->status_approver_2, $cuti->status_approver_3])) return redirect()->back()->with('error', 'Menunggu persetujuan dari Approver sebelumnya.');
-            $currentStage = 4;
-        } else {
-            return redirect()->back()->with('error', 'Otoritas tidak valid atau urutan persetujuan belum sampai ke Anda.');
-        }
+            $user = Auth::user();
+            $statusInput = $request->status;
 
-        if ($statusInput == 'ditolak') {
+            $currentStage = null;
+            if ($user->id == $cuti->approver_cuti_1_id && $cuti->status_approver_1 == 'menunggu') {
+                $currentStage = 1;
+            } elseif ($user->id == $cuti->approver_cuti_2_id && $cuti->status_approver_2 == 'menunggu') {
+                if ($cuti->status_approver_1 == 'menunggu') return redirect()->back()->with('error', 'Menunggu persetujuan dari Approver sebelumnya.');
+                $currentStage = 2;
+            } elseif ($user->id == $cuti->approver_cuti_3_id && $cuti->status_approver_3 == 'menunggu') {
+                if (in_array('menunggu', [$cuti->status_approver_1, $cuti->status_approver_2])) return redirect()->back()->with('error', 'Menunggu persetujuan dari Approver sebelumnya.');
+                $currentStage = 3;
+            } elseif ($user->id == $cuti->approver_cuti_4_id && $cuti->status_approver_4 == 'menunggu') {
+                if (in_array('menunggu', [$cuti->status_approver_1, $cuti->status_approver_2, $cuti->status_approver_3])) return redirect()->back()->with('error', 'Menunggu persetujuan dari Approver sebelumnya.');
+                $currentStage = 4;
+            } else {
+                return redirect()->back()->with('error', 'Otoritas tidak valid atau urutan persetujuan belum sampai ke Anda.');
+            }
+
+            if ($statusInput == 'ditolak') {
+                $cuti->update([
+                    "status_approver_{$currentStage}" => 'ditolak',
+                    "catatan_approver_{$currentStage}" => $request->catatan,
+                    'status' => 'ditolak'
+                ]);
+                Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'ditolak'));
+                return redirect()->back()->with('success', 'Pengajuan cuti telah ditolak.');
+            }
+
             $cuti->update([
-                "status_approver_{$currentStage}" => 'ditolak',
+                "status_approver_{$currentStage}" => 'disetujui',
                 "catatan_approver_{$currentStage}" => $request->catatan,
-                'status' => 'ditolak'
             ]);
-            Notification::send($cuti->user, new CutiNotification($cuti, 'ditolak'));
-            return redirect()->back()->with('success', 'Pengajuan cuti telah ditolak.');
-        }
 
-        $cuti->update([
-            "status_approver_{$currentStage}" => 'disetujui',
-            "catatan_approver_{$currentStage}" => $request->catatan,
-        ]);
+            // Logika next approver yang diperjelas: cek stage tepat (===) bukan range (<)
+            $nextApprover = null;
+            if ($currentStage === 1 && $cuti->status_approver_2 == 'menunggu') {
+                $nextApprover = $cuti->approver2;
+            } elseif ($currentStage === 2 && $cuti->status_approver_3 == 'menunggu') {
+                $nextApprover = $cuti->approver3;
+            } elseif ($currentStage === 3 && $cuti->status_approver_4 == 'menunggu') {
+                $nextApprover = $cuti->approver4;
+            }
 
-        $nextApprover = null;
-        if ($currentStage < 2 && $cuti->status_approver_2 == 'menunggu') {
-            $nextApprover = $cuti->approver2;
-        } elseif ($currentStage < 3 && $cuti->status_approver_3 == 'menunggu') {
-            $nextApprover = $cuti->approver3;
-        } elseif ($currentStage < 4 && $cuti->status_approver_4 == 'menunggu') {
-            $nextApprover = $cuti->approver4;
-        }
+            if ($nextApprover) {
+                $cuti->update(['status' => 'proses_finalisasi']);
+                Notification::send($nextApprover, new PengajuanCutiNotification($cuti, 'baru'));
+            } else {
+                $cuti->update(['status' => 'disetujui']);
+                // lockForUpdate memastikan decrement tidak bisa terpanggil dua kali bersamaan
+                $cuti->user->decrement('sisa_cuti', $cuti->total_hari);
+                Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'disetujui'));
+            }
 
-        if ($nextApprover) {
-            $cuti->update(['status' => 'proses_finalisasi']);
-            Notification::send($nextApprover, new CutiNotification($cuti, 'baru'));
-        } else {
-            $cuti->update(['status' => 'disetujui']);
-            $cuti->user->decrement('sisa_cuti', $cuti->total_hari);
-            
-
-
-            Notification::send($cuti->user, new CutiNotification($cuti, 'disetujui'));
-        }
-
-        return redirect()->back()->with('success', 'Status pengajuan berhasil diperbarui.');
+            return redirect()->back()->with('success', 'Status pengajuan berhasil diperbarui.');
+        });
     }
 
     public function downloadPdf($id)
@@ -199,14 +204,19 @@ class CutiController extends Controller
     public function cancel(Cuti $cuti)
     {
         if (Auth::id() !== $cuti->user_id) abort(403);
-        
-        if (!in_array($cuti->status, ['diajukan', 'proses_finalisasi'])) {
-            return redirect()->back()->with('error', 'Pengajuan sudah selesai diproses, tidak bisa dibatalkan.');
-        }
 
-        $cuti->status = 'dibatalkan';
-        $cuti->save();
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($cuti) {
+            // lockForUpdate mencegah kondisi cuti baru disetujui saat cancel diproses
+            $cuti = \App\Models\Cuti::lockForUpdate()->findOrFail($cuti->id);
 
-        return redirect()->back()->with('success', 'Pengajuan berhasil dibatalkan.');
+            if (!in_array($cuti->status, ['diajukan', 'proses_finalisasi'])) {
+                return redirect()->back()->with('error', 'Pengajuan sudah selesai diproses, tidak bisa dibatalkan.');
+            }
+
+            $cuti->status = 'dibatalkan';
+            $cuti->save();
+
+            return redirect()->back()->with('success', "Pengajuan cuti Anda berhasil dibatalkan secara permanen.");
+        });
     }
 }

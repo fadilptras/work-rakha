@@ -5,11 +5,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
-    @if(session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-6">
-            {{ session('success') }}
-        </div>
-    @endif
+    
 
     {{-- Form Edit Data Utama --}}
     <form id="form-edit-karyawan" action="{{ route('admin.employees.update', $user->id) }}" method="POST">
@@ -204,7 +200,7 @@
                 </div>
             </div>
             <div>
-                <form action="{{ route('admin.users.resetPassword', $user->id) }}" method="POST" onsubmit="return confirm('Peringatan: Apakah Anda yakin ingin me-reset password akun ini ke password default sistem (#rakhA2022)?');">
+                <form action="{{ route('admin.users.resetPassword', $user->id) }}" method="POST" onsubmit="confirmSubmit(event, 'Peringatan: Apakah Anda yakin ingin me-reset password akun ini ke password default sistem (#rakhA2022)?');">
                     @csrf
                     @method('PATCH')
                     <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors flex items-center justify-center whitespace-nowrap">

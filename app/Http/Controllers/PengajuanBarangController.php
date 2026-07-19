@@ -225,5 +225,23 @@ class PengajuanBarangController extends Controller
             }
         }
         return $pathFiles;
-    }    
+    }
+
+    /**
+     * Membatalkan pengajuan barang (hanya pemilik, hanya jika belum diproses final).
+     */
+    public function cancel(PengajuanBarang $pengajuanBarang)
+    {
+        if (Auth::id() !== $pengajuanBarang->user_id) {
+            abort(403, 'Anda tidak memiliki akses untuk membatalkan pengajuan ini.');
+        }
+
+        if (!in_array($pengajuanBarang->status, ['diajukan', 'diproses'])) {
+            return redirect()->back()->with('error', 'Pengajuan sudah selesai diproses, tidak bisa dibatalkan.');
+        }
+
+        $pengajuanBarang->update(['status' => 'dibatalkan']);
+
+        return redirect()->back()->with('success', 'Pengajuan barang berhasil dibatalkan.');
+    }
 }

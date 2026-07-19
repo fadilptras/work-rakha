@@ -1,15 +1,7 @@
 <x-layout-admin :title="'Monitoring Sales'">
     
     {{-- Notifikasi Sukses --}}
-    @if (session('success'))
-        <div class="mb-6 bg-emerald-900/50 border-l-4 border-emerald-500 text-emerald-200 p-4 rounded-r shadow-sm flex items-center">
-            <i class="fas fa-check-circle mr-3 text-lg"></i>
-            <div>
-                <p class="font-bold">Berhasil</p>
-                <p class="text-sm">{{ session('success') }}</p>
-            </div>
-        </div>
-    @endif
+    
 
     {{-- Error Handling Modal --}}
     @if ($errors->any())

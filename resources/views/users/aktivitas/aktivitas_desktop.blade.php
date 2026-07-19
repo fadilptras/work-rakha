@@ -1,4 +1,4 @@
-<x-layout-users>
+﻿<x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -356,9 +356,9 @@
     <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
         {{-- Background Animations --}}
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
-            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
-            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
+            
+            
+            
         </div>
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
@@ -385,8 +385,8 @@
             {{-- CARD ATAS PENJELAS HALAMAN (Sesuai Cuti & Simple Jelas) --}}
             <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-3xl p-6 md:p-8 shadow-xl mb-6 overflow-hidden border border-white/20">
                 {{-- Decorative circles --}}
-                <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-                <div class="absolute right-20 -bottom-10 w-24 h-24 bg-white/10 rounded-full blur-lg pointer-events-none"></div>
+                
+                
                 
                 <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div class="flex items-center gap-5">
@@ -572,7 +572,7 @@
 
     {{-- MODAL PANTAU TIM --}}
     <div id="modal-pantau" class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md hidden" style="z-index: 9999;" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div id="modal-pantau-backdrop" class="fixed inset-0"></div>
+        
         <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] flex flex-col overflow-hidden border border-slate-100 z-10">
             <div class="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
                 <div class="flex items-center gap-2.5">
@@ -591,7 +591,7 @@
 
     {{-- MODAL PRATINJAU FOTO --}}
     <div id="modal-foto" class="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm hidden" style="z-index: 10000;" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div id="modal-foto-backdrop" class="fixed inset-0"></div>
+        
         <div class="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden border border-slate-100 z-10 flex flex-col">
             <div class="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
                 <div class="flex items-center gap-2">

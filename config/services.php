@@ -42,5 +42,6 @@ return [
     
     'fonnte' => [
         'group_id' => env('WHATSAPP_GROUP_ID'),
+        'token' => env('FONNTE_TOKEN'),
     ],
 ];

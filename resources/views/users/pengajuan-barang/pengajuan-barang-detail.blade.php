@@ -1,4 +1,4 @@
-﻿<x-layout-users>
+<x-layout-users>
     <x-slot:title>Detail Pengajuan Barang</x-slot:title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -109,16 +109,8 @@
             </div>
 
             {{-- SESSION MESSAGES --}}
-            @if (session('success'))
-                <div class="mb-4 bg-green-50 border border-green-200 text-green-700 p-4 rounded-xl text-sm flex items-center gap-2 font-bold">
-                    <i class="fas fa-check-circle"></i> {{ session('success') }}
-                </div>
-            @endif
-            @if (session('error'))
-                <div class="mb-4 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm flex items-center gap-2 font-bold">
-                    <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
-                </div>
-            @endif
+            
+            
 
             {{-- GRID: INFO PEMOHON + TIMELINE --}}
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -276,7 +268,7 @@
             {{-- TOMBOL BATALKAN --}}
             @if(Auth::id() == $pengajuanBarang->user_id && in_array($pengajuanBarang->status, ['diajukan']))
             <div class="mb-10 flex justify-end">
-                <form action="{{ route('pengajuan_barang.cancel', $pengajuanBarang) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pengajuan ini?')">
+                <form action="{{ route('pengajuan_barang.cancel', $pengajuanBarang) }}" method="POST" onsubmit="confirmSubmit(event, 'Yakin ingin membatalkan pengajuan ini?')">
                     @csrf
                     <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-black text-white bg-slate-600 rounded-xl shadow hover:bg-slate-700 transition">
                         <i class="fas fa-times-circle"></i> Batalkan Pengajuan

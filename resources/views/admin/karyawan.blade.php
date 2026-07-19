@@ -11,16 +11,8 @@
     </div>
 
     {{-- Notifikasi --}}
-    @if(session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-4" role="alert">
-            {{ session('success') }}
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-4" role="alert">
-            {{ session('error') }}
-        </div>
-    @endif
+    
+    
     @if ($errors->any())
         <div class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md">
             <ul class="list-disc pl-5">
@@ -112,7 +104,7 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
 
-                                        <form action="{{ route('admin.employees.destroy', $user->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus akun ini?');">
+                                        <form action="{{ route('admin.employees.destroy', $user->id) }}" method="POST" class="inline-block" onsubmit="confirmSubmit(event, 'Apakah Anda yakin ingin menghapus akun ini?');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-red-400 hover:text-red-300" title="Hapus Karyawan">

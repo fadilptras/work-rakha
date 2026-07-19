@@ -72,12 +72,7 @@
         </button>
     </div>
 
-    @if (session('success'))
-        <div class="mb-6 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md shadow-sm" role="alert">
-            <p class="font-bold">Sukses!</p>
-            <p>{{ session('success') }}</p>
-        </div>
-    @endif
+    
     @if ($errors->any())
         <div class="mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-sm" role="alert">
             <strong class="font-bold">Oops! Terjadi kesalahan.</strong>
@@ -190,7 +185,7 @@
                                                 <i class="fas fa-edit fa-lg"></i>
                                             </button>
                                             
-                                            <form action="{{ route('admin.agenda.destroy', $agenda->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus agenda ini?');">
+                                            <form action="{{ route('admin.agenda.destroy', $agenda->id) }}" method="POST" class="inline-block" onsubmit="confirmSubmit(event, 'Apakah Anda yakin ingin menghapus agenda ini?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-400 hover:text-red-300" title="Hapus Agenda">
@@ -373,7 +368,7 @@
             
             const editButton = `<button type="button" id="edit-agenda-btn" class="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-semibold flex items-center"><i class="fas fa-edit mr-2"></i> Edit</button>`;
             const deleteUrl = "{{ route('admin.agenda.destroy', ['agenda' => ':id']) }}".replace(':id', event.id);
-            const deleteForm = `<form action="${deleteUrl}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus agenda ini?')" class="inline-block"><input type="hidden" name="_token" value="${csrfToken}"><input type="hidden" name="_method" value="DELETE"><button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold flex items-center"><i class="fas fa-trash-alt mr-2"></i> Hapus</button></form>`;
+            const deleteForm = `<form action="${deleteUrl}" method="POST" onsubmit="confirmSubmit(event, 'Anda yakin ingin menghapus agenda ini?')" class="inline-block"><input type="hidden" name="_token" value="${csrfToken}"><input type="hidden" name="_method" value="DELETE"><button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold flex items-center"><i class="fas fa-trash-alt mr-2"></i> Hapus</button></form>`;
             
             const contentHTML = `
                 <div class="flex justify-between items-center p-6 border-b border-zinc-700">

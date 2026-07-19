@@ -175,7 +175,9 @@ class AbsenController extends Controller
                 $statusAbsensi = $absensiRekanHariIni->get($rekan->id);
                 $daftarRekan[] = (object) [
                     'user'   => $rekan,
-                    'status' => $statusAbsensi ? $statusAbsensi->status : 'Belum Absen'
+                    'status' => $statusAbsensi ? $statusAbsensi->status : 'Belum Absen',
+                    'jam_masuk' => $statusAbsensi ? $statusAbsensi->jam_masuk : null,
+                    'jam_keluar' => $statusAbsensi ? $statusAbsensi->jam_keluar : null,
                 ];
             }
         }
@@ -266,7 +268,7 @@ class AbsenController extends Controller
             return redirect()->route('absen')->with('error', 'Absensi masuk Anda melewati batas waktu. Status Anda otomatis menjadi Tidak Hadir.');
         }
 
-        return redirect()->route('absen')->with('success', 'Absensi berhasil direkam!');
+        return redirect()->route('absen')->with('success', "Absensi masuk berhasil direkam pada pukul " . $jamMasuk->format('H:i') . " WIB.");
     }
 
     public function updateKeluar(Request $request, Absensi $absensi)
@@ -297,7 +299,7 @@ class AbsenController extends Controller
         // Perbaikan: menembak dari Auth::user() agar menghindari error jika relasi terputus
         Auth::user()->notify(new AbsensiNotification($absensi, 'keluar'));
 
-        return redirect()->route('absen')->with('success', 'Absensi keluar berhasil direkam!');
+        return redirect()->route('absen')->with('success', "Absensi keluar berhasil direkam pada pukul " . now()->format('H:i') . " WIB. Selamat beristirahat!");
     }
 
     public function storeLembur(Request $request)
@@ -349,7 +351,7 @@ class AbsenController extends Controller
     
         $user->notify(new \App\Notifications\AbsensiNotification($lembur, 'lembur_masuk'));
     
-        return redirect()->route('absen')->with('success', 'Absensi lembur masuk berhasil direkam!');
+        return redirect()->route('absen')->with('success', "Lembur masuk berhasil dimulai pada pukul " . now()->format('H:i') . " WIB. Semangat bekerja!");
     }
 
     public function updateLemburKeluar(Request $request, Lembur $lembur)
@@ -383,6 +385,6 @@ class AbsenController extends Controller
         // Perbaikan: sama seperti absen biasa, menggunakan Auth::user() langsung
         Auth::user()->notify(new AbsensiNotification($lembur, 'lembur_keluar'));
     
-        return redirect()->route('absen')->with('success', 'Absen keluar lembur berhasil direkam. Terima kasih!');
+        return redirect()->route('absen')->with('success', "Lembur keluar berhasil direkam pada pukul " . now()->format('H:i') . " WIB. Terima kasih atas dedikasinya hari ini!");
     }
 }

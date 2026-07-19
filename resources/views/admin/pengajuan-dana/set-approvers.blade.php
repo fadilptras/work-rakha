@@ -9,16 +9,8 @@
             </div>
         </div>
 
-        @if (session('success'))
-            <div class="mb-4 p-4 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20">
-                {{ session('success') }}
-            </div>
-        @endif
-        @if (session('error'))
-            <div class="mb-4 p-4 bg-red-500/10 text-red-400 rounded-lg border border-red-500/20">
-                {{ session('error') }}
-            </div>
-        @endif
+        
+        
 
         <form action="{{ route('admin.pengajuan_dana.set_approvers.save') }}" method="POST">
             @csrf

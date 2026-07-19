@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Notification;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Notifications\BirthdayNotification;
+use Illuminate\Support\Facades\Artisan;
 
 class NotifikasiController extends Controller
 {
@@ -71,13 +72,34 @@ class NotifikasiController extends Controller
         $query = $user->notifications()->latest();
 
         if ($filterType !== 'semua') {
-            $allNotifications = $query->take(200)->get();
-            $notificationsToGroup = $allNotifications->filter(function ($notification) use ($determineType, $filterType) {
-                return $determineType($notification) === $filterType;
-            })->take(50);
-        } else {
-            $notificationsToGroup = $query->take(50)->get();
+            // Filter langsung di database menggunakan JSON LIKE query (lebih efisien dari filter PHP)
+            $keywordMap = [
+                'Pengajuan Dana'    => ['dana'],
+                'Pengajuan Barang'  => ['barang', 'inventory'],
+                'Pengajuan Cuti'    => ['cuti'],
+                'Agenda'            => ['agenda'],
+                'Lainnya'           => [],
+            ];
+
+            $keywords = $keywordMap[$filterType] ?? [];
+
+            if ($filterType === 'Lainnya') {
+                // Lainnya = tidak mengandung keyword manapun
+                $query->where(function ($q) {
+                    foreach (['dana', 'barang', 'inventory', 'cuti', 'agenda'] as $kw) {
+                        $q->where('data', 'NOT LIKE', "%{$kw}%");
+                    }
+                });
+            } elseif (!empty($keywords)) {
+                $query->where(function ($q) use ($keywords) {
+                    foreach ($keywords as $kw) {
+                        $q->orWhere('data', 'LIKE', "%{$kw}%");
+                    }
+                });
+            }
         }
+
+        $notificationsToGroup = $query->take(50)->get();
         
         // Tandai terbaca saat dibuka
         $unreadIds = $notificationsToGroup->whereNull('read_at')->pluck('id');

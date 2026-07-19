@@ -61,7 +61,10 @@ class AktivitasController extends Controller
         }
 
         // 4. Kirim semua data ke view
-        return view('users.aktivitas.aktivitas-user', [
+        $agent = new \Jenssegers\Agent\Agent();
+        $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
+
+        return view("users.aktivitas.aktivitas_{$viewSuffix}", [
             'title' => 'Catat Aktivitas', //
             'user' => $user,
             'aktivitasHariIni' => $aktivitasHariIni, //

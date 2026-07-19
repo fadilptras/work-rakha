@@ -16,12 +16,7 @@
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="bg-green-500/10 border-l-4 border-green-500 text-green-400 p-4 rounded-md mb-6" role="alert">
-                <p class="font-bold">Berhasil!</p>
-                <p>{{ session('success') }}</p>
-            </div>
-        @endif
+        
 
         <div class="bg-zinc-800 rounded-lg shadow-lg border border-zinc-700">
             {{-- LOGIC: Route diarahkan ke updatePengaturan sesuai web.php Anda --}}
