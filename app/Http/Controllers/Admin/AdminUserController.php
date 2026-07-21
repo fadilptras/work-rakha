@@ -78,16 +78,23 @@ class AdminUserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'divisi' => ['required', 'string', 'max:100'],
             'jabatan' => ['nullable', 'string', 'max:100'],
+            'tanggal_bergabung' => ['nullable', 'date'],
             'jatah_cuti' => ['nullable', 'integer', 'min:0'],
+            'sisa_cuti' => ['nullable', 'integer', 'min:0'],
             'status_karyawan' => ['nullable', 'string', 'max:100'],
             
             // Validasi Data Tambahan Lengkap
+            'nip' => ['nullable', 'string', 'max:50'],
             'nik' => ['nullable', 'string', 'max:20'],
             'nomor_telepon' => ['nullable', 'string', 'max:20'],
             'tempat_lahir' => ['nullable', 'string', 'max:100'],
             'tanggal_lahir' => ['nullable', 'date'],
             'jenis_kelamin' => ['nullable', 'in:Laki-laki,Perempuan'],
             'agama' => ['nullable', 'string', 'max:50'],
+            'golongan_darah' => ['nullable', 'string', 'max:10'],
+            'status_pernikahan' => ['nullable', 'string', 'max:50'],
+            'alamat_ktp' => ['nullable', 'string'],
+            'alamat_domisili' => ['nullable', 'string'],
             
             // Finansial & Bank
             'nama_bank' => ['nullable', 'string', 'max:50'],
@@ -237,5 +244,14 @@ class AdminUserController extends Controller
         $pdf = Pdf::loadView('pdf.profile', $data)->setPaper('a4', 'portrait');
 
         return $pdf->download('Profil_' . str_replace(' ', '_', $user->name) . '.pdf');
+    }
+
+    /**
+     * Menyediakan data JSON profil karyawan untuk modal detail AJAX.
+     */
+    public function ajaxDetail(User $user)
+    {
+        $user->load(['riwayatPendidikan', 'riwayatPekerjaan']);
+        return response()->json($user);
     }
 }

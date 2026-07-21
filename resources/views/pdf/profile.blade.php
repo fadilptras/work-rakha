@@ -214,12 +214,7 @@
             <table class="info-table">
                 <tr><td class="label">NIP</td><td class="value">{{ $user->nip ?? '-' }}</td></tr>
                 <tr><td class="label">Status</td><td class="value">{{ $user->status_karyawan ?? '-' }}</td></tr>
-                <tr><td class="label">Lokasi Kerja</td><td class="value">{{ $user->lokasi_kerja ?? '-' }}</td></tr>
                 <tr><td class="label">Tgl Bergabung</td><td class="value">{{ $user->tanggal_bergabung ? $user->tanggal_bergabung->translatedFormat('d F Y') : '-' }}</td></tr>
-                @if($user->status_karyawan == 'Kontrak')
-                <tr><td class="label">Masa Kontrak</td><td class="value">{{ $user->tanggal_mulai_kontrak ? $user->tanggal_mulai_kontrak->translatedFormat('d/m/Y') : '-' }} - {{ $user->tanggal_akhir_kontrak ? $user->tanggal_akhir_kontrak->translatedFormat('d/m/Y') : '-' }}</td></tr>
-                @endif
-                <tr><td class="label">Status Aktif</td><td class="value">{{ $user->tanggal_berhenti ? 'Non-Aktif (' . $user->tanggal_berhenti->translatedFormat('d F Y') . ')' : 'Karyawan Aktif' }}</td></tr>
             </table>
         </div>
     </div>
@@ -230,7 +225,7 @@
         <div class="grid-column">
             <table class="info-table">
                 <tr><td class="label">NIK (KTP)</td><td class="value">{{ $user->nik ?? '-' }}</td></tr>
-                <tr><td class="label">NPWP</td><td class="value">{{ $user->npwp ?? '-' }} ({{ $user->ptkp ?? '-' }})</td></tr>
+                <tr><td class="label">NPWP</td><td class="value">{{ $user->npwp ?? '-' }}</td></tr>
                 <tr><td class="label">BPJS Kes</td><td class="value">{{ $user->bpjs_kesehatan ?? '-' }}</td></tr>
                 <tr><td class="label">BPJS TK</td><td class="value">{{ $user->bpjs_ketenagakerjaan ?? '-' }}</td></tr>
             </table>

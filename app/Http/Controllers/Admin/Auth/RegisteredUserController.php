@@ -25,6 +25,7 @@ class RegisteredUserController extends Controller
             'role' => ['required', Rule::in(['admin', 'user'])],
             'divisi' => ['required', 'string', 'max:100'],
             'jabatan' => ['nullable', 'string', 'max:100'],
+            'tanggal_bergabung' => ['nullable', 'date'],
             'nomor_telepon' => ['nullable', 'string', 'max:20'],
             'jatah_cuti' => ['nullable', 'integer', 'min:0'],
         ]);
@@ -39,6 +40,7 @@ class RegisteredUserController extends Controller
             'role' => $validated['role'],
             'divisi' => $validated['divisi'],
             'jabatan' => $validated['jabatan'] ?? 'Staff',
+            'tanggal_bergabung' => $validated['tanggal_bergabung'] ?? now()->toDateString(),
             'nomor_telepon' => $validated['nomor_telepon'] ?? null,
             'password' => Hash::make($defaultPassword),
             'is_kepala_divisi' => false,

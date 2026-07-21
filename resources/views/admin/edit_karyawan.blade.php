@@ -59,6 +59,10 @@
                     <h2 class="text-base font-bold text-white mb-4 border-b border-zinc-700 pb-2">Status Penugasan</h2>
                     <div class="space-y-4">
                         <div>
+                            <label class="block text-xs font-medium text-zinc-300 mb-1">NIP Perusahaan</label>
+                            <input type="text" name="nip" value="{{ old('nip', $user->nip) }}" placeholder="Misal: NIP-001" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                        </div>
+                        <div>
                             <label class="block text-xs font-medium text-zinc-300 mb-1">Divisi Kerja <span class="text-red-500">*</span></label>
                             <input type="text" name="divisi" value="{{ old('divisi', $user->divisi) }}" required class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500">
                         </div>
@@ -67,8 +71,18 @@
                             <input type="text" name="jabatan" value="{{ old('jabatan', $user->jabatan) }}" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-zinc-300 mb-1">Jatah Kuota Cuti Tahunan <span class="text-red-500">*</span></label>
-                            <input type="number" name="jatah_cuti" value="{{ old('jatah_cuti', $user->jatah_cuti) }}" required min="0" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                            <label class="block text-xs font-medium text-zinc-300 mb-1">Tanggal Bergabung</label>
+                            <input type="date" name="tanggal_bergabung" value="{{ old('tanggal_bergabung', $user->tanggal_bergabung ? \Carbon\Carbon::parse($user->tanggal_bergabung)->format('Y-m-d') : '') }}" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-zinc-300 mb-1">Jatah Cuti <span class="text-red-500">*</span></label>
+                                <input type="number" name="jatah_cuti" value="{{ old('jatah_cuti', $user->jatah_cuti) }}" required min="0" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-zinc-300 mb-1">Sisa Cuti</label>
+                                <input type="number" name="sisa_cuti" value="{{ old('sisa_cuti', $user->sisa_cuti) }}" min="0" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                            </div>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-zinc-300 mb-1">Status Keaktifan</label>
@@ -120,6 +134,34 @@
                         <div>
                             <label class="block text-xs font-medium text-zinc-300 mb-1">Agama</label>
                             <input type="text" name="agama" value="{{ old('agama', $user->agama) }}" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-300 mb-1">Golongan Darah</label>
+                            <select name="golongan_darah" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none">
+                                <option value="">-- Pilih --</option>
+                                @foreach(['A', 'B', 'AB', 'O', 'Tidak Tahu'] as $goldar)
+                                    <option value="{{ $goldar }}" {{ old('golongan_darah', $user->golongan_darah) == $goldar ? 'selected' : '' }}>{{ $goldar }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-300 mb-1">Status Pernikahan</label>
+                            <select name="status_pernikahan" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none">
+                                <option value="">-- Pilih --</option>
+                                @foreach(['Belum Menikah', 'Menikah', 'Cerai'] as $stt)
+                                    <option value="{{ $stt }}" {{ old('status_pernikahan', $user->status_pernikahan) == $stt ? 'selected' : '' }}>{{ $stt }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-zinc-300 mb-1">Alamat Sesuai KTP</label>
+                                <textarea name="alamat_ktp" rows="2" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none" placeholder="Alamat KTP...">{{ old('alamat_ktp', $user->alamat_ktp) }}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-zinc-300 mb-1">Alamat Domisili Saat Ini</label>
+                                <textarea name="alamat_domisili" rows="2" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none" placeholder="Alamat Domisili...">{{ old('alamat_domisili', $user->alamat_domisili) }}</textarea>
+                            </div>
                         </div>
                     </div>
                 </div>

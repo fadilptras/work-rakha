@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use Barryvdh\DomPDF\Facade\Pdf; // Tambahan untuk library PDF
-use Carbon\Carbon; // Tambahan untuk format tanggal cetak
+use Barryvdh\DomPDF\Facade\Pdf; 
+use Carbon\Carbon;
 use Exception;
 
 class ProfileController extends Controller
@@ -32,6 +32,7 @@ class ProfileController extends Controller
         $request->validate([
             'name'              => ['required', 'string', 'max:255'],
             'email'             => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'tanggal_bergabung' => ['nullable', 'date'],
             'password'          => ['nullable', 'string', 'min:8', 'confirmed'],
             'profile_picture'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'cropped_image'     => 'nullable|string',
@@ -49,9 +50,8 @@ class ProfileController extends Controller
         try {
             DB::transaction(function () use ($request, $user) {
                 // 1. Whitelist field yang BOLEH diupdate oleh karyawan sendiri
-                // (Menghindari mass assignment: role, sisa_cuti, approver_X_id, dll tidak bisa diubah)
                 $allowedFields = [
-                    'name', 'email',
+                    'name', 'email', 'tanggal_bergabung',
                     'nomor_telepon', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin',
                     'agama', 'golongan_darah', 'status_pernikahan',
                     'alamat_ktp', 'alamat_domisili',

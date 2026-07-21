@@ -180,6 +180,11 @@
                         </div>
 
                         <div class="mb-4">
+                            <label for="tanggal_bergabung" class="block text-sm font-medium text-gray-300 mb-1">Tanggal Bergabung</label>
+                            <input type="date" name="tanggal_bergabung" id="tanggal_bergabung" value="{{ date('Y-m-d') }}" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
+                        </div>
+
+                        <div class="mb-4">
                             <label for="no_telepon" class="block text-sm font-medium text-gray-300 mb-1">No. Telepon / WA</label>
                             <input type="text" name="no_telepon" id="no_telepon" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" placeholder="Contoh: 081234567890">
                         </div>
@@ -375,25 +380,23 @@
                                         </table>
                                     </div>
 
-                                    <div>
+                                     <div>
                                         <h4 class="text-sm font-bold text-emerald-400 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-briefcase mr-1.5"></i>Ketenagakerjaan & Kepegawaian</h4>
                                         <table class="w-full text-xs space-y-2">
                                             <tr><td class="text-gray-400 py-1 w-28">NIP Perusahaan</td><td class="text-white">: ${user.nip ?? '-'}</td></tr>
-                                            <tr><td class="text-gray-400 py-1">Lokasi Kerja</td><td class="text-white">: ${user.lokasi_kerja ?? '-'}</td></tr>
-                                            <tr><td class="text-gray-400 py-1">Mulai Kontrak</td><td class="text-white">: ${tglMulaiKontrak}</td></tr>
-                                            <tr><td class="text-gray-400 py-1">Akhir Kontrak</td><td class="text-white">: ${tglAkhirKontrak}</td></tr>
+                                            <tr><td class="text-gray-400 py-1">Tgl Bergabung</td><td class="text-white">: ${tglGabung}</td></tr>
                                             <tr><td class="text-gray-400 py-1">Jatah Cuti Tahunan</td><td class="text-white font-bold">: ${user.jatah_cuti ?? 12} Hari</td></tr>
                                             <tr><td class="text-gray-400 py-1">Sisa Kuota Cuti</td><td class="text-emerald-400 font-bold">: ${user.sisa_cuti ?? 0} Hari</td></tr>
                                         </table>
                                     </div>
 
                                     <div>
-                                        <h4 class="text-sm font-bold text-yellow-500 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-credit-card mr-1.5"></i>Finansial & Legalitasitas</h4>
+                                        <h4 class="text-sm font-bold text-yellow-500 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-credit-card mr-1.5"></i>Finansial & Legalitas</h4>
                                         <table class="w-full text-xs space-y-2">
                                             <tr><td class="text-gray-400 py-1 w-28">Nama Bank</td><td class="text-white">: ${user.nama_bank ?? '-'}</td></tr>
                                             <tr><td class="text-gray-400 py-1">No. Rekening</td><td class="text-white">: ${user.nomor_rekening ?? '-'}</td></tr>
                                             <tr><td class="text-gray-400 py-1">Pemilik Rekening</td><td class="text-white">: ${user.pemilik_rekening ?? '-'}</td></tr>
-                                            <tr><td class="text-gray-400 py-1">NPWP</td><td class="text-white">: ${user.npwp ?? '-'} (PTKP: ${user.ptkp ?? '-'})</td></tr>
+                                            <tr><td class="text-gray-400 py-1">NPWP</td><td class="text-white">: ${user.npwp ?? '-'}</td></tr>
                                             <tr><td class="text-gray-400 py-1">BPJS Kesehatan</td><td class="text-white">: ${user.bpjs_kesehatan ?? '-'}</td></tr>
                                             <tr><td class="text-gray-400 py-1">BPJS Ketenagakerjaan</td><td class="text-white">: ${user.bpjs_ketenagakerjaan ?? '-'}</td></tr>
                                         </table>

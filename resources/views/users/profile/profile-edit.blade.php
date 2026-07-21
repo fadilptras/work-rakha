@@ -128,7 +128,7 @@
                             <div class="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
                                 <span class="bg-white/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">NIP: {{ $user->nip ?? '-' }}</span>
                                 <span class="bg-white/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">Status: {{ $user->status_karyawan ?? '-' }}</span>
-                                <span class="bg-white/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">Lokasi: {{ $user->lokasi_kerja ?? '-' }}</span>
+                                <span class="bg-white/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">Gabung: {{ $user->tanggal_bergabung ? \Carbon\Carbon::parse($user->tanggal_bergabung)->translatedFormat('d M Y') : '-' }}</span>
                             </div>
                         </div>
                         <div class="flex-shrink-0 mt-4 md:mt-0">
@@ -159,6 +159,10 @@
                                         <div class="space-y-1">
                                             <label class="text-[10px] font-black text-slate-400 uppercase">Nomor Telepon Aktif</label>
                                             <input type="tel" name="nomor_telepon" value="{{ old('nomor_telepon', $user->nomor_telepon) }}" class="w-full border-slate-300 rounded-xl text-sm px-4 py-2.5 outline-none border" placeholder="0812xxxxxxxx">
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[10px] font-black text-slate-400 uppercase">Tanggal Bergabung</label>
+                                            <input type="date" name="tanggal_bergabung" value="{{ old('tanggal_bergabung', $user->tanggal_bergabung ? (\Carbon\Carbon::parse($user->tanggal_bergabung)->format('Y-m-d')) : '') }}" class="w-full border-slate-300 rounded-xl text-sm px-4 py-2.5 outline-none border">
                                         </div>
                                     </div>
                                 </div>
@@ -277,15 +281,6 @@
                                         </label>
                                         <input type="file" name="file_npwp" class="block w-full text-[10px] text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:bg-emerald-50 file:text-emerald-700">
                                     </div>
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="text-[10px] font-black text-slate-400 uppercase">Status PTKP (Pajak)</label>
-                                    <select name="ptkp" class="w-full border-slate-300 rounded-xl text-sm px-4 py-2.5 outline-none border">
-                                        <option value="">-- Pilih Status --</option>
-                                        @foreach(['TK/0', 'TK/1', 'TK/2', 'TK/3', 'K/0', 'K/1', 'K/2', 'K/3'] as $ptkp)
-                                            <option value="{{ $ptkp }}" @selected(old('ptkp', $user->ptkp) == $ptkp)>{{ $ptkp }}</option>
-                                        @endforeach
-                                    </select>
                                 </div>
                             </div>
 
