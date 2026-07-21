@@ -159,11 +159,11 @@ class AdminCutiController extends Controller
                 "catatan_approver_{$currentStage}" => $catatanInput,
             ]);
 
-            // Logika next approver yang diperjelas: cek stage tepat (===) bukan range (<)
+            // Logika next approver diubah menjadi berjenjang (<) agar tidak bypass jika ada yang skipped
             $nextApprover = null;
-            if ($currentStage === 1 && $cuti->status_approver_2 == 'menunggu') $nextApprover = $cuti->approver2;
-            elseif ($currentStage === 2 && $cuti->status_approver_3 == 'menunggu') $nextApprover = $cuti->approver3;
-            elseif ($currentStage === 3 && $cuti->status_approver_4 == 'menunggu') $nextApprover = $cuti->approver4;
+            if ($currentStage < 2 && $cuti->status_approver_2 == 'menunggu') $nextApprover = $cuti->approver2;
+            elseif ($currentStage < 3 && $cuti->status_approver_3 == 'menunggu') $nextApprover = $cuti->approver3;
+            elseif ($currentStage < 4 && $cuti->status_approver_4 == 'menunggu') $nextApprover = $cuti->approver4;
 
             if ($nextApprover) {
                 $cuti->update(['status' => 'proses_finalisasi']);

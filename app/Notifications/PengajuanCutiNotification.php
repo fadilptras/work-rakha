@@ -60,7 +60,9 @@ class PengajuanCutiNotification extends Notification implements ShouldQueue
     {
         $pemohon = $this->cuti->user->name ?? 'Karyawan';
         $tanggal = Carbon::parse($this->cuti->tanggal_mulai)->translatedFormat('d F Y');
-        $link = route('cuti.show', $this->cuti->id);
+        $link = $notifiable->role === 'admin' 
+            ? route('admin.cuti.show', $this->cuti->id) 
+            : route('cuti.show', $this->cuti->id);
 
         switch ($this->tipe) {
             case 'disetujui':
@@ -104,7 +106,9 @@ class PengajuanCutiNotification extends Notification implements ShouldQueue
                     'message' => "Cuti Anda pada tanggal $tanggal telah disetujui.",
                     'icon' => 'fas fa-check-circle',
                     'color' => 'text-green-600',
-                    'url' => route('cuti.show', $this->cuti->id),
+                    'url' => $notifiable->role === 'admin' 
+                        ? route('admin.cuti.show', $this->cuti->id) 
+                        : route('cuti.show', $this->cuti->id),
                 ];
             case 'ditolak':
                 return [
@@ -113,7 +117,9 @@ class PengajuanCutiNotification extends Notification implements ShouldQueue
                     'message' => "Cuti Anda pada tanggal $tanggal ditolak.",
                     'icon' => 'fas fa-times-circle',
                     'color' => 'text-red-600',
-                    'url' => route('cuti.show', $this->cuti->id),
+                    'url' => $notifiable->role === 'admin' 
+                        ? route('admin.cuti.show', $this->cuti->id) 
+                        : route('cuti.show', $this->cuti->id),
                 ];
             case 'dibatalkan':
                 return [
@@ -122,7 +128,9 @@ class PengajuanCutiNotification extends Notification implements ShouldQueue
                     'message' => "$pemohon membatalkan pengajuan cuti.",
                     'icon' => 'fas fa-ban',
                     'color' => 'text-gray-500',
-                    'url' => route('cuti.show', $this->cuti->id),
+                    'url' => $notifiable->role === 'admin' 
+                        ? route('admin.cuti.show', $this->cuti->id) 
+                        : route('cuti.show', $this->cuti->id),
                 ];
             default:
                 return [
@@ -131,7 +139,9 @@ class PengajuanCutiNotification extends Notification implements ShouldQueue
                     'message' => "$pemohon mengajukan cuti baru tanggal $tanggal.",
                     'icon' => 'fas fa-file-invoice',
                     'color' => 'text-blue-600',
-                    'url' => route('cuti.show', $this->cuti->id)
+                    'url' => $notifiable->role === 'admin' 
+                        ? route('admin.cuti.show', $this->cuti->id) 
+                        : route('cuti.show', $this->cuti->id)
                 ];
         }
     }

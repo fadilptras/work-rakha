@@ -76,10 +76,20 @@
             </div>
 
             {{-- ALERT SUCCESS --}}
-            
+            @if(session('success'))
+                <div class="bg-emerald-100 border-l-4 border-emerald-500 text-emerald-800 p-4 rounded-xl mb-6 shadow-sm flex items-center">
+                    <i class="fas fa-check-circle mr-3 text-emerald-500 text-xl"></i>
+                    <span class="font-bold">{{ session('success') }}</span>
+                </div>
+            @endif
 
             {{-- ALERT ERROR SYSTEM --}}
-            
+            @if(session('error'))
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-xl mb-6 shadow-sm flex items-center">
+                    <i class="fas fa-times-circle mr-3 text-red-500 text-xl"></i>
+                    <span class="font-bold">{{ session('error') }}</span>
+                </div>
+            @endif
 
             {{-- ALERT VALIDATION ERRORS --}}
             @if ($errors->any())
@@ -546,6 +556,7 @@
         </div>
     </template>
 
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     
     <script>

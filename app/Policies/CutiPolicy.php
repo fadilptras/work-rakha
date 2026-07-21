@@ -15,13 +15,13 @@ class CutiPolicy
     public function view(User $user, Cuti $cuti): bool
     {
         // User dapat melihat jika dia adalah pemiliknya
-        if ($user->id === $cuti->user_id) {
+        if ($user->id == $cuti->user_id) {
             return true;
         }
 
         // Cek apakah user adalah atasan yang berhak menyetujui
         $approver = $this->getApprover($cuti->user);
-        if ($approver && $user->id === $approver->id) {
+        if ($approver && $user->id == $approver->id) {
             return true;
         }
         
@@ -42,7 +42,7 @@ class CutiPolicy
         $approver = $this->getApprover($cuti->user);
 
         // User boleh update JIKA dia adalah approver yang dituju
-        return $approver && $user->id === $approver->id;
+        return $approver && $user->id == $approver->id;
     }
 
     /**
@@ -50,13 +50,23 @@ class CutiPolicy
      */
     public function cancel(User $user, Cuti $cuti): bool
     {
-        // User boleh cancel JIKA:
-        // 1. Dia adalah pemilik pengajuan cuti
-        // 2. Statusnya sudah disetujui
-        // 3. Tanggal mulai cuti masih di masa depan
-        return $user->id === $cuti->user_id &&
-               $cuti->status === 'disetujui' &&
-               Carbon::parse($cuti->tanggal_mulai)->isFuture();
+        // User boleh cancel JIKA dia adalah pemilik pengajuan cuti DAN statusnya memenuhi syarat:
+        // 1. Masih diajukan atau proses_finalisasi, ATAU
+        // 2. Sudah disetujui TAPI tanggal mulai cuti masih di masa depan
+        
+        if ($user->id != $cuti->user_id) {
+            return false;
+        }
+
+        if (in_array($cuti->status, ['diajukan', 'proses_finalisasi'])) {
+            return true;
+        }
+
+        if ($cuti->status === 'disetujui' && Carbon::parse($cuti->tanggal_mulai)->isFuture()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

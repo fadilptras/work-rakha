@@ -1,4 +1,4 @@
-﻿<x-layout-users>
+<x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
 
     @push('styles')
@@ -145,13 +145,13 @@
         {{-- ========================================== --}}
         {{-- BAGIAN BAWAH: ACTION SHEET (40% Height)    --}}
         {{-- ========================================== --}}
-        <div class="bottom-sheet bg-white rounded-t-3xl z-40 flex flex-col relative flex-grow" style="height: 40dvh; min-height: 280px;">
+        <div class="bottom-sheet bg-white rounded-t-[32px] z-40 flex flex-col relative flex-grow" style="height: 35dvh; min-height: 260px;">
             {{-- Handle Bar --}}
             <div class="w-full flex justify-center pt-3 pb-2 absolute top-0 left-0 right-0 z-50 bg-white rounded-t-3xl">
                 
             </div>
 
-            <div class="flex-grow overflow-y-auto hide-scrollbar pt-8 pb-24 px-5">
+            <div class="flex-grow overflow-y-auto hide-scrollbar pt-8 pb-6 px-5 flex flex-col">
                 @if ($absensiHariIni)
                     {{-- TOMBOL AKSI JIKA SUDAH ABSEN --}}
                     <div class="flex flex-col gap-3 h-full justify-center mt-4">
@@ -193,7 +193,7 @@
 
                 @else
                     {{-- FORM ABSEN MASUK --}}
-                    <form action="{{ route('absen.store') }}" method="POST" enctype="multipart/form-data" id="form-absen">
+                    <form action="{{ route('absen.store') }}" method="POST" enctype="multipart/form-data" id="form-absen" class="flex flex-col flex-1">
                         @csrf
                         <input type="hidden" name="latitude" id="latitude">
                         <input type="hidden" name="longitude" id="longitude">
@@ -227,30 +227,36 @@
                             </button>
                         </div>
 
-                        <div id="keterangan-container" class="hidden space-y-3 mb-4 transition-all">
-                            <textarea name="keterangan" id="keterangan" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Tulis keterangan di sini...">{{ old('keterangan') }}</textarea>
+                        <div id="keterangan-container" class="hidden mb-5 transition-all">
+                            <div class="bg-blue-50/50 border border-blue-100 rounded-[24px] p-4 space-y-3 shadow-sm">
+                                <div class="flex items-center gap-2 mb-1 px-1">
+                                    <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                        <i class="fas fa-edit text-xs"></i>
+                                    </div>
+                                    <h4 class="text-[11px] font-extrabold text-slate-700 uppercase tracking-widest">Detail Keterangan</h4>
+                                </div>
+                                <textarea name="keterangan" id="keterangan" rows="2" class="w-full bg-white border border-blue-200/60 rounded-[16px] px-4 py-3 text-[13px] font-medium text-slate-700 focus:ring-blue-500 focus:border-blue-500 shadow-sm outline-none transition-all placeholder:text-slate-400" placeholder="Tulis alasan secara singkat...">{{ old('keterangan') }}</textarea>
 
-                            <label for="lampiran" id="upload-label" class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50 active:bg-slate-100 transition-colors">
-                                <i class="fas fa-cloud-upload-alt text-2xl text-slate-400 mb-1"></i>
-                                <span id="upload-text" class="text-[10px] font-bold text-slate-500 uppercase">Unggah Surat (Opsional)</span>
-                                <input name="lampiran" id="lampiran" type="file" class="hidden" accept="image/*,.pdf" />
-                            </label>
+                                <label for="lampiran" id="upload-label" class="flex flex-col items-center justify-center w-full py-4 border-2 border-dashed border-blue-300/70 rounded-[16px] bg-white hover:bg-blue-50 transition-colors cursor-pointer group">
+                                    <i class="fas fa-cloud-upload-alt text-xl text-blue-400 group-hover:scale-110 group-hover:text-blue-500 transition-all mb-1.5"></i>
+                                    <span id="upload-text" class="text-[10px] font-bold text-slate-500 group-hover:text-blue-600 transition-colors uppercase tracking-wide">Unggah Bukti (Opsional)</span>
+                                    <input name="lampiran" id="lampiran" type="file" class="hidden" accept="image/*,.pdf" />
+                                </label>
+                            </div>
+                        </div>
+
+                        {{-- Tombol submit menempel langsung tanpa space tambahan --}}
+                        <div class="flex flex-col gap-1 pb-2">
+                            <button type="submit" id="submit-button" class="btn-gradient text-[15px] font-bold w-full py-[18px] rounded-[18px] shadow-[0_8px_20px_rgba(59,130,246,0.25)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2" disabled>
+                                <i class="fas fa-fingerprint text-lg"></i> Kirim Absensi
+                            </button>
+                            <button type="button" onclick="openRekapModal()" class="w-full mt-3 text-center text-slate-400 hover:text-blue-600 text-[10px] font-extrabold uppercase tracking-widest py-3 transition-colors flex items-center justify-center gap-2 rounded-xl active:bg-slate-50">
+                                <i class="fas fa-users text-xs"></i> Rekap & Tim <i class="fas fa-chevron-up ml-0.5 text-[8px] opacity-70"></i>
+                            </button>
                         </div>
                     </form>
                 @endif
             </div>
-
-            {{-- TOMBOL SUBMIT STICKY DI BAWAH --}}
-            @if (!$absensiHariIni && (!isset($unfinishedAbsensi) || !$unfinishedAbsensi))
-            <div class="absolute bottom-0 left-0 right-0 p-4 pt-2 bg-gradient-to-t from-white via-white to-transparent z-50">
-                <button type="submit" form="form-absen" id="submit-button" class="btn-gradient text-base" disabled>
-                    <i class="fas fa-fingerprint"></i> Kirim Absensi
-                </button>
-                <button type="button" onclick="openRekapModal()" class="w-full mt-2 text-center text-slate-400 hover:text-blue-600 text-[10px] font-bold uppercase tracking-wider py-2">
-                    Rekap & Tim <i class="fas fa-chevron-up ml-1"></i>
-                </button>
-            </div>
-            @endif
         </div>
     </div>
 
@@ -676,9 +682,7 @@
                 stopCamera();
                 const constraints = {
                     video: {
-                        facingMode: 'user',
-                        width: { ideal: isMobileUA ? 720 : 1280 },
-                        height: { ideal: isMobileUA ? 1280 : 720 }
+                        facingMode: 'user'
                     },
                     audio: false
                 };

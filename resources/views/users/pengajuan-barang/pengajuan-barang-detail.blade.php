@@ -225,8 +225,8 @@
             @php
                 $user = Auth::user();
                 $afterAppr1 = in_array($pengajuanBarang->status_appr_1, ['disetujui', 'skipped']);
-                $afterAppr2 = in_array($pengajuanBarang->status_appr_2, ['disetujui', 'skipped']);
-                $afterAppr3 = in_array($pengajuanBarang->status_appr_3, ['disetujui', 'skipped']);
+                $afterAppr2 = $afterAppr1 && in_array($pengajuanBarang->status_appr_2, ['disetujui', 'skipped']);
+                $afterAppr3 = $afterAppr2 && in_array($pengajuanBarang->status_appr_3, ['disetujui', 'skipped']);
                 $isAppr1 = ($user->id == $pengajuanBarang->approver_barang_1_id && $pengajuanBarang->status_appr_1 == 'menunggu');
                 $isAppr2 = ($user->id == $pengajuanBarang->approver_barang_2_id && $afterAppr1 && $pengajuanBarang->status_appr_2 == 'menunggu');
                 $isAppr3 = ($user->id == $pengajuanBarang->approver_barang_3_id && $afterAppr2 && $pengajuanBarang->status_appr_3 == 'menunggu');

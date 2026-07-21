@@ -574,7 +574,6 @@
                 radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
                 radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
                 radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
-            background-attachment: fixed;
         }
 
         /* Float animation for decorative elements */
@@ -659,9 +658,9 @@
     <div class="flex flex-col flex-1 h-full mesh-bg relative overflow-hidden">
         {{-- Dekorasi Latar Belakang Tambahan --}}
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
-            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
-            <div class="absolute top-[40%] right-[30%] w-16 h-16 bg-white/40 backdrop-blur-sm border border-white/50 rounded-full animate-float" style="animation-delay: 1s;"></div>
+            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 border border-white/50 rounded-full animate-float"></div>
+            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 border border-white/40 rounded-full animate-float-delayed"></div>
+            <div class="absolute top-[40%] right-[30%] w-16 h-16 bg-white/40 border border-white/50 rounded-full animate-float" style="animation-delay: 1s;"></div>
             
             {{-- Pola Dot Grid --}}
             <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>

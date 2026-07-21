@@ -57,11 +57,14 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
         $judul = $this->pengajuanDana->judul_pengajuan;
         $pemohon = $this->pengajuanDana->user->name;
         $nominal = "Rp " . number_format($this->pengajuanDana->total_dana, 0, ',', '.');
-        $link = route('pengajuan_dana.show', $this->pengajuanDana->id);
+        $link = $notifiable->role === 'admin' 
+            ? route('admin.pengajuan_dana.show', $this->pengajuanDana->id) 
+            : route('pengajuan_dana.show', $this->pengajuanDana->id);
 
         switch ($this->tipe) {
             case 'disetujui_atasan':
             case 'disetujui_finance':
+            case 'disetujui_final':
                 $header = "✅ *PENGAJUAN DANA DISETUJUI*";
                 $pesan = "Pengajuan dana *'{$judul}'* senilai {$nominal} telah disetujui dan sedang diproses ke tahap selanjutnya.";
                 break;
@@ -107,8 +110,9 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
                 $color = 'text-green-500';
                 break;
             case 'disetujui_finance':
+            case 'disetujui_final':
                 $title = 'Pengajuan Dana Disetujui';
-                $message = "Kabar baik! Pengajuan dana '$judulPengajuan' Anda telah disetujui oleh Finance.";
+                $message = "Kabar baik! Pengajuan dana '$judulPengajuan' Anda telah disetujui sepenuhnya.";
                 $icon = 'fas fa-check-circle';
                 $color = 'text-green-600';
                 break;
@@ -141,7 +145,9 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
             'id' => $this->pengajuanDana->id,
             'title' => $title,
             'message' => $message,
-            'url' => route('pengajuan_dana.show', $this->pengajuanDana->id),
+            'url' => $notifiable->role === 'admin' 
+                ? route('admin.pengajuan_dana.show', $this->pengajuanDana->id) 
+                : route('pengajuan_dana.show', $this->pengajuanDana->id),
             'icon' => $icon,
             'color' => $color,
         ];

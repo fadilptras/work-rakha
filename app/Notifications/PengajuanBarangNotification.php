@@ -56,7 +56,9 @@ class PengajuanBarangNotification extends Notification implements ShouldQueue
     {
         $judul = $this->pengajuanBarang->judul_pengajuan;
         $pemohon = $this->pengajuanBarang->user->name;
-        $link = route('pengajuan_barang.show', $this->pengajuanBarang->id);
+        $link = $notifiable->role === 'admin' 
+            ? route('admin.pengajuan_barang.show', $this->pengajuanBarang->id) 
+            : route('pengajuan_barang.show', $this->pengajuanBarang->id);
 
         switch ($this->tipe) {
             case 'disetujui_atasan':
@@ -135,7 +137,9 @@ class PengajuanBarangNotification extends Notification implements ShouldQueue
             'id' => $this->pengajuanBarang->id,
             'title' => $title,
             'message' => $message,
-            'url' => route('pengajuan_barang.show', $this->pengajuanBarang->id),
+            'url' => $notifiable->role === 'admin' 
+                ? route('admin.pengajuan_barang.show', $this->pengajuanBarang->id) 
+                : route('pengajuan_barang.show', $this->pengajuanBarang->id),
             'icon' => $icon,
             'color' => $color,
         ];

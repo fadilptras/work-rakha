@@ -39,7 +39,9 @@ class AdminUserController extends Controller
 
         $usersByDivision = User::query()
                         ->where('role', 'user')
+                        ->with(['riwayatPendidikan', 'riwayatPekerjaan']) 
                         ->orderBy('divisi')
+                        ->orderByDesc('is_kepala_divisi')
                         ->orderBy('name')
                         ->get()
                         ->groupBy('divisi');
@@ -127,16 +129,6 @@ class AdminUserController extends Controller
         // Singkirkan input cropped_image agar tidak error mass-assignment ke DB
         unset($validated['cropped_image']);
 
-        if (array_key_exists('jatah_cuti', $validated)) {
-            $oldJatah = $user->jatah_cuti ?? 12;
-            $newJatah = $validated['jatah_cuti'] ?? 12;
-            $difference = $newJatah - $oldJatah;
-
-            if ($difference != 0) {
-                $validated['sisa_cuti'] = ($user->sisa_cuti ?? 0) + $difference;
-            }
-        }
-
         $user->update($validated);
 
         Cache::forget('karyawan_list_dropdown');
@@ -165,8 +157,7 @@ class AdminUserController extends Controller
         ]);
 
         if ($request->filled('password')) {
-            // Gunakan Hash::make() konsisten dengan pengaturan bcrypt_rounds dari .env
-            $validated['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+            $validated['password'] = bcrypt($request->password);
         } else {
             unset($validated['password']);
         }
@@ -246,14 +237,5 @@ class AdminUserController extends Controller
         $pdf = Pdf::loadView('pdf.profile', $data)->setPaper('a4', 'portrait');
 
         return $pdf->download('Profil_' . str_replace(' ', '_', $user->name) . '.pdf');
-    }
-
-    /**
-     * Mengambil detail profil karyawan melalui AJAX.
-     */
-    public function ajaxDetail(User $user): \Illuminate\Http\JsonResponse
-    {
-        $user->load(['riwayatPendidikan', 'riwayatPekerjaan']);
-        return response()->json($user);
     }
 }

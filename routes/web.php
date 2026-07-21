@@ -39,7 +39,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.post');
 });
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout')->middleware('auth');
-Route::view('/forgot-password', 'auth.forgot-password')->middleware('guest')->name('password.request');
+Route::get('/forgot-password', function () {
+    $agent = new \Jenssegers\Agent\Agent();
+    $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
+    return view("auth.forgot-password_{$viewSuffix}");
+})->middleware('guest')->name('password.request');
 
 Route::middleware('auth')->group(function () {
     Route::get('/confirm-password', [ConfirmablePasswordController::class, 'show'])->name('password.confirm');
@@ -143,7 +147,7 @@ Route::controller(CrmController::class)->group(function () {
         ->middleware('auth');
 
     Route::get('/aktivitas/json', [AktivitasController::class, 'getAktivitasJson'])
-        ->name('aktivitas.json')
+        ->name('aktivitas.getJson')
         ->middleware('auth');
 
     Route::get('/kirim-ulang-tahun', [NotifikasiController::class, 'kirimUlangTahun'])

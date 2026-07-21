@@ -181,9 +181,7 @@ class AdminPengajuanDanaController extends Controller
      */
     public function showSetApprovers()
     {
-        $employees = Cache::rememberForever('karyawan_list_dropdown', function () {
-            return User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
-        });
+        $employees = User::where('role', 'user')->orderBy('name')->get();
         
         $approvers = Cache::rememberForever('approvers_list_dropdown', function () {
             return User::where('name', '!=', 'Admin Rakha')->orderBy('name')->get(['id', 'name']);

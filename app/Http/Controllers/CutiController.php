@@ -163,13 +163,13 @@ class CutiController extends Controller
                 "catatan_approver_{$currentStage}" => $request->catatan,
             ]);
 
-            // Logika next approver yang diperjelas: cek stage tepat (===) bukan range (<)
+            // Logika next approver diubah menjadi berjenjang (<) agar tidak bypass jika ada yang skipped
             $nextApprover = null;
-            if ($currentStage === 1 && $cuti->status_approver_2 == 'menunggu') {
+            if ($currentStage < 2 && $cuti->status_approver_2 == 'menunggu') {
                 $nextApprover = $cuti->approver2;
-            } elseif ($currentStage === 2 && $cuti->status_approver_3 == 'menunggu') {
+            } elseif ($currentStage < 3 && $cuti->status_approver_3 == 'menunggu') {
                 $nextApprover = $cuti->approver3;
-            } elseif ($currentStage === 3 && $cuti->status_approver_4 == 'menunggu') {
+            } elseif ($currentStage < 4 && $cuti->status_approver_4 == 'menunggu') {
                 $nextApprover = $cuti->approver4;
             }
 
@@ -209,8 +209,13 @@ class CutiController extends Controller
             // lockForUpdate mencegah kondisi cuti baru disetujui saat cancel diproses
             $cuti = \App\Models\Cuti::lockForUpdate()->findOrFail($cuti->id);
 
-            if (!in_array($cuti->status, ['diajukan', 'proses_finalisasi'])) {
-                return redirect()->back()->with('error', 'Pengajuan sudah selesai diproses, tidak bisa dibatalkan.');
+            if (!in_array($cuti->status, ['diajukan', 'proses_finalisasi', 'disetujui'])) {
+                return redirect()->back()->with('error', 'Cuti yang sudah ditolak atau dibatalkan tidak bisa dibatalkan lagi.');
+            }
+
+            // Jika membatalkan cuti yang sudah disetujui (saldo sudah dipotong), maka refund saldonya
+            if ($cuti->status == 'disetujui') {
+                $cuti->user->increment('sisa_cuti', $cuti->total_hari);
             }
 
             $cuti->status = 'dibatalkan';

@@ -279,7 +279,7 @@ class AbsenController extends Controller
             'longitude_keluar'   => 'required|string',
         ]);
 
-        if ($absensi->user_id !== Auth::id()) {
+        if ($absensi->user_id != Auth::id()) {
             return back()->with('error', 'Aksi tidak diizinkan.');
         }
 
@@ -362,7 +362,7 @@ class AbsenController extends Controller
             'longitude_keluar'   => 'required|string',
         ]);
     
-        if ($lembur->user_id !== Auth::id()) {
+        if ($lembur->user_id != Auth::id()) {
             return redirect()->route('absen')->with('error', 'Aksi tidak diizinkan.');
         }
         
