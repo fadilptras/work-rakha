@@ -242,7 +242,7 @@
                 </div>
             </div>
             <div>
-                <form action="{{ route('admin.users.resetPassword', $user->id) }}" method="POST" onsubmit="confirmSubmit(event, 'Peringatan: Apakah Anda yakin ingin me-reset password akun ini ke password default sistem (#rakhA2022)?');">
+                <form action="{{ route('admin.users.resetPassword', $user->id) }}" method="POST" onsubmit="confirmSubmit(event, 'Peringatan: Apakah Anda yakin ingin me-reset password akun ini ke password default sistem (#rakhA2022!)?');">
                     @csrf
                     @method('PATCH')
                     <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors flex items-center justify-center whitespace-nowrap">

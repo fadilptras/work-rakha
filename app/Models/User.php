@@ -27,29 +27,36 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        // ini data utk add karyawan
         'name',
         'email',
         'password',
         'role',
-        'fcm_token',
         'profile_picture',
         'jabatan',
         'tanggal_bergabung',
         'divisi',
         'is_kepala_divisi',
 
-        // Approver pengajuan dana
-        'approver_1_id',
-        'approver_2_id',
+        // pengajuan dana
+        'approver_dana_1_id',
+        'approver_dana_2_id',
         'approver_dana_3_id',
         'approver_dana_4_id',
-        'manager_keuangan_id',
 
-        // approver pengajuan barang
-        'approver_barang_1_id', 'approver_barang_2_id', 'approver_barang_3_id', 'approver_barang_4_id',
+        // pengajuan barang
+        'approver_barang_1_id', 
+        'approver_barang_2_id', 
+        'approver_barang_3_id', 
+        'approver_barang_4_id',
 
-        // approver pengajuan cuti (Ditambahkan approver_cuti_4_id)
-        'approver_cuti_1_id', 'approver_cuti_2_id', 'approver_cuti_3_id', 'approver_cuti_4_id',
+        // pengajuan cuti
+        'approver_cuti_1_id', 
+        'approver_cuti_2_id', 
+        'approver_cuti_3_id', 
+        'approver_cuti_4_id',
+        'jatah_cuti',
+        'sisa_cuti',
 
         // Informasi Pribadi
         'nomor_telepon',
@@ -57,25 +64,22 @@ class User extends Authenticatable
         'tanggal_lahir',
         'jenis_kelamin',
         'nik',
-        'kontak_darurat_nama',
-        'kontak_darurat_nomor',
         'nip',
-        'status_karyawan',
-        'atasan_id',
-        'lokasi_kerja',
-        'tanggal_mulai_kontrak',
-        'tanggal_akhir_kontrak',
-        'tanggal_berhenti',
         'agama',
         'golongan_darah',
         'status_pernikahan',
         'alamat_ktp',
         'alamat_domisili',
+
+        'status_karyawan',
+        'kontak_darurat_nama',
+        'kontak_darurat_nomor',
         'kontak_darurat_hubungan',
+
+        // dokumen
         'npwp',
         'file_npwp',
         'file_ktp',
-        'ptkp',
         'bpjs_kesehatan',
         'file_bpjs_kesehatan',
         'bpjs_ketenagakerjaan',
@@ -86,8 +90,7 @@ class User extends Authenticatable
         'nomor_rekening',
         'pemilik_rekening',
         
-        'jatah_cuti',
-        'sisa_cuti',
+        'fcm_token',
     ];
 
     protected $hidden = [
@@ -102,20 +105,17 @@ class User extends Authenticatable
             'password'          => 'hashed',
             'tanggal_bergabung' => 'date:Y-m-d',
             'tanggal_lahir'     => 'date:Y-m-d',
-            'tanggal_mulai_kontrak' => 'date:Y-m-d',
-            'tanggal_akhir_kontrak' => 'date:Y-m-d',
-            'tanggal_berhenti'      => 'date:Y-m-d',
         ];
     }
     
-    public function approver1(): BelongsTo
+    public function approverDana1(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'approver_1_id');
+        return $this->belongsTo(User::class, 'approver_dana_1_id');
     }
 
-    public function approver2(): BelongsTo
+    public function approverDana2(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'approver_2_id');
+        return $this->belongsTo(User::class, 'approver_dana_2_id');
     }
 
     public function approverDana3(): BelongsTo
@@ -126,11 +126,6 @@ class User extends Authenticatable
     public function approverDana4(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approver_dana_4_id');
-    }
-
-    public function managerKeuangan(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'manager_keuangan_id');
     }
 
     public function pengajuanDanas(): HasMany
@@ -157,8 +152,6 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Agenda::class, 'agenda_user', 'user_id', 'agenda_id');
     }
-
-
 
     public function riwayatPendidikan(): HasMany
     {

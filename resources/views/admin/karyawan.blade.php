@@ -143,7 +143,7 @@
                 {{-- INFO BOX: Penjelasan Mekanisme Password Default dengan Icon Clickable --}}
                 <div class="col-span-1 md:col-span-2 mb-6 bg-sky-900/30 border border-sky-700 rounded-lg p-4 flex items-start gap-3 shadow-inner">
                     <div class="text-sky-400 mt-0.5 cursor-pointer hover:scale-110 transition-transform" 
-                         onclick="alert('INFORMASI PASSWORD:\n\n1. Karyawan yang ditambahkan tidak perlu membuat password.\n2. Untuk buat akun baru default passwordnya yaitu: #rakhA2022\n3. Karyawan dapat langsung login menggunakan Email dan Password default tersebut.')">
+                         onclick="alert('INFORMASI PASSWORD:\n\n1. Karyawan yang ditambahkan tidak perlu membuat password.\n2. Untuk buat akun baru default passwordnya yaitu: #rakhA2022!\n3. Karyawan dapat langsung login menggunakan Email dan Password default tersebut.')">
                         <i class="fas fa-info-circle text-2xl"></i>
                     </div>
                     <div>
@@ -185,8 +185,8 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="no_telepon" class="block text-sm font-medium text-gray-300 mb-1">No. Telepon / WA</label>
-                            <input type="text" name="no_telepon" id="no_telepon" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" placeholder="Contoh: 081234567890">
+                            <label for="nomor_telepon" class="block text-sm font-medium text-gray-300 mb-1">No. Telepon / WA</label>
+                            <input type="text" name="nomor_telepon" id="nomor_telepon" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" placeholder="Contoh: 081234567890">
                         </div>
 
                         <div class="mb-4">
