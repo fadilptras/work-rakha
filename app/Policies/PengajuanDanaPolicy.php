@@ -14,10 +14,10 @@ class PengajuanDanaPolicy
     public function view(User $user, PengajuanDana $pengajuanDana): bool
     {
         if ($user->id == $pengajuanDana->user_id) return true; // Pemohon
-        if ($user->id == $pengajuanDana->approver_1_id) return true; // Approver 1
-        if ($user->id == $pengajuanDana->approver_2_id) return true; // Approver 2
-        if ($user->id == $pengajuanDana->approver_3_id) return true; // Approver 3
-        if ($user->id == $pengajuanDana->approver_4_id) return true; // Approver 4
+        if ($user->id == $pengajuanDana->approver_dana_1_id) return true; // Approver 1
+        if ($user->id == $pengajuanDana->approver_dana_2_id) return true; // Approver 2
+        if ($user->id == $pengajuanDana->approver_dana_3_id) return true; // Approver 3
+        if ($user->id == $pengajuanDana->approver_dana_4_id) return true; // Approver 4
         return $user->role === 'admin'; // Admin
     }
 
@@ -29,13 +29,16 @@ class PengajuanDanaPolicy
      */
     public function approve(User $user, PengajuanDana $pengajuanDana): bool
     {
-        if ($user->id == $pengajuanDana->approver_1_id && $pengajuanDana->approver_1_status === 'menunggu') return true;
-        if ($user->id == $pengajuanDana->approver_2_id && $pengajuanDana->approver_2_status === 'menunggu') {
+        if ($user->id == $pengajuanDana->approver_dana_1_id && $pengajuanDana->approver_1_status === 'menunggu') return true;
+        if ($user->id == $pengajuanDana->approver_dana_2_id && $pengajuanDana->approver_2_status === 'menunggu') {
             if ($pengajuanDana->approver_1_status === 'menunggu') return false;
             return true;
         }
-        // Approver 3 SENGAJA dikecualikan — gunakan uploadBuktiTransfer()
-        if ($user->id == $pengajuanDana->approver_4_id && $pengajuanDana->approver_4_status === 'menunggu') {
+        if ($user->id == $pengajuanDana->approver_dana_3_id && $pengajuanDana->approver_3_status === 'menunggu') {
+            if (in_array('menunggu', [$pengajuanDana->approver_1_status, $pengajuanDana->approver_2_status])) return false;
+            return true;
+        }
+        if ($user->id == $pengajuanDana->approver_dana_4_id && $pengajuanDana->approver_4_status === 'menunggu') {
             if (in_array('menunggu', [$pengajuanDana->approver_1_status, $pengajuanDana->approver_2_status, $pengajuanDana->approver_3_status])) return false;
             return true;
         }
@@ -43,24 +46,7 @@ class PengajuanDanaPolicy
     }
 
 
-    /**
-     * Tentukan apakah user (Approver 3) bisa menekan tombol "Proses Pembayaran".
-     * Tidak dipakai lagi di alur baru, namun dipertahankan demi kompatibilitas.
-     */
-    public function prosesPembayaran(User $user, PengajuanDana $pengajuanDana): bool
-    {
-        return false; // Dihapus karena Approver 3 langsung upload bukti transfer
-    }
 
-    /**
-     * Tentukan apakah user (Approver 3) bisa upload bukti transfer.
-     */
-    public function uploadBuktiTransfer(User $user, PengajuanDana $pengajuanDana): bool
-    {
-        return $user->id == $pengajuanDana->approver_3_id
-               && $pengajuanDana->approver_3_status === 'menunggu'
-               && !in_array('menunggu', [$pengajuanDana->approver_1_status, $pengajuanDana->approver_2_status]);
-    }
 
     /**
      * Tentukan apakah user (Pemohon) bisa membatalkan pengajuan.

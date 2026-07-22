@@ -206,13 +206,13 @@
                     
                     @if($pengajuanDana->approver_1_status == 'disetujui')
                         <div class="st-approved">[ DISETUJUI ]</div>
-                        <div class="ttd-nama">{{ $pengajuanDana->approver1->name ?? 'Approver 1' }}</div>
-                        <div class="ttd-jabatan">{{ $pengajuanDana->approver1->jabatan ?? 'Atasan' }}</div>
+                        <div class="ttd-nama">{{ $pengajuanDana->approverDana1->name ?? 'Approver 1' }}</div>
+                        <div class="ttd-jabatan">{{ $pengajuanDana->approverDana1->jabatan ?? 'Atasan' }}</div>
                         <div class="ttd-tanggal">{{ $pengajuanDana->approver_1_approved_at?->translatedFormat('l, d F Y H:i') }} WIB</div>
                     
                     @elseif($pengajuanDana->approver_1_status == 'ditolak')
                         <div class="st-rejected">[ DITOLAK ]</div>
-                        <div class="ttd-nama">{{ $pengajuanDana->approver1->name ?? 'Approver 1' }}</div>
+                        <div class="ttd-nama">{{ $pengajuanDana->approverDana1->name ?? 'Approver 1' }}</div>
                         <div class="ttd-tanggal">{{ $pengajuanDana->approver_1_approved_at?->translatedFormat('l, d F Y H:i') }} WIB</div>
 
                     @elseif($pengajuanDana->approver_1_status == 'skipped')
@@ -231,13 +231,13 @@
 
                     @if($pengajuanDana->approver_2_status == 'disetujui')
                         <div class="st-approved">[ DISETUJUI ]</div>
-                        <div class="ttd-nama">{{ $pengajuanDana->approver2->name ?? 'Approver 2' }}</div>
-                        <div class="ttd-jabatan">{{ $pengajuanDana->approver2->jabatan ?? 'Manager' }}</div>
+                        <div class="ttd-nama">{{ $pengajuanDana->approverDana2->name ?? 'Approver 2' }}</div>
+                        <div class="ttd-jabatan">{{ $pengajuanDana->approverDana2->jabatan ?? 'Manager' }}</div>
                         <div class="ttd-tanggal">{{ $pengajuanDana->approver_2_approved_at?->translatedFormat('l, d F Y H:i') }} WIB</div>
 
                     @elseif($pengajuanDana->approver_2_status == 'ditolak')
                         <div class="st-rejected">[ DITOLAK ]</div>
-                        <div class="ttd-nama">{{ $pengajuanDana->approver2->name ?? 'Approver 2' }}</div>
+                        <div class="ttd-nama">{{ $pengajuanDana->approverDana2->name ?? 'Approver 2' }}</div>
                         <div class="ttd-tanggal">{{ $pengajuanDana->approver_2_approved_at?->translatedFormat('l, d F Y H:i') }} WIB</div>
 
                     @elseif($pengajuanDana->approver_2_status == 'skipped')
@@ -252,25 +252,25 @@
                 <td>
                     <div class="ttd-header">Diproses oleh (Finance),</div>
 
-                    @if($pengajuanDana->payment_status == 'selesai')
+                    @if($pengajuanDana->approver_3_status == 'disetujui')
                         <div class="st-approved">[ SELESAI ]</div>
-                        <div class="ttd-nama">{{ $pengajuanDana->financeProcessor->name ?? 'Admin Finance' }}</div>
-                        <div class="ttd-jabatan">{{ $pengajuanDana->financeProcessor->jabatan ?? 'Finance & Accounting' }}</div>
+                        <div class="ttd-nama">{{ $pengajuanDana->approverDana3->name ?? 'Manager Keuangan' }}</div>
+                        <div class="ttd-jabatan">{{ $pengajuanDana->approverDana3->jabatan ?? 'Finance & Accounting' }}</div>
                         <div class="ttd-tanggal">{{ $pengajuanDana->updated_at->translatedFormat('l, d F Y H:i') }} WIB</div>
-
-                    @elseif($pengajuanDana->payment_status == 'diproses')
-                        <div class="st-approved">[ DIPROSES ]</div>
-                        <div class="ttd-nama">{{ $pengajuanDana->financeProcessor->name ?? 'Admin Finance' }}</div>
-                        <div class="ttd-jabatan">{{ $pengajuanDana->financeProcessor->jabatan ?? 'Finance & Accounting' }}</div>
-                        <div class="ttd-tanggal">{{ $pengajuanDana->finance_processed_at?->translatedFormat('l, d F Y H:i') }} WIB</div>
                     
+                    @elseif($pengajuanDana->approver_3_status == 'ditolak')
+                        <div class="st-rejected">[ DITOLAK ]</div>
+                        <div class="ttd-nama">{{ $pengajuanDana->approverDana3->name ?? 'Manager Keuangan' }}</div>
+                        <div class="ttd-jabatan">{{ $pengajuanDana->approverDana3->jabatan ?? 'Finance & Accounting' }}</div>
+                        <div class="ttd-tanggal">{{ $pengajuanDana->approver_3_approved_at?->translatedFormat('l, d F Y H:i') }} WIB</div>
+
                     @elseif($pengajuanDana->status == 'ditolak') 
                         <div class="st-placeholder">-</div>
 
                     @else
                         <div class="st-placeholder">( Menunggu Proses )</div>
                         <div class="ttd-nama" style="text-decoration: none; color: #999; font-weight: normal;">
-                            {{ $pengajuanDana->user->managerKeuangan->name ?? 'Finance' }}
+                            {{ $pengajuanDana->approverDana3->name ?? 'Finance' }}
                         </div>
                     @endif
                 </td>
@@ -278,7 +278,7 @@
         </table>
 
         {{-- V. CATATAN --}}
-        @if($pengajuanDana->approver_1_catatan || $pengajuanDana->approver_2_catatan || $pengajuanDana->catatan_finance)
+        @if($pengajuanDana->approver_1_catatan || $pengajuanDana->approver_2_catatan || $pengajuanDana->approver_3_catatan)
             <div class="section-title">V. CATATAN TAMBAHAN</div>
             <table class="data-table">
                 @if($pengajuanDana->approver_1_catatan)
@@ -287,8 +287,8 @@
                 @if($pengajuanDana->approver_2_catatan)
                     <tr><td>Catatan Approver 2</td><td><div class="catatan">{{ $pengajuanDana->approver_2_catatan }}</div></td></tr>
                 @endif
-                @if($pengajuanDana->catatan_finance)
-                    <tr><td>Catatan Finance</td><td><div class="catatan">{{ $pengajuanDana->catatan_finance }}</div></td></tr>
+                @if($pengajuanDana->approver_3_catatan)
+                    <tr><td>Catatan Finance</td><td><div class="catatan">{{ $pengajuanDana->approver_3_catatan }}</div></td></tr>
                 @endif
             </table>
         @endif

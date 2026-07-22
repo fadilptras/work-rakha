@@ -140,12 +140,14 @@
                                 <span class="font-bold bg-red-500/10 text-red-400 px-2 py-1 rounded-full text-xs">Ditolak</span>
                             @elseif ($pengajuan->status == 'proses_pembayaran')
                                 <span class="font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-xs">Proses Bayar</span>
-                            @elseif ($pengajuan->status == 'diproses_appr_2')
-                                <span class="font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-xs">Menunggu Appr 2</span>
+                            @elseif ($pengajuan->status == 'disetujui')
+                                <span class="font-bold bg-teal-500/10 text-teal-400 px-2 py-1 rounded-full text-xs">Menunggu Final</span>
+                            @elseif ($pengajuan->status == 'diproses')
+                                <span class="font-bold bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded-full text-xs">Diproses</span>
                             @elseif ($pengajuan->status == 'dibatalkan')
                                 <span class="font-bold bg-zinc-500/10 text-zinc-400 px-2 py-1 rounded-full text-xs">Dibatalkan</span>
                             @else
-                                <span class="font-bold bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-full text-xs">Menunggu Appr 1</span>
+                                <span class="font-bold bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-full text-xs">Diajukan</span>
                             @endif
                         </td>
 

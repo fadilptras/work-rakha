@@ -30,7 +30,7 @@ class AdminPengajuanDanaController extends Controller
         switch ($activeTab) {
             case 'pending':
                 // Menampilkan yang sedang berjalan (status diset di approve/reject controller)
-                $query->whereIn('status', ['diajukan', 'diproses']);
+                $query->whereIn('status', ['diajukan', 'diproses', 'proses_pembayaran']);
                 break;
             case 'approved':
                 // Menampilkan yang sudah sukses
@@ -82,7 +82,7 @@ class AdminPengajuanDanaController extends Controller
      */
     public function show(PengajuanDana $pengajuanDana)
     {
-        $pengajuanDana->load(['user', 'approver1', 'approver2', 'financeProcessor', 'user.managerKeuangan']);
+        $pengajuanDana->load(['user', 'approverDana1', 'approverDana2', 'approverDana3', 'approverDana4']);
         
         return view('admin.pengajuan-dana.show', [
             'title' => 'Detail Pengajuan Dana',
@@ -95,7 +95,7 @@ class AdminPengajuanDanaController extends Controller
      */
     public function downloadPDF(PengajuanDana $pengajuanDana)
     {
-        $pengajuanDana->load(['user', 'approver1', 'approver2', 'financeProcessor', 'user.managerKeuangan']);
+        $pengajuanDana->load(['user', 'approverDana1', 'approverDana2', 'approverDana3', 'approverDana4']);
         
         $pdf = PDF::loadView('pdf.pdf_pengajuan_dana', compact('pengajuanDana'));
         $filename = "{$pengajuanDana->nomor_pengajuan}.pdf";
@@ -116,7 +116,7 @@ class AdminPengajuanDanaController extends Controller
         switch ($activeTab) {
             case 'pending':
                 // Hanya yang sedang berjalan
-                $query->whereIn('status', ['diajukan', 'diproses']);
+                $query->whereIn('status', ['diajukan', 'diproses', 'proses_pembayaran']);
                 break;
             case 'approved':
                 // Hanya yang selesai
@@ -230,8 +230,8 @@ class AdminPengajuanDanaController extends Controller
             foreach ($approver1Data as $userId => $approver1Id) {
                 $user = $users->get($userId);
                 if ($user) {
-                    $user->approver_1_id     = $approver1Id;
-                    $user->approver_2_id     = $approver2Data[$userId] ?? null;
+                    $user->approver_dana_1_id     = $approver1Id;
+                    $user->approver_dana_2_id     = $approver2Data[$userId] ?? null;
                     $user->approver_dana_3_id = $approver3Data[$userId] ?? null;
                     $user->approver_dana_4_id = $approver4Data[$userId] ?? null;
                     $user->save();
@@ -258,8 +258,8 @@ class AdminPengajuanDanaController extends Controller
      */
     public function markAsPaid(Request $request, PengajuanDana $pengajuanDana)
     {
-        // Validasi status harus dalam tahap pembayaran (status 'diproses' diset oleh approve flow)
-        if ($pengajuanDana->status !== 'diproses') {
+        // Validasi status harus dalam tahap pembayaran
+        if ($pengajuanDana->status !== 'proses_pembayaran') {
              return back()->with('error', 'Pengajuan ini tidak dalam status menunggu pembayaran.');
         }
 
@@ -270,11 +270,10 @@ class AdminPengajuanDanaController extends Controller
 
         // Siapkan data update dasar
         $updateData = [
-            'status' => 'selesai',           
-            'payment_status' => 'selesai',   
-            'finance_id' => Auth::id(),      
-            'finance_processed_at' => Carbon::now(),
-            'catatan_finance' => $request->catatan_admin ?? 'Selesai',
+            'approver_dana_3_id' => Auth::id(),
+            'approver_3_status' => 'disetujui',
+            'approver_3_approved_at' => Carbon::now(),
+            'approver_3_catatan' => $request->catatan_admin ?? 'Diselesaikan oleh Admin',
         ];
 
 
@@ -286,8 +285,17 @@ class AdminPengajuanDanaController extends Controller
         // Lakukan update
         $pengajuanDana->update($updateData);
 
-        // Kirim notifikasi
-        Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'bukti_transfer'));
+        // Tentukan status dan notifikasi selanjutnya
+        if ($pengajuanDana->approver_dana_4_id && $pengajuanDana->approver_4_status === 'menunggu') {
+            $pengajuanDana->update(['status' => 'disetujui']);
+            $nextApprover = User::find($pengajuanDana->approver_dana_4_id);
+            if ($nextApprover) {
+                Notification::send($nextApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
+            }
+        } else {
+            $pengajuanDana->update(['status' => 'selesai']);
+            Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'bukti_transfer'));
+        }
 
         return back()->with('success', 'Pembayaran berhasil diselesaikan oleh Admin.');
     }

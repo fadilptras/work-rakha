@@ -7,6 +7,8 @@ use App\Models\PengajuanDana;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\PengajuanDanaNotification;
 use Tests\TestCase;
 
 class PengajuanDanaTest extends TestCase
@@ -17,16 +19,32 @@ class PengajuanDanaTest extends TestCase
     {
         parent::setUp();
         Storage::fake('public');
+        Notification::fake();
     }
 
-    public function test_user_can_create_pengajuan_dana()
+    private function createUserWithApprovers($app1, $app2, $app3, $app4)
     {
-        $user = User::factory()->create(['role' => 'user']);
+        return User::factory()->create([
+            'role' => 'user',
+            'approver_dana_1_id' => $app1 ? $app1->id : null,
+            'approver_dana_2_id' => $app2 ? $app2->id : null,
+            'approver_dana_3_id' => $app3 ? $app3->id : null,
+            'approver_dana_4_id' => $app4 ? $app4->id : null,
+        ]);
+    }
+
+    public function test_user_can_create_pengajuan_dana_with_correct_initial_status_and_approvers()
+    {
+        $app1 = User::factory()->create(['role' => 'user']);
+        $app2 = User::factory()->create(['role' => 'user']);
+        $user = $this->createUserWithApprovers($app1, $app2, null, null);
+        
         $this->actingAs($user);
 
-        $response = $this->post('/users/pengajuan-dana/simpan', [
+        $response = $this->post('/pengajuan-dana', [
             'judul_pengajuan' => 'Pembelian Laptop',
             'deskripsi' => 'Laptop untuk tim dev',
+            'divisi' => 'IT',
             'nama_bank' => 'BCA',
             'no_rekening' => '1234567890',
             'nama_rek' => 'Budi',
@@ -34,37 +52,57 @@ class PengajuanDanaTest extends TestCase
             'rincian' => [
                 ['nama_item' => 'Laptop', 'jumlah' => 15000000]
             ],
-            // Simulate missing file uploads for simplicity
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('pengajuan_dana', [
             'judul_pengajuan' => 'Pembelian Laptop',
             'user_id' => $user->id,
-            'status' => 'diajukan'
+            'status' => 'diajukan',
+            'approver_dana_1_id' => $app1->id,
+            'approver_1_status' => 'menunggu',
+            'approver_dana_2_id' => $app2->id,
+            'approver_2_status' => 'menunggu',
+            'approver_dana_3_id' => null,
+            'approver_3_status' => 'skipped',
+            'approver_dana_4_id' => null,
+            'approver_4_status' => 'skipped',
         ]);
+
+        // Assert notification sent to approver 1
+        Notification::assertSentTo(
+            [$app1], PengajuanDanaNotification::class
+        );
     }
 
-    public function test_approver_1_can_approve_pengajuan()
+    public function test_approver_1_can_approve_and_status_changes_to_diproses()
     {
-        $approver1 = User::factory()->create(['role' => 'user']);
-        $user = User::factory()->create([
-            'role' => 'user', 
-            'approver_1_id' => $approver1->id
-        ]);
+        $app1 = User::factory()->create(['role' => 'user']);
+        $app2 = User::factory()->create(['role' => 'user']);
+        $user = $this->createUserWithApprovers($app1, $app2, null, null);
         
         $pengajuan = PengajuanDana::create([
             'user_id' => $user->id,
             'judul_pengajuan' => 'Test',
+            'divisi' => 'IT',
+            'nama_bank' => 'BCA',
+            'no_rekening' => '123',
+            'nama_rek' => 'Test',
             'total_dana' => 1000,
             'status' => 'diajukan',
-            'approver_1_id' => $approver1->id,
-            'approver_1_status' => 'menunggu'
+            'approver_dana_1_id' => $app1->id,
+            'approver_1_status' => 'menunggu',
+            'approver_dana_2_id' => $app2->id,
+            'approver_2_status' => 'menunggu',
+            'approver_dana_3_id' => null,
+            'approver_3_status' => 'skipped',
+            'approver_dana_4_id' => null,
+            'approver_4_status' => 'skipped',
         ]);
 
-        $this->actingAs($approver1);
+        $this->actingAs($app1);
 
-        $response = $this->post("/users/pengajuan-dana/{$pengajuan->id}/approve", [
+        $response = $this->post("/pengajuan-dana/{$pengajuan->id}/approve", [
             'catatan_persetujuan' => 'Ok disetujui'
         ]);
 
@@ -72,46 +110,96 @@ class PengajuanDanaTest extends TestCase
         
         $pengajuan->refresh();
         $this->assertEquals('disetujui', $pengajuan->approver_1_status);
-        // Should move to next status based on controller logic
+        $this->assertEquals('diproses', $pengajuan->status);
+
+        // Assert notification sent to approver 2
+        Notification::assertSentTo(
+            [$app2], PengajuanDanaNotification::class
+        );
     }
 
-    public function test_approver_3_cannot_approve_normally_but_can_upload_bukti()
+    public function test_admin_override_mark_as_paid_completes_if_no_approver_4()
     {
-        $approver3 = User::factory()->create(['role' => 'user']);
-        $user = User::factory()->create([
-            'role' => 'user', 
-            'approver_dana_3_id' => $approver3->id
-        ]);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'user']);
         
         $pengajuan = PengajuanDana::create([
             'user_id' => $user->id,
-            'judul_pengajuan' => 'Test',
+            'judul_pengajuan' => 'Test Admin Override',
+            'divisi' => 'IT',
+            'nama_bank' => 'BCA',
+            'no_rekening' => '123',
+            'nama_rek' => 'Test',
             'total_dana' => 1000,
             'status' => 'proses_pembayaran',
-            'approver_1_id' => null,
-            'approver_2_id' => null,
-            'approver_3_id' => $approver3->id,
-            'approver_3_status' => 'menunggu'
+            'approver_dana_1_id' => null,
+            'approver_1_status' => 'skipped',
+            'approver_dana_2_id' => null,
+            'approver_2_status' => 'skipped',
+            'approver_dana_3_id' => null,
+            'approver_3_status' => 'menunggu', // waiting for finance
+            'approver_dana_4_id' => null,
+            'approver_4_status' => 'skipped', // no approver 4
         ]);
 
-        $this->actingAs($approver3);
+        $this->actingAs($admin);
 
-        // 1. Coba approve normal (Harus dilarang oleh policy baru)
-        $response = $this->post("/users/pengajuan-dana/{$pengajuan->id}/approve", [
-            'catatan_persetujuan' => 'Ini tidak boleh'
-        ]);
-        $response->assertStatus(403); // Forbidden
-
-        // 2. Upload bukti transfer (Diizinkan)
-        $file = UploadedFile::fake()->image('bukti.jpg');
-        $response = $this->post("/users/pengajuan-dana/{$pengajuan->id}/upload-bukti-transfer", [
-            'bukti_transfer' => $file
+        $response = $this->post("/admin/pengajuan-dana/{$pengajuan->id}/mark-as-paid", [
+            'catatan_admin' => 'Telah ditransfer'
         ]);
 
         $response->assertRedirect();
         
         $pengajuan->refresh();
         $this->assertEquals('disetujui', $pengajuan->approver_3_status);
-        $this->assertNotNull($pengajuan->bukti_transfer);
+        $this->assertEquals($admin->id, $pengajuan->approver_dana_3_id);
+        $this->assertEquals('selesai', $pengajuan->status);
+
+        // Assert notification sent to user for completion
+        Notification::assertSentTo(
+            [$user], PengajuanDanaNotification::class
+        );
+    }
+
+    public function test_any_approver_can_reject_and_status_becomes_ditolak()
+    {
+        $app1 = User::factory()->create(['role' => 'user']);
+        $user = $this->createUserWithApprovers($app1, null, null, null);
+        
+        $pengajuan = PengajuanDana::create([
+            'user_id' => $user->id,
+            'judul_pengajuan' => 'Test Reject',
+            'divisi' => 'IT',
+            'nama_bank' => 'BCA',
+            'no_rekening' => '123',
+            'nama_rek' => 'Test',
+            'total_dana' => 1000,
+            'status' => 'diajukan',
+            'approver_dana_1_id' => $app1->id,
+            'approver_1_status' => 'menunggu',
+            'approver_dana_2_id' => null,
+            'approver_2_status' => 'skipped',
+            'approver_dana_3_id' => null,
+            'approver_3_status' => 'skipped',
+            'approver_dana_4_id' => null,
+            'approver_4_status' => 'skipped',
+        ]);
+
+        $this->actingAs($app1);
+
+        $response = $this->post("/pengajuan-dana/{$pengajuan->id}/reject", [
+            'catatan_penolakan' => 'Tidak valid'
+        ]);
+
+        $response->assertRedirect();
+        
+        $pengajuan->refresh();
+        $this->assertEquals('ditolak', $pengajuan->approver_1_status);
+        $this->assertEquals('ditolak', $pengajuan->status);
+
+        // Assert notification sent to user for rejection
+        Notification::assertSentTo(
+            [$user], PengajuanDanaNotification::class
+        );
     }
 }

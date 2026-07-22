@@ -62,9 +62,12 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
             : route('pengajuan_dana.show', $this->pengajuanDana->id);
 
         switch ($this->tipe) {
+            case 'disetujui_final':
+                $header = "✅ *PENGAJUAN DANA SELESAI*";
+                $pesan = "Kabar baik! Pengajuan dana *'{$judul}'* senilai {$nominal} Anda telah disetujui sepenuhnya dan selesai diproses.";
+                break;
             case 'disetujui_atasan':
             case 'disetujui_finance':
-            case 'disetujui_final':
                 $header = "✅ *PENGAJUAN DANA DISETUJUI*";
                 $pesan = "Pengajuan dana *'{$judul}'* senilai {$nominal} telah disetujui dan sedang diproses ke tahap selanjutnya.";
                 break;

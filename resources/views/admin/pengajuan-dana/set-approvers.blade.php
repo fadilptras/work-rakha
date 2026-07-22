@@ -44,7 +44,7 @@
                                                     class="w-full appearance-none p-2 pr-8 bg-zinc-700 border border-zinc-600 rounded-lg text-xs text-white focus:ring-sky-500 focus:border-sky-500 approver-select">
                                                 <option value="">-- Tidak Ada --</option>
                                                 @foreach ($approvers as $approver)
-                                                    <option value="{{ $approver->id }}" @selected($employee->approver_1_id == $approver->id)>
+                                                    <option value="{{ $approver->id }}" @selected($employee->approver_dana_1_id == $approver->id)>
                                                         {{ $approver->name }}
                                                     </option>
                                                 @endforeach
@@ -60,7 +60,7 @@
                                                     class="w-full appearance-none p-2 pr-8 bg-zinc-700 border border-zinc-600 rounded-lg text-xs text-white focus:ring-sky-500 focus:border-sky-500 approver-select">
                                                 <option value="">-- Tidak Ada --</option>
                                                 @foreach ($approvers as $approver)
-                                                    <option value="{{ $approver->id }}" @selected($employee->approver_2_id == $approver->id)>
+                                                    <option value="{{ $approver->id }}" @selected($employee->approver_dana_2_id == $approver->id)>
                                                         {{ $approver->name }}
                                                     </option>
                                                 @endforeach

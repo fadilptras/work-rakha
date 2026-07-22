@@ -43,12 +43,12 @@ class PengajuanDanaController extends Controller
         $user   = Auth::user();
 
         // Hanya pemilik, approver yang ditugaskan, manager keuangan, atau admin yang boleh akses
-        $isOwner    = $pengajuanDana->user_id === $userId;
+        $isOwner    = $pengajuanDana->user_id == $userId;
         $isApprover = in_array($userId, array_filter([
-            $pengajuanDana->approver_1_id,
-            $pengajuanDana->approver_2_id,
-            $pengajuanDana->approver_3_id,
-            $pengajuanDana->approver_4_id,
+            $pengajuanDana->approver_dana_1_id,
+            $pengajuanDana->approver_dana_2_id,
+            $pengajuanDana->approver_dana_3_id,
+            $pengajuanDana->approver_dana_4_id,
         ]));
         $isAdmin    = $user->role === 'admin';
 
@@ -56,7 +56,7 @@ class PengajuanDanaController extends Controller
             abort(403, 'Anda tidak memiliki akses ke pengajuan dana ini.');
         }
 
-        $pengajuanDana->load(['user', 'approver1', 'approver2', 'approver3', 'approver4']);
+        $pengajuanDana->load(['user', 'approverDana1', 'approverDana2', 'approverDana3', 'approverDana4']);
 
         return view('users.pengajuan-dana.pengajuan-dana-detail', [
             'title' => 'Detail Pengajuan Dana',
@@ -103,8 +103,8 @@ class PengajuanDanaController extends Controller
         }
 
         $user = Auth::user();
-        $app1 = $user->approver_1_id;
-        $app2 = $user->approver_2_id;
+        $app1 = $user->approver_dana_1_id;
+        $app2 = $user->approver_dana_2_id;
         $app3 = $user->approver_dana_3_id;
         $app4 = $user->approver_dana_4_id;
 
@@ -130,19 +130,34 @@ class PengajuanDanaController extends Controller
             
             'status' => 'diajukan',
             
-            'approver_1_id' => $app1, 'approver_1_status' => $st1,
-            'approver_2_id' => $app2, 'approver_2_status' => $st2,
-            'approver_3_id' => $app3, 'approver_3_status' => $st3,
-            'approver_4_id' => $app4, 'approver_4_status' => $st4,
-            
-            'payment_status' => 'skipped',
+            'approver_dana_1_id' => $app1, 'approver_1_status' => $st1,
+            'approver_dana_2_id' => $app2, 'approver_2_status' => $st2,
+            'approver_dana_3_id' => $app3, 'approver_3_status' => $st3,
+            'approver_dana_4_id' => $app4, 'approver_4_status' => $st4,
         ]);
 
         $firstApprover = null;
-        if ($pengajuanDana->approver1 && $st1 === 'menunggu') $firstApprover = $pengajuanDana->approver1;
-        elseif ($pengajuanDana->approver2 && $st2 === 'menunggu') $firstApprover = $pengajuanDana->approver2;
-        elseif ($pengajuanDana->approver3 && $st3 === 'menunggu') $firstApprover = $pengajuanDana->approver3;
-        elseif ($pengajuanDana->approver4 && $st4 === 'menunggu') $firstApprover = $pengajuanDana->approver4;
+        $firstStage = null;
+        if ($pengajuanDana->approverDana1 && $st1 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana1;
+            $firstStage = 1;
+        } elseif ($pengajuanDana->approverDana2 && $st2 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana2;
+            $firstStage = 2;
+        } elseif ($pengajuanDana->approverDana3 && $st3 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana3;
+            $firstStage = 3;
+        } elseif ($pengajuanDana->approverDana4 && $st4 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana4;
+            $firstStage = 4;
+        }
+        
+        // Sesuaikan status awal berdasarkan siapa approver pertamanya
+        if ($firstStage == 3) {
+            $pengajuanDana->update(['status' => 'proses_pembayaran']);
+        } elseif ($firstStage == 4) {
+            $pengajuanDana->update(['status' => 'disetujui']);
+        }
 
         if ($firstApprover) {
             Notification::send($firstApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
@@ -156,42 +171,63 @@ class PengajuanDanaController extends Controller
         $user = Auth::user();
         
         $currentStage = null;
-        if ($user->id == $pengajuanDana->approver_1_id && $pengajuanDana->approver_1_status == 'menunggu') {
+        if ($user->id == $pengajuanDana->approver_dana_1_id && $pengajuanDana->approver_1_status == 'menunggu') {
             $currentStage = 1;
-        } elseif ($user->id == $pengajuanDana->approver_2_id && $pengajuanDana->approver_2_status == 'menunggu') {
+        } elseif ($user->id == $pengajuanDana->approver_dana_2_id && $pengajuanDana->approver_2_status == 'menunggu') {
             if ($pengajuanDana->approver_1_status == 'menunggu') return redirect()->back()->with('error', 'Menunggu persetujuan dari Approver sebelumnya.');
             $currentStage = 2;
-        } elseif ($user->id == $pengajuanDana->approver_3_id && $pengajuanDana->approver_3_status == 'menunggu') {
+        } elseif ($user->id == $pengajuanDana->approver_dana_3_id && $pengajuanDana->approver_3_status == 'menunggu') {
             if (in_array('menunggu', [$pengajuanDana->approver_1_status, $pengajuanDana->approver_2_status])) return redirect()->back()->with('error', 'Menunggu persetujuan dari Approver sebelumnya.');
             $currentStage = 3;
-        } elseif ($user->id == $pengajuanDana->approver_4_id && $pengajuanDana->approver_4_status == 'menunggu') {
+        } elseif ($user->id == $pengajuanDana->approver_dana_4_id && $pengajuanDana->approver_4_status == 'menunggu') {
             if (in_array('menunggu', [$pengajuanDana->approver_1_status, $pengajuanDana->approver_2_status, $pengajuanDana->approver_3_status])) return redirect()->back()->with('error', 'Menunggu persetujuan dari Approver sebelumnya.');
             $currentStage = 4;
         } else {
             return redirect()->back()->with('error', 'Otoritas tidak valid atau urutan persetujuan salah.');
         }
 
-        if ($currentStage == 3) {
-            return redirect()->back()->with('error', 'Persetujuan tahap 3 harus dilakukan dengan mengunggah bukti transfer.');
-        }
+        $request->validate([
+            'bukti_transfer' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
 
-        $pengajuanDana->update([
+        $updateData = [
             "approver_{$currentStage}_status" => 'disetujui',
             "approver_{$currentStage}_catatan" => $request->catatan_persetujuan ?? 'Disetujui',
             "approver_{$currentStage}_approved_at" => Carbon::now(),
-        ]);
+        ];
+
+        if ($currentStage == 3 && $request->hasFile('bukti_transfer')) {
+            $path = $request->file('bukti_transfer')->store('bukti_transfer', 'public');
+            $updateData['bukti_transfer'] = $path;
+        }
+
+        $pengajuanDana->update($updateData);
 
         $nextApprover = null;
-        if ($currentStage < 2 && $pengajuanDana->approver_2_status == 'menunggu') $nextApprover = $pengajuanDana->approver2;
-        elseif ($currentStage < 3 && $pengajuanDana->approver_3_status == 'menunggu') $nextApprover = $pengajuanDana->approver3;
-        elseif ($currentStage < 4 && $pengajuanDana->approver_4_status == 'menunggu') $nextApprover = $pengajuanDana->approver4;
+        $nextStage = null;
+        if ($currentStage < 2 && $pengajuanDana->approver_2_status == 'menunggu') {
+            $nextApprover = $pengajuanDana->approverDana2;
+            $nextStage = 2;
+        } elseif ($currentStage < 3 && $pengajuanDana->approver_3_status == 'menunggu') {
+            $nextApprover = $pengajuanDana->approverDana3;
+            $nextStage = 3;
+        } elseif ($currentStage < 4 && $pengajuanDana->approver_4_status == 'menunggu') {
+            $nextApprover = $pengajuanDana->approverDana4;
+            $nextStage = 4;
+        }
 
         if ($nextApprover) {
-            $pengajuanDana->update(['status' => 'diproses']);
+            $status = 'diproses';
+            if ($nextStage == 3) $status = 'proses_pembayaran';
+            if ($nextStage == 4) $status = 'disetujui';
+
+            $pengajuanDana->update(['status' => $status]);
             Notification::send($nextApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
         } else {
             $pengajuanDana->update(['status' => 'selesai']);
-            Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'disetujui_final'));
+            
+            $notificationType = $currentStage == 3 ? 'bukti_transfer' : 'disetujui_final';
+            Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, $notificationType));
         }
 
         return redirect()->route('pengajuan_dana.show', $pengajuanDana)->with('success', 'Pengajuan dana berhasil disetujui!');
@@ -202,10 +238,10 @@ class PengajuanDanaController extends Controller
         $user = Auth::user();
         
         $currentStage = null;
-        if ($user->id == $pengajuanDana->approver_1_id && $pengajuanDana->approver_1_status == 'menunggu') $currentStage = 1;
-        elseif ($user->id == $pengajuanDana->approver_2_id && $pengajuanDana->approver_2_status == 'menunggu') $currentStage = 2;
-        elseif ($user->id == $pengajuanDana->approver_3_id && $pengajuanDana->approver_3_status == 'menunggu') $currentStage = 3;
-        elseif ($user->id == $pengajuanDana->approver_4_id && $pengajuanDana->approver_4_status == 'menunggu') $currentStage = 4;
+        if ($user->id == $pengajuanDana->approver_dana_1_id && $pengajuanDana->approver_1_status == 'menunggu') $currentStage = 1;
+        elseif ($user->id == $pengajuanDana->approver_dana_2_id && $pengajuanDana->approver_2_status == 'menunggu') $currentStage = 2;
+        elseif ($user->id == $pengajuanDana->approver_dana_3_id && $pengajuanDana->approver_3_status == 'menunggu') $currentStage = 3;
+        elseif ($user->id == $pengajuanDana->approver_dana_4_id && $pengajuanDana->approver_4_status == 'menunggu') $currentStage = 4;
         else {
             return redirect()->back()->with('error', 'Otoritas tidak valid.');
         }
@@ -221,53 +257,34 @@ class PengajuanDanaController extends Controller
         return redirect()->route('pengajuan_dana.show', $pengajuanDana)->with('success', 'Pengajuan dana berhasil ditolak!');
     }
 
-    public function uploadBuktiTransfer(Request $request, PengajuanDana $pengajuanDana)
-    {
-        $request->validate([
-            'bukti_transfer' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
-        ]);
-        
-        $user = Auth::user();
-        if ($user->id != $pengajuanDana->approver_3_id || $pengajuanDana->approver_3_status != 'menunggu') {
-             return redirect()->route('pengajuan_dana.show', $pengajuanDana)->with('error', 'Anda tidak memiliki wewenang mengunggah bukti transfer saat ini.');
-        }
 
-        if (in_array('menunggu', [$pengajuanDana->approver_1_status, $pengajuanDana->approver_2_status])) {
-             return redirect()->route('pengajuan_dana.show', $pengajuanDana)->with('error', 'Menunggu persetujuan sebelumnya.');
-        }
-
-        $path = $request->file('bukti_transfer')->store('bukti_transfer', 'public');
-
-        $pengajuanDana->update([
-            'bukti_transfer' => $path,
-            'approver_3_status' => 'disetujui',
-            'approver_3_catatan' => $request->catatan_persetujuan ?? 'Bukti transfer diunggah',
-            'approver_3_approved_at' => Carbon::now(),
-        ]);
-        
-        $nextApprover = null;
-        if ($pengajuanDana->approver_4_status == 'menunggu') $nextApprover = $pengajuanDana->approver4;
-
-        if ($nextApprover) {
-            $pengajuanDana->update(['status' => 'diproses']);
-            Notification::send($nextApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
-        } else {
-            $pengajuanDana->update(['status' => 'selesai']);
-            Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'bukti_transfer'));
-        }
-
-        return redirect()->route('pengajuan_dana.show', $pengajuanDana)->with('success', 'Bukti transfer berhasil diunggah!');
-    }
 
     public function cancel(PengajuanDana $pengajuanDana)
     {
         $pengajuanDana->update(['status' => 'dibatalkan']);
+
+        // Cari approver yang sedang bertugas (yang statusnya masih 'menunggu')
+        $currentApprover = null;
+        if ($pengajuanDana->approver_1_status == 'menunggu' && $pengajuanDana->approver_dana_1_id) {
+            $currentApprover = $pengajuanDana->approverDana1;
+        } elseif ($pengajuanDana->approver_2_status == 'menunggu' && $pengajuanDana->approver_dana_2_id) {
+            $currentApprover = $pengajuanDana->approverDana2;
+        } elseif ($pengajuanDana->approver_3_status == 'menunggu' && $pengajuanDana->approver_dana_3_id) {
+            $currentApprover = $pengajuanDana->approverDana3;
+        } elseif ($pengajuanDana->approver_4_status == 'menunggu' && $pengajuanDana->approver_dana_4_id) {
+            $currentApprover = $pengajuanDana->approverDana4;
+        }
+
+        if ($currentApprover) {
+            Notification::send($currentApprover, new PengajuanDanaNotification($pengajuanDana, 'dibatalkan'));
+        }
+
         return redirect()->route('pengajuan_dana.index')->with('success', 'Pengajuan dana telah berhasil dibatalkan.');
     }
 
     public function downloadPDF(PengajuanDana $pengajuanDana)
     {
-        $pengajuanDana->load(['user', 'approver1', 'approver2', 'approver3', 'approver4']);
+        $pengajuanDana->load(['user', 'approverDana1', 'approverDana2', 'approverDana3', 'approverDana4']);
         $pdf = PDF::loadView('pdf.pdf_pengajuan_dana', compact('pengajuanDana'));
         $namaJudul = \Illuminate\Support\Str::slug($pengajuanDana->judul_pengajuan, '-');
         $filename = "pengajuan-dana-{$pengajuanDana->id}-{$namaJudul}.pdf";

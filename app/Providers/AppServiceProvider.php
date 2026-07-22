@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Cuti;                   
 use App\Models\PengajuanDana;         
+use Illuminate\Support\Facades\URL;         
 
 
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +25,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Paksa Laravel menggunakan APP_URL dari .env untuk semua generate link route()
+        // Ini mencegah route() menggunakan "/public" jika admin memproses data via URL yg mengandung /public
+        if (config('app.url')) {
+            URL::forceRootUrl(config('app.url'));
+        }
+        if (str_contains(config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
+
         Cuti::observe(\App\Observers\CutiObserver::class);
 
         View::composer('components.layout-admin', function ($view) {

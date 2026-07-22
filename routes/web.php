@@ -106,8 +106,7 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     Route::post('/pengajuan-dana/{pengajuanDana}/reject', [PengajuanDanaController::class, 'reject'])->name('pengajuan_dana.reject');
     Route::post('/pengajuan-dana/{pengajuanDana}/proses-pembayaran', [PengajuanDanaController::class, 'prosesPembayaran'])
         ->name('pengajuan_dana.proses_pembayaran');
-    Route::post('/pengajuan-dana/{pengajuanDana}/upload-bukti-transfer', [PengajuanDanaController::class, 'uploadBuktiTransfer'])
-        ->name('pengajuan_dana.upload_bukti_transfer');
+
     Route::get('/pengajuan-dana/{pengajuanDana}/download', [PengajuanDanaController::class, 'downloadPDF'])->name('pengajuan_dana.download');
     Route::post('/pengajuan-dana/{pengajuanDana}/cancel', [PengajuanDanaController::class, 'cancel'])->name('pengajuan_dana.cancel');
 
