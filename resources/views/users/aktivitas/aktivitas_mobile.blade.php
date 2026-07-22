@@ -1,4 +1,4 @@
-﻿<x-layout-users>
+<x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,7 +16,6 @@
                 radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
                 radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
                 radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
-            background-attachment: fixed;
         }
 
         /* Float animation */
@@ -81,21 +80,23 @@
         .aktivitas-date-card {
             background: #f5f3ff; /* light violet/indigo */
             border: 1px solid #ddd6fe;
-            border-radius: 12px;
-            padding: 6px 12px;
-            display: inline-flex;
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
             align-items: center;
             color: #6d28d9;
             box-shadow: 0 2px 4px rgba(109, 40, 217, 0.03);
         }
         .aktivitas-date-val {
-            font-size: 0.78rem; font-weight: 800;
+            font-size: 0.85rem; font-weight: 800;
         }
         .aktivitas-time-badge {
             background: #ffffff;
             color: #6d28d9;
-            font-size: 0.72rem; font-weight: 800;
-            padding: 3px 8px; border-radius: 8px;
+            font-size: 0.85rem; font-weight: 800;
+            padding: 4px 12px; border-radius: 8px;
             border: 1px solid #ddd6fe;
         }
 
@@ -117,7 +118,7 @@
         /* Camera Box */
         .camera-box {
             position: relative;
-            aspect-ratio: 16 / 9;
+            aspect-ratio: 3 / 4;
             border-radius: 20px;
             overflow: hidden;
             background: #0f172a;
@@ -239,12 +240,12 @@
         /* Log List Cards */
         .log-item-card {
             background: linear-gradient(135deg, rgba(239, 246, 255, 0.9), rgba(245, 243, 255, 0.9));
-            border-radius: 16px;
-            border: 1.5px solid rgba(191, 219, 254, 0.6);
-            padding: 16px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            border-radius: 8px;
+            border: 1px solid rgba(191, 219, 254, 0.6);
+            padding: 8px 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
             transition: all 0.2s;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
         .log-item-card:hover { 
             border-color: #93c5fd; 
@@ -253,27 +254,27 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.04);
         }
         .log-item-desc {
-            font-size: 0.88rem; color: #334155; line-height: 1.5; font-weight: 600;
+            font-size: 0.78rem; color: #334155; line-height: 1.35; font-weight: 600;
         }
         .log-item-footer {
-            margin-top: 10px;
-            padding-top: 10px;
+            margin-top: 6px;
+            padding-top: 6px;
             border-top: 1px solid #e2e8f0;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
         .log-item-time {
-            font-size: 0.78rem; font-weight: 800; color: #64748b;
-            display: flex; align-items: center; gap: 6px;
+            font-size: 0.75rem; font-weight: 800; color: #475569;
+            display: flex; align-items: center; gap: 4px;
         }
         .log-item-link-row {
             display: flex; gap: 8px;
         }
         .log-item-link {
-            font-size: 0.72rem; font-weight: 800;
-            padding: 4px 10px;
-            border-radius: 6px;
+            font-size: 0.65rem; font-weight: 800;
+            padding: 3px 6px;
+            border-radius: 4px;
             background: #f1f5f9;
             color: #1e293b;
             text-decoration: none;
@@ -382,29 +383,19 @@
                 Kembali ke Dashboard
             </a>
 
-            {{-- CARD ATAS PENJELAS HALAMAN (Sesuai Cuti & Simple Jelas) --}}
-            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-3xl p-6 md:p-8 shadow-xl mb-6 overflow-hidden border border-white/20">
-                {{-- Decorative circles --}}
-                
-                
-                
-                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="flex items-center gap-5">
-                        <div class="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                            <i class="fas fa-running text-2xl text-white"></i>
+            {{-- CARD ATAS PENJELAS HALAMAN --}}
+            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl p-4 shadow-lg mb-4 overflow-hidden border border-white/20">
+                <div class="relative z-10 flex flex-col gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
+                            <i class="fas fa-running text-xl text-white"></i>
                         </div>
                         <div>
-                            <h1 class="text-xl md:text-2xl font-black tracking-tight text-white uppercase">Aktivitas Harian</h1>
-                            <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
-                                Catat kegiatan kerja harian Anda secara real-time dengan foto dan lokasi GPS, serta pantau aktivitas rekan kerja Anda.
+                            <h1 class="text-lg font-black tracking-tight text-white uppercase leading-none">Aktivitas Harian</h1>
+                            <p class="text-blue-100 text-[11px] mt-1 font-medium leading-tight">
+                                Catat & pantau aktivitas real-time.
                             </p>
                         </div>
-                    </div>
-                    <div>
-                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider bg-white/90 border border-white text-blue-700 shadow-sm">
-                            <i class="fas fa-check-circle text-green-500"></i>
-                            {{ isset($aktivitasHariIni) ? $aktivitasHariIni->count() : 0 }} Tercatat
-                        </span>
                     </div>
                 </div>
             </div>
@@ -422,15 +413,11 @@
 
                         <div class="glass-card space-y-5 h-full flex flex-col justify-between">
                             <div class="space-y-5">
-                                {{-- Judul dan Tanggal Sejajar dengan Warna Kotak Berbeda (Ungu/Violet) --}}
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 flex-shrink-0">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0"><i class="fas fa-pen-nib text-lg"></i></div>
-                                        <h3 class="text-lg font-black text-slate-800 leading-none">Catat Aktivitas</h3>
-                                    </div>
-                                    <div class="aktivitas-date-card flex-shrink-0">
-                                        <span class="aktivitas-date-val text-[11px] font-black mr-2">{{ \Carbon\Carbon::now()->translatedFormat('d M Y') }}</span>
-                                        <span class="aktivitas-time-badge text-[10px] font-black" id="jam-realtime">--:-- WIB</span>
+                                {{-- Tanggal dan Jam Real-time (Full Width) --}}
+                                <div class="flex w-full mb-3 flex-shrink-0">
+                                    <div class="aktivitas-date-card shadow-sm border-slate-200">
+                                        <span class="aktivitas-date-val">{{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</span>
+                                        <span class="aktivitas-time-badge" id="jam-realtime">--:-- WIB</span>
                                     </div>
                                 </div>
 
@@ -492,9 +479,11 @@
                                 <button type="button" id="tab-riwayat-btn" class="tab-btn active">
                                     Riwayat Saya ({{ isset($aktivitasHariIni) ? $aktivitasHariIni->count() : 0 }})
                                 </button>
+                                @if(isset($aktivitasTim) && $aktivitasTim->count() > 0)
                                 <button type="button" id="tab-rekan-btn" class="tab-btn">
-                                    Rekan Kerja ({{ isset($timYangDipantau) ? $timYangDipantau->count() : 0 }})
+                                    Rekan Kerja ({{ $aktivitasTim->count() }})
                                 </button>
+                                @endif
                             </div>
 
                             {{-- VIEW 1: RIWAYAT SAYA --}}
@@ -503,10 +492,13 @@
                                     <div class="log-item-card">
                                         <p class="log-item-desc">{{ $event->keterangan ?? '' }}</p>
                                         <div class="log-item-footer">
-                                            <span class="log-item-time">
-                                                <i class="fas fa-clock text-blue-500"></i>
-                                                {{ $event->created_at->format('H:i') }} WIB
-                                            </span>
+                                            <div class="flex flex-col">
+                                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{{ $event->created_at->format('d M Y') }}</span>
+                                                <span class="log-item-time leading-none">
+                                                    <i class="fas fa-clock text-blue-500 text-[10px]"></i>
+                                                    {{ $event->created_at->format('H:i') }} WIB
+                                                </span>
+                                            </div>
                                             <div class="log-item-link-row">
                                                 @if($event->photo_url)
                                                     <a href="#" data-img-url="{{ $event->photo_url }}" class="log-item-link view-photo-trigger">
@@ -530,27 +522,45 @@
                             </div>
 
                             {{-- VIEW 2: AKTIVITAS REKAN --}}
-                            <div id="view-rekan" class="hidden overflow-y-auto max-h-[380px] pr-1 scrollbar-thin">
-                                @if(isset($timYangDipantau) && $timYangDipantau->count() > 0)
-                                    <div class="tim-grid">
-                                        @foreach($timYangDipantau as $tim)
-                                            <button type="button" 
-                                                    class="tim-member-btn tim-card-button"
-                                                    data-userid="{{ $tim->id }}"
-                                                    data-username="{{ $tim->name }}">
-                                                
-                                                <img src="{{ $tim->profile_picture ? asset('storage/' . $tim->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($tim->name ?? 'U').'&background=random&color=fff&size=64' }}" 
-                                                     alt="{{ $tim->name }}" 
-                                                     class="tim-member-avatar">
-                                                <p class="tim-member-name">{{ $tim->name }}</p>
-                                                <span class="tim-member-role">{{ $tim->jabatan ?? 'Staf' }}</span>
-                                            </button>
-                                        @endforeach
-                                    </div>
+                            <div id="view-rekan" class="hidden space-y-3 overflow-y-auto max-h-[380px] pr-1 scrollbar-thin">
+                                @if(isset($aktivitasTim) && $aktivitasTim->count() > 0)
+                                    @foreach($aktivitasTim as $event)
+                                        <div class="log-item-card">
+                                            <div class="flex items-center gap-2 mb-1.5">
+                                                <img src="{{ $event->user_photo ?? 'https://ui-avatars.com/api/?name='.urlencode($event->user_name).'&background=random&color=fff' }}" alt="{{ $event->user_name }}" class="w-6 h-6 rounded-full object-cover shadow-sm border border-slate-200 flex-shrink-0">
+                                                <div class="flex-1 min-w-0 flex items-center gap-1.5">
+                                                    <p class="text-[0.8rem] font-bold text-slate-800 truncate">{{ $event->user_name }}</p>
+                                                    <span class="text-[10px] text-slate-400 font-medium truncate bg-white/60 px-1.5 py-0.5 rounded border border-slate-100">{{ $event->user_divisi }}</span>
+                                                </div>
+                                            </div>
+                                            <p class="log-item-desc">{{ $event->keterangan ?? '' }}</p>
+                                            <div class="log-item-footer mt-1">
+                                                <div class="flex flex-col">
+                                                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{{ $event->created_at->format('d M Y') }}</span>
+                                                    <span class="log-item-time leading-none">
+                                                        <i class="fas fa-clock text-blue-500 text-[10px]"></i>
+                                                        {{ $event->created_at->format('H:i') }} WIB
+                                                    </span>
+                                                </div>
+                                                <div class="log-item-link-row">
+                                                    @if($event->photo_url)
+                                                        <a href="#" data-img-url="{{ $event->photo_url }}" class="log-item-link view-photo-trigger">
+                                                            Foto
+                                                        </a>
+                                                    @endif
+                                                    @if($event->latitude && $event->longitude)
+                                                        <a href="https://www.google.com/maps?q={{ $event->latitude }},{{ $event->longitude }}" target="_blank" class="log-item-link">
+                                                            Lokasi
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 @else
                                     <div class="empty-log-state">
-                                        <i class="fas fa-users-slash text-3xl text-slate-300 mb-2 block"></i>
-                                        <p class="text-slate-500 text-xs font-semibold">Tidak ada anggota tim.</p>
+                                        <i class="fas fa-history text-3xl text-slate-300 mb-2 block"></i>
+                                        <p class="text-slate-500 text-xs font-semibold">Belum ada aktivitas tim hari ini.</p>
                                     </div>
                                 @endif
                             </div>
@@ -561,7 +571,7 @@
                             <div class="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
                                 <i class="fas fa-info-circle text-xs"></i>
                             </div>
-                            <p class="flex-1 text-xs">Data diperbarui secara real-time. Klik nama rekan kerja untuk melihat rincian lokasi dan foto aktivitasnya.</p>
+                            <p class="flex-1 text-xs">Data diperbarui secara real-time. Klik tombol pada aktivitas rekan kerja untuk melihat rincian lokasi dan foto aktivitasnya.</p>
                         </div>
                     </div>
                 </div>
@@ -570,29 +580,10 @@
         </div>
     </div>
 
-    {{-- MODAL PANTAU TIM --}}
-    <div id="modal-pantau" class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md hidden" style="z-index: 9999;" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        
-        <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] flex flex-col overflow-hidden border border-slate-100 z-10">
-            <div class="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-user-friends"></i></div>
-                    <h3 class="text-base font-black text-slate-800" id="modal-pantau-title">Memuat...</h3>
-                </div>
-                <button type="button" id="modal-pantau-close-btn" class="text-slate-400 hover:text-red-500 transition-colors">
-                    <i class="fas fa-times text-lg"></i>
-                </button>
-            </div>
-            <div class="p-5 space-y-4 overflow-y-auto bg-slate-50 flex-grow" id="modal-pantau-content">
-                {{-- Isi modal --}}
-            </div>
-        </div>
-    </div>
-
     {{-- MODAL PRATINJAU FOTO --}}
-    <div id="modal-foto" class="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm hidden" style="z-index: 10000;" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        
-        <div class="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden border border-slate-100 z-10 flex flex-col">
+    <div id="modal-foto" class="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden" style="z-index: 10000;" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div id="modal-foto-backdrop" class="fixed inset-0"></div>
+        <div class="relative bg-white rounded-3xl shadow-2xl max-w-4xl w-full mx-4 overflow-hidden border border-slate-100 z-10 flex flex-col">
             <div class="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-image"></i></div>
@@ -602,8 +593,8 @@
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
-            <div class="p-4 bg-slate-950 flex items-center justify-center min-h-[300px] max-h-[70vh]">
-                <img id="modal-foto-img" src="" class="max-w-full max-h-[60vh] object-contain rounded-xl shadow-lg border border-white/10" alt="Foto Lampiran Aktivitas"/>
+            <div class="p-4 bg-slate-50 flex items-center justify-center min-h-[300px] max-h-[90vh]">
+                <img id="modal-foto-img" src="" class="max-w-full max-h-[80vh] object-contain rounded-xl shadow-lg border border-slate-200" alt="Foto Lampiran Aktivitas"/>
             </div>
         </div>
     </div>
@@ -671,7 +662,7 @@
                 snapButton.disabled = true;
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } } 
+                        video: { facingMode: currentFacingMode } 
                     });
                     video.srcObject = stream;
                     video.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
@@ -762,11 +753,13 @@
  
         const getLocation = () => {
             isLocationReady = false; checkFormReadiness();
-            navigator.geolocation.getCurrentPosition(
-                (pos) => { latitudeInput.value = pos.coords.latitude; longitudeInput.value = pos.coords.longitude; isLocationReady = true; checkFormReadiness(); },
-                () => { alert('Gagal ambil lokasi.'); isLocationReady = false; checkFormReadiness(); },
-                { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-            );
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => { latitudeInput.value = pos.coords.latitude; longitudeInput.value = pos.coords.longitude; isLocationReady = true; checkFormReadiness(); },
+                    () => { alert('Gagal ambil lokasi.'); isLocationReady = false; checkFormReadiness(); },
+                    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+                );
+            }
         };
         
         window.cameraInstances[''].startCamera();
@@ -777,57 +770,6 @@
             if (submitButton.disabled) { e.preventDefault(); alert('Lengkapi data.'); } 
             else { submitButton.disabled = true; submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...'; }
         });
- 
-        // --- MODAL PANTAU TIM ---
-        const modalPantau = document.getElementById('modal-pantau');
-        const modalPantauCloseBtn = document.getElementById('modal-pantau-close-btn');
-        const modalPantauBackdrop = document.getElementById('modal-pantau-backdrop');
-        const modalPantauTitle = document.getElementById('modal-pantau-title');
-        const modalPantauContent = document.getElementById('modal-pantau-content');
- 
-        const openModalPantau = () => modalPantau.classList.remove('hidden');
-        const closeModalPantau = () => modalPantau.classList.add('hidden');
- 
-        modalPantauCloseBtn.addEventListener('click', closeModalPantau);
-        modalPantauBackdrop.addEventListener('click', closeModalPantau);
- 
-        const fetchAktivitasTim = async (userId, userName) => {
-            modalPantauTitle.textContent = `${userName}`;
-            modalPantauContent.innerHTML = `<div class="text-center text-slate-500 py-10"><i class="fas fa-spinner fa-spin text-2xl"></i><p class="mt-2">Memuat...</p></div>`;
-            openModalPantau();
- 
-            try {
-                const response = await fetch(`{{ route('aktivitas.getJson') }}?user_id=${userId}`);
-                if (!response.ok) throw new Error('Gagal memuat');
-                const data = await response.json();
- 
-                if (data && data.length > 0) {
-                    let htmlContent = '<div class="space-y-4">';
-                    data.forEach(item => {
-                        const time = new Date(item.start).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-                        const photo = item.extendedProps.photo_url ? `<a href="#" data-img-url="${item.extendedProps.photo_url}" class="text-blue-600 text-xs font-bold bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1.5 hover:bg-blue-100 transition-colors view-photo-trigger">Foto</a>` : '';
-                        const loc = (item.extendedProps.latitude) ? `<a href="https://www.google.com/maps?q=${item.extendedProps.latitude},${item.extendedProps.longitude}" target="_blank" class="text-red-600 text-xs font-bold bg-red-50 border border-red-100 rounded-lg px-2.5 py-1.5 hover:bg-red-100 transition-colors">Lokasi</a>` : '';
-                        
-                        htmlContent += `
-                            <div class="tim-detail-card">
-                                <p class="font-bold text-slate-800 text-sm">${item.title}</p>
-                                <p class="text-slate-600 text-xs mt-2.5 leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100">"${item.extendedProps.keterangan || ''}"</p>
-                                <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
-                                    <span class="text-[11px] font-black text-slate-400"><i class="fas fa-clock"></i> ${time} WIB</span>
-                                    <div class="space-x-2">${photo} ${loc}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    htmlContent += '</div>';
-                    modalPantauContent.innerHTML = htmlContent;
-                } else {
-                    modalPantauContent.innerHTML = `<div class="text-center py-10 text-slate-400"><i class="fas fa-calendar-times text-4xl mb-2"></i><p class="text-sm font-semibold">Belum ada aktivitas hari ini.</p></div>`;
-                }
-            } catch (error) {
-                modalPantauContent.innerHTML = `<div class="text-center text-red-500 py-5 text-sm">Gagal memuat data.</div>`;
-            }
-        };
  
         // --- MODAL PRATINJAU FOTO ---
         const modalFoto = document.getElementById('modal-foto');
@@ -845,14 +787,10 @@
             modalFotoImg.src = '';
         };
 
-        modalFotoCloseBtn.addEventListener('click', closeModalFoto);
-        modalFotoBackdrop.addEventListener('click', closeModalFoto);
+        if (modalFotoCloseBtn) modalFotoCloseBtn.addEventListener('click', closeModalFoto);
+        if (modalFotoBackdrop) modalFotoBackdrop.addEventListener('click', closeModalFoto);
  
-        document.body.addEventListener('click', function(e) {
-            const btn = e.target.closest('.tim-card-button');
-            if(btn) {
-                fetchAktivitasTim(btn.dataset.userid, btn.dataset.username);
-            }
+        document.addEventListener('click', function(e) {
 
             const photoTrigger = e.target.closest('.view-photo-trigger');
             if (photoTrigger) {

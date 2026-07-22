@@ -16,7 +16,6 @@
                 radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
                 radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
                 radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
-            background-attachment: fixed;
         }
 
         /* Float animation */
@@ -492,9 +491,11 @@
                                 <button type="button" id="tab-riwayat-btn" class="tab-btn active">
                                     Riwayat Saya ({{ isset($aktivitasHariIni) ? $aktivitasHariIni->count() : 0 }})
                                 </button>
+                                @if(isset($timYangDipantau) && $timYangDipantau->count() > 0)
                                 <button type="button" id="tab-rekan-btn" class="tab-btn">
-                                    Rekan Kerja ({{ isset($timYangDipantau) ? $timYangDipantau->count() : 0 }})
+                                    Rekan Kerja ({{ $timYangDipantau->count() }})
                                 </button>
+                                @endif
                             </div>
 
                             {{-- VIEW 1: RIWAYAT SAYA --}}
@@ -671,7 +672,7 @@
                 snapButton.disabled = true;
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } } 
+                        video: { facingMode: currentFacingMode } 
                     });
                     video.srcObject = stream;
                     video.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
@@ -762,11 +763,13 @@
  
         const getLocation = () => {
             isLocationReady = false; checkFormReadiness();
-            navigator.geolocation.getCurrentPosition(
-                (pos) => { latitudeInput.value = pos.coords.latitude; longitudeInput.value = pos.coords.longitude; isLocationReady = true; checkFormReadiness(); },
-                () => { alert('Gagal ambil lokasi.'); isLocationReady = false; checkFormReadiness(); },
-                { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-            );
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => { latitudeInput.value = pos.coords.latitude; longitudeInput.value = pos.coords.longitude; isLocationReady = true; checkFormReadiness(); },
+                    () => { alert('Gagal ambil lokasi.'); isLocationReady = false; checkFormReadiness(); },
+                    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+                );
+            }
         };
         
         window.cameraInstances[''].startCamera();
@@ -848,7 +851,7 @@
         modalFotoCloseBtn.addEventListener('click', closeModalFoto);
         modalFotoBackdrop.addEventListener('click', closeModalFoto);
  
-        document.body.addEventListener('click', function(e) {
+        document.addEventListener('click', function(e) {
             const btn = e.target.closest('.tim-card-button');
             if(btn) {
                 fetchAktivitasTim(btn.dataset.userid, btn.dataset.username);

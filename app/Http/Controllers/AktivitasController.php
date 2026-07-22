@@ -40,24 +40,39 @@ class AktivitasController extends Controller
         $timYangDipantau = collect();
         $targetUserIds = [];
 
-        if ($user->jabatan === 'Direktur') {
+        $isDirektur = $user->jabatan === 'Direktur';
+        $isMarketingOpsHead = $user->is_kepala_divisi == 1 && in_array($user->divisi, ['Marketing dan Operasional']);
+
+        if ($isDirektur || $isMarketingOpsHead) {
             $targetUserIds = User::where('id', '!=', $user->id)
                                  ->where('role', 'user') 
                                  ->pluck('id');
-        } 
-        elseif ($user->is_kepala_divisi == 1) { 
-            $targetUserIds = User::where('divisi', $user->divisi)
-                                 ->where('id', '!=', $user->id)
-                                 ->where('role', 'user') 
-                                 ->where('is_kepala_divisi', 0) 
-                                 ->pluck('id');
         }
 
-        // 3. Ambil data User (Foto, Nama, Jabatan)
+        $aktivitasTim = collect();
+
+        // 3. Ambil data aktivitas dari tim yang dipantau
         if (!empty($targetUserIds) && count($targetUserIds) > 0) {
-            $timYangDipantau = User::whereIn('id', $targetUserIds)
-                                ->select('id', 'name', 'jabatan', 'profile_picture') // Ambil hanya data yg perlu
-                                ->get();
+            $aktivitasTim = Aktivitas::with('user:id,name,jabatan,profile_picture,divisi')
+                                ->whereIn('user_id', $targetUserIds)
+                                ->whereDate('created_at', $tanggal)
+                                ->orderBy('created_at', 'desc')
+                                ->get()
+                                ->map(function ($item) {
+                                    $photo_url = $item->lampiran ? asset('storage/' . $item->lampiran) : null;
+                                    return (object) [
+                                        'id' => $item->id,
+                                        'user_name' => $item->user->name ?? 'User Dihapus',
+                                        'user_divisi' => $item->user->divisi ?? '-',
+                                        'user_photo' => $item->user->profile_picture ? asset('storage/' . $item->user->profile_picture) : null,
+                                        'title' => $item->title,
+                                        'keterangan' => $item->keterangan,
+                                        'created_at' => $item->created_at,
+                                        'photo_url' => $photo_url,
+                                        'latitude' => $item->latitude,
+                                        'longitude' => $item->longitude,
+                                    ];
+                                });
         }
 
         // 4. Kirim semua data ke view
@@ -68,7 +83,7 @@ class AktivitasController extends Controller
             'title' => 'Catat Aktivitas', //
             'user' => $user,
             'aktivitasHariIni' => $aktivitasHariIni, //
-            'timYangDipantau' => $timYangDipantau // Data baru untuk tim (berisi daftar user)
+            'aktivitasTim' => $aktivitasTim // Data aktivitas rekan kerja
         ]);
     }
 
@@ -120,20 +135,15 @@ class AktivitasController extends Controller
             
             $allowedUserIds = [];
 
-            // LOGIK 1: Jika User adalah Direktur
-            if ($user->jabatan === 'Direktur') { // <--- BARIS INI TADI HILANG
+            $isDirektur = $user->jabatan === 'Direktur';
+            $isMarketingOpsHead = $user->is_kepala_divisi == 1 && in_array($user->divisi, ['Marketing', 'Operasional']);
+
+            // LOGIK 1: Jika User adalah Direktur atau Kepala Divisi Marketing/Operasional
+            if ($isDirektur || $isMarketingOpsHead) {
                 $allowedUserIds = User::where('id', '!=', $user->id)
                               ->where('role', 'user')
                               ->pluck('id')
                               ->toArray();
-            } 
-            elseif ($user->is_kepala_divisi == 1) {
-                $allowedUserIds = User::where('divisi', $user->divisi)
-                                    ->where('id', '!=', $user->id)
-                                    ->where('role', 'user')
-                                    ->where('is_kepala_divisi', 0)
-                                    ->pluck('id')
-                                    ->toArray();
             }
 
             // Cek apakah ID yang diminta ada di dalam daftar yang diizinkan
