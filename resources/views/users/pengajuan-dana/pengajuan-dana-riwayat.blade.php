@@ -142,8 +142,9 @@
                         <select name="status" class="modern-select" onchange="this.form.submit()">
                             <option value="semua" {{ request('status') == 'semua' || !request('status') ? 'selected' : '' }}>Semua Status</option>
                             <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Appr 1</option>
-                            <option value="diproses_appr_2" {{ request('status') == 'diproses_appr_2' ? 'selected' : '' }}>Menunggu Appr 2</option>
+                            <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
                             <option value="proses_pembayaran" {{ request('status') == 'proses_pembayaran' ? 'selected' : '' }}>Proses Pembayaran</option>
+                            <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Menunggu Final</option>
                             <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
                             <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                             <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
@@ -171,13 +172,15 @@
                                         'ditolak' => 'bg-red-100 text-red-700 border-red-200',
                                         'dibatalkan' => 'bg-slate-100 text-slate-700 border-slate-200',
                                         'diajukan' => 'bg-yellow-100 text-yellow-700 border-yellow-200',
-                                        'diproses_appr_2' => 'bg-indigo-100 text-indigo-700 border-indigo-200',
+                                        'diproses' => 'bg-indigo-100 text-indigo-700 border-indigo-200',
+                                        'disetujui' => 'bg-teal-100 text-teal-700 border-teal-200',
                                         'proses_pembayaran' => 'bg-blue-100 text-blue-700 border-blue-200',
                                         default => 'bg-slate-100 text-slate-700 border-slate-200',
                                     };
                                     $statusLabel = match($pengajuan->status) {
-                                        'diajukan' => 'Menunggu Appr 1',
-                                        'diproses_appr_2' => 'Menunggu Appr 2',
+                                        'diajukan' => 'Diajukan',
+                                        'diproses' => 'Diproses',
+                                        'disetujui' => 'Menunggu Final',
                                         'proses_pembayaran' => 'Proses Pembayaran',
                                         'selesai' => 'Selesai',
                                         'ditolak' => 'Ditolak',
@@ -223,13 +226,15 @@
                                 'ditolak' => 'bg-red-100 text-red-700 border-red-200',
                                 'dibatalkan' => 'bg-slate-100 text-slate-700 border-slate-200',
                                 'diajukan' => 'bg-yellow-100 text-yellow-700 border-yellow-200',
-                                'diproses_appr_2' => 'bg-indigo-100 text-indigo-700 border-indigo-200',
+                                'diproses' => 'bg-indigo-100 text-indigo-700 border-indigo-200',
+                                'disetujui' => 'bg-teal-100 text-teal-700 border-teal-200',
                                 'proses_pembayaran' => 'bg-blue-100 text-blue-700 border-blue-200',
                                 default => 'bg-slate-100 text-slate-700 border-slate-200',
                             };
                             $statusLabel = match($pengajuan->status) {
-                                'diajukan' => 'Appr 1',
-                                'diproses_appr_2' => 'Appr 2',
+                                'diajukan' => 'Diajukan',
+                                'diproses' => 'Diproses',
+                                'disetujui' => 'Menunggu Final',
                                 'proses_pembayaran' => 'Pembayaran',
                                 'selesai' => 'Selesai',
                                 'ditolak' => 'Ditolak',

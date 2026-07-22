@@ -128,17 +128,20 @@
                                 'selesai' => 'bg-green-500 text-white shadow-green-500/20',
                                 'ditolak' => 'bg-red-500 text-white shadow-red-500/20',
                                 'proses_pembayaran' => 'bg-blue-500 text-white shadow-blue-500/20',
-                                'diproses_appr_2' => 'bg-indigo-500 text-white shadow-indigo-500/20',
+                                'diproses' => 'bg-indigo-500 text-white shadow-indigo-500/20',
                                 'dibatalkan' => 'bg-slate-500 text-white shadow-slate-500/20',
+                                'disetujui' => 'bg-teal-500 text-white shadow-teal-500/20',
                                 default => 'bg-yellow-500 text-white shadow-yellow-500/20',
                             };
                             $statusText = match($pengajuanDana->status) {
                                 'selesai' => 'Selesai',
                                 'ditolak' => 'Ditolak',
                                 'proses_pembayaran' => 'Proses Pembayaran',
-                                'diproses_appr_2' => 'Menunggu Approver 2',
+                                'diproses' => 'Diproses',
                                 'dibatalkan' => 'Dibatalkan',
-                                default => 'Menunggu Approver 1',
+                                'disetujui' => 'Menunggu Final',
+                                'diajukan' => 'Diajukan',
+                                default => 'Menunggu',
                             };
                         @endphp
                         <span class="inline-flex items-center px-4.5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider border border-white/20 shadow-sm {{ $statusClass }}">
@@ -229,7 +232,7 @@
                         <div class="space-y-3.5 flex-1 overflow-y-auto">
                             
                             {{-- 1. APPROVER 1 --}}
-                            @if ($pengajuanDana->approver_1_id)
+                            @if ($pengajuanDana->approver_dana_1_id)
                                 @php
                                     $s1 = $pengajuanDana->approver_1_status;
                                     $c1 = $pengajuanDana->approver_1_catatan;
@@ -251,7 +254,7 @@
                                                     <span class="text-[9px] text-slate-400 font-semibold">• {{ $t1->translatedFormat('d M Y, H:i') }}</span>
                                                 @endif
                                             </div>
-                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $pengajuanDana->approver1->name ?? 'Approver 1' }}</h4>
+                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $pengajuanDana->approverDana1->name ?? 'Approver 1' }}</h4>
                                         </div>
                                         <span class="px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border {{ $theme1['badge'] }}">
                                             {{ ucfirst($s1) }}
@@ -267,7 +270,7 @@
                             @endif
 
                             {{-- 2. APPROVER 2 --}}
-                            @if ($pengajuanDana->approver_2_id)
+                            @if ($pengajuanDana->approver_dana_2_id)
                                 @php
                                     $s2 = $pengajuanDana->approver_2_status;
                                     $c2 = $pengajuanDana->approver_2_catatan;
@@ -289,7 +292,7 @@
                                                     <span class="text-[9px] text-slate-400 font-semibold">• {{ $t2->translatedFormat('d M Y, H:i') }}</span>
                                                 @endif
                                             </div>
-                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $pengajuanDana->approver2->name ?? 'Approver 2' }}</h4>
+                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $pengajuanDana->approverDana2->name ?? 'Approver 2' }}</h4>
                                         </div>
                                         <span class="px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border {{ $theme2['badge'] }}">
                                             {{ ucfirst($s2) }}
@@ -304,25 +307,23 @@
                                 </div>
                             @endif
 
-                            {{-- 3. MANAGER KEUANGAN --}}
-                            @if ($pengajuanDana->user->managerKeuangan)
+                            {{-- 3. FINANCE / KEUANGAN --}}
+                            @if ($pengajuanDana->approver_dana_3_id)
                                 @php
-                                    $sF = $pengajuanDana->payment_status; 
-                                    $cF = $pengajuanDana->catatan_finance;
-                                    $tF = $pengajuanDana->finance_processed_at;
-                                    if ($sF === 'selesai') $tF = $pengajuanDana->updated_at;
+                                    $sF = $pengajuanDana->approver_3_status; 
+                                    $cF = $pengajuanDana->approver_3_catatan;
+                                    $tF = $pengajuanDana->approver_3_approved_at;
+                                    if ($sF === 'disetujui' && $pengajuanDana->status === 'selesai') $tF = $pengajuanDana->updated_at;
 
                                     $themeF = match($sF) {
-                                        'selesai' => ['border' => 'border-l-green-500', 'bg' => 'bg-white', 'badge' => 'bg-green-100 text-green-700 border-green-200'],
-                                        'diproses' => ['border' => 'border-l-blue-500', 'bg' => 'bg-white', 'badge' => 'bg-blue-100 text-blue-700 border-blue-200'],
+                                        'disetujui' => ['border' => 'border-l-green-500', 'bg' => 'bg-white', 'badge' => 'bg-green-100 text-green-700 border-green-200'],
                                         'ditolak' => ['border' => 'border-l-red-500', 'bg' => 'bg-white', 'badge' => 'bg-red-100 text-red-700 border-red-200'],
                                         'skipped' => ['border' => 'border-l-slate-400', 'bg' => 'bg-white', 'badge' => 'bg-slate-200 text-slate-600 border-slate-300'],
                                         default => ['border' => 'border-l-yellow-400', 'bg' => 'bg-white', 'badge' => 'bg-yellow-100 text-yellow-700 border-yellow-200'],
                                     };
                                     
                                     $textF = match($sF) {
-                                        'selesai' => 'Selesai',
-                                        'diproses' => 'Diproses',
+                                        'disetujui' => 'Selesai',
                                         default => ucfirst($sF)
                                     };
                                 @endphp
@@ -335,7 +336,7 @@
                                                     <span class="text-[9px] text-slate-400 font-semibold">• {{ $tF->translatedFormat('d M Y, H:i') }}</span>
                                                 @endif
                                             </div>
-                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $pengajuanDana->user->managerKeuangan->name ?? 'Finance' }}</h4>
+                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $pengajuanDana->approverDana3->name ?? 'Finance' }}</h4>
                                         </div>
                                         <span class="px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border {{ $themeF['badge'] }}">
                                             {{ $textF }}
@@ -345,6 +346,50 @@
                                         <div class="mt-2.5 bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-600 italic flex items-start gap-2">
                                             <i class="fas fa-quote-left text-slate-300 text-[10px] mt-0.5"></i>
                                             <span>{{ $cF }}</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+
+                            {{-- 4. DIREKTUR / FINAL --}}
+                            @if ($pengajuanDana->approver_dana_4_id)
+                                @php
+                                    $s4 = $pengajuanDana->approver_4_status; 
+                                    $c4 = $pengajuanDana->approver_4_catatan;
+                                    $t4 = $pengajuanDana->approver_4_approved_at;
+                                    if ($s4 === 'disetujui' && $pengajuanDana->status === 'selesai') $t4 = $pengajuanDana->updated_at;
+
+                                    $theme4 = match($s4) {
+                                        'disetujui' => ['border' => 'border-l-green-500', 'bg' => 'bg-white', 'badge' => 'bg-green-100 text-green-700 border-green-200'],
+                                        'ditolak' => ['border' => 'border-l-red-500', 'bg' => 'bg-white', 'badge' => 'bg-red-100 text-red-700 border-red-200'],
+                                        'skipped' => ['border' => 'border-l-slate-400', 'bg' => 'bg-white', 'badge' => 'bg-slate-200 text-slate-600 border-slate-300'],
+                                        default => ['border' => 'border-l-yellow-400', 'bg' => 'bg-white', 'badge' => 'bg-yellow-100 text-yellow-700 border-yellow-200'],
+                                    };
+                                    
+                                    $text4 = match($s4) {
+                                        'disetujui' => 'Selesai',
+                                        default => ucfirst($s4)
+                                    };
+                                @endphp
+                                <div class="rounded-2xl border border-slate-200/80 p-4 {{ $theme4['bg'] }} {{ $theme4['border'] }} border-l-[4px] shadow-sm mt-3.5">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Tahap 4 (Final)</span>
+                                                @if($t4)
+                                                    <span class="text-[9px] text-slate-400 font-semibold">• {{ $t4->translatedFormat('d M Y, H:i') }}</span>
+                                                @endif
+                                            </div>
+                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $pengajuanDana->approverDana4->name ?? 'Direktur' }}</h4>
+                                        </div>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border {{ $theme4['badge'] }}">
+                                            {{ $text4 }}
+                                        </span>
+                                    </div>
+                                    @if($c4)
+                                        <div class="mt-2.5 bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-600 italic flex items-start gap-2">
+                                            <i class="fas fa-quote-left text-slate-300 text-[10px] mt-0.5"></i>
+                                            <span>{{ $c4 }}</span>
                                         </div>
                                     @endif
                                 </div>
@@ -476,8 +521,32 @@
                         <i class="fas fa-gavel text-slate-700 mr-2"></i> Tindakan Persetujuan
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <form action="{{ route('pengajuan_dana.approve', $pengajuanDana) }}" method="POST" class="bg-green-50/70 p-5 rounded-2xl border border-green-100 shadow-sm flex flex-col gap-3">
+                        <form action="{{ route('pengajuan_dana.approve', $pengajuanDana) }}" method="POST" enctype="multipart/form-data" class="bg-green-50/70 p-5 rounded-2xl border border-green-100 shadow-sm flex flex-col gap-3">
                             @csrf
+                            
+                            @php
+                                $user = Auth::user();
+                                $currentStage = null;
+                                if ($user->id == $pengajuanDana->approver_dana_1_id && $pengajuanDana->approver_1_status == 'menunggu') $currentStage = 1;
+                                elseif ($user->id == $pengajuanDana->approver_dana_2_id && $pengajuanDana->approver_2_status == 'menunggu') $currentStage = 2;
+                                elseif ($user->id == $pengajuanDana->approver_dana_3_id && $pengajuanDana->approver_3_status == 'menunggu') $currentStage = 3;
+                                elseif ($user->id == $pengajuanDana->approver_dana_4_id && $pengajuanDana->approver_4_status == 'menunggu') $currentStage = 4;
+                            @endphp
+
+                            @if($currentStage == 3)
+                            <div>
+                                <label class="block text-xs font-black text-green-800 mb-1">
+                                    Berkas Bukti Transfer <span class="font-semibold text-green-600">(Opsional)</span>
+                                </label>
+                                <input type="file" name="bukti_transfer" class="block w-full text-xs text-slate-500
+                                    file:mr-4 file:py-2 file:px-4
+                                    file:rounded-xl file:border-0
+                                    file:text-xs file:font-black
+                                    file:bg-green-100 file:text-green-700
+                                    hover:file:bg-green-200 cursor-pointer">
+                            </div>
+                            @endif
+
                             <label class="block text-xs font-black text-green-800">
                                 Catatan Persetujuan <span class="font-semibold text-green-600">(Opsional)</span>
                             </label>
@@ -505,46 +574,7 @@
                 </div>
                 @endcan
 
-                {{-- B. PROSES PEMBAYARAN --}}
-                @can('prosesPembayaran', $pengajuanDana)
-                <div class="glass-card border-t-4 border-t-indigo-500">
-                    <h3 class="text-lg font-black text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-sync-alt text-indigo-600 mr-2"></i> Proses Pembayaran
-                    </h3>
-                    <p class="text-xs text-slate-500 mb-4 font-semibold">Ubah status menjadi "Sedang Diproses" sebelum melakukan transfer bank.</p>
-                    <form action="{{ route('pengajuan_dana.proses_pembayaran', $pengajuanDana) }}" method="POST" class="bg-indigo-50/70 p-5 rounded-2xl border border-indigo-100 shadow-sm flex flex-col gap-3">
-                        @csrf
-                        <label class="block text-xs font-black text-indigo-800">Catatan Proses (Opsional)</label>
-                        <textarea name="catatan_proses" rows="2" class="w-full p-3 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-white text-xs font-semibold"></textarea>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-100">
-                            <i class="fas fa-sync-alt"></i> Tandai Sedang Diproses
-                        </button>
-                    </form>
-                </div>
-                @endcan
 
-                {{-- C. UPLOAD BUKTI --}}
-                @can('uploadBuktiTransfer', $pengajuanDana)
-                <div class="glass-card border-t-4 border-t-green-500">
-                    <h3 class="text-lg font-black text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-file-invoice-dollar text-green-600 mr-2"></i> Penyelesaian & Upload Bukti
-                    </h3>
-                    <p class="text-xs text-slate-500 mb-4 font-semibold">Unggah bukti transfer dari bank untuk menyelesaikan pengajuan dana ini.</p>
-                    <form action="{{ route('pengajuan_dana.upload_bukti_transfer', $pengajuanDana) }}" method="POST" enctype="multipart/form-data" class="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3">
-                        @csrf
-                        <label class="block text-xs font-black text-slate-700">Berkas Bukti Transfer (Gambar / PDF)</label>
-                        <input type="file" name="bukti_transfer" class="block w-full text-xs text-slate-500
-                            file:mr-4 file:py-2 file:px-4
-                            file:rounded-xl file:border-0
-                            file:text-xs file:font-black
-                            file:bg-green-50 file:text-green-700
-                            hover:file:bg-green-100 cursor-pointer" required>
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-lg shadow-green-200">
-                            <i class="fas fa-check-double"></i> Upload & Selesaikan
-                        </button>
-                    </form>
-                </div>
-                @endcan
 
                 {{-- D. BATALKAN --}}
                 @can('cancel', $pengajuanDana)
