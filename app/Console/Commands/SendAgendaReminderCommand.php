@@ -32,8 +32,8 @@ class SendAgendaReminderCommand extends Command
         $tomorrowString = $tomorrow->toDateString();
         $dateText = $tomorrow->locale('id')->translatedFormat('l, d F Y');
 
-        // Ambil semua agenda yang dijadwalkan besok beserta peserta (guests)
-        $agendas = Agenda::with('guests')
+        // Ambil semua agenda yang dijadwalkan besok beserta peserta (guests) dan pembuat (creator)
+        $agendas = Agenda::with(['guests', 'creator'])
             ->whereDate('start_time', $tomorrowString)
             ->get();
 
@@ -46,14 +46,17 @@ class SendAgendaReminderCommand extends Command
         $userAgendas = [];
 
         foreach ($agendas as $agenda) {
-            foreach ($agenda->guests as $guest) {
-                if (!isset($userAgendas[$guest->id])) {
-                    $userAgendas[$guest->id] = [
-                        'user' => $guest,
+            // Kumpulkan semua peserta (pembuat + tamu)
+            $participants = $agenda->guests->push($agenda->creator)->filter()->unique('id');
+
+            foreach ($participants as $participant) {
+                if (!isset($userAgendas[$participant->id])) {
+                    $userAgendas[$participant->id] = [
+                        'user' => $participant,
                         'agendas' => []
                     ];
                 }
-                $userAgendas[$guest->id]['agendas'][] = $agenda;
+                $userAgendas[$participant->id]['agendas'][] = $agenda;
             }
         }
 
@@ -62,7 +65,7 @@ class SendAgendaReminderCommand extends Command
             return;
         }
 
-        $token = config('services.fonnte.token');
+        $token = 'MP8iwGyRDCKJVgNs5ejZ';
         if (!$token) {
             $this->error("Token Fonnte tidak dikonfigurasi.");
             Log::error("Fonnte token missing untuk Agenda Reminder.");

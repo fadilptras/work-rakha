@@ -36,7 +36,12 @@ return [
     ],
 
     'google_maps' => [
-    'key' => env('GOOGLE_MAPS_API_KEY'),
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
+    'fonnte' => [
+        'token' => env('FONNTE_TOKEN'),
+        'group_id' => env('FONNTE_GROUP_ID'),
     ],
     
 ];

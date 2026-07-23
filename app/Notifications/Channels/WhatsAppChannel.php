@@ -22,7 +22,7 @@ class WhatsAppChannel
             return;
         }
 
-        // Konfigurasi Fonnte
+        // // Konfigurasi Fonnte
         $fonnteToken = 'MP8iwGyRDCKJVgNs5ejZ';
         $fonnteGroupId = '120363242834102956@g.us';
 

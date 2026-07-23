@@ -126,8 +126,8 @@ class SendAbsensiSummaryCommand extends Command
     
     private function sendToFonnte($message)
     {
-        $targetGroupId = config('services.fonnte.group_id');
-        $token = config('services.fonnte.token');
+        $targetGroupId = '120363242834102956@g.us';
+        $token = 'MP8iwGyRDCKJVgNs5ejZ';
         
         if (!$targetGroupId || !$token) {
             Log::error("Fonnte config missing (group_id atau token). Batal mengirim Rekap Absensi.");
