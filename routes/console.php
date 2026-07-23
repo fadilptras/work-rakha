@@ -30,15 +30,22 @@ Schedule::command('cuti:reset-tahunan')
         ->yearlyOn(1, 1, '00:01')
         ->timezone('Asia/Jakarta');
 
-Schedule::command('absensi:remind-morning')
-        ->dailyAt('07:30')
-        ->weekdays()
-        ->timezone('Asia/Jakarta');
-
-Schedule::command('absensi:remind-checkout')
-        ->dailyAt('21:00')
-        ->timezone('Asia/Jakarta');
-
 Schedule::command('pengajuan:cleanup-stale')
         ->dailyAt('00:05')
+        ->timezone('Asia/Jakarta');
+
+Schedule::command('app:send-absensi-summary morning')
+        ->dailyAt('08:10')
+        ->timezone('Asia/Jakarta');
+
+Schedule::command('app:send-absensi-summary midday')
+        ->dailyAt('12:00')
+        ->timezone('Asia/Jakarta');
+
+Schedule::command('app:send-absensi-summary evening')
+        ->dailyAt('17:30')
+        ->timezone('Asia/Jakarta');
+
+Schedule::command('app:send-agenda-reminder')
+        ->dailyAt('19:30')
         ->timezone('Asia/Jakarta');

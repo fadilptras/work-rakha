@@ -39,9 +39,4 @@ return [
     'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
     
-    
-    'fonnte' => [
-        'group_id' => env('WHATSAPP_GROUP_ID'),
-        'token' => env('FONNTE_TOKEN'),
-    ],
 ];

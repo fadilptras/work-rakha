@@ -37,7 +37,7 @@ class ClientBirthdayNotification extends Notification implements ShouldQueue
         $salesName = $this->client->user ? $this->client->user->name : '-';
 
         return [
-            'message' => "*CLIENT BIRTHDAY REMINDER*\n\n" .
+            'message' => "Client Birthday Reminder\n\n" .
                          "Hari ini adalah ulang tahun client/mitra kita: *{$namaClient} - {$perusahaan}*\n" .
                          "PIC Internal: {$salesName}\n\n"
         ];

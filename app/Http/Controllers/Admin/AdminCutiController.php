@@ -168,6 +168,7 @@ class AdminCutiController extends Controller
             if ($nextApprover) {
                 $cuti->update(['status' => 'proses_finalisasi']);
                 Notification::send($nextApprover, new PengajuanCutiNotification($cuti, 'baru'));
+                Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'disetujui_parsial'));
             } else {
                 $cuti->update(['status' => 'disetujui']);
                 // lockForUpdate memastikan decrement tidak bisa terpanggil dua kali bersamaan

@@ -8,50 +8,24 @@ use Illuminate\Notifications\Notification;
 use App\Models\PengajuanDana;
 use App\Notifications\Channels\WhatsAppChannel;
 
-/**
- * Notifikasi Pengajuan Dana
- * 
- * Sifat: Transaksional (Japri / Direct Message).
- * Pesan akan dikirim secara spesifik kepada pemohon atau approver terkait (Finance/Atasan).
- */
 class PengajuanDanaNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * @var \App\Models\PengajuanDana $pengajuanDana Data pengajuan dana
-     */
     public PengajuanDana $pengajuanDana;
-
-    /**
-     * @var string $tipe Tipe status/tahap pengajuan
-     */
     public string $tipe;
 
-    /**
-     * Konstruktor Notifikasi Pengajuan Dana
-     *
-     * @param \App\Models\PengajuanDana $pengajuanDana
-     * @param string $tipe Konteks notifikasi
-     */
     public function __construct(PengajuanDana $pengajuanDana, string $tipe = 'baru')
     {
         $this->pengajuanDana = $pengajuanDana;
         $this->tipe = $tipe;
     }
 
-    /**
-     * Menentukan channel pengiriman
-     */
     public function via(object $notifiable): array
     {
         return ['database', WhatsAppChannel::class];
     }
 
-    /**
-     * Format pengiriman via WhatsApp.
-     * Karena tidak mendefinisikan 'target', pesan otomatis dikirim secara personal.
-     */
     public function toWhatsApp(object $notifiable): array
     {
         $judul = $this->pengajuanDana->judul_pengajuan;
@@ -62,30 +36,24 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
             : route('pengajuan_dana.show', $this->pengajuanDana->id);
 
         switch ($this->tipe) {
+            case 'disetujui_parsial':
+                return []; // In-app notification only
             case 'disetujui_final':
-                $header = "✅ *PENGAJUAN DANA SELESAI*";
+            case 'bukti_transfer':
+                $header = "Pengajuan Dana Selesai! ✅";
                 $pesan = "Kabar baik! Pengajuan dana *'{$judul}'* senilai {$nominal} Anda telah disetujui sepenuhnya dan selesai diproses.";
                 break;
-            case 'disetujui_atasan':
-            case 'disetujui_finance':
-                $header = "✅ *PENGAJUAN DANA DISETUJUI*";
-                $pesan = "Pengajuan dana *'{$judul}'* senilai {$nominal} telah disetujui dan sedang diproses ke tahap selanjutnya.";
-                break;
             case 'ditolak':
-                $header = "❌ *PENGAJUAN DANA DITOLAK*";
+                $header = "Pengajuan Dana Ditolak! ❌";
                 $pesan = "Mohon maaf, pengajuan dana *'{$judul}'* senilai {$nominal} telah ditolak.";
                 break;
-            case 'bukti_transfer':
-                $header = "💸 *DANA TELAH DITRANSFER*";
-                $pesan = "Dana untuk *'{$judul}'* senilai {$nominal} telah berhasil ditransfer. Silakan cek rekening dan lampirkan bukti jika diminta.";
-                break;
             case 'dibatalkan':
-                $header = "⚠️ *PENGAJUAN DANA DIBATALKAN*";
+                $header = "Pengajuan Dana Dibatalkan! ⚠️";
                 $pesan = "Pengajuan dana *'{$judul}'* oleh {$pemohon} telah dibatalkan.";
                 break;
             case 'baru':
             default:
-                $header = "🆕 *PENGAJUAN DANA BARU*";
+                $header = "Pengajuan Dana Baru! 🆕";
                 $pesan = "Ada pengajuan dana baru dari *{$pemohon}*.\nJudul: {$judul}\nNominal: {$nominal}\n\nMohon segera diperiksa.";
                 break;
         }
@@ -93,9 +61,6 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
         return ['message' => "{$header}\n\nHalo {$notifiable->name},\n{$pesan}\n\n🔗 Link: {$link}"];
     }
 
-    /**
-     * Menyimpan data notifikasi ke dalam tabel 'notifications' (Database)
-     */
     public function toArray(object $notifiable): array
     {
         $title = '';
@@ -106,14 +71,14 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
         $judulPengajuan = \Illuminate\Support\Str::limit($this->pengajuanDana->judul_pengajuan, 30);
 
         switch ($this->tipe) {
-            case 'disetujui_atasan':
+            case 'disetujui_parsial':
                 $title = 'Pengajuan Dana Diproses';
-                $message = "Pengajuan '$judulPengajuan' Anda telah disetujui atasan dan diteruskan ke Finance.";
+                $message = "Pengajuan '$judulPengajuan' Anda telah disetujui dan diteruskan ke approver berikutnya.";
                 $icon = 'fas fa-check-double';
                 $color = 'text-green-500';
                 break;
-            case 'disetujui_finance':
             case 'disetujui_final':
+            case 'bukti_transfer':
                 $title = 'Pengajuan Dana Disetujui';
                 $message = "Kabar baik! Pengajuan dana '$judulPengajuan' Anda telah disetujui sepenuhnya.";
                 $icon = 'fas fa-check-circle';
@@ -124,12 +89,6 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
                 $message = "Mohon maaf, pengajuan dana '$judulPengajuan' Anda ditolak.";
                 $icon = 'fas fa-times-circle';
                 $color = 'text-red-600';
-                break;
-            case 'bukti_transfer':
-                $title = 'Dana Telah Ditransfer';
-                $message = "Dana untuk pengajuan '$judulPengajuan' telah ditransfer. Silakan cek rekening Anda.";
-                $icon = 'fas fa-receipt';
-                $color = 'text-indigo-600';
                 break;
             case 'dibatalkan':
                 $title = 'Pengajuan Dibatalkan';

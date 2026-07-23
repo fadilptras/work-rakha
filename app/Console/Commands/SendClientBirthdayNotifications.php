@@ -14,7 +14,7 @@ class SendClientBirthdayNotifications extends Command
      * Nama command: php artisan app:send-client-birthday
      */
     protected $signature = 'app:send-client-birthday';
-    protected $description = 'Kirim notifikasi ultah client ke Internal Sales (PIC), Direktur, & Kadiv terkait';
+    protected $description = 'Kirim notifikasi ultah client HANYA ke Internal Sales (PIC)';
 
     public function handle()
     {
@@ -31,16 +31,6 @@ class SendClientBirthdayNotifications extends Command
             return;
         }
 
-        // kita
-        $managementUsers = User::where('jabatan', 'Direktur')
-                                ->orWhere(function($query) {
-                                    $query->where('is_kepala_divisi', 1)
-                                          ->whereIn('divisi', ['Marketing', 'Operasional', 'Marketing dan Operasional']);
-                                })
-                                ->get();
-
-        $this->info("Management users found: " . $managementUsers->count());
-
         // 3. Loop Client dan Kirim Notifikasi
         foreach ($birthdayClients as $client) {
             $namaClient = $client->nama_user;
@@ -48,21 +38,14 @@ class SendClientBirthdayNotifications extends Command
             
             $this->info("Memproses Client: {$namaClient} ({$perusahaan})");
 
-            // A. Kumpulkan Manajemen dan PIC Internal (Sales) secara fungsional (tanpa mutasi collection asli)
-            $finalRecipients = $managementUsers->concat(
-                $client->user ? collect([$client->user]) : collect([])
-            )->unique('id');
+            $pic = $client->user;
 
-            if ($client->user) {
-                $this->info(" - PIC (Sales) ditemukan: " . $client->user->name);
+            if ($pic) {
+                $this->info(" - PIC (Sales) ditemukan: " . $pic->name);
+                Notification::send($pic, new ClientBirthdayNotification($client));
+                $this->info(" - Notifikasi dikirim ke PIC.");
             } else {
-                $this->info(" - Client ini tidak memiliki Sales/User internal yang terhubung.");
-            }
-
-            if ($finalRecipients->isNotEmpty()) {
-                // Kirim Notifikasi
-                Notification::send($finalRecipients, new ClientBirthdayNotification($client));
-                $this->info(" - Notifikasi dikirim ke " . $finalRecipients->count() . " orang.");
+                $this->info(" - Client ini tidak memiliki Sales/User internal yang terhubung. Notifikasi diabaikan.");
             }
         }
         

@@ -223,6 +223,7 @@ class PengajuanDanaController extends Controller
 
             $pengajuanDana->update(['status' => $status]);
             Notification::send($nextApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
+            Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'disetujui_parsial'));
         } else {
             $pengajuanDana->update(['status' => 'selesai']);
             

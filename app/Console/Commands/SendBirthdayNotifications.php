@@ -33,20 +33,12 @@ class SendBirthdayNotifications extends Command
             return;
         }
 
-        $waGroupId = config('services.fonnte.group_id'); 
-        if (!$waGroupId) {
-            $this->error('WHATSAPP_GROUP_ID belum di-set di file .env!');
-            return;
-        } 
-
         foreach ($birthdayUsers as $birthdayPerson) {
             $this->info("Memproses ulang tahun: {$birthdayPerson->name}");
 
-            if ($waGroupId) {
-                Notification::route('whatsapp', $waGroupId)
-                    ->notify(new BirthdayNotification($birthdayPerson, true, $waGroupId));
-                $this->info(" - Pesan WhatsApp terkirim ke Grup.");
-            }
+            Notification::route('whatsapp', 'group')
+                ->notify(new BirthdayNotification($birthdayPerson, true));
+            $this->info(" - Pesan WhatsApp terkirim ke Grup.");
 
             $colleagues = User::where('id', '!=', $birthdayPerson->id)->get();
             if ($colleagues->isNotEmpty()) {

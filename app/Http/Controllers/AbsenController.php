@@ -257,6 +257,7 @@ class AbsenController extends Controller
 
         $user = Auth::user();
         if ($inputStatus === 'hadir' || $inputStatus === 'terlambat') {
+            // Mengaktifkan kembali untuk In-App Notification (WA akan di-bypass di class Notification)
             $user->notify(new AbsensiNotification($absensi, 'masuk'));
         } elseif ($inputStatus === 'izin') {
             $user->notify(new AbsensiNotification($absensi, 'izin'));
@@ -297,6 +298,7 @@ class AbsenController extends Controller
         ]);
 
         // Perbaikan: menembak dari Auth::user() agar menghindari error jika relasi terputus
+        // Mengaktifkan kembali untuk In-App Notification (WA di-bypass)
         Auth::user()->notify(new AbsensiNotification($absensi, 'keluar'));
 
         return redirect()->route('absen')->with('success', "Absensi keluar berhasil direkam pada pukul " . now()->format('H:i') . " WIB. Selamat beristirahat!");

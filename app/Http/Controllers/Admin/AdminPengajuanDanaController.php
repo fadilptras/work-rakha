@@ -291,6 +291,7 @@ class AdminPengajuanDanaController extends Controller
             $nextApprover = User::find($pengajuanDana->approver_dana_4_id);
             if ($nextApprover) {
                 Notification::send($nextApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
+                Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'disetujui_parsial'));
             }
         } else {
             $pengajuanDana->update(['status' => 'selesai']);

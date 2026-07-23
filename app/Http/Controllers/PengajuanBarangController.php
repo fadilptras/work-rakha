@@ -171,6 +171,7 @@ class PengajuanBarangController extends Controller
             // MASIH ADA APPROVER SELANJUTNYA -> Ubah status jadi diproses & kirim notif ke approver berikutnya
             $pengajuan->update(['status' => 'diproses']);
             $nextApprover->notify(new PengajuanBarangNotification($pengajuan, 'baru'));
+            $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_parsial'));
         } else {
             // TIDAK ADA LAGI YANG MENUNGGU (FINISH 100%) -> Sahkan barang menjadi selesai!
             $pengajuan->update(['status' => 'selesai']);

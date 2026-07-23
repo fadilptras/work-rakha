@@ -10,31 +10,16 @@ use App\Models\Lembur;
 use App\Notifications\Channels\WhatsAppChannel;
 use Carbon\Carbon;
 
-/**
- * Notifikasi Absensi & Lembur
- * 
- * Sifat: Broadcast (Pengumuman ke Grup Perusahaan).
- * Menggunakan proteksi Target Group agar pesan tidak nyasar ke chat personal.
- */
 class AbsensiNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * @var object $data Model Absensi atau Lembur
-     */
     public object $data; 
-
-    /**
-     * @var string $tipe Jenis aksi absensi
-     */
     public string $tipe; 
 
     /**
-     * Konstruktor Notifikasi Absensi
-     *
-     * @param object $data
-     * @param string $tipe (contoh: 'masuk', 'keluar', 'izin', dll)
+     * @param object $data Data Absensi / Lembur
+     * @param string $tipe ('masuk', 'keluar', 'izin', 'sakit', dll)
      */
     public function __construct(object $data, string $tipe)
     {
@@ -42,65 +27,45 @@ class AbsensiNotification extends Notification implements ShouldQueue
         $this->tipe = $tipe;
     }
 
-    /**
-     * Menentukan channel pengiriman
-     */
     public function via(object $notifiable): array
     {
         return ['database', WhatsAppChannel::class];
     }
 
-    /**
-     * Format pengiriman via WhatsApp.
-     */
     public function toWhatsApp(object $notifiable): array
     {
+        // Masuk/Keluar dihandle oleh rekap harian, tidak dikirim langsung.
+        if (in_array($this->tipe, ['masuk', 'keluar'])) {
+            return [];
+        }
+
         $nama = $notifiable->name;
         $waktu = now()->translatedFormat('d F Y H:i');
-        
-        // Ambil keterangan jika tersedia (khusus izin/sakit)
         $keterangan = !empty($this->data->keterangan) ? $this->data->keterangan : '-';
         
         switch ($this->tipe) {
-            case 'masuk':
-                $pesan = "📢 *INFO ABSENSI*\n\n✅ Karyawan a.n. *{$nama}* telah melakukan *Absen Masuk* pada {$waktu}.\n\nSelamat bekerja dan semangat! 💪";
-                break;
-            case 'keluar':
-                $pesan = "📢 *INFO ABSENSI*\n\n🚪 Karyawan a.n. *{$nama}* telah melakukan *Absen Keluar* pada {$waktu}.\n\nTerima kasih atas kerja kerasnya hari ini!";
-                break;
             case 'lembur_masuk':
-                $pesan = "📢 *INFO LEMBUR*\n\n💼 Karyawan a.n. *{$nama}* telah memulai *Lembur* pada {$waktu}.";
+                $pesan = "[INFO LEMBUR]\n\nKaryawan a.n. *{$nama}* telah memulai *Lembur* pada {$waktu}.";
                 break;
             case 'lembur_keluar':
-                $pesan = "📢 *INFO LEMBUR*\n\n🏠 Karyawan a.n. *{$nama}* telah menyelesaikan *Lembur* pada {$waktu}.";
+                $pesan = "[INFO LEMBUR]\n\nKaryawan a.n. *{$nama}* telah menyelesaikan *Lembur* pada {$waktu}.";
                 break;
             case 'izin':
-                $pesan = "📢 *INFO ABSENSI*\n\nℹ️ Karyawan a.n. *{$nama}* mengajukan *Izin* pada {$waktu}.\n\n📝 *Keterangan:* {$keterangan}";
+                $pesan = "[INFO ABSENSI - IZIN]\n\nKaryawan a.n. *{$nama}* memberitahukan status *Izin* pada {$waktu}.\n\nKeterangan: {$keterangan}";
                 break;
             case 'sakit':
-                $pesan = "📢 *INFO ABSENSI*\n\n⚕️ Karyawan a.n. *{$nama}* mengajukan *Sakit* pada {$waktu}.\n\n📝 *Keterangan:* {$keterangan}\n\nSemoga lekas sembuh!";
+                $pesan = "[INFO ABSENSI - SAKIT]\n\nKaryawan a.n. *{$nama}* memberitahukan *Sakit* pada {$waktu}.\n\nKeterangan: {$keterangan}\nSemoga lekas sembuh.";
                 break;
             default:
-                $pesan = "📢 *INFO ABSENSI*\n\nAbsensi a.n. *{$nama}* berhasil dicatat pada {$waktu}.";
-        }
-
-        $targetGroupId = config('services.fonnte.group_id');
-        
-        // PROTEKSI: Jika Group ID di .env kosong, sistem akan membatalkan pengiriman pesan ini.
-        // Mencegah pengumuman absensi nyasar ke nomor pribadi karyawan.
-        if (empty($targetGroupId)) {
-            return [];
+                $pesan = "[INFO ABSENSI]\n\nAbsensi a.n. *{$nama}* berhasil dicatat pada {$waktu}.";
         }
 
         return [
             'message' => $pesan,
-            'target'  => $targetGroupId,
+            'target'  => 'group',
         ];
     }
 
-    /**
-     * Menyimpan data notifikasi ke dalam tabel 'notifications' (Database)
-     */
     public function toArray(object $notifiable): array
     {
         $pesanPendek = '';

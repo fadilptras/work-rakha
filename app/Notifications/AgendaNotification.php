@@ -62,31 +62,9 @@ class AgendaNotification extends Notification implements ShouldQueue
      */
     public function toWhatsApp(object $notifiable): array
     {
-        $judul = $this->agenda->title;
-        $waktu = Carbon::parse($this->agenda->start_time)->translatedFormat('l, d F Y H:i');
-        $lokasi = $this->agenda->location ?? 'Online/Tidak ditentukan';
-        $pembuat = $this->creatorName;
-        $link = route('dashboard'); 
-
-        switch ($this->type) {
-            case 'undangan_baru':
-                $header = "📅 *UNDANGAN AGENDA BARU*";
-                $pesan = "Halo {$notifiable->name},\nAnda diundang oleh *{$pembuat}* untuk menghadiri:\n\n📌 *{$judul}*\n🕒 {$waktu}\n📍 {$lokasi}\n\nMohon kehadirannya.";
-                break;
-            case 'agenda_diperbarui':
-                $header = "✏️ *UPDATE AGENDA*";
-                $pesan = "Halo {$notifiable->name},\nAgenda *{$judul}* telah diperbarui oleh {$pembuat}.\n\nWaktu Baru: {$waktu}\nLokasi: {$lokasi}\n\nSilakan cek detail terbaru.";
-                break;
-            case 'agenda_dibatalkan':
-                $header = "❌ *AGENDA DIBATALKAN*";
-                $pesan = "Halo {$notifiable->name},\nAgenda *{$judul}* yang dijadwalkan pada {$waktu} telah *DIBATALKAN* oleh {$pembuat}.";
-                break;
-            default:
-                $header = "INFO AGENDA";
-                $pesan = "Info mengenai agenda {$judul}.";
-        }
-
-        return ['message' => "{$header}\n\n{$pesan}\n\n🔗 Cek Dashboard: {$link}"];
+        // Bypass pengiriman pesan otomatis (real-time) via WA untuk mengurangi spam.
+        // Pengiriman informasi agenda akan direkap dan dikirim H-1 (malam hari) via Command SendAgendaReminderCommand.
+        return [];
     }
 
     /**

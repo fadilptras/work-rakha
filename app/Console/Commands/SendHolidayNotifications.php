@@ -38,14 +38,8 @@ class SendHolidayNotifications extends Command
 
         $this->info("Hari ini libur: {$holiday->keterangan}");
 
-        $waGroupId = config('services.fonnte.group_id'); 
-        if (!$waGroupId) {
-            $this->error('WHATSAPP_GROUP_ID belum di-set di file .env!');
-            return;
-        }
-
-        Notification::route('whatsapp', $waGroupId)
-            ->notify(new HolidayNotification($holiday, true, $waGroupId));
+        Notification::route('whatsapp', 'group')
+            ->notify(new HolidayNotification($holiday, true));
         $this->info(" - Pesan WhatsApp terkirim ke Grup.");
 
         $users = User::all();

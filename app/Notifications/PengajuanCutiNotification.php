@@ -9,41 +9,19 @@ use App\Models\Cuti;
 use App\Notifications\Channels\WhatsAppChannel;
 use Carbon\Carbon;
 
-/**
- * Notifikasi Pengajuan Cuti
- * 
- * Sifat: Transaksional (Japri / Direct Message).
- * Pesan akan dikirim secara spesifik kepada pemohon atau approver.
- */
 class PengajuanCutiNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * @var \App\Models\Cuti $cuti Data pengajuan cuti
-     */
     public Cuti $cuti;
-
-    /**
-     * @var string $tipe Tipe notifikasi ('baru', 'disetujui', 'ditolak', 'dibatalkan')
-     */
     public string $tipe;
 
-    /**
-     * Konstruktor Notifikasi Cuti
-     *
-     * @param \App\Models\Cuti $cuti
-     * @param string $tipe
-     */
     public function __construct(Cuti $cuti, string $tipe = 'baru')
     {
         $this->cuti = $cuti;
         $this->tipe = $tipe;
     }
 
-    /**
-     * Menentukan channel pengiriman
-     */
     public function via(object $notifiable): array
     {
         return [
@@ -52,10 +30,6 @@ class PengajuanCutiNotification extends Notification implements ShouldQueue
         ];
     }
 
-    /**
-     * Format notifikasi untuk pengiriman via WhatsApp.
-     * Karena tidak mendefinisikan 'target', pesan otomatis dikirim secara personal.
-     */
     public function toWhatsApp(object $notifiable): array
     {
         $pemohon = $this->cuti->user->name ?? 'Karyawan';
@@ -65,22 +39,24 @@ class PengajuanCutiNotification extends Notification implements ShouldQueue
             : route('cuti.show', $this->cuti->id);
 
         switch ($this->tipe) {
+            case 'disetujui_parsial':
+                return []; // In-app notification only
             case 'disetujui':
-                $header = "✅ *CUTI DISETUJUI*";
+            case 'disetujui_final':
+                $header = "Cuti Disetujui Sepenuhnya! ✅";
                 $pesan = "Halo {$notifiable->name}, pengajuan cuti Anda untuk tanggal *{$tanggal}* telah DISETUJUI sepenuhnya oleh semua pihak.";
                 break;
             case 'ditolak':
-                $header = "❌ *CUTI DITOLAK*";
+                $header = "Cuti Ditolak ❌";
                 $pesan = "Halo {$notifiable->name}, pengajuan cuti Anda untuk tanggal *{$tanggal}* DITOLAK.";
                 break;
             case 'dibatalkan':
-                $header = "⚠️ *CUTI DIBATALKAN*";
+                $header = "Cuti Dibatalkan ⚠️";
                 $pesan = "Halo {$notifiable->name}, pengajuan cuti atas nama *{$pemohon}* telah dibatalkan.";
                 break;
             case 'baru':
             default:
-                // Biasanya dikirim ke Approver (HRD, Atasan) untuk direview
-                $header = "🆕 *PENGAJUAN CUTI*";
+                $header = "Pengajuan Cuti Baru! 🆕";
                 $pesan = "Halo {$notifiable->name}, ada pengajuan cuti yang memerlukan persetujuan Anda.\n\n*Pemohon:* {$pemohon}\n*Tanggal:* {$tanggal}\n\nMohon segera diperiksa melalui sistem.";
                 break;
         }
@@ -90,16 +66,25 @@ class PengajuanCutiNotification extends Notification implements ShouldQueue
         ];
     }
 
-    /**
-     * Menyimpan data notifikasi ke dalam tabel 'notifications' (Database)
-     */
     public function toArray(object $notifiable): array
     {
         $pemohon = $this->cuti->user->name ?? 'Karyawan';
         $tanggal = Carbon::parse($this->cuti->tanggal_mulai)->translatedFormat('d F Y');
 
         switch ($this->tipe) {
+            case 'disetujui_parsial':
+                return [
+                    'id' => $this->cuti->id,
+                    'title' => 'Cuti Diproses',
+                    'message' => "Pengajuan cuti Anda diteruskan ke approver berikutnya.",
+                    'icon' => 'fas fa-check-double',
+                    'color' => 'text-green-500',
+                    'url' => $notifiable->role === 'admin' 
+                        ? route('admin.cuti.show', $this->cuti->id) 
+                        : route('cuti.show', $this->cuti->id),
+                ];
             case 'disetujui':
+            case 'disetujui_final':
                 return [
                     'id' => $this->cuti->id,
                     'title' => 'Cuti Disetujui',
