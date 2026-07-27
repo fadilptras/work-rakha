@@ -127,22 +127,26 @@
             </tr>
         </table>
 
-        {{-- III. PERSETUJUAN (4 KOLOM) --}}
+        {{-- III. PERSETUJUAN (Dinamis 3 atau 4 Kolom) --}}
+        @php
+            $hasApprover4 = !empty($cuti->approver_cuti_4_id);
+            $colWidth = $hasApprover4 ? '25%' : '33.33%';
+        @endphp
         <div class="section-title">III. LEMBAR PERSETUJUAN</div>
         <table class="signatures">
             <tr>
                 {{-- KOLOM 1: APPROVER 1 --}}
-                <td>
+                <td style="width: {{ $colWidth }};">
                     <div class="ttd-header">Tahap 1,</div>
                     @if($cuti->status_approver_1 == 'disetujui')
                         <div class="st-approved">[ DISETUJUI ]</div>
                         <div class="ttd-nama">{{ $cuti->approver1->name ?? 'Tahap 1' }}</div>
                         <div class="ttd-jabatan">{{ $cuti->approver1->jabatan ?? 'Atasan' }}</div>
-                        <div class="ttd-tanggal">{{ $cuti->tanggal_approved_1 ? \Carbon\Carbon::parse($cuti->tanggal_approved_1)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
+                        <div class="ttd-tanggal">{{ $cuti->tanggal_approve_1 ? \Carbon\Carbon::parse($cuti->tanggal_approve_1)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
                     @elseif($cuti->status_approver_1 == 'ditolak')
                         <div class="st-rejected">[ DITOLAK ]</div>
                         <div class="ttd-nama">{{ $cuti->approver1->name ?? 'Tahap 1' }}</div>
-                        <div class="ttd-tanggal">{{ $cuti->tanggal_approved_1 ? \Carbon\Carbon::parse($cuti->tanggal_approved_1)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
+                        <div class="ttd-tanggal">{{ $cuti->tanggal_approve_1 ? \Carbon\Carbon::parse($cuti->tanggal_approve_1)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
                     @elseif($cuti->status_approver_1 == 'skipped')
                         <div class="st-placeholder">( Dilewati )</div>
                     @else
@@ -151,17 +155,17 @@
                 </td>
 
                 {{-- KOLOM 2: APPROVER 2 --}}
-                <td>
+                <td style="width: {{ $colWidth }};">
                     <div class="ttd-header">Tahap 2,</div>
                     @if($cuti->status_approver_2 == 'disetujui')
                         <div class="st-approved">[ DISETUJUI ]</div>
                         <div class="ttd-nama">{{ $cuti->approver2->name ?? 'Tahap 2' }}</div>
                         <div class="ttd-jabatan">{{ $cuti->approver2->jabatan ?? 'Manajer' }}</div>
-                        <div class="ttd-tanggal">{{ $cuti->tanggal_approved_2 ? \Carbon\Carbon::parse($cuti->tanggal_approved_2)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
+                        <div class="ttd-tanggal">{{ $cuti->tanggal_approve_2 ? \Carbon\Carbon::parse($cuti->tanggal_approve_2)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
                     @elseif($cuti->status_approver_2 == 'ditolak')
                         <div class="st-rejected">[ DITOLAK ]</div>
                         <div class="ttd-nama">{{ $cuti->approver2->name ?? 'Tahap 2' }}</div>
-                        <div class="ttd-tanggal">{{ $cuti->tanggal_approved_2 ? \Carbon\Carbon::parse($cuti->tanggal_approved_2)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
+                        <div class="ttd-tanggal">{{ $cuti->tanggal_approve_2 ? \Carbon\Carbon::parse($cuti->tanggal_approve_2)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
                     @elseif($cuti->status_approver_2 == 'skipped')
                         <div class="st-placeholder">( Dilewati )</div>
                     @else
@@ -170,17 +174,17 @@
                 </td>
 
                 {{-- KOLOM 3: APPROVER 3 --}}
-                <td>
+                <td style="width: {{ $colWidth }};">
                     <div class="ttd-header">Tahap 3,</div>
                     @if($cuti->status_approver_3 == 'disetujui')
                         <div class="st-approved">[ DISETUJUI ]</div>
                         <div class="ttd-nama">{{ $cuti->approver3->name ?? 'Tahap 3' }}</div>
                         <div class="ttd-jabatan">{{ $cuti->approver3->jabatan ?? 'HRD / Keuangan' }}</div>
-                        <div class="ttd-tanggal">{{ $cuti->tanggal_approved_3 ? \Carbon\Carbon::parse($cuti->tanggal_approved_3)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
+                        <div class="ttd-tanggal">{{ $cuti->tanggal_approve_3 ? \Carbon\Carbon::parse($cuti->tanggal_approve_3)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
                     @elseif($cuti->status_approver_3 == 'ditolak')
                         <div class="st-rejected">[ DITOLAK ]</div>
                         <div class="ttd-nama">{{ $cuti->approver3->name ?? 'Tahap 3' }}</div>
-                        <div class="ttd-tanggal">{{ $cuti->tanggal_approved_3 ? \Carbon\Carbon::parse($cuti->tanggal_approved_3)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
+                        <div class="ttd-tanggal">{{ $cuti->tanggal_approve_3 ? \Carbon\Carbon::parse($cuti->tanggal_approve_3)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
                     @elseif($cuti->status_approver_3 == 'skipped')
                         <div class="st-placeholder">( Dilewati )</div>
                     @else
@@ -189,23 +193,25 @@
                 </td>
 
                 {{-- KOLOM 4: APPROVER 4 (ADMIN FINAL) --}}
-                <td>
+                @if($hasApprover4)
+                <td style="width: {{ $colWidth }};">
                     <div class="ttd-header">Tahap Final,</div>
                     @if($cuti->status_approver_4 == 'disetujui')
                         <div class="st-approved">[ DISETUJUI ]</div>
                         <div class="ttd-nama">{{ $cuti->approver4->name ?? 'Admin / Direktur' }}</div>
                         <div class="ttd-jabatan">{{ $cuti->approver4->jabatan ?? 'Admin / Direktur' }}</div>
-                        <div class="ttd-tanggal">{{ $cuti->tanggal_approved_4 ? \Carbon\Carbon::parse($cuti->tanggal_approved_4)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
+                        <div class="ttd-tanggal">{{ $cuti->tanggal_approve_4 ? \Carbon\Carbon::parse($cuti->tanggal_approve_4)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
                     @elseif($cuti->status_approver_4 == 'ditolak')
                         <div class="st-rejected">[ DITOLAK ]</div>
                         <div class="ttd-nama">{{ $cuti->approver4->name ?? 'Admin / Direktur' }}</div>
-                        <div class="ttd-tanggal">{{ $cuti->tanggal_approved_4 ? \Carbon\Carbon::parse($cuti->tanggal_approved_4)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
+                        <div class="ttd-tanggal">{{ $cuti->tanggal_approve_4 ? \Carbon\Carbon::parse($cuti->tanggal_approve_4)->translatedFormat('d/m/Y H:i') : '' }} WIB</div>
                     @elseif($cuti->status_approver_4 == 'skipped')
                         <div class="st-placeholder">( Dilewati )</div>
                     @else
                         <div class="st-placeholder">( Menunggu Persetujuan )</div>
                     @endif
                 </td>
+                @endif
             </tr>
         </table>
 

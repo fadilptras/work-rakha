@@ -197,11 +197,15 @@
         </table>
 
         {{-- IV. PERSETUJUAN (LAYOUT MIRIP PENGAJUAN BARANG) --}}
+        @php
+            $hasApprover4 = !empty($pengajuanDana->approver_dana_4_id);
+            $colWidth = $hasApprover4 ? '25%' : '33.33%';
+        @endphp
         <div class="section-title">IV. LEMBAR PERSETUJUAN</div>
         <table class="signatures">
             <tr>
                 {{-- KOLOM 1: APPROVER 1 --}}
-                <td>
+                <td style="width: {{ $colWidth }};">
                     <div class="ttd-header">Disetujui oleh (Approver 1),</div>
                     
                     @if($pengajuanDana->approver_1_status == 'disetujui')
@@ -226,7 +230,7 @@
                 </td>
 
                 {{-- KOLOM 2: APPROVER 2 --}}
-                <td>
+                <td style="width: {{ $colWidth }};">
                     <div class="ttd-header">Disetujui oleh (Approver 2),</div>
 
                     @if($pengajuanDana->approver_2_status == 'disetujui')
@@ -249,7 +253,7 @@
                 </td>
 
                 {{-- KOLOM 3: FINANCE --}}
-                <td>
+                <td style="width: {{ $colWidth }};">
                     <div class="ttd-header">Diproses oleh (Finance),</div>
 
                     @if($pengajuanDana->approver_3_status == 'disetujui')
@@ -274,11 +278,39 @@
                         </div>
                     @endif
                 </td>
+
+                {{-- KOLOM 4: APPROVER 4 (DIREKTUR / FINAL) --}}
+                @if($hasApprover4)
+                <td style="width: {{ $colWidth }};">
+                    <div class="ttd-header">Disetujui oleh (Approver 4 - Final),</div>
+
+                    @if($pengajuanDana->approver_4_status == 'disetujui')
+                        <div class="st-approved">[ DISETUJUI ]</div>
+                        <div class="ttd-nama">{{ $pengajuanDana->approverDana4->name ?? 'Direktur' }}</div>
+                        <div class="ttd-jabatan">{{ $pengajuanDana->approverDana4->jabatan ?? 'Direktur' }}</div>
+                        <div class="ttd-tanggal">{{ $pengajuanDana->approver_4_approved_at?->translatedFormat('l, d F Y H:i') }} WIB</div>
+
+                    @elseif($pengajuanDana->approver_4_status == 'ditolak')
+                        <div class="st-rejected">[ DITOLAK ]</div>
+                        <div class="ttd-nama">{{ $pengajuanDana->approverDana4->name ?? 'Direktur' }}</div>
+                        <div class="ttd-tanggal">{{ $pengajuanDana->approver_4_approved_at?->translatedFormat('l, d F Y H:i') }} WIB</div>
+
+                    @elseif($pengajuanDana->approver_4_status == 'skipped')
+                        <div class="st-placeholder">(Dilewati)</div>
+
+                    @else
+                        <div class="st-placeholder">( Menunggu Persetujuan )</div>
+                        <div class="ttd-nama" style="text-decoration: none; color: #999; font-weight: normal;">
+                            {{ $pengajuanDana->approverDana4->name ?? 'Direktur' }}
+                        </div>
+                    @endif
+                </td>
+                @endif
             </tr>
         </table>
 
         {{-- V. CATATAN --}}
-        @if($pengajuanDana->approver_1_catatan || $pengajuanDana->approver_2_catatan || $pengajuanDana->approver_3_catatan)
+        @if($pengajuanDana->approver_1_catatan || $pengajuanDana->approver_2_catatan || $pengajuanDana->approver_3_catatan || $pengajuanDana->approver_4_catatan)
             <div class="section-title">V. CATATAN TAMBAHAN</div>
             <table class="data-table">
                 @if($pengajuanDana->approver_1_catatan)
@@ -289,6 +321,9 @@
                 @endif
                 @if($pengajuanDana->approver_3_catatan)
                     <tr><td>Catatan Finance</td><td><div class="catatan">{{ $pengajuanDana->approver_3_catatan }}</div></td></tr>
+                @endif
+                @if($pengajuanDana->approver_4_catatan)
+                    <tr><td>Catatan Approver 4</td><td><div class="catatan">{{ $pengajuanDana->approver_4_catatan }}</div></td></tr>
                 @endif
             </table>
         @endif

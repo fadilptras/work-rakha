@@ -43,13 +43,11 @@ class SendAbsensiSummaryCommand extends Command
 
         $title = "";
         if ($type === 'morning') {
-            $title = "[REKAP ABSENSI PAGI - 08:10]\nTanggal: " . $dateText . "\n\n";
-        } elseif ($type === 'midday') {
-            $title = "[REKAP ABSENSI SIANG - 12:00]\nTanggal: " . $dateText . "\n\n";
+            $title = "[REKAP ABSENSI PAGI - 08:30]\nTanggal: " . $dateText . "\n\n";
         } elseif ($type === 'evening') {
             $title = "[REKAP ABSENSI PULANG - 17:30]\nTanggal: " . $dateText . "\n\n";
         } else {
-            $this->error("Tipe tidak valid. Gunakan: morning, midday, evening");
+            $this->error("Tipe tidak valid. Gunakan: morning, evening");
             return;
         }
         
@@ -71,7 +69,7 @@ class SendAbsensiSummaryCommand extends Command
             foreach ($items as $absen) {
                 $nama = $absen->user->name ?? 'Unknown';
                 
-                if ($type === 'morning' || $type === 'midday') {
+                if ($type === 'morning') {
                     if (!$absen->jam_masuk) continue;
                     
                     $jamMasuk = $absen->jam_masuk;
@@ -80,16 +78,7 @@ class SendAbsensiSummaryCommand extends Command
                     
                     $keteranganTelat = "";
                     if ($waktuMasuk->greaterThan($standarMasuk)) {
-                        $diffInMinutes = $waktuMasuk->diffInMinutes($standarMasuk);
-                        $jam = floor($diffInMinutes / 60);
-                        $menit = $diffInMinutes % 60;
-                        
-                        $telatText = "";
-                        if ($jam > 0) $telatText .= "{$jam} Jam ";
-                        if ($menit > 0) $telatText .= "{$menit} Menit";
-                        if ($telatText === "") $telatText = "Kurang dari 1 Menit";
-                        
-                        $keteranganTelat = " (Telat " . trim($telatText) . ")";
+                        $keteranganTelat = " (Telat)";
                     }
                     
                     // Potong detik pada jam_masuk agar lebih rapi (dari 08:00:00 menjadi 08:00)

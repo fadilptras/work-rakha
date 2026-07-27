@@ -96,10 +96,10 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     @foreach([
-                        1 => ['nama' => 'Tahap 1', 'user' => $cuti->approver1, 'status' => $cuti->status_approver_1, 'catatan' => $cuti->catatan_approver_1, 'tgl' => $cuti->tanggal_approved_1 ?? null],
-                        2 => ['nama' => 'Tahap 2', 'user' => $cuti->approver2, 'status' => $cuti->status_approver_2, 'catatan' => $cuti->catatan_approver_2, 'tgl' => $cuti->tanggal_approved_2 ?? null],
-                        3 => ['nama' => 'Tahap 3', 'user' => $cuti->approver3, 'status' => $cuti->status_approver_3, 'catatan' => $cuti->catatan_approver_3, 'tgl' => $cuti->tanggal_approved_3 ?? null],
-                        4 => ['nama' => 'Tahap 4 (Admin)', 'user' => $cuti->approver4, 'status' => $cuti->status_approver_4, 'catatan' => $cuti->catatan_approver_4, 'tgl' => $cuti->tanggal_approved_4 ?? null],
+                        1 => ['nama' => 'Tahap 1', 'user' => $cuti->approver1, 'status' => $cuti->status_approver_1, 'catatan' => $cuti->catatan_approver_1, 'tgl' => $cuti->tanggal_approve_1 ?? null],
+                        2 => ['nama' => 'Tahap 2', 'user' => $cuti->approver2, 'status' => $cuti->status_approver_2, 'catatan' => $cuti->catatan_approver_2, 'tgl' => $cuti->tanggal_approve_2 ?? null],
+                        3 => ['nama' => 'Tahap 3', 'user' => $cuti->approver3, 'status' => $cuti->status_approver_3, 'catatan' => $cuti->catatan_approver_3, 'tgl' => $cuti->tanggal_approve_3 ?? null],
+                        4 => ['nama' => 'Tahap 4 (Admin)', 'user' => $cuti->approver4, 'status' => $cuti->status_approver_4, 'catatan' => $cuti->catatan_approver_4, 'tgl' => $cuti->tanggal_approve_4 ?? null],
                     ] as $stage => $data)
                         @php
                             $borderAppr = match($data['status']) {
@@ -187,6 +187,21 @@
                 </div>
             @endif
 
+            {{-- [BARU] BUTTON TRIGGER MODAL AMBIL ALIH (Hanya muncul jika belum final & sudah disetujui approver 1) --}}
+            @if (!in_array($cuti->status, ['disetujui', 'ditolak', 'dibatalkan']) && $cuti->status_approver_1 !== 'menunggu')
+            <div class="mt-6 bg-zinc-900/50 p-4 rounded-xl border border-zinc-700">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <div>
+                        <h4 class="text-sm font-bold text-white"><i class="fas fa-user-shield text-amber-500 mr-1.5"></i> Ambil Alih Persetujuan Cuti</h4>
+                        <p class="text-xs text-zinc-400 mt-1">Gunakan fitur ini untuk langsung menyetujui pengajuan cuti ini (Admin Override).</p>
+                    </div>
+                    <button onclick="openModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-md transition flex items-center gap-2 text-sm whitespace-nowrap active:scale-95">
+                        <i class="fas fa-user-shield"></i> Ambil Alih & Setujui
+                    </button>
+                </div>
+            </div>
+            @endif
+
             {{-- 6. FOOTER ACTION --}}
             <div class="mt-8 pt-6 border-t border-zinc-700 flex justify-end gap-3">
                 <a href="{{ route('admin.cuti.download', $cuti->id) }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-lg transition text-sm">
@@ -196,4 +211,62 @@
 
         </div>
     </div>
+
+    {{-- [BARU] MODAL ADMIN OVERRIDE --}}
+    @if (!in_array($cuti->status, ['disetujui', 'ditolak', 'dibatalkan']) && $cuti->status_approver_1 !== 'menunggu')
+    <div id="adminOverrideModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="relative inline-block align-bottom bg-zinc-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-zinc-700">
+                <div class="bg-zinc-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-amber-500/10 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-user-shield text-amber-500"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-white" id="modal-title">
+                                Konfirmasi Penyelesaian Manual (Cuti)
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-zinc-400 mb-4">
+                                    Anda akan mengambil alih persetujuan cuti ini. Semua sisa persetujuan akan dilewati dan status pengajuan akan langsung berubah menjadi <b>DISETUJUI</b>. Jatah cuti karyawan juga akan langsung dipotong.
+                                </p>
+
+                                <form id="formOverride" action="{{ route('admin.cuti.forceApprove', $cuti->id) }}" method="POST" class="space-y-4">
+                                    @csrf
+                                    
+                                    {{-- Input Catatan --}}
+                                    <div>
+                                        <label class="block text-sm font-medium text-zinc-300 mb-1">Catatan Persetujuan (Opsional)</label>
+                                        <textarea name="catatan_admin" rows="2" placeholder="Catatan" 
+                                            class="w-full bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-white px-3 py-2 focus:ring-amber-500 focus:border-amber-500"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-zinc-900/60 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+                    <button type="submit" form="formOverride" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        Ya, Ambil Alih
+                    </button>
+                    <button type="button" onclick="closeModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-zinc-600 shadow-sm px-4 py-2 bg-zinc-700 text-base font-medium text-zinc-200 hover:bg-zinc-600 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('adminOverrideModal').classList.remove('hidden');
+        }
+        function closeModal() {
+            document.getElementById('adminOverrideModal').classList.add('hidden');
+        }
+    </script>
+    @endif
 </x-layout-admin>

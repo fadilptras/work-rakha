@@ -84,7 +84,7 @@ class PengajuanDanaController extends Controller
             'nama_rek' => 'required|string|max:255',
             'jumlah_dana_total' => 'required|numeric|min:1',
             'rincian_deskripsi.*' => 'required|string|max:1000',
-            'rincian_jumlah.*' => 'required|numeric|min:1',
+            'rincian_jumlah.*' => 'required|numeric|min:0',
             'file_pendukung.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:5120',
         ]);
 

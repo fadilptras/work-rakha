@@ -35,11 +35,7 @@ Schedule::command('pengajuan:cleanup-stale')
         ->timezone('Asia/Jakarta');
 
 Schedule::command('app:send-absensi-summary morning')
-        ->dailyAt('08:10')
-        ->timezone('Asia/Jakarta');
-
-Schedule::command('app:send-absensi-summary midday')
-        ->dailyAt('12:00')
+        ->dailyAt('08:30')
         ->timezone('Asia/Jakarta');
 
 Schedule::command('app:send-absensi-summary evening')

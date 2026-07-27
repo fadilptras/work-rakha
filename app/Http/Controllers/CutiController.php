@@ -152,6 +152,7 @@ class CutiController extends Controller
                 $cuti->update([
                     "status_approver_{$currentStage}" => 'ditolak',
                     "catatan_approver_{$currentStage}" => $request->catatan,
+                    "tanggal_approve_{$currentStage}" => Carbon::now(),
                     'status' => 'ditolak'
                 ]);
                 Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'ditolak'));
@@ -161,6 +162,7 @@ class CutiController extends Controller
             $cuti->update([
                 "status_approver_{$currentStage}" => 'disetujui',
                 "catatan_approver_{$currentStage}" => $request->catatan,
+                "tanggal_approve_{$currentStage}" => Carbon::now(),
             ]);
 
             // Logika next approver diubah menjadi berjenjang (<) agar tidak bypass jika ada yang skipped

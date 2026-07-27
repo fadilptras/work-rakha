@@ -13,18 +13,17 @@ class AktivitasController extends Controller
 {
     /**
      * Menampilkan halaman utama Aktivitas.
-     * LOGIKA DIPERBARUI: Mengirim daftar tim untuk dipantau.
      */
     public function index()
     {
         $user = Auth::user(); //
         $tanggal = now()->toDateString(); //
 
-        // 1. Ambil Aktivitas Pribadi (Seperti sebelumnya)
+        // 1. Ambil Aktivitas Pribadi
         $aktivitasDataPribadi = Aktivitas::where('user_id', $user->id)
-                        ->whereDate('created_at', $tanggal) //
-                        ->orderBy('created_at', 'asc') //
-                        ->get(); //
+                        ->orderBy('created_at', 'desc')
+                        ->take(50)
+                        ->get();
 
         $aktivitasHariIni = $aktivitasDataPribadi->map(function ($item) {
             $photo_url = $item->lampiran ? asset('storage/' . $item->lampiran) : null;
@@ -40,11 +39,16 @@ class AktivitasController extends Controller
         $timYangDipantau = collect();
         $targetUserIds = [];
 
-        $isDirektur = $user->jabatan === 'Direktur';
-        $isMarketingOpsHead = $user->is_kepala_divisi == 1 && in_array($user->divisi, ['Marketing dan Operasional']);
-
-        if ($isDirektur || $isMarketingOpsHead) {
+        $isDirektur = Str::contains(strtolower($user->jabatan ?? ''), 'direktur');
+        $isKepalaDivisi = ($user->is_kepala_divisi == 1) || Str::contains(strtolower($user->jabatan ?? ''), 'kepala');
+ 
+        if ($isDirektur) {
             $targetUserIds = User::where('id', '!=', $user->id)
+                                 ->where('role', 'user') 
+                                 ->pluck('id');
+        } elseif ($isKepalaDivisi && $user->divisi) {
+            $targetUserIds = User::where('id', '!=', $user->id)
+                                 ->where('divisi', $user->divisi)
                                  ->where('role', 'user') 
                                  ->pluck('id');
         }
@@ -55,8 +59,8 @@ class AktivitasController extends Controller
         if (!empty($targetUserIds) && count($targetUserIds) > 0) {
             $aktivitasTim = Aktivitas::with('user:id,name,jabatan,profile_picture,divisi')
                                 ->whereIn('user_id', $targetUserIds)
-                                ->whereDate('created_at', $tanggal)
                                 ->orderBy('created_at', 'desc')
+                                ->take(50)
                                 ->get()
                                 ->map(function ($item) {
                                     $photo_url = $item->lampiran ? asset('storage/' . $item->lampiran) : null;
@@ -83,7 +87,9 @@ class AktivitasController extends Controller
             'title' => 'Catat Aktivitas', //
             'user' => $user,
             'aktivitasHariIni' => $aktivitasHariIni, //
-            'aktivitasTim' => $aktivitasTim // Data aktivitas rekan kerja
+            'aktivitasTim' => $aktivitasTim, // Data aktivitas rekan kerja
+            'isDirektur' => $isDirektur,
+            'isKepalaDivisi' => $isKepalaDivisi
         ]);
     }
 
@@ -135,12 +141,17 @@ class AktivitasController extends Controller
             
             $allowedUserIds = [];
 
-            $isDirektur = $user->jabatan === 'Direktur';
-            $isMarketingOpsHead = $user->is_kepala_divisi == 1 && in_array($user->divisi, ['Marketing', 'Operasional']);
-
-            // LOGIK 1: Jika User adalah Direktur atau Kepala Divisi Marketing/Operasional
-            if ($isDirektur || $isMarketingOpsHead) {
+            $isDirektur = Str::contains(strtolower($user->jabatan ?? ''), 'direktur');
+            $isKepalaDivisi = ($user->is_kepala_divisi == 1) || Str::contains(strtolower($user->jabatan ?? ''), 'kepala');
+ 
+            if ($isDirektur) {
                 $allowedUserIds = User::where('id', '!=', $user->id)
+                              ->where('role', 'user')
+                              ->pluck('id')
+                              ->toArray();
+            } elseif ($isKepalaDivisi && $user->divisi) {
+                $allowedUserIds = User::where('id', '!=', $user->id)
+                              ->where('divisi', $user->divisi)
                               ->where('role', 'user')
                               ->pluck('id')
                               ->toArray();

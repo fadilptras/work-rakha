@@ -491,9 +491,9 @@
                                 <button type="button" id="tab-riwayat-btn" class="tab-btn active">
                                     Riwayat Saya ({{ isset($aktivitasHariIni) ? $aktivitasHariIni->count() : 0 }})
                                 </button>
-                                @if(isset($aktivitasTim) && $aktivitasTim->count() > 0)
+                                @if($isDirektur || $isKepalaDivisi)
                                 <button type="button" id="tab-rekan-btn" class="tab-btn">
-                                    Rekan Kerja ({{ $aktivitasTim->count() }})
+                                    Rekan Kerja ({{ isset($aktivitasTim) ? $aktivitasTim->count() : 0 }})
                                 </button>
                                 @endif
                             </div>
@@ -525,7 +525,7 @@
                                 @empty
                                     <div class="empty-log-state">
                                         <i class="fas fa-tasks text-3xl text-slate-300 mb-2 block"></i>
-                                        <p class="text-slate-500 text-xs font-semibold">Belum ada aktivitas hari ini.</p>
+                                        <p class="text-slate-500 text-xs font-semibold">Belum ada aktivitas.</p>
                                     </div>
                                 @endforelse
                             </div>
@@ -566,7 +566,7 @@
                                 @else
                                     <div class="empty-log-state">
                                         <i class="fas fa-history text-3xl text-slate-300 mb-2 block"></i>
-                                        <p class="text-slate-500 text-xs font-semibold">Belum ada aktivitas tim hari ini.</p>
+                                        <p class="text-slate-500 text-xs font-semibold">Belum ada aktivitas tim.</p>
                                     </div>
                                 @endif
                             </div>
@@ -586,8 +586,9 @@
         </div>
     </div>
 
+    @push('modals')
     {{-- MODAL PRATINJAU FOTO --}}
-    <div id="modal-foto" class="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden" style="z-index: 10000;" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="modal-foto" class="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden" style="z-index: 10000;" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div id="modal-foto-backdrop" class="fixed inset-0"></div>
         <div class="relative bg-white rounded-3xl shadow-2xl max-w-4xl w-full mx-4 overflow-hidden border border-slate-100 z-10 flex flex-col">
             <div class="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
@@ -604,6 +605,7 @@
             </div>
         </div>
     </div>
+    @endpush
 
     @push('scripts')
     <script>

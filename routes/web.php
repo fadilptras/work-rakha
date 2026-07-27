@@ -233,16 +233,17 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
         
     // Cuti
     Route::prefix('cuti')->name('cuti.')->group(function () {
-    Route::get('/', [AdminCutiController::class, 'index'])->name('index');
-    Route::get('/rekap-pdf', [AdminCutiController::class, 'downloadRekapPDF'])->name('downloadRekapPdf');
-    Route::get('/set-approvers', [AdminCutiController::class, 'setApprovers'])->name('set_approvers');
-    Route::post('/set-approvers', [AdminCutiController::class, 'saveApprovers'])->name('set_approvers.save');
-    Route::get('/pengaturan-pdf', [AdminCutiController::class, 'downloadPengaturanPDF'])->name('downloadPengaturanPDF');
-    Route::get('/pengaturan', [AdminCutiController::class, 'pengaturanCuti'])->name('pengaturan');
-    Route::post('/pengaturan', [AdminCutiController::class, 'updatePengaturanCuti'])->name('updatePengaturan');
-    Route::get('/{cuti}', [AdminCutiController::class, 'show'])->name('show');
-    Route::delete('/{cuti}', [AdminCutiController::class, 'destroy'])->name('destroy');
-    Route::get('/{cuti}/download', [AdminCutiController::class, 'download'])->name('download');
+        Route::get('/', [AdminCutiController::class, 'index'])->name('index');
+        Route::get('/rekap-pdf', [AdminCutiController::class, 'downloadRekapPDF'])->name('downloadRekapPdf');
+        Route::get('/set-approvers', [AdminCutiController::class, 'setApprovers'])->name('set_approvers');
+        Route::post('/set-approvers', [AdminCutiController::class, 'saveApprovers'])->name('set_approvers.save');
+        Route::get('/pengaturan-pdf', [AdminCutiController::class, 'downloadPengaturanPDF'])->name('downloadPengaturanPDF');
+        Route::get('/pengaturan', [AdminCutiController::class, 'pengaturanCuti'])->name('pengaturan');
+        Route::post('/pengaturan', [AdminCutiController::class, 'updatePengaturanCuti'])->name('updatePengaturan');
+        Route::get('/{cuti}', [AdminCutiController::class, 'show'])->name('show');
+        Route::delete('/{cuti}', [AdminCutiController::class, 'destroy'])->name('destroy');
+        Route::get('/{cuti}/download', [AdminCutiController::class, 'download'])->name('download');
+        Route::post('/{cuti}/force-approve', [AdminCutiController::class, 'forceApprove'])->name('forceApprove');
     });
 
     // Pengajuan Dana

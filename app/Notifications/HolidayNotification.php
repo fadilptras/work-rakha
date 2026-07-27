@@ -32,12 +32,13 @@ class HolidayNotification extends Notification implements ShouldQueue
 
     public function toWhatsApp(object $notifiable): array
     {
-        $namaLibur = $this->holiday->keterangan ?? 'Hari Libur Nasional';
+        $namaLibur = $this->holiday->keterangan ?? 'Hari Libur';
+        $jenis = $this->holiday->is_cuti_bersama ? 'Cuti Bersama' : 'Hari Libur';
         
         return [
-            'message' => "Informasi Hari Libur 🏖️\n\n" .
-                         "Mengingatkan bahwa hari ini kantor libur dalam rangka: *{$namaLibur}*\n" .
-                         "Selamat beristirahat dan menikmati waktu luang! Sampai jumpa di hari kerja berikutnya.\n\n",
+            'message' => "Informasi {$jenis} 🏖️\n\n" .
+                         "Hari ini Kantor Libur dalam rangka: *{$namaLibur}*\n" .
+                         "Selamat beristirahat!",
             'target'  => 'group'
         ];
     }

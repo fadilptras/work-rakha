@@ -34,6 +34,8 @@ class DeductCutiBersamaCommand extends Command
             $this->info("Memproses: {$holiday->keterangan} ({$holiday->tanggal->format('Y-m-d')})");
             $this->warn("==================================================");
 
+            $hasNewDeduction = false;
+
             foreach ($allUsers as $user) {
                 DB::beginTransaction();
                 try {
@@ -82,9 +84,16 @@ class DeductCutiBersamaCommand extends Command
                                 'holiday_id' => $holiday->id
                             ]);
 
+                            $hasNewDeduction = true;
+
                             $this->line("<info>[BERHASIL]</info> User: {$user->name} (Sisa Cuti: {$user->sisa_cuti})");
                         } else {
-                            $this->line("<comment>[SKIP]</comment> User: {$user->name} (Sisa cuti sudah 0)");
+                            // Catat ke ledger agar tidak diproses ulang di kemudian hari saat saldo bertambah
+                            CutiBersamaLedger::create([
+                                'user_id'    => $user->id,
+                                'holiday_id' => $holiday->id
+                            ]);
+                            $this->line("<comment>[SKIP]</comment> User: {$user->name} (Sisa cuti sudah 0, dicatat ke ledger)");
                         }
                     } else {
                         $this->line("<comment>[SKIP]</comment> User: {$user->name} (Sudah pernah diproses)");
@@ -96,8 +105,61 @@ class DeductCutiBersamaCommand extends Command
                     $this->error("Gagal pada user {$user->name}: " . $e->getMessage());
                 }
             }
+
+            if ($hasNewDeduction) {
+                $this->sendNotificationToGroup($holiday);
+            }
         }
 
         $this->info("\nSemua proses selesai.");
+    }
+
+    /**
+     * Mengirim notifikasi informasi Cuti Bersama ke Whatsapp Group via Fonnte.
+     */
+    private function sendNotificationToGroup(Holiday $holiday)
+    {
+        $namaLibur = $holiday->keterangan ?? 'Cuti Bersama';
+        $message = "Informasi Cuti Bersama 🏖️\n\nHari ini Kantor Libur dalam rangka: *{$namaLibur}*\nSelamat beristirahat!";
+
+        $targetGroupId = '120363242834102956@g.us';
+        $token = 'MP8iwGyRDCKJVgNs5ejZ';
+
+        if (!$targetGroupId || !$token) {
+            \Illuminate\Support\Facades\Log::error("Fonnte config tidak lengkap untuk notifikasi Cuti Bersama.");
+            return;
+        }
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://api.fonnte.com/send',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30, 
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => array(
+                'target' => $targetGroupId,
+                'message' => $message,
+                'countryCode' => '62',
+            ),
+            CURLOPT_HTTPHEADER => array(
+                'Authorization: ' . $token
+            ),
+        ));
+
+        $response = curl_exec($curl);
+        $error = curl_error($curl);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+
+        if ($error) {
+            \Illuminate\Support\Facades\Log::error("Fonnte Error saat mengirim Notifikasi Cuti Bersama ke Group: " . $error);
+        } else {
+            \Illuminate\Support\Facades\Log::info("Fonnte Notifikasi Cuti Bersama Terkirim ke Group (HTTP $httpCode): " . $response);
+        }
     }
 }

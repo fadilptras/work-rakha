@@ -248,7 +248,7 @@
                             </div>
                             <div class="md:col-span-2">
                                 <label class="modern-label" for="judul-pengajuan">Judul Pengajuan <span class="text-red-500">*</span></label>
-                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Contoh: Pembelian Perlengkapan Kantor & ATK" required>
+                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Contoh: Pembelian Perlengkapan Kantor & ATK" value="{{ old('judul_pengajuan') }}" required>
                             </div>
                             <div>
                                 <label class="modern-label">Tanggal Pengajuan</label>
@@ -272,30 +272,30 @@
                             <div>
                                 <label class="modern-label" for="pilih-bank">Nama Bank <span class="text-red-500">*</span></label>
                                 <select id="pilih-bank" name="nama_bank" class="modern-input" required>
-                                    <option value="" disabled selected>Pilih Bank</option>
-                                    <option value="BCA">BCA</option>
-                                    <option value="BRI">BRI</option>
-                                    <option value="BNI">BNI</option>
-                                    <option value="Mandiri">Mandiri</option>
-                                    <option value="CIMB Niaga">CIMB Niaga</option>
-                                    <option value="BSI">BSI</option>
-                                    <option value="OCBC NISP">OCBC NISP</option>
-                                    <option value="Permata">Permata</option>
-                                    <option value="Jago">Jago</option>
-                                    <option value="Seabank">Seabank</option>
-                                    <option value="other">Lainnya</option>
+                                    <option value="" disabled {{ !old('nama_bank') ? 'selected' : '' }}>Pilih Bank</option>
+                                    <option value="BCA" {{ old('nama_bank') == 'BCA' ? 'selected' : '' }}>BCA</option>
+                                    <option value="BRI" {{ old('nama_bank') == 'BRI' ? 'selected' : '' }}>BRI</option>
+                                    <option value="BNI" {{ old('nama_bank') == 'BNI' ? 'selected' : '' }}>BNI</option>
+                                    <option value="Mandiri" {{ old('nama_bank') == 'Mandiri' ? 'selected' : '' }}>Mandiri</option>
+                                    <option value="CIMB Niaga" {{ old('nama_bank') == 'CIMB Niaga' ? 'selected' : '' }}>CIMB Niaga</option>
+                                    <option value="BSI" {{ old('nama_bank') == 'BSI' ? 'selected' : '' }}>BSI</option>
+                                    <option value="OCBC NISP" {{ old('nama_bank') == 'OCBC NISP' ? 'selected' : '' }}>OCBC NISP</option>
+                                    <option value="Permata" {{ old('nama_bank') == 'Permata' ? 'selected' : '' }}>Permata</option>
+                                    <option value="Jago" {{ old('nama_bank') == 'Jago' ? 'selected' : '' }}>Jago</option>
+                                    <option value="Seabank" {{ old('nama_bank') == 'Seabank' ? 'selected' : '' }}>Seabank</option>
+                                    <option value="other" {{ old('nama_bank') == 'other' ? 'selected' : '' }}>Lainnya</option>
                                 </select>
-                                <div id="bank-lainnya-container" class="hidden mt-2">
-                                    <input type="text" id="input-bank-lainnya" name="nama_bank_lainnya" class="modern-input" placeholder="Nama Bank Lainnya">
+                                <div id="bank-lainnya-container" class="{{ old('nama_bank') == 'other' ? '' : 'hidden' }} mt-2">
+                                    <input type="text" id="input-bank-lainnya" name="nama_bank_lainnya" class="modern-input" placeholder="Nama Bank Lainnya" value="{{ old('nama_bank_lainnya') }}" {{ old('nama_bank') == 'other' ? 'required' : '' }}>
                                 </div>
                             </div>
                             <div>
                                 <label class="modern-label" for="no-rekening">Nomor Rekening <span class="text-red-500">*</span></label>
-                                <input type="number" id="no-rekening" name="no_rekening" class="modern-input" placeholder="Contoh: 1234567890" required>
+                                <input type="number" id="no-rekening" name="no_rekening" class="modern-input" placeholder="Contoh: 1234567890" value="{{ old('no_rekening') }}" required>
                             </div>
                             <div>
                                 <label class="modern-label" for="nama-rek">Atas Nama (A/N) <span class="text-red-500">*</span></label>
-                                <input type="text" id="nama-rek" name="nama_rek" class="modern-input" placeholder="Nama Pemilik Rekening" required>
+                                <input type="text" id="nama-rek" name="nama_rek" class="modern-input" placeholder="Nama Pemilik Rekening" value="{{ old('nama_rek') }}" required>
                             </div>
                         </div>
                     </div>
@@ -413,21 +413,27 @@
             input.value = value ? parseInt(value).toLocaleString('id-ID') : '';
         }
         
-        function addRow() {
+        function addRow(deskripsi = '', jumlah = '') {
             const isMobile = window.innerWidth < 768; 
             const container = isMobile ? rincianDanaContainerMobile : rincianDanaBodyDesktop; 
             const newRow = document.createElement(isMobile ? 'div' : 'tr');
             
+            let formattedJumlah = '';
+            if (jumlah !== '') {
+                let cleanVal = jumlah.toString().replace(/[^0-9]/g, '');
+                formattedJumlah = cleanVal ? parseInt(cleanVal).toLocaleString('id-ID') : '';
+            }
+            
             if (isMobile) {
                 newRow.className = 'bg-white rounded-xl p-3 border border-slate-200 space-y-2'; 
                 newRow.innerHTML = `
-                    <div><input type="text" name="rincian_deskripsi[]" class="modern-input" placeholder="Deskripsi pengeluaran" required></div>
-                    <div><input type="text" name="rincian_jumlah[]" class="modern-input jumlah-input" placeholder="Jumlah (Rp)" required></div>
+                    <div><input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input" placeholder="Deskripsi pengeluaran" required></div>
+                    <div><input type="text" name="rincian_jumlah[]" value="${formattedJumlah}" class="modern-input jumlah-input" placeholder="Jumlah (Rp)" required></div>
                     <button type="button" class="delete-row-btn text-red-500 hover:text-red-700 text-[10px] font-bold uppercase tracking-wider block mt-1">Hapus Item</button>`;
             } else {
                 newRow.innerHTML = `
-                    <td class="px-4 py-2"><input type="text" name="rincian_deskripsi[]" class="modern-input !py-2 !px-3.5 !rounded-xl !text-xs" placeholder="Masukkan deskripsi" required></td>
-                    <td class="px-4 py-2"><div class="relative"><span class="absolute text-slate-400 text-xs font-bold" style="left: 14px; top: 50%; transform: translateY(-50%);">Rp</span><input type="text" name="rincian_jumlah[]" class="modern-input !py-2 !rounded-xl !text-xs jumlah-input" style="padding-left: 46px !important; padding-right: 14px !important;" placeholder="0" required></div></td>
+                    <td class="px-4 py-2"><input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-2 !px-3.5 !rounded-xl !text-xs" placeholder="Masukkan deskripsi" required></td>
+                    <td class="px-4 py-2"><div class="relative"><span class="absolute text-slate-400 text-xs font-bold" style="left: 14px; top: 50%; transform: translateY(-50%);">Rp</span><input type="text" name="rincian_jumlah[]" value="${formattedJumlah}" class="modern-input !py-2 !rounded-xl !text-xs jumlah-input" style="padding-left: 46px !important; padding-right: 14px !important;" placeholder="0" required></div></td>
                     <td class="px-4 py-2 text-center"><button type="button" class="delete-row-btn text-slate-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-xl text-sm transition-all"><i class="fas fa-trash-alt"></i></button></td>`;
             }
             container.appendChild(newRow); 
@@ -436,9 +442,20 @@
             newRow.querySelector('.delete-row-btn').addEventListener('click', () => { newRow.remove(); updateTotal(); });
         }
         
+        const oldRincianDeskripsi = @json(old('rincian_deskripsi', []));
+        const oldRincianJumlah = @json(old('rincian_jumlah', []));
+
         if (tambahBarisBtn) { 
-            addRow(); 
-            tambahBarisBtn.addEventListener('click', addRow); 
+            if (oldRincianDeskripsi && oldRincianDeskripsi.length > 0) {
+                oldRincianDeskripsi.forEach((deskripsi, index) => {
+                    const jumlah = oldRincianJumlah[index] !== undefined ? oldRincianJumlah[index] : '';
+                    addRow(deskripsi, jumlah);
+                });
+                updateTotal();
+            } else {
+                addRow(); 
+            }
+            tambahBarisBtn.addEventListener('click', () => addRow()); 
         }
 
         const tambahLampiranBtn = document.getElementById('tambah-lampiran-btn');
@@ -507,7 +524,24 @@
             addLampiranInput();
         }
         
-        mainForm.addEventListener('submit', function() {
+        mainForm.addEventListener('submit', function(e) {
+            let tooLarge = false;
+            document.querySelectorAll('input[type="file"][name="file_pendukung[]"]').forEach(input => {
+                if (input.files && input.files.length > 0) {
+                    const file = input.files[0];
+                    const maxBytes = 5 * 1024 * 1024; // 5MB
+                    if (file.size > maxBytes) {
+                        tooLarge = true;
+                    }
+                }
+            });
+
+            if (tooLarge) {
+                e.preventDefault();
+                alert('Ukuran salah satu file lampiran melebihi batas maksimal 5MB. Silakan pilih berkas yang lebih kecil agar formulir tidak perlu diisi ulang.');
+                return false;
+            }
+
             document.querySelectorAll('input[type="file"][name="file_pendukung[]"]').forEach(input => {
                 if (input.files && input.files.length > 0) {
                     const uniqueId = input.id;

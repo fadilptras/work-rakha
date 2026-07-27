@@ -19,7 +19,7 @@ class ResetCutiCommand extends Command
         $updatedCount = 0;
 
         foreach ($users as $user) {
-            $user->update(['sisa_cuti' => 12]);
+            $user->update(['sisa_cuti' => $user->jatah_cuti ?? 12]);
             $updatedCount++;
         }
 

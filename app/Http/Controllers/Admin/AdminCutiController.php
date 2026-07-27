@@ -148,6 +148,7 @@ class AdminCutiController extends Controller
                 $cuti->update([
                     "status_approver_{$currentStage}" => 'ditolak',
                     "catatan_approver_{$currentStage}" => $catatanInput,
+                    "tanggal_approve_{$currentStage}" => Carbon::now(),
                     'status' => 'ditolak'
                 ]);
                 Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'ditolak'));
@@ -157,6 +158,7 @@ class AdminCutiController extends Controller
             $cuti->update([
                 "status_approver_{$currentStage}" => 'disetujui',
                 "catatan_approver_{$currentStage}" => $catatanInput,
+                "tanggal_approve_{$currentStage}" => Carbon::now(),
             ]);
 
             // Logika next approver diubah menjadi berjenjang (<) agar tidak bypass jika ada yang skipped
@@ -319,5 +321,51 @@ class AdminCutiController extends Controller
         $cuti->delete();
 
         return redirect()->back()->with('success', 'Data pengajuan cuti berhasil dihapus.');
+    }
+
+    /**
+     * [BARU] Admin mengambil alih pengajuan cuti dan menyetujuinya langsung.
+     */
+    public function forceApprove(Request $request, $id)
+    {
+        return DB::transaction(function () use ($request, $id) {
+            $cuti = Cuti::with(['user'])->lockForUpdate()->findOrFail($id);
+
+            // Validasi status: hanya boleh untuk yang belum selesai/ditolak/dibatalkan
+            if (in_array($cuti->status, ['disetujui', 'ditolak', 'dibatalkan'])) {
+                return back()->with('error', 'Pengajuan cuti ini sudah disetujui, ditolak, atau dibatalkan.');
+            }
+
+            if ($cuti->status_approver_1 === 'menunggu') {
+                return back()->with('error', 'Pengajuan cuti ini belum disetujui oleh Approver pertama.');
+            }
+
+            $request->validate([
+                'catatan_admin' => 'nullable|string|max:255',
+            ]);
+
+            $updateData = [
+                'status' => 'disetujui',
+            ];
+
+            // Tandai semua status approver yang masih 'menunggu' menjadi 'skipped'
+            for ($i = 1; $i <= 4; $i++) {
+                if ($cuti->{"approver_cuti_{$i}_id"} && $cuti->{"status_approver_{$i}"} === 'menunggu') {
+                    $updateData["status_approver_{$i}"] = 'skipped';
+                    $updateData["catatan_approver_{$i}"] = $request->catatan_admin ?? 'Dilewati oleh Admin Override';
+                    $updateData["tanggal_approve_{$i}"] = Carbon::now();
+                }
+            }
+
+            $cuti->update($updateData);
+
+            // Potong jatah cuti pemohon
+            $cuti->user->decrement('sisa_cuti', $cuti->total_hari);
+
+            // Kirim notifikasi ke pemohon
+            Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'disetujui'));
+
+            return back()->with('success', 'Pengajuan cuti berhasil diambil alih dan disetujui oleh Admin.');
+        });
     }
 }

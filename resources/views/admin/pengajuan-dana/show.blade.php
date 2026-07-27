@@ -299,14 +299,14 @@
                 @endif
                 
                 
-                {{-- [MODIFIKASI] BUTTON TRIGGER MODAL (Hanya muncul jika 'proses_pembayaran') --}}
-                @if ($pengajuanDana->status === 'proses_pembayaran')
+                {{-- [MODIFIKASI] BUTTON TRIGGER MODAL (Muncul jika belum selesai/ditolak/dibatalkan & sudah disetujui approver 1) --}}
+                @if (!in_array($pengajuanDana->status, ['selesai', 'ditolak', 'dibatalkan']) && $pengajuanDana->approver_1_status !== 'menunggu')
                 <div class="mt-4">
                     <button onclick="openModal()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transform transition hover:-translate-y-0.5 flex justify-center items-center gap-2">
                         <i class="fas fa-user-shield"></i> Ambil Alih & Tandai Selesai
                     </button>
                     <p class="text-xs text-zinc-500 mt-2 text-center">
-                        *Klik untuk menyelesaikan pembayaran secara manual (Admin Override).
+                        *Klik untuk mengambil alih persetujuan & menyelesaikan secara manual (Admin Override).
                     </p>
                 </div>
                 @endif
@@ -316,6 +316,8 @@
                     <label class="block text-sm font-medium text-zinc-400 mb-1">Status Final Pengajuan</label>
                      @if ($pengajuanDana->status == 'selesai')
                         <p class="text-xl font-bold flex items-center text-emerald-400"><i class="fas fa-check-circle mr-2"></i> SELESAI</p>
+                    @elseif ($pengajuanDana->status == 'disetujui')
+                        <p class="text-xl font-bold flex items-center text-teal-400"><i class="fas fa-check-double mr-2"></i> MENUNGGU DIREKTUR</p>
                     @elseif ($pengajuanDana->status == 'ditolak')
                         <p class="text-xl font-bold flex items-center text-red-400"><i class="fas fa-times-circle mr-2"></i> DITOLAK</p>
                     @elseif ($pengajuanDana->status == 'proses_pembayaran' || $pengajuanDana->status == 'diproses')
@@ -331,15 +333,15 @@
     </div>
 
     {{-- [BARU] MODAL ADMIN OVERRIDE --}}
-    @if ($pengajuanDana->status === 'proses_pembayaran')
+    @if (!in_array($pengajuanDana->status, ['selesai', 'ditolak', 'dibatalkan']) && $pengajuanDana->approver_1_status !== 'menunggu')
     <div id="adminOverrideModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         {{-- Backdrop --}}
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-black bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
+            <div class="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
             {{-- Modal Panel --}}
-            <div class="inline-block align-bottom bg-zinc-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-zinc-700">
+            <div class="relative inline-block align-bottom bg-zinc-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-zinc-700">
                 <div class="bg-zinc-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-amber-500/10 sm:mx-0 sm:h-10 sm:w-10">
@@ -351,7 +353,7 @@
                             </h3>
                             <div class="mt-2">
                                 <p class="text-sm text-zinc-400 mb-4">
-                                    Anda akan mengambil alih tugas Manajer Keuangan. Status pengajuan akan langsung berubah menjadi <b>SELESAI</b>.
+                                    Anda akan mengambil alih persetujuan pengajuan dana ini. Semua sisa persetujuan akan dilewati dan status pengajuan akan langsung berubah menjadi <b>SELESAI</b>.
                                 </p>
 
                                 <form id="formOverride" action="{{ route('admin.pengajuan_dana.markAsPaid', $pengajuanDana->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">

@@ -453,6 +453,22 @@
         tglMulai.addEventListener('change', hitungDurasi);
         tglSelesai.addEventListener('change', hitungDurasi);
         hitungDurasi();
+
+        const form = document.querySelector('form[action="{{ route('cuti.store') }}"]');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                const lampiranInput = document.getElementById('lampiran');
+                if (lampiranInput && lampiranInput.files && lampiranInput.files[0]) {
+                    const fileSize = lampiranInput.files[0].size;
+                    const maxBytes = 2 * 1024 * 1024; // 2MB
+                    if (fileSize > maxBytes) {
+                        e.preventDefault();
+                        alert('Ukuran berkas lampiran melebihi batas maksimal 2MB. Silakan pilih berkas yang lebih kecil agar formulir tidak perlu diisi ulang.');
+                        return false;
+                    }
+                }
+            });
+        }
     });
     </script>
     @endpush

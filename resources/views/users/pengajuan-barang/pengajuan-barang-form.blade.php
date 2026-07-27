@@ -144,7 +144,7 @@
                             </div>
                             <div class="md:col-span-2">
                                 <label class="modern-label" for="judul-pengajuan">Judul Pengajuan <span class="text-red-500">*</span></label>
-                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Contoh: Pengadaan Perlengkapan Kantor & ATK" required>
+                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Contoh: Pengadaan Perlengkapan Kantor & ATK" value="{{ old('judul_pengajuan') }}" required>
                             </div>
                             <div>
                                 <label class="modern-label">Tanggal Pengajuan</label>
@@ -223,21 +223,42 @@
 
         const unitOptions = `<option value="Pcs">Pcs</option><option value="Box">Box</option><option value="Pack">Pack</option><option value="Unit">Unit</option><option value="Set">Set</option><option value="Lusin">Lusin</option><option value="Rim">Rim</option><option value="Buah">Buah</option><option value="Roll">Roll</option><option value="Lainnya">Lainnya</option>`;
 
-        function addRow() {
+        function addRow(deskripsi = '', satuan = '', jumlah = '') {
             const isMobile = window.innerWidth < 768;
             const container = isMobile ? rincianBarangContainerMobile : rincianBarangBodyDesktop;
             const newRow = document.createElement(isMobile ? 'div' : 'tr');
+            
+            let localUnitOptions = unitOptions;
+            if (satuan !== '') {
+                localUnitOptions = localUnitOptions.replace(`value="${satuan}"`, `value="${satuan}" selected`);
+            }
+
             if (isMobile) {
                 newRow.className = 'bg-white rounded-xl p-3 border border-slate-200 space-y-2';
-                newRow.innerHTML = `<div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Deskripsi</label><input type="text" name="rincian_deskripsi[]" class="modern-input" placeholder="Deskripsi barang" required></div><div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Satuan</label><select name="rincian_satuan[]" class="modern-select">${unitOptions}</select></div><div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Jumlah</label><input type="number" name="rincian_jumlah[]" class="modern-input" placeholder="0" min="1" required></div></div><button type="button" class="delete-row-btn text-red-500 hover:text-red-700 text-[10px] font-bold uppercase tracking-wider block mt-1 border-t border-slate-100 pt-2 w-full text-right"><i class="fas fa-trash-alt mr-1"></i> Hapus Item</button>`;
+                newRow.innerHTML = `<div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Deskripsi</label><input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input" placeholder="Deskripsi barang" required></div><div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Satuan</label><select name="rincian_satuan[]" class="modern-select">${localUnitOptions}</select></div><div><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Jumlah</label><input type="number" name="rincian_jumlah[]" value="${jumlah}" class="modern-input" placeholder="0" min="1" required></div></div><button type="button" class="delete-row-btn text-red-500 hover:text-red-700 text-[10px] font-bold uppercase tracking-wider block mt-1 border-t border-slate-100 pt-2 w-full text-right"><i class="fas fa-trash-alt mr-1"></i> Hapus Item</button>`;
             } else {
-                newRow.innerHTML = `<td class="px-4 py-2"><input type="text" name="rincian_deskripsi[]" class="modern-input !py-2 !px-3.5 !rounded-xl !text-xs" placeholder="Masukkan deskripsi barang" required></td><td class="px-4 py-2"><select name="rincian_satuan[]" class="modern-select !py-2 !px-3.5 !rounded-xl !text-xs">${unitOptions}</select></td><td class="px-4 py-2"><input type="number" name="rincian_jumlah[]" class="modern-input !py-2 !px-3.5 !rounded-xl !text-xs" placeholder="0" min="1" required></td><td class="px-4 py-2 text-center"><button type="button" class="delete-row-btn text-slate-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-xl text-sm transition-all"><i class="fas fa-trash-alt"></i></button></td>`;
+                newRow.innerHTML = `<td class="px-4 py-2"><input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-2 !px-3.5 !rounded-xl !text-xs" placeholder="Masukkan deskripsi barang" required></td><td class="px-4 py-2"><select name="rincian_satuan[]" class="modern-select !py-2 !px-3.5 !rounded-xl !text-xs">${localUnitOptions}</select></td><td class="px-4 py-2"><input type="number" name="rincian_jumlah[]" value="${jumlah}" class="modern-input !py-2 !px-3.5 !rounded-xl !text-xs" placeholder="0" min="1" required></td><td class="px-4 py-2 text-center"><button type="button" class="delete-row-btn text-slate-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-xl text-sm transition-all"><i class="fas fa-trash-alt"></i></button></td>`;
             }
             container.appendChild(newRow);
             newRow.querySelector('.delete-row-btn').addEventListener('click', () => { newRow.remove(); });
         }
 
-        if (tambahBarisBtn) { addRow(); tambahBarisBtn.addEventListener('click', addRow); }
+        const oldRincianDeskripsi = @json(old('rincian_deskripsi', []));
+        const oldRincianSatuan = @json(old('rincian_satuan', []));
+        const oldRincianJumlah = @json(old('rincian_jumlah', []));
+
+        if (tambahBarisBtn) { 
+            if (oldRincianDeskripsi && oldRincianDeskripsi.length > 0) {
+                oldRincianDeskripsi.forEach((deskripsi, index) => {
+                    const satuan = oldRincianSatuan[index] !== undefined ? oldRincianSatuan[index] : '';
+                    const jumlah = oldRincianJumlah[index] !== undefined ? oldRincianJumlah[index] : '';
+                    addRow(deskripsi, satuan, jumlah);
+                });
+            } else {
+                addRow(); 
+            }
+            tambahBarisBtn.addEventListener('click', () => addRow()); 
+        }
 
         const tambahLampiranBtn = document.getElementById('tambah-lampiran-btn');
         const lampiranContainer = document.getElementById('file-pendukung-container');
@@ -271,7 +292,24 @@
         if (tambahLampiranBtn) { tambahLampiranBtn.addEventListener('click', addLampiranInput); addLampiranInput(); }
 
         if (mainForm) {
-            mainForm.addEventListener('submit', function() {
+            mainForm.addEventListener('submit', function(e) {
+                let tooLarge = false;
+                document.querySelectorAll('input[type="file"][name="file_pendukung[]"]').forEach(input => {
+                    if (input.files && input.files.length > 0) {
+                        const file = input.files[0];
+                        const maxBytes = 2 * 1024 * 1024; // 2MB
+                        if (file.size > maxBytes) {
+                            tooLarge = true;
+                        }
+                    }
+                });
+
+                if (tooLarge) {
+                    e.preventDefault();
+                    alert('Ukuran salah satu file lampiran melebihi batas maksimal 2MB. Silakan pilih berkas yang lebih kecil agar formulir tidak perlu diisi ulang.');
+                    return false;
+                }
+
                 submitButton.disabled = true;
                 submitButton.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Mengirim...`;
                 submitButton.classList.add('inline-flex', 'items-center');

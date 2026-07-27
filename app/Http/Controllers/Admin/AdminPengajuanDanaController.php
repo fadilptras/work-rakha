@@ -258,9 +258,13 @@ class AdminPengajuanDanaController extends Controller
      */
     public function markAsPaid(Request $request, PengajuanDana $pengajuanDana)
     {
-        // Validasi status harus dalam tahap pembayaran
-        if ($pengajuanDana->status !== 'proses_pembayaran') {
-             return back()->with('error', 'Pengajuan ini tidak dalam status menunggu pembayaran.');
+        // Validasi status
+        if (in_array($pengajuanDana->status, ['selesai', 'ditolak', 'dibatalkan'])) {
+             return back()->with('error', 'Pengajuan ini tidak dapat diambil alih karena sudah selesai, ditolak, atau dibatalkan.');
+        }
+
+        if ($pengajuanDana->approver_1_status === 'menunggu') {
+             return back()->with('error', 'Pengajuan ini belum disetujui oleh Approver pertama.');
         }
 
         $request->validate([
@@ -268,35 +272,39 @@ class AdminPengajuanDanaController extends Controller
             'catatan_admin' => 'nullable|string|max:255',
         ]);
 
-        // Siapkan data update dasar
+        // Siapkan data update dasar - langsung ubah status utama ke selesai
         $updateData = [
-            'approver_dana_3_id' => Auth::id(),
-            'approver_3_status' => 'disetujui',
-            'approver_3_approved_at' => Carbon::now(),
-            'approver_3_catatan' => $request->catatan_admin ?? 'Diselesaikan oleh Admin',
+            'status' => 'selesai',
         ];
 
+        // Loop dan tandai semua approver yang statusnya masih 'menunggu' menjadi 'skipped'
+        for ($i = 1; $i <= 4; $i++) {
+            if ($pengajuanDana->{"approver_dana_{$i}_id"} && $pengajuanDana->{"approver_{$i}_status"} === 'menunggu') {
+                $updateData["approver_{$i}_status"] = 'skipped';
+                $updateData["approver_{$i}_catatan"] = $request->catatan_admin ?? 'Dilewati oleh Admin Override';
+                $updateData["approver_{$i}_approved_at"] = Carbon::now();
+            }
+        }
+
+        // Khusus untuk Finance (biasanya Approver 3), jika dia yang diambil alih atau jika admin ingin menandainya disetujui
+        // agar data transfer tercatat, kita bisa set approver_dana_3_id ke admin yang login jika masih menunggu
+        if ($pengajuanDana->approver_3_status === 'menunggu') {
+            $updateData['approver_dana_3_id'] = Auth::id();
+            $updateData['approver_3_status'] = 'disetujui';
+            $updateData['approver_3_approved_at'] = Carbon::now();
+            $updateData['approver_3_catatan'] = $request->catatan_admin ?? 'Diselesaikan oleh Admin';
+        }
 
         if ($request->hasFile('bukti_transfer')) {
             $path = $request->file('bukti_transfer')->store('bukti_transfer', 'public');
             $updateData['bukti_transfer'] = $path;
         }
 
-        // Lakukan update
+        // Lakukan update sekali jalan
         $pengajuanDana->update($updateData);
 
-        // Tentukan status dan notifikasi selanjutnya
-        if ($pengajuanDana->approver_dana_4_id && $pengajuanDana->approver_4_status === 'menunggu') {
-            $pengajuanDana->update(['status' => 'disetujui']);
-            $nextApprover = User::find($pengajuanDana->approver_dana_4_id);
-            if ($nextApprover) {
-                Notification::send($nextApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
-                Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'disetujui_parsial'));
-            }
-        } else {
-            $pengajuanDana->update(['status' => 'selesai']);
-            Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'bukti_transfer'));
-        }
+        // Kirim notifikasi bukti transfer ke pemohon
+        Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'bukti_transfer'));
 
         return back()->with('success', 'Pembayaran berhasil diselesaikan oleh Admin.');
     }
