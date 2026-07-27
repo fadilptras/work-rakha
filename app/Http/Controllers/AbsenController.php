@@ -120,7 +120,7 @@ class AbsenController extends Controller
             $recordLembur = $lemburDalamPeriode->get($tanggalFormatted);
             $holidayString = $holidays[$tanggalFormatted] ?? null;
 
-            $dailyStatus = \App\Services\AttendanceService::calculateDailyStatus($day, $recordAbsensi, $recordLembur, $holidayString);
+            $dailyStatus = \App\Services\AttendanceService::calculateDailyStatus($day, $recordAbsensi, $recordLembur, $holidayString, $user);
 
             if ($dailyStatus->status_key === 'H' || strpos($dailyStatus->status_key, 'H ') === 0) $rekap['hadir']++;
             if ($dailyStatus->status_key === 'S' || strpos($dailyStatus->status_key, 'S ') === 0) $rekap['sakit']++;
@@ -128,7 +128,7 @@ class AbsenController extends Controller
             if ($dailyStatus->status_key === 'C' || strpos($dailyStatus->status_key, 'C ') === 0) $rekap['cuti']++;
             if ($dailyStatus->status_key === 'A' || strpos($dailyStatus->status_key, 'A ') === 0) $rekap['tidak hadir']++;
             
-            if (strpos($dailyStatus->status_key, 'L') !== false) {
+            if (in_array('L', explode(' ', $dailyStatus->status_key))) {
                 $rekap['lembur']++;
             }
             

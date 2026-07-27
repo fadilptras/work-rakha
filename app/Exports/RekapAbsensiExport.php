@@ -187,7 +187,7 @@ class RekapAbsensiExport implements FromCollection, WithHeadings, WithMapping, W
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['argb' => '000000'],
+                            'color' => ['argb' => 'FFD1D5DB'], // Softer grey border
                         ],
                     ],
                     'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
@@ -249,16 +249,48 @@ class RekapAbsensiExport implements FromCollection, WithHeadings, WithMapping, W
                     // Loop pewarnaan Status (H, S, I...)
                     for ($row = 7; $row <= $lastRow; $row++) {
                         $cellValue = $sheet->getCell("{$colStr}{$row}")->getValue();
-                        $color = null;
                         
-                        if ($cellValue === 'S') $color = 'FFFF0000'; // Merah
-                        elseif ($cellValue === 'I') $color = 'FFFFA500'; // Orange
-                        elseif ($cellValue === 'C') $color = 'FF0000FF'; // Biru
-                        elseif ($cellValue === 'A') $color = 'FF000000'; // Hitam (Bold)
-                        elseif ($cellValue === 'L') $color = 'FF800080'; // Ungu
-
-                        if ($color) {
-                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color($color));
+                        if ($cellValue === 'H') {
+                            $sheet->getStyle("{$colStr}{$row}")->getFill()
+                                ->setFillType(Fill::FILL_SOLID)
+                                ->getStartColor()->setARGB('FFD1E7DD'); // Hijau muda bg
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0F5132')); // Hijau tua text
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setBold(true);
+                        } elseif ($cellValue === 'H L') {
+                            $sheet->getStyle("{$colStr}{$row}")->getFill()
+                                ->setFillType(Fill::FILL_SOLID)
+                                ->getStartColor()->setARGB('FFD1E7DD'); // Hijau muda bg (Present)
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF6B21A8')); // Ungu tua text (Overtime)
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setBold(true);
+                        } elseif ($cellValue === 'S') {
+                            $sheet->getStyle("{$colStr}{$row}")->getFill()
+                                ->setFillType(Fill::FILL_SOLID)
+                                ->getStartColor()->setARGB('FFF8D7DA'); // Merah muda bg
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF842029')); // Merah tua text
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setBold(true);
+                        } elseif ($cellValue === 'I') {
+                            $sheet->getStyle("{$colStr}{$row}")->getFill()
+                                ->setFillType(Fill::FILL_SOLID)
+                                ->getStartColor()->setARGB('FFFFF3CD'); // Orange/Kuning muda bg
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF664D03')); // Orange/Kuning tua text
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setBold(true);
+                        } elseif ($cellValue === 'C') {
+                            $sheet->getStyle("{$colStr}{$row}")->getFill()
+                                ->setFillType(Fill::FILL_SOLID)
+                                ->getStartColor()->setARGB('FFCFE2FF'); // Biru muda bg
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF084298')); // Biru tua text
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setBold(true);
+                        } elseif ($cellValue === 'A') {
+                            $sheet->getStyle("{$colStr}{$row}")->getFill()
+                                ->setFillType(Fill::FILL_SOLID)
+                                ->getStartColor()->setARGB('FFE2E3E5'); // Abu-abu bg
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF41464B')); // Abu-abu tua text
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setBold(true);
+                        } elseif ($cellValue === 'L') {
+                            $sheet->getStyle("{$colStr}{$row}")->getFill()
+                                ->setFillType(Fill::FILL_SOLID)
+                                ->getStartColor()->setARGB('FFF3E8FF'); // Ungu muda bg
+                            $sheet->getStyle("{$colStr}{$row}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF6B21A8')); // Ungu tua text
                             $sheet->getStyle("{$colStr}{$row}")->getFont()->setBold(true);
                         }
                     }

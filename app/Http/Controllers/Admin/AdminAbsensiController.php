@@ -128,8 +128,8 @@ class AdminAbsensiController extends Controller
 
         $rekapData = $this->getRekapData($startDate, $endDate, $divisi, $userId);
         
-        $karyawanList = Cache::rememberForever('karyawan_list_dropdown', function () {
-            return User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'divisi']);
+        $karyawanList = Cache::rememberForever('karyawan_list_dropdown_v2', function () {
+            return User::where('role', 'user')->where('email', '!=', 'test@gmail.com')->orderBy('name')->get(['id', 'name', 'divisi']);
         });
 
         $divisions = $karyawanList->pluck('divisi')->filter()->unique()->values();
@@ -308,7 +308,10 @@ class AdminAbsensiController extends Controller
         if ($divisi) $queryUsers->where('divisi', $divisi);
         if ($userId) $queryUsers->where('id', $userId);
         
-        $users = $queryUsers->where('role', 'user')->orderBy('name', 'asc')->get();
+        $users = $queryUsers->where('role', 'user')
+            ->where('email', '!=', 'test@gmail.com')
+            ->orderBy('name', 'asc')
+            ->get();
 
         $allDates = collect(CarbonPeriod::create($startDate, $endDate));
         $rekapData = [];
@@ -350,7 +353,7 @@ class AdminAbsensiController extends Controller
                 $lembur = $lemburRecords->get($dateString);
                 $holidayString = $holidays[$dateString] ?? null;
 
-                $dailyStatus = \App\Services\AttendanceService::calculateDailyStatus($date, $record, $lembur, $holidayString);
+                $dailyStatus = \App\Services\AttendanceService::calculateDailyStatus($date, $record, $lembur, $holidayString, $user);
 
                 $statusKey = $dailyStatus->status_key;
                 $status = ($statusKey === 'Libur') ? '-' : $statusKey;

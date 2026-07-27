@@ -79,7 +79,7 @@ class RekapAbsenController extends Controller
             
             $holidayString = $holidayData ? $holidayData->keterangan : null;
             
-            $dailyStatus = \App\Services\AttendanceService::calculateDailyStatus($date, $recordAbsensi, $recordLembur, $holidayString);
+            $dailyStatus = \App\Services\AttendanceService::calculateDailyStatus($date, $recordAbsensi, $recordLembur, $holidayString, $user);
 
             // Update Rekap Total
             if ($dailyStatus->status_key === 'H' || strpos($dailyStatus->status_key, 'H ') === 0) $rekap['hadir']++;
@@ -87,7 +87,7 @@ class RekapAbsenController extends Controller
             if ($dailyStatus->status_key === 'I' || strpos($dailyStatus->status_key, 'I ') === 0) $rekap['izin']++;
             if ($dailyStatus->status_key === 'C' || strpos($dailyStatus->status_key, 'C ') === 0) $rekap['cuti']++;
             if ($dailyStatus->status_key === 'A' || strpos($dailyStatus->status_key, 'A ') === 0) $rekap['alpa']++;
-            if (strpos($dailyStatus->status_key, 'L') !== false) $rekap['lembur']++;
+            if (in_array('L', explode(' ', $dailyStatus->status_key))) $rekap['lembur']++;
             
             $rekap['terlambat'] += $dailyStatus->terlambat_menit;
 
