@@ -1,4 +1,4 @@
-﻿<x-layout-users>
+<x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
 
     @push('styles')
@@ -995,7 +995,13 @@
 
             const startCamera = async () => {
                 try {
-                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                    stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: "user",
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        } 
+                    });
                     video.srcObject = stream;
                     video.onloadedmetadata = () => { snapButton.disabled = false; };
                     video.classList.remove('hidden');

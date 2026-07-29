@@ -672,7 +672,11 @@
                 snapButton.disabled = true;
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: currentFacingMode } 
+                        video: { 
+                            facingMode: currentFacingMode,
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        } 
                     });
                     video.srcObject = stream;
                     video.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
