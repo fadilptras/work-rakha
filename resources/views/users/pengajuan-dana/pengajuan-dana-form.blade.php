@@ -1,3 +1,7 @@
+@php
+    $agent = new \Jenssegers\Agent\Agent();
+    $isMobile = $agent->isMobile();
+@endphp
 <x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
 
@@ -10,28 +14,8 @@
             scroll-behavior: smooth;
         }
 
-        /* == Modern Mesh Background == */
-        .mesh-bg {
-            background-color: #f0f6fc;
-            background-image: 
-                radial-gradient(at 40% 20%, rgba(147, 197, 253, 0.45) 0px, transparent 50%),
-                radial-gradient(at 80% 0%, rgba(167, 139, 250, 0.35) 0px, transparent 50%),
-                radial-gradient(at 0% 50%, rgba(191, 219, 254, 0.45) 0px, transparent 50%),
-                radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
-                radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
-                radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
-            background-attachment: fixed;
-        }
-
-        /* Float animation */
-        @keyframes float {
-            0% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(5deg); }
-            100% { transform: translateY(0px) rotate(0deg); }
-        }
-        .animate-float { animation: float 8s ease-in-out infinite; }
-        .animate-float-delayed { animation: float 10s ease-in-out infinite; animation-delay: 2s; }
+        /* == Background == */
+        .mesh-bg { background-color: #ede9fe; }
 
         /* == Modern Back Button == */
         .btn-back-modern {
@@ -142,16 +126,81 @@
         .btn-action-secondary:hover {
             border-color: #cbd5e1; background: #f8fafc;
         }
+
+        /* Custom Dynamic Row Grid Layouts */
+        .rincian-row-desktop {
+            display: grid !important;
+            grid-template-columns: 8fr 3fr 1fr !important;
+            gap: 16px !important;
+            padding: 16px !important;
+            align-items: center !important;
+            background: #ffffff !important;
+        }
+        .rincian-row-mobile {
+            display: grid !important;
+            grid-template-columns: 7fr 4fr 1fr !important;
+            gap: 8px !important;
+            padding: 10px !important;
+            align-items: center !important;
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+            margin-bottom: 8px !important;
+        }
+        .input-wrapper-rp {
+            position: relative !important;
+            display: block !important;
+            width: 100% !important;
+        }
+        .label-rp {
+            position: absolute !important;
+            left: 12px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            color: #94a3b8 !important;
+            pointer-events: none !important;
+            z-index: 10 !important;
+        }
+        .input-with-rp {
+            padding-left: 32px !important;
+        }
+
+        @media (max-width: 767.98px) {
+            .glass-card {
+                padding: 18px;
+                border-radius: 18px;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(255, 255, 255, 0.95) !important;
+            }
+            .modern-input, .modern-input-readonly {
+                padding: 9px 12px;
+                font-size: 0.85rem;
+                border-radius: 10px;
+            }
+            .modern-label {
+                font-size: 0.72rem;
+                margin-bottom: 4px;
+            }
+            .btn-action-primary, .btn-action-secondary {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+                border-radius: 10px;
+                width: 100%;
+                justify-content: center;
+            }
+            .form-section-header {
+                padding-bottom: 12px;
+                margin-bottom: 20px;
+            }
+        }
     </style>
     @endpush
 
     <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
-        {{-- Background Animations --}}
-        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
-            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
-            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
-        </div>
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
 
@@ -180,54 +229,52 @@
             </a>
 
             {{-- CARD ATAS PENJELAS HALAMAN --}}
-            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-3xl p-6 md:p-8 shadow-xl mb-6 overflow-hidden border border-white/20">
+            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
                 <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
                 <div class="absolute right-20 -bottom-10 w-24 h-24 bg-white/10 rounded-full blur-lg pointer-events-none"></div>
                 
-                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="flex items-center gap-5">
-                        <div class="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                            <i class="fas fa-hand-holding-usd text-2xl text-white"></i>
-                        </div>
-                        <div>
-                            <h1 class="text-xl md:text-2xl font-black tracking-tight text-white uppercase">Form Pengajuan Dana</h1>
-                            <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
-                                Ajukan permohonan dana operasional atau pengeluaran kantor, tambahkan rincian item, lampirkan dokumen bukti, dan pantau status persetujuan.
-                            </p>
-                        </div>
+                <div class="relative z-10 flex items-center gap-3 md:gap-5">
+                    <div class="h-10 w-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
+                        <i class="fas fa-hand-holding-usd text-lg md:text-2xl text-white"></i>
                     </div>
                     <div>
-                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider bg-white/90 border border-white text-blue-700 shadow-sm">
-                            <i class="fas fa-check-circle text-green-500"></i>
-                            {{ $totalPengajuan }} Pengajuan
-                        </span>
+                        <h1 class="text-base md:text-2xl font-black tracking-tight text-white uppercase">Form Pengajuan Dana</h1>
+                        @if(!$isMobile)
+                        <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
+                            Ajukan permohonan dana operasional atau pengeluaran kantor, tambahkan rincian item, lampirkan dokumen bukti, dan pantau status persetujuan.
+                        </p>
+                        @endif
                     </div>
                 </div>
             </div>
 
             {{-- STACKED VERTICAL LAYOUT --}}
-            <div class="space-y-6 pb-10">
+            <div class="space-y-4 md:space-y-6 pb-10">
 
-                <form action="{{ route('pengajuan_dana.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6 m-0">
+                <form action="{{ route('pengajuan_dana.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 md:space-y-6 m-0">
                     @csrf
                     
                     {{-- 1. INFORMASI PEMOHON (CARD SENDIRI) --}}
                     <div class="glass-card">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60" style="padding-bottom: 16px; margin-bottom: 28px;">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-3 md:pb-4 mb-4 md:mb-7">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-user-tie"></i></div>
                                 <div>
                                     <h3 class="text-lg font-black text-slate-800">1. Informasi Pemohon</h3>
+                                    @if(!$isMobile)
                                     <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Detail data karyawan yang mengajukan dana</p>
+                                    @endif
                                 </div>
                             </div>
-                            <a href="{{ route('pengajuan_dana.history') }}" class="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
-                                <i class="fas fa-history"></i>
-                                Lihat Riwayat Pengajuan
-                            </a>
+                            <div class="w-full flex justify-end sm:w-auto">
+                                <a href="{{ route('pengajuan_dana.history') }}" class="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
+                                    <i class="fas fa-history"></i>
+                                    Lihat Riwayat Pengajuan
+                                </a>
+                            </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="grid grid-cols-2 gap-3 md:gap-5">
                             <div>
                                 <label class="modern-label">Nama Pemohon</label>
                                 <input type="text" class="modern-input-readonly" value="{{ Auth::user()->name }}" readonly>
@@ -246,13 +293,13 @@
                                 <label class="modern-label">Email Pemohon</label>
                                 <input type="text" class="modern-input-readonly" value="{{ Auth::user()->email }}" readonly>
                             </div>
-                            <div class="md:col-span-2">
+                            <div class="col-span-2">
                                 <label class="modern-label" for="judul-pengajuan">Judul Pengajuan <span class="text-red-500">*</span></label>
                                 <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Contoh: Pembelian Perlengkapan Kantor & ATK" value="{{ old('judul_pengajuan') }}" required>
                             </div>
-                            <div>
+                            <div class="col-span-2 md:col-span-1">
                                 <label class="modern-label">Tanggal Pengajuan</label>
-                                <input type="text" class="modern-input-readonly" value="{{ date('d F Y') }}" readonly>
+                                <input type="text" class="modern-input-readonly" value="{{ \Carbon\Carbon::now()->locale('id')->isoFormat('dddd, D MMMM YYYY') }}" readonly>
                                 <input type="hidden" name="tanggal_pengajuan" value="{{ date('Y-m-d') }}">
                             </div>
                         </div>
@@ -264,12 +311,14 @@
                             <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-university"></i></div>
                             <div>
                                 <h4 class="text-lg font-black text-slate-800">2. Tujuan Transfer Rekening</h4>
+                                @if(!$isMobile)
                                 <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Informasi rekening untuk proses pencairan dana</p>
+                                @endif
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            <div>
+                        <div class="grid grid-cols-2 gap-3 md:gap-5">
+                            <div class="col-span-1">
                                 <label class="modern-label" for="pilih-bank">Nama Bank <span class="text-red-500">*</span></label>
                                 <select id="pilih-bank" name="nama_bank" class="modern-input" required>
                                     <option value="" disabled {{ !old('nama_bank') ? 'selected' : '' }}>Pilih Bank</option>
@@ -289,11 +338,11 @@
                                     <input type="text" id="input-bank-lainnya" name="nama_bank_lainnya" class="modern-input" placeholder="Nama Bank Lainnya" value="{{ old('nama_bank_lainnya') }}" {{ old('nama_bank') == 'other' ? 'required' : '' }}>
                                 </div>
                             </div>
-                            <div>
+                            <div class="col-span-1">
                                 <label class="modern-label" for="no-rekening">Nomor Rekening <span class="text-red-500">*</span></label>
                                 <input type="number" id="no-rekening" name="no_rekening" class="modern-input" placeholder="Contoh: 1234567890" value="{{ old('no_rekening') }}" required>
                             </div>
-                            <div>
+                            <div class="col-span-2 md:col-span-1">
                                 <label class="modern-label" for="nama-rek">Atas Nama (A/N) <span class="text-red-500">*</span></label>
                                 <input type="text" id="nama-rek" name="nama_rek" class="modern-input" placeholder="Nama Pemilik Rekening" value="{{ old('nama_rek') }}" required>
                             </div>
@@ -306,25 +355,30 @@
                             <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-list-ol"></i></div>
                             <div>
                                 <h4 class="text-lg font-black text-slate-800">3. Rincian Kebutuhan Dana</h4>
+                                @if(!$isMobile)
                                 <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Tambahkan deskripsi barang/jasa beserta nominal estimasi</p>
+                                @endif
                             </div>
                         </div>
                         
-                        {{-- Desktop Table --}}
-                        <div class="hidden md:block rounded-2xl border border-slate-200 overflow-hidden mb-3">
-                            <table class="min-w-full text-xs">
-                                <thead class="bg-slate-50 text-slate-600 uppercase font-black border-b border-slate-200">
-                                    <tr>
-                                        <th class="px-5 py-3 text-left w-2/3">Deskripsi Item</th>
-                                        <th class="px-5 py-3 text-left w-1/3">Jumlah Estimasi (Rp)</th>
-                                        <th class="px-5 py-3 text-center w-14"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rincian-dana-body" class="bg-white divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                        {{-- Mobile View --}}
-                        <div id="rincian-dana-container-mobile" class="block md:hidden space-y-3 mb-3"></div>
+                        @if($isMobile)
+                            <div id="rincian-dana-body" class="space-y-4 mb-4">
+                                {{-- Rows appended here dynamically --}}
+                            </div>
+                        @else
+                            <div class="rounded-2xl border border-slate-200 overflow-hidden mb-3">
+                                {{-- Header: Hidden on mobile, visible as grid on desktop --}}
+                                <div class="hidden md:grid grid-cols-12 bg-slate-50 text-slate-600 uppercase font-black text-xs border-b border-slate-200 p-4 gap-4">
+                                    <div class="col-span-8">Deskripsi Item</div>
+                                    <div class="col-span-3">Jumlah Estimasi (Rp)</div>
+                                    <div class="col-span-1 text-center">Aksi</div>
+                                </div>
+                                {{-- Container for rows --}}
+                                <div id="rincian-dana-body" class="bg-white divide-y divide-slate-100">
+                                    {{-- Rows appended here dynamically --}}
+                                </div>
+                            </div>
+                        @endif
                         
                         <button id="tambah-baris-btn" type="button" class="bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 font-black py-2 px-4 rounded-xl text-xs flex items-center gap-1.5 transition">
                             <i class="fas fa-plus"></i> Tambah Item Kebutuhan
@@ -344,16 +398,18 @@
                         <div class="form-section-header">
                             <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-paperclip"></i></div>
                             <div>
-                                <h4 class="text-lg font-black text-slate-800">4. Dokumen / Nota Bukti Pendukung (Opsional)</h4>
+                                <h4 class="text-lg font-black text-slate-800">4. File Pendukung (Opsional)</h4>
+                                @if(!$isMobile)
                                 <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Lampirkan file nota, invoice, proposal, dll. jika ada</p>
+                                @endif
                             </div>
                         </div>
 
                         {{-- Info Banner Format Dokumen --}}
-                        <div class="bg-blue-50/50 border border-blue-100 p-3.5 rounded-2xl mb-4 flex gap-3">
+                        <div class="bg-blue-50/50 border border-blue-100 p-3 md:p-3.5 rounded-2xl mb-3 md:mb-4 flex gap-3">
                             <i class="fas fa-info-circle text-blue-600 text-sm mt-0.5"></i>
                             <div class="text-[11px] text-blue-800 leading-normal font-semibold">
-                                Format file yang didukung: <span class="text-blue-900 font-black">JPG, JPEG, PNG, PDF, DOC, DOCX</span>. Ukuran berkas maksimal <span class="text-blue-900 font-black">2MB</span> per file.
+                                Format file yang didukung: <span class="text-blue-900 font-black">JPG, JPEG, PNG, PDF, DOC, DOCX, XLS, XLSX</span>. Ukuran berkas maksimal <span class="text-blue-900 font-black">5MB</span> per file.
                             </div>
                         </div>
 
@@ -364,12 +420,21 @@
                     </div>
 
                     {{-- SUBMIT BUTTONS --}}
-                    <div class="flex justify-end gap-3 pt-2">
-                        <button type="button" id="reset-form-btn" class="btn-action-secondary">Reset Formulir</button>
-                        <button type="submit" id="submit-button" class="btn-action-primary">
-                            <i class="fas fa-paper-plane"></i> Ajukan Dana Sekarang
-                        </button>
-                    </div>
+                    @if($isMobile)
+                        <div class="flex flex-col-reverse gap-3 pt-2">
+                            <button type="button" id="reset-form-btn" class="btn-action-secondary">Reset Formulir</button>
+                            <button type="submit" id="submit-button" class="btn-action-primary">
+                                <i class="fas fa-paper-plane"></i> Ajukan Dana Sekarang
+                            </button>
+                        </div>
+                    @else
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button type="button" id="reset-form-btn" class="btn-action-secondary">Reset Formulir</button>
+                            <button type="submit" id="submit-button" class="btn-action-primary">
+                                <i class="fas fa-paper-plane"></i> Ajukan Dana Sekarang
+                            </button>
+                        </div>
+                    @endif
                 </form>
 
 
@@ -393,8 +458,7 @@
         });
         
         const tambahBarisBtn = document.getElementById('tambah-baris-btn'); 
-        const rincianDanaBodyDesktop = document.getElementById('rincian-dana-body'); 
-        const rincianDanaContainerMobile = document.getElementById('rincian-dana-container-mobile'); 
+        const rincianDanaBody = document.getElementById('rincian-dana-body'); 
         const totalDanaDisplay = document.getElementById('total-dana-display'); 
         const jumlahDanaTotalInput = document.getElementById('jumlah-dana-total');
         
@@ -413,10 +477,10 @@
             input.value = value ? parseInt(value).toLocaleString('id-ID') : '';
         }
         
+        const isMobile = @json($isMobile);
+
         function addRow(deskripsi = '', jumlah = '') {
-            const isMobile = window.innerWidth < 768; 
-            const container = isMobile ? rincianDanaContainerMobile : rincianDanaBodyDesktop; 
-            const newRow = document.createElement(isMobile ? 'div' : 'tr');
+            const newRow = document.createElement('div');
             
             let formattedJumlah = '';
             if (jumlah !== '') {
@@ -425,18 +489,44 @@
             }
             
             if (isMobile) {
-                newRow.className = 'bg-white rounded-xl p-3 border border-slate-200 space-y-2'; 
+                newRow.className = 'rincian-row-mobile';
                 newRow.innerHTML = `
-                    <div><input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input" placeholder="Deskripsi pengeluaran" required></div>
-                    <div><input type="text" name="rincian_jumlah[]" value="${formattedJumlah}" class="modern-input jumlah-input" placeholder="Jumlah (Rp)" required></div>
-                    <button type="button" class="delete-row-btn text-red-500 hover:text-red-700 text-[10px] font-bold uppercase tracking-wider block mt-1">Hapus Item</button>`;
+                    <div>
+                        <input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Deskripsi item" required>
+                    </div>
+                    <div>
+                        <div class="input-wrapper-rp">
+                            <span class="label-rp">Rp</span>
+                            <input type="text" name="rincian_jumlah[]" value="${formattedJumlah}" class="modern-input !py-1.5 !rounded-lg !text-xs jumlah-input input-with-rp" placeholder="Jumlah" required>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: center; align-items: center;">
+                        <button type="button" class="delete-row-btn text-red-500 hover:text-red-700 p-1.5 text-sm">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
             } else {
+                newRow.className = 'rincian-row-desktop';
                 newRow.innerHTML = `
-                    <td class="px-4 py-2"><input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-2 !px-3.5 !rounded-xl !text-xs" placeholder="Masukkan deskripsi" required></td>
-                    <td class="px-4 py-2"><div class="relative"><span class="absolute text-slate-400 text-xs font-bold" style="left: 14px; top: 50%; transform: translateY(-50%);">Rp</span><input type="text" name="rincian_jumlah[]" value="${formattedJumlah}" class="modern-input !py-2 !rounded-xl !text-xs jumlah-input" style="padding-left: 46px !important; padding-right: 14px !important;" placeholder="0" required></div></td>
-                    <td class="px-4 py-2 text-center"><button type="button" class="delete-row-btn text-slate-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-xl text-sm transition-all"><i class="fas fa-trash-alt"></i></button></td>`;
+                    <div>
+                        <input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-2 !px-3.5 !rounded-xl !text-xs" placeholder="Masukkan deskripsi" required>
+                    </div>
+                    <div>
+                        <div class="input-wrapper-rp">
+                            <span class="label-rp">Rp</span>
+                            <input type="text" name="rincian_jumlah[]" value="${formattedJumlah}" class="modern-input !py-2 !rounded-xl !text-xs jumlah-input input-with-rp" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: center; align-items: center;">
+                        <button type="button" class="delete-row-btn text-slate-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-xl text-sm transition-all">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
             }
-            container.appendChild(newRow); 
+            
+            rincianDanaBody.appendChild(newRow); 
             const amountInput = newRow.querySelector('.jumlah-input'); 
             amountInput.addEventListener('input', () => { formatCurrency(amountInput); updateTotal(); }); 
             newRow.querySelector('.delete-row-btn').addEventListener('click', () => { newRow.remove(); updateTotal(); });
@@ -573,8 +663,7 @@
         if (resetBtn) {
             resetBtn.addEventListener('click', function() {
                 mainForm.reset();
-                if (rincianDanaBodyDesktop) rincianDanaBodyDesktop.innerHTML = '';
-                if (rincianDanaContainerMobile) rincianDanaContainerMobile.innerHTML = '';
+                if (rincianDanaBody) rincianDanaBody.innerHTML = '';
                 addRow();
                 if (lampiranContainer) lampiranContainer.innerHTML = '';
                 addLampiranInput();
