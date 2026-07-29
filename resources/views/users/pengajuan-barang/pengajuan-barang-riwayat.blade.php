@@ -1,3 +1,7 @@
+@php
+    $agent = new \Jenssegers\Agent\Agent();
+    $isMobile = $agent->isMobile();
+@endphp
 <x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
 
@@ -5,25 +9,8 @@
 
     @push('styles')
     <style>
-        .mesh-bg {
-            background-color: #f0f6fc;
-            background-image:
-                radial-gradient(at 40% 20%, rgba(147, 197, 253, 0.45) 0px, transparent 50%),
-                radial-gradient(at 80% 0%, rgba(167, 139, 250, 0.35) 0px, transparent 50%),
-                radial-gradient(at 0% 50%, rgba(191, 219, 254, 0.45) 0px, transparent 50%),
-                radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
-                radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
-                radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
-            background-attachment: fixed;
-        }
-        @keyframes float {
-            0% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(5deg); }
-            100% { transform: translateY(0px) rotate(0deg); }
-        }
-        .animate-float { animation: float 8s ease-in-out infinite; }
-        .animate-float-delayed { animation: float 10s ease-in-out infinite; animation-delay: 2s; }
+        /* == Background == */
+        .mesh-bg { background-color: #ede9fe; }
         .btn-back-modern {
             display: inline-flex; align-items: center; gap: 10px;
             padding: 8px 18px 8px 8px;
@@ -41,14 +28,32 @@
         .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,1); border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); padding: 28px; }
         .modern-select { background: rgba(255,255,255,0.95); border: 2px solid #e2e8f0; border-radius: 14px; padding: 9px 15px; font-size: 0.85rem; color: #1e293b; font-weight: 700; outline: none; transition: all 0.2s ease; cursor: pointer; }
         .modern-select:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.15); }
+
+        .history-card-mobile {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+
+        @media (max-width: 767.98px) {
+            .glass-card {
+                padding: 16px;
+                border-radius: 18px;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(255, 255, 255, 0.95) !important;
+            }
+            .modern-select {
+                padding: 7px 12px;
+                font-size: 0.8rem;
+                border-radius: 10px;
+                width: auto !important;
+                flex: 1 !important;
+            }
+        }
     </style>
     @endpush
 
     <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
-            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
-        </div>
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
 
@@ -58,37 +63,39 @@
             </a>
 
             {{-- HEADER --}}
-            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-3xl p-6 md:p-8 shadow-xl mb-6 overflow-hidden border border-white/20">
+            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
                 <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-                <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div class="flex items-center gap-5">
-                        <div class="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                            <i class="fas fa-history text-2xl text-white"></i>
-                        </div>
-                        <div>
-                            <h1 class="text-xl md:text-2xl font-black tracking-tight text-white uppercase">Riwayat Pengajuan Barang</h1>
-                            <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
-                                Pantau status, detail, dan alur persetujuan permohonan barang yang telah Anda ajukan.
-                            </p>
-                        </div>
+                <div class="relative z-10 flex items-center gap-3 md:gap-5">
+                    <div class="h-10 w-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
+                        <i class="fas fa-history text-lg md:text-2xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-base md:text-2xl font-black tracking-tight text-white uppercase">Riwayat Pengajuan Barang</h1>
+                        @if(!$isMobile)
+                        <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
+                            Pantau status, detail, dan alur persetujuan permohonan barang yang telah Anda ajukan.
+                        </p>
+                        @endif
                     </div>
                 </div>
             </div>
 
             {{-- RIWAYAT CARD --}}
             <div class="glass-card space-y-6 mb-10">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200" style="padding-bottom: 20px; margin-bottom: 24px;">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4 mb-5">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-list-ul"></i></div>
                         <div>
                             <h3 class="text-lg font-black text-slate-800">Daftar Pengajuan Anda</h3>
+                            @if(!$isMobile)
                             <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Gunakan filter di sebelah kanan untuk menyaring status pengajuan.</p>
+                            @endif
                         </div>
                     </div>
 
                     {{-- Filter --}}
-                    <form action="{{ route('pengajuan_barang.history') }}" method="GET" class="flex items-center gap-2.5 m-0">
-                        <label class="text-[11px] font-black text-slate-500 uppercase tracking-wider mt-0.5">Status Filter:</label>
+                    <form action="{{ route('pengajuan_barang.history') }}" method="GET" class="flex items-center justify-between md:justify-end gap-2.5 w-full md:w-auto m-0">
+                        <label class="text-[11px] font-black text-slate-500 uppercase tracking-wider mt-0.5 whitespace-nowrap">Status Filter:</label>
                         <select name="status" class="modern-select" onchange="this.form.submit()">
                             <option value="semua" {{ request('status') == 'semua' || !request('status') ? 'selected' : '' }}>Semua Status</option>
                             <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Appr 1</option>
@@ -133,7 +140,7 @@
                                     };
                                 @endphp
                                 <tr class="hover:bg-slate-50/50 transition">
-                                    <td class="px-6 py-4.5 text-slate-500 font-extrabold">{{ $pengajuan->created_at->format('d F Y') }}</td>
+                                    <td class="px-6 py-4.5 text-slate-500 font-extrabold">{{ $pengajuan->created_at->locale('id')->isoFormat('D MMMM YYYY') }}</td>
                                     <td class="px-6 py-4.5 text-slate-800 font-bold leading-normal">{{ $pengajuan->judul_pengajuan }}</td>
                                     <td class="px-6 py-4.5 font-black text-slate-700">{{ count($pengajuan->rincian_barang ?? []) }} Item</td>
                                     <td class="px-6 py-4.5">
@@ -182,14 +189,14 @@
                                 default => ucfirst($pengajuan->status),
                             };
                         @endphp
-                        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+                        <div class="history-card-mobile rounded-2xl p-4 border shadow-sm space-y-3">
                             <div class="flex justify-between items-start gap-2">
                                 <div class="font-bold text-slate-800 text-sm leading-snug">{{ $pengajuan->judul_pengajuan }}</div>
                                 <span class="inline-block px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border {{ $statusClass }}">
                                     {{ $statusLabel }}
                                 </span>
                             </div>
-                            <div class="text-[11px] text-slate-400 font-bold">{{ $pengajuan->created_at->format('d F Y') }}</div>
+                            <div class="text-[11px] text-slate-400 font-bold">{{ $pengajuan->created_at->locale('id')->isoFormat('D MMMM YYYY') }}</div>
                             <div class="flex justify-between items-center pt-3 border-t border-slate-100">
                                 <div class="text-[11px] text-slate-500 font-bold">Total: <span class="text-slate-800 text-xs font-black">{{ count($pengajuan->rincian_barang ?? []) }} item</span></div>
                                 <a href="{{ route('pengajuan_barang.show', $pengajuan->id) }}" class="text-xs text-blue-600 font-bold hover:underline">

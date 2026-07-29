@@ -1,3 +1,7 @@
+@php
+    $agent = new \Jenssegers\Agent\Agent();
+    $isMobile = $agent->isMobile();
+@endphp
 <x-layout-users>
     <x-slot:title>Detail Pengajuan Barang</x-slot:title>
 
@@ -6,25 +10,8 @@
     @push('styles')
     <style>
         html { scroll-behavior: smooth; }
-        .mesh-bg {
-            background-color: #f0f6fc;
-            background-image:
-                radial-gradient(at 40% 20%, rgba(147, 197, 253, 0.45) 0px, transparent 50%),
-                radial-gradient(at 80% 0%, rgba(167, 139, 250, 0.35) 0px, transparent 50%),
-                radial-gradient(at 0% 50%, rgba(191, 219, 254, 0.45) 0px, transparent 50%),
-                radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
-                radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
-                radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
-            background-attachment: fixed;
-        }
-        @keyframes float {
-            0% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(5deg); }
-            100% { transform: translateY(0px) rotate(0deg); }
-        }
-        .animate-float { animation: float 8s ease-in-out infinite; }
-        .animate-float-delayed { animation: float 10s ease-in-out infinite; animation-delay: 2s; }
+        /* == Background == */
+        .mesh-bg { background-color: #ede9fe; }
         .btn-back-modern {
             display: inline-flex; align-items: center; gap: 10px;
             padding: 8px 18px 8px 8px;
@@ -40,71 +27,79 @@
         .btn-back-modern .icon-circle { width: 32px; height: 32px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #6366f1; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(0,0,0,0.06); transition: transform 0.3s ease; }
         .btn-back-modern:hover .icon-circle { transform: translateX(-3px); background: #EEF2FF; }
         .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,1); border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); padding: 28px; }
+
+        @media (max-width: 767.98px) {
+            .glass-card {
+                padding: 16px;
+                border-radius: 18px;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(255, 255, 255, 0.95) !important;
+            }
+        }
     </style>
     @endpush
 
     <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
-            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
-            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
-        </div>
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
 
             {{-- NAVIGASI --}}
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div class="flex justify-between items-center mb-6 relative z-10">
                 <a href="{{ route('pengajuan_barang.history') }}" class="btn-back-modern">
                     <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                     Kembali ke Riwayat
                 </a>
 
                 @if(Auth::id() == $pengajuanBarang->user_id || Auth::user()->role === 'admin')
-                <a href="{{ route('pengajuan_barang.download', $pengajuanBarang) }}"
-                   class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-black text-white bg-red-600 rounded-xl shadow-lg hover:bg-red-700 transition-all duration-300 w-full sm:w-auto">
-                    <i class="fas fa-file-pdf"></i> Cetak PDF
-                </a>
+                    <a href="{{ route('pengajuan_barang.download', $pengajuanBarang) }}" 
+                       class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-black text-white bg-red-600 rounded-full shadow-md hover:bg-red-700 hover:shadow-lg transition-all duration-300">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Cetak PDF</span>
+                    </a>
                 @endif
             </div>
 
             {{-- HEADER UTAMA --}}
-            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-3xl p-6 md:p-8 shadow-xl mb-6 overflow-hidden border border-white/20">
+            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
                 <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
                 @php
                     $badgeClass = match($pengajuanBarang->status) {
-                        'selesai' => 'bg-green-100 text-green-700 border-green-200',
-                        'ditolak' => 'bg-red-100 text-red-700 border-red-200',
-                        'diproses' => 'bg-blue-100 text-blue-700 border-blue-200',
-                        'dibatalkan' => 'bg-slate-200 text-slate-700 border-slate-300',
-                        default => 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                        'selesai' => 'bg-green-500 text-white shadow-green-500/20',
+                        'ditolak' => 'bg-red-500 text-white shadow-red-500/20',
+                        'diproses' => 'bg-blue-500 text-white shadow-blue-500/20',
+                        'dibatalkan' => 'bg-slate-500 text-white shadow-slate-500/20',
+                        default => 'bg-yellow-500 text-white shadow-yellow-500/20',
                     };
                     $badgeLabel = match($pengajuanBarang->status) {
-                        'diajukan' => 'Menunggu Persetujuan',
-                        'diproses' => 'Sedang Diproses',
+                        'diajukan' => 'Diajukan',
+                        'diproses' => 'Diproses',
                         'selesai' => 'Selesai',
                         'ditolak' => 'Ditolak',
                         'dibatalkan' => 'Dibatalkan',
                         default => ucfirst($pengajuanBarang->status),
                     };
                 @endphp
-                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="flex items-center gap-5">
-                        <div class="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                            <i class="fas fa-box text-2xl text-white"></i>
+                <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 md:gap-5">
+                        <div class="h-10 w-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
+                            <i class="fas fa-box text-lg md:text-2xl text-white"></i>
                         </div>
                         <div>
-                            <div class="text-blue-200 text-[11px] font-black uppercase tracking-widest mb-1">
+                            <div class="text-blue-200 text-[10px] font-black uppercase tracking-widest mb-0.5">
                                 #BRG-{{ str_pad($pengajuanBarang->id, 4, '0', STR_PAD_LEFT) }}
                             </div>
-                            <h1 class="text-xl md:text-2xl font-black tracking-tight text-white">{{ $pengajuanBarang->judul_pengajuan }}</h1>
-                            <p class="text-blue-200 text-xs mt-1 font-semibold">
-                                Diajukan: {{ $pengajuanBarang->created_at->translatedFormat('d F Y') }}
+                            <h1 class="text-sm md:text-xl font-black tracking-tight text-white uppercase leading-snug">{{ $pengajuanBarang->judul_pengajuan }}</h1>
+                            <p class="text-blue-100 text-[10px] md:text-xs mt-1 font-semibold leading-relaxed">
+                                Diajukan {{ $pengajuanBarang->created_at->locale('id')->isoFormat('dddd, D MMMM YYYY') }}
                             </p>
                         </div>
                     </div>
-                    <span class="inline-flex items-center px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider border {{ $badgeClass }} shadow-sm">
-                        {{ $badgeLabel }}
-                    </span>
+                    <div class="w-full flex justify-end sm:w-auto">
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/20 shadow-sm {{ $badgeClass }}">
+                            {{ $badgeLabel }}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -136,7 +131,7 @@
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-500 font-semibold text-xs">Tanggal</span>
-                            <span class="font-bold text-slate-800 text-xs text-right">{{ $pengajuanBarang->created_at->format('d F Y') }}</span>
+                            <span class="font-bold text-slate-800 text-xs text-right">{{ $pengajuanBarang->created_at->locale('id')->isoFormat('D MMMM YYYY') }}</span>
                         </div>
                     </div>
                 </div>
@@ -147,12 +142,12 @@
                         <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-history"></i></div>
                         <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">Timeline Persetujuan</h4>
                     </div>
-                    <div class="space-y-3">
+                    <div class="space-y-3.5 flex-1 overflow-y-auto">
                         @foreach ([
-                            ['label' => 'Tahap 1', 'approver' => $pengajuanBarang->approver1, 'status' => $pengajuanBarang->status_appr_1],
-                            ['label' => 'Tahap 2', 'approver' => $pengajuanBarang->approver2, 'status' => $pengajuanBarang->status_appr_2],
-                            ['label' => 'Tahap 3', 'approver' => $pengajuanBarang->approver3, 'status' => $pengajuanBarang->status_appr_3],
-                            ['label' => 'Tahap 4 (Final)', 'approver' => $pengajuanBarang->approver4, 'status' => $pengajuanBarang->status_appr_4],
+                            ['label' => 'Tahap 1', 'approver' => $pengajuanBarang->approver1, 'status' => $pengajuanBarang->status_appr_1, 'catatan' => $pengajuanBarang->catatan_approver_1, 'tanggal' => $pengajuanBarang->tanggal_approved_1],
+                            ['label' => 'Tahap 2', 'approver' => $pengajuanBarang->approver2, 'status' => $pengajuanBarang->status_appr_2, 'catatan' => $pengajuanBarang->catatan_approver_2, 'tanggal' => $pengajuanBarang->tanggal_approved_2],
+                            ['label' => 'Tahap 3', 'approver' => $pengajuanBarang->approver3, 'status' => $pengajuanBarang->status_appr_3, 'catatan' => $pengajuanBarang->catatan_approver_3, 'tanggal' => $pengajuanBarang->tanggal_approved_3],
+                            ['label' => 'Tahap 4 (Final)', 'approver' => $pengajuanBarang->approver4, 'status' => $pengajuanBarang->status_appr_4, 'catatan' => $pengajuanBarang->catatan_approver_4, 'tanggal' => $pengajuanBarang->tanggal_approved_4],
                         ] as $tahap)
                             @if($tahap['approver'])
                                 @php
@@ -170,15 +165,26 @@
                                     };
                                 @endphp
                                 <div class="rounded-2xl border border-slate-200/80 p-4 bg-white {{ $borderColor }} border-l-[4px] shadow-sm">
-                                    <div class="flex justify-between items-center">
+                                    <div class="flex justify-between items-start">
                                         <div>
-                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">{{ $tahap['label'] }}</span>
-                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-0.5">{{ $tahap['approver']->name }}</h4>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">{{ $tahap['label'] }}</span>
+                                                @if($tahap['tanggal'])
+                                                    <span class="text-[9px] text-slate-400 font-semibold">• {{ $tahap['tanggal']->locale('id')->isoFormat('D MMMM YYYY, H:i') }}</span>
+                                                @endif
+                                            </div>
+                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $tahap['approver']->name }}</h4>
                                         </div>
                                         <span class="px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border {{ $badgeAppr }}">
                                             {{ ucfirst($tahap['status']) }}
                                         </span>
                                     </div>
+                                    @if($tahap['catatan'])
+                                        <div class="mt-2.5 bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs text-slate-600 italic flex items-start gap-2">
+                                            <i class="fas fa-quote-left text-slate-300 text-[10px] mt-0.5"></i>
+                                            <span>{{ $tahap['catatan'] }}</span>
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
                         @endforeach
@@ -193,7 +199,7 @@
                     <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">Rincian Barang yang Diajukan</h4>
                 </div>
 
-                <div class="overflow-x-auto rounded-2xl border border-slate-200/80" style="border-radius: 16px; overflow: hidden;">
+                <div class="overflow-x-auto rounded-2xl border border-slate-200/80" style="border-radius: 16px;">
                     <table class="min-w-full text-xs">
                         <thead class="bg-slate-50 text-slate-600 uppercase font-black border-b border-slate-200">
                             <tr>
@@ -232,50 +238,62 @@
                 $isAppr3 = ($user->id == $pengajuanBarang->approver_barang_3_id && $afterAppr2 && $pengajuanBarang->status_appr_3 == 'menunggu');
                 $isAppr4 = ($user->id == $pengajuanBarang->approver_barang_4_id && $afterAppr3 && $pengajuanBarang->status_appr_4 == 'menunggu');
                 $showForm = $isAppr1 || $isAppr2 || $isAppr3 || $isAppr4;
-            @endphp
-
-            @if($showForm)
-            <div class="glass-card mb-10 border-t-4 border-blue-500">
-                <div class="flex items-center gap-3 border-b border-slate-200/60" style="padding-bottom: 14px; margin-bottom: 20px;">
-                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-gavel"></i></div>
-                    <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">
-                        Tindakan Persetujuan {{ $isAppr4 ? '(Final)' : '' }}
-                    </h4>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <form action="{{ route('pengajuan_barang.updateStatus', $pengajuanBarang) }}" method="POST">
-                        @csrf @method('PATCH')
-                        <div class="bg-green-50 p-6 rounded-2xl border border-green-100 text-center h-full flex flex-col">
-                            <label class="block text-sm font-bold text-green-800 mb-2">Setujui Pengajuan</label>
-                            <textarea name="alasan" rows="3" class="w-full p-3 border border-green-200 rounded-xl mb-3 text-sm focus:ring-green-500 focus:border-green-500" placeholder="Catatan persetujuan (opsional)..."></textarea>
+            @endphp            {{-- AREA TINDAKAN / ACTION --}}
+            <div class="space-y-6 mt-8 pb-12">
+                
+                {{-- A. APPROVAL --}}
+                @if($showForm)
+                <div class="glass-card border-t-4 border-t-blue-500">
+                    <h3 class="text-lg font-black text-slate-800 mb-6 flex items-center">
+                        <i class="fas fa-gavel text-slate-700 mr-2"></i> Tindakan Persetujuan {{ $isAppr4 ? '(Final)' : '' }}
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <form action="{{ route('pengajuan_barang.updateStatus', $pengajuanBarang) }}" method="POST" class="bg-green-50/70 p-5 rounded-2xl border border-green-100 shadow-sm flex flex-col gap-3">
+                            @csrf @method('PATCH')
+                            
+                            <label class="block text-xs font-black text-green-800">
+                                Catatan Persetujuan <span class="font-semibold text-green-600">(Opsional)</span>
+                            </label>
+                            <textarea name="alasan" rows="3" 
+                                class="w-full p-3 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-xs font-semibold"
+                                placeholder="Tulis catatan persetujuan jika perlu..."></textarea>
                             <input type="hidden" name="status" value="disetujui">
-                            <button type="submit" class="mt-auto w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition shadow-md">Setujui Sekarang</button>
-                        </div>
-                    </form>
-                    <form action="{{ route('pengajuan_barang.updateStatus', $pengajuanBarang) }}" method="POST">
-                        @csrf @method('PATCH')
-                        <div class="bg-red-50 p-6 rounded-2xl border border-red-100 text-center h-full flex flex-col">
-                            <label class="block text-sm font-bold text-red-800 mb-2">Tolak Pengajuan <span class="text-red-500">*</span></label>
-                            <textarea name="alasan" rows="3" class="w-full p-3 border border-red-200 rounded-xl mb-3 text-sm focus:ring-red-500 focus:border-red-500" placeholder="Wajib isi alasan penolakan..." required></textarea>
+                            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-md shadow-green-200 flex items-center justify-center gap-2">
+                                <i class="fas fa-check-circle"></i> Setujui Pengajuan
+                            </button>
+                        </form>
+                        
+                        <form action="{{ route('pengajuan_barang.updateStatus', $pengajuanBarang) }}" method="POST" class="bg-red-50/70 p-5 rounded-2xl border border-red-100 shadow-sm flex flex-col gap-3">
+                            @csrf @method('PATCH')
+                            <label class="block text-xs font-black text-red-800">
+                                Catatan Penolakan <span class="text-red-600 font-bold">*</span>
+                            </label>
+                            <textarea name="alasan" rows="3" 
+                                class="w-full p-3 border border-red-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-xs font-semibold"
+                                placeholder="Tulis alasan penolakan wajib..." required></textarea>
                             <input type="hidden" name="status" value="ditolak">
-                            <button type="submit" class="mt-auto w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-md">Tolak Pengajuan</button>
-                        </div>
+                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-md shadow-red-200 flex items-center justify-center gap-2">
+                                <i class="fas fa-times-circle"></i> Tolak Pengajuan
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                @endif
+
+                {{-- B. BATALKAN --}}
+                @if(Auth::id() == $pengajuanBarang->user_id && in_array($pengajuanBarang->status, ['diajukan']))
+                <div class="bg-red-50/70 rounded-3xl border border-red-100 p-6 md:p-8 text-center shadow-sm">
+                    <h3 class="text-base font-black text-red-800 mb-1 uppercase tracking-tight">Batalkan Pengajuan?</h3>
+                    <p class="text-xs text-red-600 mb-4 font-semibold">Tindakan ini tidak dapat diurungkan. Pengajuan barang akan dibatalkan secara permanen.</p>
+                    <form action="{{ route('pengajuan_barang.cancel', $pengajuanBarang) }}" method="POST" onsubmit="confirmSubmit(event, 'Apakah Anda benar-benar yakin ingin membatalkan pengajuan barang ini?');">
+                        @csrf
+                        <button type="submit" class="bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase transition shadow-sm">
+                            Batalkan Pengajuan
+                        </button>
                     </form>
                 </div>
+                @endif
             </div>
-            @endif
-
-            {{-- TOMBOL BATALKAN --}}
-            @if(Auth::id() == $pengajuanBarang->user_id && in_array($pengajuanBarang->status, ['diajukan']))
-            <div class="mb-10 flex justify-end">
-                <form action="{{ route('pengajuan_barang.cancel', $pengajuanBarang) }}" method="POST" onsubmit="confirmSubmit(event, 'Yakin ingin membatalkan pengajuan ini?')">
-                    @csrf
-                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-black text-white bg-slate-600 rounded-xl shadow hover:bg-slate-700 transition">
-                        <i class="fas fa-times-circle"></i> Batalkan Pengajuan
-                    </button>
-                </form>
-            </div>
-            @endif
 
         </div>
     </div>
