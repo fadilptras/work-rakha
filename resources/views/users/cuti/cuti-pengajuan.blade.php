@@ -1,3 +1,7 @@
+@php
+    $agent = new \Jenssegers\Agent\Agent();
+    $isMobile = $agent->isMobile();
+@endphp
 <x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
 
@@ -43,15 +47,7 @@
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             margin-bottom: 24px;
-            width: 100%;
-            justify-content: center;
-            min-height: 44px;
-        }
-        @media (min-width: 768px) {
-            .btn-back-modern {
-                width: fit-content;
-                justify-content: flex-start;
-            }
+            width: fit-content;
         }
         .btn-back-modern:hover { 
             background: rgba(255, 255, 255, 0.95);
@@ -203,7 +199,211 @@
             </a>
             <input type="hidden" id="libur-nasional-data" value='@json($liburNasional ?? [])'>
 
-            {{-- GRID LAYOUT UTAMA --}}
+                        @if($isMobile)
+            {{-- HEADER MOBILE --}}
+            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl p-4 shadow-xl mb-4 overflow-hidden border border-white/20">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                <div class="relative z-10 flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
+                        <i class="fas fa-file-signature text-lg text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-base font-black tracking-tight text-white uppercase">Form Pengajuan Cuti</h1>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4 pb-10">
+                <form action="{{ route('cuti.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 m-0">
+                    @csrf
+                    <input type="hidden" name="jenis_cuti" value="tahunan">
+
+                    {{-- 1. INFORMASI PEMOHON --}}
+                    <div class="glass-card" style="padding:16px; border-radius:18px;">
+                        <div class="flex flex-col gap-4 border-b border-slate-200/60 pb-3 mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-user-tie"></i></div>
+                                <div>
+                                    <h3 class="text-lg font-black text-slate-800">1. Info Pemohon</h3>
+                                </div>
+                            </div>
+                            <div class="w-full flex justify-end">
+                                <a href="#riwayat-card" class="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
+                                    <i class="fas fa-history"></i> Lihat Riwayat
+                                </a>
+                            </div>
+                        </div>
+
+                        {{-- Card Sisa Cuti --}}
+                        <div class="card-sisa-cuti" style="border-radius:14px; padding:14px; margin-bottom:16px;">
+                            <div class="relative z-10">
+                                <p class="text-blue-100 font-semibold mb-1 text-[10px] uppercase tracking-wider">Sisa Cuti Tahunan</p>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-3xl font-black">{{ $sisaCuti ?? 0 }}</span>
+                                    <span class="text-sm font-medium text-blue-200">/ {{ $totalCuti ?? 0 }} Hari</span>
+                                </div>
+                            </div>
+                            <div class="relative z-10 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-xl">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="modern-label" style="font-size:0.72rem; margin-bottom:4px;">Nama Pemohon</label>
+                                <input type="text" class="modern-input-readonly" style="padding:9px 12px; font-size:0.85rem; border-radius:10px; width:100%; background:rgba(255, 255, 255, 0.95); border:2px solid #e2e8f0; color:#1e293b;" value="{{ Auth::user()->name }}" readonly>
+                            </div>
+                            <div>
+                                <label class="modern-label" style="font-size:0.72rem; margin-bottom:4px;">Divisi</label>
+                                <input type="text" class="modern-input-readonly" style="padding:9px 12px; font-size:0.85rem; border-radius:10px; width:100%; background:rgba(255, 255, 255, 0.95); border:2px solid #e2e8f0; color:#1e293b;" value="{{ Auth::user()->divisi }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- 2. DETAIL CUTI --}}
+                    <div class="glass-card" style="padding:16px; border-radius:18px;">
+                        <div class="form-section-header" style="padding-bottom:12px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+                            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-calendar-alt"></i></div>
+                            <div>
+                                <h4 class="text-lg font-black text-slate-800">2. Detail Cuti</h4>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <label for="tanggal_mulai" class="modern-label" style="font-size:0.72rem; margin-bottom:4px;">Tanggal Mulai <span class="text-red-500">*</span></label>
+                                <input type="date" id="tanggal_mulai" name="tanggal_mulai" min="{{ \Carbon\Carbon::now()->toDateString() }}" value="{{ old('tanggal_mulai') }}" class="modern-input" style="padding:9px 12px; font-size:0.85rem; border-radius:10px;" required>
+                            </div>
+                            <div>
+                                <label for="tanggal_selesai" class="modern-label" style="font-size:0.72rem; margin-bottom:4px;">Tanggal Selesai <span class="text-red-500">*</span></label>
+                                <input type="date" id="tanggal_selesai" name="tanggal_selesai" min="{{ \Carbon\Carbon::now()->toDateString() }}" value="{{ old('tanggal_selesai') }}" class="modern-input" style="padding:9px 12px; font-size:0.85rem; border-radius:10px;" required>
+                            </div>
+                        </div>
+                        <div class="mb-5">
+                            <label for="alasan" class="modern-label" style="font-size:0.72rem; margin-bottom:4px;">Alasan Cuti <span class="text-red-500">*</span></label>
+                            <textarea id="alasan" name="alasan" rows="3" class="modern-input" style="padding:9px 12px; font-size:0.85rem; border-radius:10px;" placeholder="Tulis alasan..." required>{{ old('alasan') }}</textarea>
+                        </div>
+
+                        {{-- Card Estimasi Durasi --}}
+                        <div class="bg-slate-50 rounded-xl p-3 border border-slate-200">
+                            <h5 class="font-bold text-slate-700 text-[11px] mb-2">Estimasi Durasi</h5>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="space-y-2">
+                                    <div class="ringkasan-item" style="padding:8px 10px; border-radius:8px; margin-bottom:0; justify-content:space-between;">
+                                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Mulai</span>
+                                        <span id="ringkasan-mulai" class="font-black text-slate-900 text-[11px]">-</span>
+                                    </div>
+                                    <div class="ringkasan-item" style="padding:8px 10px; border-radius:8px; margin-bottom:0; justify-content:space-between;">
+                                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Selesai</span>
+                                        <span id="ringkasan-selesai" class="font-black text-slate-900 text-[11px]">-</span>
+                                    </div>
+                                </div>
+                                <div class="ringkasan-item h-full bg-blue-50 border-blue-100 flex-col justify-center items-center gap-1 py-2" style="padding:8px; border-radius:8px; margin-bottom:0;">
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <i class="fas fa-stopwatch text-blue-600 text-[10px]"></i>
+                                        <span class="text-[9px] font-semibold text-blue-800 uppercase tracking-wider">Total</span>
+                                    </div>
+                                    <span id="total-hari" class="font-black text-blue-700 text-lg">- Hari</span>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-3 mt-3 bg-amber-50 rounded-xl border border-amber-100">
+                                <i class="fas fa-info-circle text-amber-500 mt-0.5 text-xs"></i>
+                                <p class="text-[9px] text-amber-800 font-medium leading-relaxed">Sabtu, Minggu, & Libur Nasional tidak dihitung sebagai hari cuti.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- 3. FILE PENDUKUNG --}}
+                    <div class="glass-card" style="padding:16px; border-radius:18px;">
+                        <div class="form-section-header" style="padding-bottom:12px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+                            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-paperclip"></i></div>
+                            <div>
+                                <h4 class="text-lg font-black text-slate-800">3. Lampiran</h4>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="modern-file-label w-full flex-col text-center" for="lampiran" style="padding:10px; border-radius:10px;">
+                                <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 flex-shrink-0 mx-auto">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="flex-1 w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                                    <p id="file-name-label" class="font-semibold text-slate-700 truncate text-xs mt-1">Pilih File</p>
+                                    <p class="text-[9px] text-slate-400 mt-1 whitespace-normal">Format: JPG, PNG, PDF (Maks 2MB)</p>
+                                </div>
+                                <input type="file" id="lampiran" name="lampiran" class="hidden" accept="image/*,application/pdf" onchange="document.getElementById('file-name-label').textContent = this.files[0]?.name || 'Pilih File'">
+                            </label>
+                        </div>
+                    </div>
+
+                    {{-- SUBMIT BUTTONS --}}
+                    <div class="flex flex-col-reverse gap-3 pt-2">
+                        <button type="reset" id="reset-form-btn" style="padding:12px 20px; font-size:0.85rem; border-radius:12px; width:100%; display:flex; justify-content:center; background:#f8fafc; color:#475569; border:2px solid #e2e8f0; font-weight:700;">Reset Formulir</button>
+                        <button type="submit" id="submit-button" style="padding:12px 20px; font-size:0.85rem; border-radius:12px; width:100%; display:flex; justify-content:center; gap:8px; align-items:center; background:linear-gradient(135deg, #1d4ed8, #3b82f6); color:white; font-weight:700; border:none; box-shadow:0 6px 20px rgba(37,99,235,0.3);">
+                            <i class="fas fa-paper-plane"></i> Kirim Pengajuan
+                        </button>
+                    </div>
+                </form>
+
+                {{-- 4. RIWAYAT TERBARU --}}
+                <div id="riwayat-card" class="glass-card mt-6 border-t-4 border-t-blue-500 scroll-mt-6" style="padding:16px; border-radius:18px;">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-bold text-slate-800 flex items-center gap-2 text-sm">
+                            <i class="fas fa-history text-blue-600"></i> Riwayat Terbaru
+                        </h4>
+                        <a href="javascript:void(0)" onclick="window.location.reload()" class="text-xs text-blue-600 font-semibold hover:underline">Muat Ulang</a>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        @forelse ($cutiRequests->take(3) as $cuti)
+                            @php
+                                $status = $cuti->status;
+                                $iconClass = match($status) {
+                                    'disetujui'  => 'fas fa-check',
+                                    'ditolak'    => 'fas fa-times',
+                                    'dibatalkan' => 'fas fa-ban',
+                                    default      => 'fas fa-clock',
+                                };
+                                $iconBox = match($status) {
+                                    'disetujui'  => 'bg-green-100 text-green-600',
+                                    'ditolak'    => 'bg-red-100 text-red-600',
+                                    'dibatalkan' => 'bg-slate-100 text-slate-600',
+                                    default      => 'bg-amber-100 text-amber-600',
+                                };
+                                $badgeStyle = match($status) {
+                                    'disetujui'  => 'bg-green-100 text-green-700 border border-green-200',
+                                    'ditolak'    => 'bg-red-100 text-red-700 border-red-200',
+                                    'dibatalkan' => 'bg-slate-100 text-slate-700 border-slate-200',
+                                    default      => 'bg-amber-100 text-amber-700 border-amber-200',
+                                };
+                            @endphp
+                            <a href="{{ route('cuti.show', $cuti) }}" class="riwayat-item" style="flex-direction:column; gap:10px; padding:14px; margin-bottom:12px; background:rgba(255,255,255,0.8); border:1.5px solid #e2e8f0; border-radius:16px; display:flex; text-decoration:none;">
+                                <div class="flex items-center gap-3 w-full">
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center {{ $iconBox }} flex-shrink-0">
+                                        <i class="{{ $iconClass }}"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-bold text-slate-800 text-sm truncate">
+                                            {{ \Carbon\Carbon::parse($cuti->tanggal_mulai)->format('d M y') }} - {{ \Carbon\Carbon::parse($cuti->tanggal_selesai)->format('d M y') }}
+                                        </p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5 truncate">Diajukan: {{ \Carbon\Carbon::parse($cuti->created_at)->format('d M Y') }}</p>
+                                    </div>
+                                </div>
+                                <span class="riwayat-badge {{ $badgeStyle }} w-full text-center mt-2 font-bold px-3 py-1.5 rounded-full text-[10px] border" style="display:inline-block;">{{ ucfirst($status) }}</span>
+                            </a>
+                        @empty
+                            <div class="p-6 text-center border-2 border-dashed border-slate-200 rounded-2xl">
+                                <div class="w-10 h-10 bg-slate-100 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-2 text-lg">
+                                    <i class="fas fa-folder-open"></i>
+                                </div>
+                                <p class="text-xs text-slate-500 font-medium">Belum ada riwayat.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+            @else
+            {{-- GRID LAYOUT UTAMA (DESKTOP) --}}
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 
                 {{-- KOLOM KIRI (Form Pengajuan) --}}
@@ -380,6 +580,7 @@
 
                 </div>
             </div>
+            @endif
         </div>
     </div>
 
