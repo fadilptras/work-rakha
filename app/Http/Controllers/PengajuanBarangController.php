@@ -45,7 +45,8 @@ class PengajuanBarangController extends Controller
             'rincian_deskripsi.*' => 'required|string',
             'rincian_jumlah.*' => 'required|integer|min:1',
             'rincian_satuan.*' => 'required|string',
-            'file_pendukung.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'file_pendukung' => 'nullable|array|max:10',
+            'file_pendukung.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:5120',
         ]);
 
         $user = Auth::user();
