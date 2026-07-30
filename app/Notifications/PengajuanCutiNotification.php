@@ -6,7 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Models\Cuti;
-use App\Notifications\Channels\WhatsAppChannel;
+use App\Notifications\Channels\LocalWhatsAppChannel;
 use Carbon\Carbon;
 
 class PengajuanCutiNotification extends Notification implements ShouldQueue
@@ -26,7 +26,7 @@ class PengajuanCutiNotification extends Notification implements ShouldQueue
     {
         return [
             'database', 
-            WhatsAppChannel::class
+            LocalWhatsAppChannel::class
         ];
     }
 

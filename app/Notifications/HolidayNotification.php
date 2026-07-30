@@ -6,7 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Models\Holiday;
-use App\Notifications\Channels\WhatsAppChannel;
+use App\Notifications\Channels\LocalWhatsAppChannel;
 
 class HolidayNotification extends Notification implements ShouldQueue
 {
@@ -27,7 +27,7 @@ class HolidayNotification extends Notification implements ShouldQueue
     
     public function via(object $notifiable): array
     {
-        return $this->isWaBroadcast ? [WhatsAppChannel::class] : ['database'];
+        return $this->isWaBroadcast ? [LocalWhatsAppChannel::class] : ['database'];
     }
 
     public function toWhatsApp(object $notifiable): array

@@ -6,7 +6,7 @@ use App\Models\Agenda;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
-use App\Notifications\Channels\WhatsAppChannel;
+use App\Notifications\Channels\LocalWhatsAppChannel;
 use Carbon\Carbon;
 
 /**
@@ -53,7 +53,7 @@ class AgendaNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database', WhatsAppChannel::class]; 
+        return ['database', LocalWhatsAppChannel::class]; 
     }
 
     /**
@@ -62,9 +62,31 @@ class AgendaNotification extends Notification implements ShouldQueue
      */
     public function toWhatsApp(object $notifiable): array
     {
-        // Bypass pengiriman pesan otomatis (real-time) via WA untuk mengurangi spam.
-        // Pengiriman informasi agenda akan direkap dan dikirim H-1 (malam hari) via Command SendAgendaReminderCommand.
-        return [];
+        $nama = $notifiable->name;
+        $title = $this->agenda->title;
+        $start = Carbon::parse($this->agenda->start_date)->translatedFormat('d F Y H:i');
+        $end = $this->agenda->end_date ? ' s/d ' . Carbon::parse($this->agenda->end_date)->translatedFormat('d F Y H:i') : '';
+        $waktu = $start . $end;
+        $location = $this->agenda->location ?? '-';
+        $desc = $this->agenda->description ?? '-';
+
+        $pesan = "";
+        switch ($this->type) {
+            case 'undangan_baru':
+                $pesan = "📢 *[UNDANGAN AGENDA]*\n\nHalo *{$nama}*,\nAnda diundang oleh *{$this->creatorName}* untuk menghadiri agenda:\n\n📌 *{$title}*\n⏰ {$waktu}\n📍 {$location}\n📝 {$desc}";
+                break;
+            case 'agenda_diperbarui':
+                $pesan = "📢 *[UPDATE AGENDA]*\n\nHalo *{$nama}*,\nAgenda *{$title}* telah diperbarui oleh *{$this->creatorName}*.\n\n⏰ {$waktu}\n📍 {$location}\n📝 {$desc}";
+                break;
+            case 'agenda_dibatalkan':
+                $pesan = "📢 *[AGENDA DIBATALKAN]*\n\nHalo *{$nama}*,\nMohon maaf, agenda *{$title}* telah dibatalkan oleh *{$this->creatorName}*.";
+                break;
+        }
+
+        return [
+            'message' => $pesan
+            // target sengaja tidak diset agar LocalWhatsAppChannel otomatis mengirim secara Japri ke nomor HP $notifiable
+        ];
     }
 
     /**

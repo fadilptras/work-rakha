@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Models\Absensi;
 use App\Models\Lembur;
-use App\Notifications\Channels\WhatsAppChannel;
+use App\Notifications\Channels\LocalWhatsAppChannel;
 use Carbon\Carbon;
 
 class AbsensiNotification extends Notification implements ShouldQueue
@@ -29,35 +29,36 @@ class AbsensiNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['database', WhatsAppChannel::class];
+        return ['database', LocalWhatsAppChannel::class];
     }
 
     public function toWhatsApp(object $notifiable): array
     {
-        // Masuk/Keluar dihandle oleh rekap harian, tidak dikirim langsung.
-        if (in_array($this->tipe, ['masuk', 'keluar'])) {
-            return [];
-        }
-
         $nama = $notifiable->name;
         $waktu = now()->translatedFormat('d F Y H:i');
         $keterangan = !empty($this->data->keterangan) ? $this->data->keterangan : '-';
         
         switch ($this->tipe) {
+            case 'masuk':
+                $pesan = "📢 *[ABSENSI MASUK]*\n\nHalo, *{$nama}* telah hadir! 🚀\n⏰ Waktu: {$waktu}\n📝 Catatan: {$keterangan}\n\n_Selamat bekerja, semoga harinya produktif dan penuh semangat!_ 💪";
+                break;
+            case 'keluar':
+                $pesan = "📢 *[ABSENSI PULANG]*\n\n*{$nama}* telah selesai bekerja untuk hari ini.\n⏰ Waktu: {$waktu}\n📝 Catatan: {$keterangan}\n\n_Terima kasih atas dedikasi dan kerja kerasnya. Selamat beristirahat!_ 🏡";
+                break;
             case 'lembur_masuk':
-                $pesan = "[INFO LEMBUR]\n\nKaryawan a.n. *{$nama}* telah memulai *Lembur* pada {$waktu}.";
+                $pesan = "📢 *[MULAI LEMBUR]*\n\n*{$nama}* mulai melakukan lembur. 💼\n⏰ Waktu: {$waktu}\n\n_Semangat melanjutkan tugas, pastikan tetap jaga kesehatan!_ ✨";
                 break;
             case 'lembur_keluar':
-                $pesan = "[INFO LEMBUR]\n\nKaryawan a.n. *{$nama}* telah menyelesaikan *Lembur* pada {$waktu}.";
+                $pesan = "📢 *[SELESAI LEMBUR]*\n\n*{$nama}* telah menyelesaikan lembur.\n⏰ Waktu: {$waktu}\n\n_Terima kasih atas usaha ekstra hari ini. Hati-hati di jalan dan selamat beristirahat!_ 🌙";
                 break;
             case 'izin':
-                $pesan = "[INFO ABSENSI - IZIN]\n\nKaryawan a.n. *{$nama}* memberitahukan status *Izin* pada {$waktu}.\n\nKeterangan: {$keterangan}";
+                $pesan = "📢 *[INFO IZIN]*\n\n*{$nama}* sedang izin hari ini.\n⏰ Waktu: {$waktu}\n📝 Keterangan: {$keterangan}\n\n_Semoga urusannya dilancarkan!_ 🌟";
                 break;
             case 'sakit':
-                $pesan = "[INFO ABSENSI - SAKIT]\n\nKaryawan a.n. *{$nama}* memberitahukan *Sakit* pada {$waktu}.\n\nKeterangan: {$keterangan}\nSemoga lekas sembuh.";
+                $pesan = "📢 *[INFO SAKIT]*\n\n*{$nama}* tidak dapat hadir karena sakit.\n⏰ Waktu: {$waktu}\n📝 Keterangan: {$keterangan}\n\n_Mari kita doakan agar {$nama} lekas sembuh dan bisa beraktivitas kembali!_ 🤲💊";
                 break;
             default:
-                $pesan = "[INFO ABSENSI]\n\nAbsensi a.n. *{$nama}* berhasil dicatat pada {$waktu}.";
+                $pesan = "📢 *[INFO ABSENSI]*\n\n*{$nama}* telah melakukan absensi.\n⏰ Waktu: {$waktu}";
         }
 
         return [

@@ -6,7 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Models\PengajuanDana;
-use App\Notifications\Channels\WhatsAppChannel;
+use App\Notifications\Channels\LocalWhatsAppChannel;
 
 class PengajuanDanaNotification extends Notification implements ShouldQueue
 {
@@ -23,7 +23,7 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['database', WhatsAppChannel::class];
+        return ['database', LocalWhatsAppChannel::class];
     }
 
     public function toWhatsApp(object $notifiable): array

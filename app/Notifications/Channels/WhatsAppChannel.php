@@ -24,7 +24,8 @@ class WhatsAppChannel
 
         // Konfigurasi Fonnte
         $fonnteToken = 'Co6BcrBdvcnaaZhh4FP9';
-        $fonnteGroupId = '120363242834102956@g.us';
+        $fonnteGroupId = 
+        // '120363242834102956@g.us';
 
         // Tentukan Target Penerima
         $target = $data['target'] ?? null;
