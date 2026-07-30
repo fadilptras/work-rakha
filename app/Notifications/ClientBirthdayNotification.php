@@ -6,12 +6,11 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Models\Client;
-use App\Notifications\Channels\WhatsAppChannel;
+use App\Notifications\Channels\LocalWhatsAppChannel;
 
 class ClientBirthdayNotification extends Notification implements ShouldQueue
 {
     use Queueable;
-
     public $client;
 
     /**
@@ -24,7 +23,7 @@ class ClientBirthdayNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable)
     {
-        return ['database', WhatsAppChannel::class];
+        return ['database', LocalWhatsAppChannel::class];
     }
 
     public function toWhatsApp(object $notifiable)
@@ -37,9 +36,11 @@ class ClientBirthdayNotification extends Notification implements ShouldQueue
         $salesName = $this->client->user ? $this->client->user->name : '-';
 
         return [
-            'message' => "Client Birthday Reminder\n\n" .
-                         "Hari ini adalah ulang tahun client/mitra kita: *{$namaClient} - {$perusahaan}*\n" .
-                         "PIC Internal: {$salesName}\n\n"
+            'message' => "[Reminder: Ulang Tahun Klien] 🎂\n\n" .
+                         "Klien kita berulang tahun hari ini:\n" .
+                         "Nama: {$namaClient}\n" .
+                         "Perusahaan: {$perusahaan}\n" .
+                         "PIC Internal: {$salesName}\n"
         ];
     }
 

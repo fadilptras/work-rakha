@@ -31,6 +31,15 @@ class SendClientBirthdayNotifications extends Command
             return;
         }
 
+        // Ambil Direktur dan Kepala Divisi Marketing & Operasional
+        // Berdasarkan data, Direktur memiliki jabatan 'Direktur'
+        $direkturs = User::where('jabatan', 'like', '%Direktur%')->get();
+        
+        // Kepala Divisi Marketing & Operasional (contoh: Kepala Operasional)
+        $kepalaDivisi = User::where('divisi', 'Marketing dan Operasional')
+                            ->where('jabatan', 'like', '%Kepala%')
+                            ->get();
+
         // 3. Loop Client dan Kirim Notifikasi
         foreach ($birthdayClients as $client) {
             $namaClient = $client->nama_user;
@@ -45,7 +54,19 @@ class SendClientBirthdayNotifications extends Command
                 Notification::send($pic, new ClientBirthdayNotification($client));
                 $this->info(" - Notifikasi dikirim ke PIC.");
             } else {
-                $this->info(" - Client ini tidak memiliki Sales/User internal yang terhubung. Notifikasi diabaikan.");
+                $this->info(" - Client ini tidak memiliki Sales/User internal yang terhubung.");
+            }
+
+            // Kirim ke Direktur
+            if ($direkturs->isNotEmpty()) {
+                Notification::send($direkturs, new ClientBirthdayNotification($client));
+                $this->info(" - Notifikasi dikirim ke Direktur.");
+            }
+
+            // Kirim ke Kepala Divisi Marketing dan Operasional
+            if ($kepalaDivisi->isNotEmpty()) {
+                Notification::send($kepalaDivisi, new ClientBirthdayNotification($client));
+                $this->info(" - Notifikasi dikirim ke Kepala Divisi Marketing & Operasional.");
             }
         }
         
