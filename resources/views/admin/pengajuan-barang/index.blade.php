@@ -28,7 +28,11 @@
             </a>
             <a href="{{ route('admin.pengajuan_barang.index', array_merge(request()->query(), ['tab' => 'rejected', 'page' => 1])) }}" 
                class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'rejected' ? 'border-red-500 text-red-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
-               <i class="fas fa-times-circle mr-2"></i> Ditolak / Dibatalkan
+               <i class="fas fa-times-circle mr-2"></i> Ditolak
+            </a>
+            <a href="{{ route('admin.pengajuan_barang.index', array_merge(request()->query(), ['tab' => 'cancelled', 'page' => 1])) }}" 
+               class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'cancelled' ? 'border-zinc-500 text-zinc-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
+               <i class="fas fa-ban mr-2"></i> Dibatalkan
             </a>
             <a href="{{ route('admin.pengajuan_barang.index', array_merge(request()->query(), ['tab' => 'all', 'page' => 1])) }}" 
                class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'all' ? 'border-blue-500 text-blue-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
@@ -113,7 +117,7 @@
                         <th scope="col" class="px-6 py-3 w-[120px]">Tanggal</th> 
                         <th scope="col" class="px-6 py-3 w-[200px]">Nama Karyawan</th> 
                         <th scope="col" class="px-6 py-3 w-auto">Judul Pengajuan</th> 
-                        <th scope="col" class="px-6 py-3 w-[100px]">Total Item</th> 
+                        <th scope="col" class="px-6 py-3 w-[140px] whitespace-nowrap">Total Item</th> 
                         <th scope="col" class="px-6 py-3 w-[180px]">Status Final</th> 
                         <th scope="col" class="px-6 py-3 w-[100px] text-center">Aksi</th> 
                     </tr>
@@ -132,7 +136,7 @@
                         </td>
                         
                         <td class="px-6 py-4 truncate">{{ $pengajuan->judul_pengajuan }}</td> 
-                        <td class="px-6 py-4 font-mono">{{ count($pengajuan->rincian_barang ?? []) }} Item</td>
+                        <td class="px-6 py-4 font-mono whitespace-nowrap">{{ count($pengajuan->rincian_barang ?? []) }} Item</td>
                         <td class="px-6 py-4">
                             @if ($pengajuan->status == 'selesai')
                                 <span class="font-bold bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full text-xs">Selesai</span>
@@ -177,6 +181,8 @@
                                 Belum ada pengajuan barang yang selesai.
                             @elseif($activeTab == 'rejected')
                                 Belum ada pengajuan barang yang ditolak.
+                            @elseif($activeTab == 'cancelled')
+                                Belum ada pengajuan barang yang dibatalkan.
                             @else
                                 Tidak ada data untuk ditampilkan.
                             @endif

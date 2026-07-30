@@ -28,7 +28,11 @@
             </a>
             <a href="{{ route('admin.pengajuan_dana.index', array_merge(request()->query(), ['tab' => 'rejected', 'page' => 1])) }}" 
                class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'rejected' ? 'border-red-500 text-red-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
-               <i class="fas fa-times-circle mr-2"></i> Ditolak / Dibatalkan
+               <i class="fas fa-times-circle mr-2"></i> Ditolak
+            </a>
+            <a href="{{ route('admin.pengajuan_dana.index', array_merge(request()->query(), ['tab' => 'cancelled', 'page' => 1])) }}" 
+               class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'cancelled' ? 'border-zinc-500 text-zinc-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
+               <i class="fas fa-ban mr-2"></i> Dibatalkan
             </a>
             <a href="{{ route('admin.pengajuan_dana.index', array_merge(request()->query(), ['tab' => 'all', 'page' => 1])) }}" 
                class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'all' ? 'border-blue-500 text-blue-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
@@ -180,6 +184,8 @@
                                 Belum ada data pengajuan yang selesai.
                             @elseif($activeTab == 'rejected')
                                 Belum ada data pengajuan yang ditolak.
+                            @elseif($activeTab == 'cancelled')
+                                Belum ada data pengajuan yang dibatalkan.
                             @else
                                 Tidak ada data untuk ditampilkan.
                             @endif

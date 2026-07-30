@@ -27,7 +27,11 @@ class PengajuanDanaController extends Controller
     {
         $query = Auth::user()->pengajuanDanas()->latest();
         if ($request->filled('status') && $request->status != 'semua') {
-            $query->where('status', $request->status);
+            if ($request->status == 'diproses') {
+                $query->whereIn('status', ['diajukan', 'diproses', 'proses_pembayaran', 'disetujui']);
+            } else {
+                $query->where('status', $request->status);
+            }
         }
         $pengajuanDanas = $query->paginate(15)->appends($request->query());
 
@@ -85,7 +89,7 @@ class PengajuanDanaController extends Controller
             'jumlah_dana_total' => 'required|numeric|min:1',
             'rincian_deskripsi.*' => 'required|string|max:1000',
             'rincian_jumlah.*' => 'required|numeric|min:0',
-            'file_pendukung.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:5120',
+            'file_pendukung.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:10240',
         ]);
 
         $rincian = [];

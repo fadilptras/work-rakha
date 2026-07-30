@@ -29,16 +29,20 @@ class AdminPengajuanDanaController extends Controller
 
         switch ($activeTab) {
             case 'pending':
-                // Menampilkan yang sedang berjalan (status diset di approve/reject controller)
-                $query->whereIn('status', ['diajukan', 'diproses', 'proses_pembayaran']);
+                // Menampilkan yang sedang berjalan (termasuk disetujui)
+                $query->whereIn('status', ['diajukan', 'diproses', 'proses_pembayaran', 'disetujui']);
                 break;
             case 'approved':
                 // Menampilkan yang sudah sukses
                 $query->where('status', 'selesai');
                 break;
             case 'rejected':
-                // Menampilkan yang gagal/batal
-                $query->whereIn('status', ['ditolak', 'dibatalkan']);
+                // Menampilkan yang ditolak
+                $query->where('status', 'ditolak');
+                break;
+            case 'cancelled':
+                // Menampilkan yang dibatalkan
+                $query->where('status', 'dibatalkan');
                 break;
             default:
                 // Jika tab='all', tidak ada filter status (tampilkan semua)
@@ -116,15 +120,19 @@ class AdminPengajuanDanaController extends Controller
         switch ($activeTab) {
             case 'pending':
                 // Hanya yang sedang berjalan
-                $query->whereIn('status', ['diajukan', 'diproses', 'proses_pembayaran']);
+                $query->whereIn('status', ['diajukan', 'diproses', 'proses_pembayaran', 'disetujui']);
                 break;
             case 'approved':
                 // Hanya yang selesai
                 $query->where('status', 'selesai');
                 break;
             case 'rejected':
-                // Hanya yang ditolak/batal
-                $query->whereIn('status', ['ditolak', 'dibatalkan']);
+                // Hanya yang ditolak
+                $query->where('status', 'ditolak');
+                break;
+            case 'cancelled':
+                // Hanya yang dibatalkan
+                $query->where('status', 'dibatalkan');
                 break;
             default:
                 // Jika tab='all', ambil semua data (tidak ada where status)

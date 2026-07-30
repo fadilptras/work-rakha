@@ -23,7 +23,11 @@ class PengajuanBarangController extends Controller
     {
         $query = Auth::user()->pengajuanBarangs()->latest();
         if ($request->filled('status') && $request->status != 'semua') {
-            $query->where('status', $request->status);
+            if ($request->status == 'diproses') {
+                $query->whereIn('status', ['diajukan', 'diproses']);
+            } else {
+                $query->where('status', $request->status);
+            }
         }
         $pengajuanBarangs = $query->paginate(15)->appends($request->query());
 
@@ -46,7 +50,7 @@ class PengajuanBarangController extends Controller
             'rincian_jumlah.*' => 'required|integer|min:1',
             'rincian_satuan.*' => 'required|string',
             'file_pendukung' => 'nullable|array|max:10',
-            'file_pendukung.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:5120',
+            'file_pendukung.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:10240',
         ]);
 
         $user = Auth::user();

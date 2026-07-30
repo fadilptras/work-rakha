@@ -34,6 +34,9 @@ class AdminCutiController extends Controller
             case 'rejected':
                 $query->where('status', 'ditolak');
                 break;
+            case 'cancelled':
+                $query->where('status', 'dibatalkan');
+                break;
         }
 
         if ($request->filled('user_id')) {
@@ -261,6 +264,7 @@ class AdminCutiController extends Controller
             case 'pending': $query->whereIn('status', ['diajukan', 'proses_finalisasi']); break;
             case 'approved': $query->whereIn('status', ['disetujui', 'diterima']); break;
             case 'rejected': $query->where('status', 'ditolak'); break;
+            case 'cancelled': $query->where('status', 'dibatalkan'); break;
         }
 
         if ($request->filled('user_id')) $query->where('user_id', $request->user_id);

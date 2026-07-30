@@ -30,7 +30,10 @@ class AdminPengajuanBarangController extends Controller
                 $query->where('status', 'selesai');
                 break;
             case 'rejected':
-                $query->whereIn('status', ['ditolak', 'dibatalkan']);
+                $query->where('status', 'ditolak');
+                break;
+            case 'cancelled':
+                $query->where('status', 'dibatalkan');
                 break;
         }
 
