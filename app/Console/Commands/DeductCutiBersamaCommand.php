@@ -115,51 +115,34 @@ class DeductCutiBersamaCommand extends Command
     }
 
     /**
-     * Mengirim notifikasi informasi Cuti Bersama ke Whatsapp Group via Fonnte.
+     * Mengirim notifikasi informasi Cuti Bersama ke Whatsapp Group via WA Server Lokal.
      */
     private function sendNotificationToGroup(Holiday $holiday)
     {
         $namaLibur = $holiday->keterangan ?? 'Cuti Bersama';
         $message = "Informasi Cuti Bersama 🏖️\n\nHari ini Kantor Libur dalam rangka: *{$namaLibur}*\nSelamat beristirahat!";
 
-        $targetGroupId = '120363242834102956@g.us';
-        $token = 'MP8iwGyRDCKJVgNs5ejZ';
+        $targetGroupId = env('WHATSAPP_GROUP_ID', '120363242834102956@g.us');
+        $waApiUrl = env('WA_API_URL', 'http://localhost:3000/send');
 
-        if (!$targetGroupId || !$token) {
-            \Illuminate\Support\Facades\Log::error("Fonnte config tidak lengkap untuk notifikasi Cuti Bersama.");
+        if (!$targetGroupId) {
+            \Illuminate\Support\Facades\Log::error("WA config tidak lengkap untuk notifikasi Cuti Bersama.");
             return;
         }
 
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => 'https://api.fonnte.com/send',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30, 
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => array(
+        try {
+            $response = \Illuminate\Support\Facades\Http::post($waApiUrl, [
                 'target' => $targetGroupId,
-                'message' => $message,
-                'countryCode' => '62',
-            ),
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: ' . $token
-            ),
-        ));
+                'message' => $message
+            ]);
 
-        $response = curl_exec($curl);
-        $error = curl_error($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-
-        if ($error) {
-            \Illuminate\Support\Facades\Log::error("Fonnte Error saat mengirim Notifikasi Cuti Bersama ke Group: " . $error);
-        } else {
-            \Illuminate\Support\Facades\Log::info("Fonnte Notifikasi Cuti Bersama Terkirim ke Group (HTTP $httpCode): " . $response);
+            if ($response->successful()) {
+                \Illuminate\Support\Facades\Log::info("WA Server Notifikasi Cuti Bersama Terkirim ke Group: " . $response->body());
+            } else {
+                \Illuminate\Support\Facades\Log::error("WA Server Error saat mengirim Notifikasi Cuti Bersama ke Group: " . $response->body());
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("WA Server Exception saat mengirim Notifikasi Cuti Bersama ke Group: " . $e->getMessage());
         }
     }
 }

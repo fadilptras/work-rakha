@@ -65,12 +65,7 @@ class SendAgendaReminderCommand extends Command
             return;
         }
 
-        $token = 'MP8iwGyRDCKJVgNs5ejZ';
-        if (!$token) {
-            $this->error("Token Fonnte tidak dikonfigurasi.");
-            Log::error("Fonnte token missing untuk Agenda Reminder.");
-            return;
-        }
+        // Remove Fonnte token check
 
         $sentCount = 0;
 
@@ -113,46 +108,29 @@ class SendAgendaReminderCommand extends Command
             $message .= "Mohon persiapkan diri Anda dan hadir tepat waktu. Terima kasih!\n";
             $message .= "🔗 Cek detail: " . route('dashboard');
 
-            // Kirim via Fonnte
-            $this->sendToFonntePersonal($targetPhone, $message, $token);
+            // Kirim via Local WA Server
+            $this->sendToLocalWhatsApp($targetPhone, $message);
             $sentCount++;
         }
 
         $this->info("Berhasil mengirim pengingat agenda ke $sentCount orang untuk besok.");
     }
 
-    private function sendToFonntePersonal($target, $message, $token)
+    private function sendToLocalWhatsApp($target, $message)
     {
-        $curl = curl_init();
+        $waApiUrl = env('WA_API_URL', 'http://localhost:3000/send');
 
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => 'https://api.fonnte.com/send',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => array(
+        try {
+            $response = \Illuminate\Support\Facades\Http::post($waApiUrl, [
                 'target' => $target,
-                'message' => $message,
-                'countryCode' => '62',
-            ),
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: ' . $token
-            ),
-        ));
+                'message' => $message
+            ]);
 
-        $response = curl_exec($curl);
-        $error = curl_error($curl);
-        curl_close($curl);
-
-        if ($error) {
-            Log::error("Fonnte Error (Agenda Reminder to $target): " . $error);
-        } else {
-            // Optional: log response untuk debugging
-            // Log::info("Fonnte (Agenda Reminder to $target): " . $response);
+            if (!$response->successful()) {
+                Log::error("WA Server Error (Agenda Reminder to $target): " . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error("WA Server Exception (Agenda Reminder to $target): " . $e->getMessage());
         }
     }
 }

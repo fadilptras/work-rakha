@@ -34,14 +34,16 @@ Schedule::command('pengajuan:cleanup-stale')
         ->dailyAt('00:05')
         ->timezone('Asia/Jakarta');
 
-Schedule::command('app:send-absensi-summary morning')
-        ->dailyAt('08:30')
-        ->timezone('Asia/Jakarta');
+// Dinonaktifkan karena sudah menggunakan notifikasi absensi real-time per orang
+// Schedule::command('app:send-absensi-summary morning')
+//         ->dailyAt('08:30')
+//         ->timezone('Asia/Jakarta');
 
-Schedule::command('app:send-absensi-summary evening')
-        ->dailyAt('17:30')
-        ->timezone('Asia/Jakarta');
+// Schedule::command('app:send-absensi-summary evening')
+//         ->dailyAt('17:30')
+//         ->timezone('Asia/Jakarta');
 
-Schedule::command('app:send-agenda-reminder')
-        ->dailyAt('19:30')
-        ->timezone('Asia/Jakarta');
+// Dinonaktifkan karena sudah menggunakan notifikasi agenda real-time
+// Schedule::command('app:send-agenda-reminder')
+//         ->dailyAt('19:30')
+//         ->timezone('Asia/Jakarta');

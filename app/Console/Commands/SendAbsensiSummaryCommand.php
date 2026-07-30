@@ -109,52 +109,36 @@ class SendAbsensiSummaryCommand extends Command
             return;
         }
 
-        $this->sendToFonnte($message);
+        $this->sendToLocalWhatsApp($message);
         $this->info("Berhasil mengirim rekap absensi tipe: $type");
     }
     
-    private function sendToFonnte($message)
+    private function sendToLocalWhatsApp($message)
     {
-        $targetGroupId = '120363242834102956@g.us';
-        $token = 'MP8iwGyRDCKJVgNs5ejZ';
-        
-        if (!$targetGroupId || !$token) {
-            Log::error("Fonnte config missing (group_id atau token). Batal mengirim Rekap Absensi.");
-            $this->error("Fonnte config missing.");
+        $targetGroupId = env('WHATSAPP_GROUP_ID', '120363242834102956@g.us');
+        $waApiUrl = env('WA_API_URL', 'http://localhost:3000/send');
+
+        if (!$targetGroupId) {
+            Log::error("WA config missing (group_id). Batal mengirim Rekap Absensi.");
+            $this->error("WA config missing.");
             return;
         }
 
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => 'https://api.fonnte.com/send',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30, // 30 secs to prevent hanging
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => array(
+        try {
+            $response = \Illuminate\Support\Facades\Http::post($waApiUrl, [
                 'target' => $targetGroupId,
-                'message' => $message,
-                'countryCode' => '62', // Default Indonesia
-            ),
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: ' . $token
-            ),
-        ));
+                'message' => $message
+            ]);
 
-        $response = curl_exec($curl);
-        $error = curl_error($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-        
-        if ($error) {
-            Log::error("Fonnte Error saat mengirim Rekap Absensi: " . $error);
-            $this->error("Fonnte Error: " . $error);
-        } else {
-            Log::info("Fonnte Rekap Absensi Terkirim (HTTP $httpCode): " . $response);
+            if ($response->successful()) {
+                Log::info("WA Server Rekap Absensi Terkirim: " . $response->body());
+            } else {
+                Log::error("WA Server Error saat mengirim Rekap Absensi: " . $response->body());
+                $this->error("WA Server Error: " . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error("WA Server Exception saat mengirim Rekap Absensi: " . $e->getMessage());
+            $this->error("WA Server Exception: " . $e->getMessage());
         }
     }
 }
