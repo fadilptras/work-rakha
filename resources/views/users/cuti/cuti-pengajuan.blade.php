@@ -214,23 +214,22 @@
             </div>
 
             <div class="space-y-4 pb-10">
+                <div class="flex justify-end mb-4">
+                    <a href="#riwayat-card" class="text-sm text-blue-600 font-bold hover:underline flex items-center gap-2 bg-blue-50 px-5 py-2.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
+                        <i class="fas fa-history"></i> Lihat Riwayat Pengajuan
+                    </a>
+                </div>
+
                 <form action="{{ route('cuti.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 m-0">
                     @csrf
                     <input type="hidden" name="jenis_cuti" value="tahunan">
 
                     {{-- 1. INFORMASI PEMOHON --}}
                     <div class="glass-card" style="padding:16px; border-radius:18px;">
-                        <div class="flex flex-col gap-4 border-b border-slate-200/60 pb-3 mb-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-user-tie"></i></div>
-                                <div>
-                                    <h3 class="text-lg font-black text-slate-800">1. Info Pemohon</h3>
-                                </div>
-                            </div>
-                            <div class="w-full flex justify-end">
-                                <a href="#riwayat-card" class="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
-                                    <i class="fas fa-history"></i> Lihat Riwayat
-                                </a>
+                        <div class="flex items-center gap-3 border-b border-slate-200/60 pb-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-user-tie"></i></div>
+                            <div>
+                                <h3 class="text-lg font-black text-slate-800">1. Info Pemohon</h3>
                             </div>
                         </div>
 
@@ -416,7 +415,7 @@
                             </div>
                             <a href="#riwayat-card" class="text-[10px] md:text-xs text-blue-600 font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-2 md:px-3 py-1.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100">
                                 <i class="fas fa-history"></i>
-                                Lihat Riwayat
+                                Lihat Riwayat Pengajuan
                             </a>
                         </div>
 

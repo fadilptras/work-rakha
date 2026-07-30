@@ -251,6 +251,14 @@
             {{-- STACKED VERTICAL LAYOUT --}}
             <div class="space-y-4 md:space-y-6 pb-10">
 
+                @if($isMobile)
+                <div class="flex justify-end mb-4">
+                    <a href="{{ route('pengajuan_dana.history') }}" class="text-sm text-blue-600 font-bold hover:underline flex items-center gap-2 bg-blue-50 px-5 py-2.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
+                        <i class="fas fa-history"></i> Lihat Riwayat Pengajuan
+                    </a>
+                </div>
+                @endif
+
                 <form action="{{ route('pengajuan_dana.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 md:space-y-6 m-0">
                     @csrf
                     
@@ -266,12 +274,13 @@
                                     @endif
                                 </div>
                             </div>
+                            @if(!$isMobile)
                             <div class="w-full flex justify-end sm:w-auto">
                                 <a href="{{ route('pengajuan_dana.history') }}" class="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
-                                    <i class="fas fa-history"></i>
-                                    Lihat Riwayat Pengajuan
+                                    <i class="fas fa-history"></i> Lihat Riwayat Pengajuan
                                 </a>
                             </div>
+                            @endif
                         </div>
 
                         <div class="grid grid-cols-2 gap-3 md:gap-5">
@@ -409,7 +418,7 @@
                         <div class="bg-blue-50/50 border border-blue-100 p-3 md:p-3.5 rounded-2xl mb-3 md:mb-4 flex gap-3">
                             <i class="fas fa-info-circle text-blue-600 text-sm mt-0.5"></i>
                             <div class="text-[11px] text-blue-800 leading-normal font-semibold">
-                                Format file yang didukung: <span class="text-blue-900 font-black">JPG, JPEG, PNG, PDF, DOC, DOCX, XLS, XLSX</span>. Ukuran berkas maksimal <span class="text-blue-900 font-black">5MB</span> per file.
+                                Format file yang didukung: <span class="text-blue-900 font-black">JPG, JPEG, PNG, PDF, DOC, DOCX, XLS, XLSX</span>. Ukuran berkas maksimal <span class="text-blue-900 font-black">10MB</span> per file.
                             </div>
                         </div>
 
@@ -619,7 +628,7 @@
             document.querySelectorAll('input[type="file"][name="file_pendukung[]"]').forEach(input => {
                 if (input.files && input.files.length > 0) {
                     const file = input.files[0];
-                    const maxBytes = 5 * 1024 * 1024; // 5MB
+                    const maxBytes = 10 * 1024 * 1024; // 10MB
                     if (file.size > maxBytes) {
                         tooLarge = true;
                     }
@@ -628,7 +637,7 @@
 
             if (tooLarge) {
                 e.preventDefault();
-                alert('Ukuran salah satu file lampiran melebihi batas maksimal 5MB. Silakan pilih berkas yang lebih kecil agar formulir tidak perlu diisi ulang.');
+                alert('Ukuran salah satu file lampiran melebihi batas maksimal 10MB. Silakan pilih berkas yang lebih kecil agar formulir tidak perlu diisi ulang.');
                 return false;
             }
 
