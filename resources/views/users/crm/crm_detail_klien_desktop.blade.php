@@ -1,4 +1,5 @@
 <x-layout-users :title="'Detail Klien & Sales'">
+@php $routePrefix = request()->is('admin/*') ? 'admin.crm.' : 'crm.'; @endphp
 
     @push('styles')
     <style>
@@ -76,7 +77,7 @@
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
             
             {{-- Tombol Kembali --}}
-            <a href="{{ route('crm.index') }}" class="btn-back-modern">
+            <a href="{{ route($routePrefix . 'index') }}" class="btn-back-modern">
                 <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                 Kembali ke Data Sales
             </a>
@@ -142,7 +143,7 @@
                                 <button onclick="toggleModal('editClientModal')" class="group flex items-center text-xs font-semibold text-yellow-200 hover:text-white transition-colors bg-yellow-500/20 hover:bg-yellow-500/80 px-4 py-2 rounded-lg backdrop-blur-sm border border-transparent hover:border-yellow-300/50 shadow-sm cursor-pointer">
                                     <i class="fas fa-edit mr-2 transition-transform group-hover:scale-110"></i> Edit Detail
                                 </button>
-                                <!--<form action="{{ route('crm.client.destroy', $client->id) }}" method="POST" onsubmit="confirmSubmit(event, 'PERINGATAN: Yakin ingin menghapus klien ini beserta seluruh data riwayatnya?');">-->
+                                <!--<form action="{{ route($routePrefix . 'client.destroy', $client->id) }}" method="POST" onsubmit="confirmSubmit(event, 'PERINGATAN: Yakin ingin menghapus klien ini beserta seluruh data riwayatnya?');">-->
                                 <!--    @csrf @method('DELETE')-->
                                 <!--    <button type="submit" class="group flex items-center text-xs font-semibold text-red-200 hover:text-white transition-colors bg-red-900/20 hover:bg-red-600/80 px-4 py-2 rounded-lg backdrop-blur-sm border border-transparent hover:border-red-400/50 shadow-sm">-->
                                 <!--        <i class="fas fa-trash-alt mr-2 transition-transform group-hover:scale-110"></i> Hapus-->
@@ -284,7 +285,7 @@
                 <h3 class="font-bold text-white text-lg flex items-center"><span class="w-8 h-8 bg-white text-blue-600 rounded-lg flex items-center justify-center mr-3 text-sm shadow"><i class="fas fa-plus"></i></span> Input Sales</h3>
             </div>
             <div class="p-6 md:p-8">
-                <form action="{{ route('crm.interaction.store') }}" method="POST">
+                <form action="{{ route($routePrefix . 'interaction.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="client_id" value="{{ $client->id }}">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -309,7 +310,7 @@
                 <h3 class="font-bold text-white text-lg flex items-center"><span class="w-8 h-8 bg-white text-red-600 rounded-lg flex items-center justify-center mr-3 text-sm shadow"><i class="fas fa-hand-holding-usd"></i></span> Pengeluaran</h3>
             </div>
             <div class="p-6 md:p-8">
-                <form action="{{ route('crm.interaction.support') }}" method="POST">
+                <form action="{{ route($routePrefix . 'interaction.support') }}" method="POST">
                     @csrf
                     <input type="hidden" name="client_id" value="{{ $client->id }}">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -340,7 +341,7 @@
                     </h3>
                 </div>
                 <div class="p-6 md:p-8">
-                    <form action="{{ route('crm.interaction.entertain') }}" method="POST">
+                    <form action="{{ route($routePrefix . 'interaction.entertain') }}" method="POST">
                         @csrf
                         <input type="hidden" name="client_id" value="{{ $client->id }}">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -376,7 +377,7 @@
                     </div>
 
                     {{-- FILTER TAHUN AKTIVITAS --}}
-                    <form action="{{ route('crm.show', $client->id) }}" method="GET" class="flex items-center gap-2">
+                    <form action="{{ route($routePrefix . 'show', $client->id) }}" method="GET" class="flex items-center gap-2">
                         <input type="hidden" name="tab" value="activity"> 
                         <label class="text-xs font-bold text-gray-500 uppercase">Filter:</label>
                         <div class="relative">
@@ -432,16 +433,16 @@
                                                 id: '{{ $act->id }}',
                                                 jenis: 'ENTERTAIN',
                                                 tanggal: '{{ $act->tanggal_interaksi }}',
-                                                produk: '{{ addslashes($act->nama_produk) }}', 
+                                                produk: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->nama_produk)) }}', 
                                                 nominal: '{{ $act->nilai_kontribusi }}',
-                                                catatan: '{{ addslashes($act->catatan) }}',
-                                                lokasi: '{{ addslashes($act->lokasi ?? '') }}',
-                                                peserta: '{{ addslashes($act->peserta ?? '') }}'
+                                                catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->catatan)) }}',
+                                                lokasi: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->lokasi ?? '')) }}',
+                                                peserta: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->peserta ?? '')) }}'
                                             })"
                                             class="text-orange-400 hover:text-orange-600 transition" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <form action="{{ route('crm.interaction.destroy', $act->id) }}" method="POST" onsubmit="confirmSubmit(event, 'Hapus aktivitas ini?');" class="inline">
+                                        <form action="{{ route($routePrefix . 'interaction.destroy', $act->id) }}" method="POST" onsubmit="confirmSubmit(event, 'Hapus aktivitas ini?');" class="inline">
                                             @csrf @method('DELETE')
                                             <button class="text-gray-300 hover:text-red-500 transition"><i class="fas fa-trash-alt"></i></button>
                                         </form>
@@ -473,7 +474,7 @@
                     <i class="fas fa-history text-gray-400"></i> Riwayat Transaksi
                 </h3>
                 {{-- FILTER TAHUN HISTORY --}}
-                <form action="{{ route('crm.show', $client->id) }}" method="GET" class="flex items-center gap-2">
+                <form action="{{ route($routePrefix . 'show', $client->id) }}" method="GET" class="flex items-center gap-2">
                     <input type="hidden" name="tab" value="history"> 
                     <label class="text-xs font-bold text-gray-500 uppercase">Filter:</label>
                     <div class="relative">
@@ -521,8 +522,8 @@
                             <td class="px-4 py-3 text-right font-mono font-bold text-red-600">{{ $isOut ? number_format($item->nilai_kontribusi, 0, ',', '.') : '-' }}</td>
                             <td class="px-4 py-3 text-center">
                                 <div class="flex items-center justify-center gap-2">
-                                    <button type="button" onclick="openEditTransactionModal({id: '{{ $item->id }}', jenis: '{{ $item->jenis_transaksi }}', tanggal: '{{ $item->tanggal_interaksi }}', produk: '{{ addslashes($item->nama_produk) }}', nominal: '{{ ($item->jenis_transaksi == 'IN') ? $item->nilai_sales : $item->nilai_kontribusi }}', rate: '{{ $rate }}', catatan: '{{ addslashes($displayNote) }}'})" class="text-blue-400 hover:text-blue-600 transition" title="Edit Data"><i class="fas fa-edit"></i></button>
-                                    <form action="{{ route('crm.interaction.destroy', $item->id) }}" method="POST" onsubmit="confirmSubmit(event, 'Hapus transaksi ini?');" class="inline">@csrf @method('DELETE')<button class="text-gray-300 hover:text-red-600 transition" title="Hapus Data"><i class="fas fa-trash-alt"></i></button></form>
+                                    <button type="button" onclick="openEditTransactionModal({id: '{{ $item->id }}', jenis: '{{ $item->jenis_transaksi }}', tanggal: '{{ $item->tanggal_interaksi }}', produk: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $item->nama_produk)) }}', nominal: '{{ ($item->jenis_transaksi == 'IN') ? $item->nilai_sales : $item->nilai_kontribusi }}', rate: '{{ $rate }}', catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $displayNote)) }}'})" class="text-blue-400 hover:text-blue-600 transition" title="Edit Data"><i class="fas fa-edit"></i></button>
+                                    <form action="{{ route($routePrefix . 'interaction.destroy', $item->id) }}" method="POST" onsubmit="confirmSubmit(event, 'Hapus transaksi ini?');" class="inline">@csrf @method('DELETE')<button class="text-gray-300 hover:text-red-600 transition" title="Hapus Data"><i class="fas fa-trash-alt"></i></button></form>
                                 </div>
                             </td>
                         </tr>
@@ -545,7 +546,7 @@
                     Rekapitulasi Tahun {{ $year }}
                 </h3>
                 <div class="flex items-center gap-2">
-                    <form action="{{ route('crm.show', $client->id) }}" method="GET" class="flex items-center">
+                    <form action="{{ route($routePrefix . 'show', $client->id) }}" method="GET" class="flex items-center">
                         <input type="hidden" name="tab" value="recap"> 
                         <div class="relative">
                             <select name="year" onchange="this.form.submit()" class="pl-4 pr-10 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer hover:bg-gray-50 transition appearance-none">
@@ -556,7 +557,7 @@
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"><i class="fas fa-chevron-down text-xs"></i></div>
                         </div>
                     </form>
-                    <a href="{{ route('crm.client.export', ['client' => $client->id, 'year' => $year]) }}" class="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2 px-4 rounded-lg shadow-sm transition hover:shadow-md border border-emerald-700"><i class="fas fa-file-excel mr-2"></i> Export Excel</a>
+                    <a href="{{ route($routePrefix . 'client.export', ['client' => $client->id, 'year' => $year]) }}" class="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2 px-4 rounded-lg shadow-sm transition hover:shadow-md border border-emerald-700"><i class="fas fa-file-excel mr-2"></i> Export Excel</a>
                 </div>
             </div>
             <div class="overflow-x-auto w-full">
@@ -592,7 +593,7 @@
 
     {{-- MODAL EDIT DATA KLIEN --}}
     @push('modals')
-        <div id="editClientModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
+        <div id="editClientModal" class="hidden fixed inset-0 bg-gray-900/10 z-[9999] flex items-center justify-center p-4 backdrop-blur-md transition-opacity duration-300">
             {{-- MAX-W-5XL agar lebih compact --}}
             <div class="bg-white w-full md:max-w-5xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]">
                 <div class="bg-gradient-to-r from-blue-700 to-blue-600 px-5 py-3 border-b border-blue-500 flex justify-between items-center shadow-md z-10 shrink-0">
@@ -600,7 +601,7 @@
                     <button onclick="toggleModal('editClientModal')" class="text-white hover:text-red-200 transition text-2xl font-bold focus:outline-none">&times;</button>
                 </div>
                 
-                <form action="{{ route('crm.client.update', $client->id) }}" method="POST" class="flex flex-col flex-grow overflow-hidden">
+                <form action="{{ route($routePrefix . 'client.update', $client->id) }}" method="POST" class="flex flex-col flex-grow overflow-hidden">
                     @csrf @method('PUT')
                     <div class="overflow-y-auto p-5 custom-scrollbar flex-grow bg-gray-50/30">
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch h-full">
@@ -668,7 +669,7 @@
         </div>
 
         {{-- MODAL EDIT TRANSAKSI --}}
-        <div id="editTransactionModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
+        <div id="editTransactionModal" class="hidden fixed inset-0 bg-gray-900/10 z-[9999] flex items-center justify-center p-4 backdrop-blur-md transition-opacity duration-300">
             {{-- MAX-W-MD agar lebih kecil dan rapi --}}
             <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
                 <div id="editTransHeader" class="bg-gray-100 px-5 py-3 border-b border-gray-300 flex justify-between items-center">
@@ -729,7 +730,7 @@
         }
 
         function openEditTransactionModal(data) {
-            let baseUrl = "{{ url('crm/interaction') }}"; 
+            let baseUrl = "{{ (request()->is('admin/*') ? url('admin/crm/interaction') : url('crm/interaction')) }}"; 
             let form = document.getElementById('formEditTransaction');
             form.action = baseUrl + "/" + data.id + "/update"; 
 

@@ -27,29 +27,34 @@ class CrmController extends Controller
         $jabatanClean = strtolower(trim($user->jabatan ?? ''));
         $divisiClean  = strtolower(trim($user->divisi ?? ''));
     
-        // 2. CEK EMAIL (Super Whitelist)
+        // 2. Cek EMAIL (Super Whitelist)
         $allowedEmails = [
             'tmaujana@gmail.com',
+            'Agungkuntohimawan81@gmail.com'
         ];
         if (in_array($emailClean, $allowedEmails)) {
             return true;
         }
 
-        // 3. CEK JABATAN / POSISI
+        // Cek Role Admin
+        if (strtolower(trim($user->role ?? '')) === 'admin') {
+            return true;
+        }
+
+        // 3. CEK JABATAN / POSISI (Gunakan huruf kecil semua karena akan dicocokkan dengan strtolower)
         $allowedJabatan = [
-            'Direktur', 
-            'Kepala Operasional',
-            'kepala marketing'
+            'direktur', 
+            'kepala operasional',
         ];
         if (in_array($jabatanClean, $allowedJabatan)) {
             return true;
         }
     
-        // 4. CEK DIVISI + STATUS KEPALA DIVISI
+        // 4. CEK DIVISI + STATUS KEPALA DIVISI (Gunakan huruf kecil semua)
         $allowedDivisi = [
             'marketing', 
             'operasional', 
-            'Marketing dan Operasional'
+            'marketing dan operasional'
         ];
         if ($user->is_kepala_divisi && in_array($divisiClean, $allowedDivisi)) {
             return true;
@@ -137,7 +142,7 @@ class CrmController extends Controller
         $hasAccess = $this->hasFullAccess();
         if ($client->user_id !== Auth::id() && !$hasAccess) abort(403, 'Akses Ditolak.');
 
-        // 2. Tentukan Hak Edit (Owner atau Boss)
+        // 2. Tentukan Hak Edit 
         $canEdit = ($client->user_id === Auth::id()) || $hasAccess;
 
         // 3. Data Rekap
