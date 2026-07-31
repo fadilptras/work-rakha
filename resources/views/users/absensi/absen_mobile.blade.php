@@ -36,10 +36,11 @@
 
         .success-chip {
             display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(16, 185, 129, 0.15); color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.4);
-            font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 9999px;
+            background: rgba(16, 185, 129, 0.95); color: #ffffff;
+            border: 1px solid rgba(16, 185, 129, 1);
+            font-size: 12px; font-weight: 800; padding: 8px 14px; border-radius: 9999px;
             backdrop-filter: blur(6px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
         }
     </style>
     @endpush
@@ -123,7 +124,7 @@
                             <img id="preview-image" src="" class="w-full h-full object-cover" alt="Pratinjau Foto"/>
                             <div class="absolute top-20 right-4 z-30 flex flex-col items-end gap-2">
                                 <span class="success-chip"><i class="fas fa-check-circle"></i> Foto Tersimpan</span>
-                                <button type="button" id="retake-btn" class="bg-white/20 backdrop-blur-md text-white border border-white/50 font-bold py-2.5 px-4 rounded-full shadow-lg flex items-center gap-2 text-xs">
+                                <button type="button" id="retake-btn" class="bg-red-600 text-white border border-red-500 font-bold py-2.5 px-4 rounded-full shadow-lg flex items-center gap-2 text-xs">
                                     <i class="fas fa-sync-alt"></i> Ulang
                                 </button>
                             </div>
@@ -235,13 +236,15 @@
                                     </div>
                                     <h4 class="text-[11px] font-extrabold text-slate-700 uppercase tracking-widest">Detail Keterangan</h4>
                                 </div>
-                                <textarea name="keterangan" id="keterangan" rows="2" class="w-full bg-white border border-blue-200/60 rounded-[16px] px-4 py-3 text-[13px] font-medium text-slate-700 focus:ring-blue-500 focus:border-blue-500 shadow-sm outline-none transition-all placeholder:text-slate-400" placeholder="Tulis alasan secara singkat...">{{ old('keterangan') }}</textarea>
+                                <div class="flex gap-3 items-stretch h-24">
+                                    <textarea name="keterangan" id="keterangan" class="flex-grow w-full bg-white border border-blue-200/60 rounded-[16px] px-4 py-3 text-[13px] font-medium text-slate-700 focus:ring-blue-500 focus:border-blue-500 shadow-sm outline-none transition-all placeholder:text-slate-400 resize-none h-full" placeholder="Tulis alasan secara singkat...">{{ old('keterangan') }}</textarea>
 
-                                <label for="lampiran" id="upload-label" class="flex flex-col items-center justify-center w-full py-4 border-2 border-dashed border-blue-300/70 rounded-[16px] bg-white hover:bg-blue-50 transition-colors cursor-pointer group">
-                                    <i class="fas fa-cloud-upload-alt text-xl text-blue-400 group-hover:scale-110 group-hover:text-blue-500 transition-all mb-1.5"></i>
-                                    <span id="upload-text" class="text-[10px] font-bold text-slate-500 group-hover:text-blue-600 transition-colors uppercase tracking-wide">Unggah Bukti (Opsional)</span>
-                                    <input name="lampiran" id="lampiran" type="file" class="hidden" accept="image/*,.pdf" />
-                                </label>
+                                    <label for="lampiran" id="upload-label" class="flex-shrink-0 w-24 h-full flex flex-col items-center justify-center border-2 border-dashed border-blue-300/70 rounded-[16px] bg-white hover:bg-blue-50 transition-colors cursor-pointer group px-1">
+                                        <i class="fas fa-cloud-upload-alt text-2xl text-blue-400 group-hover:scale-110 group-hover:text-blue-500 transition-all mb-1"></i>
+                                        <span id="upload-text" class="text-[9px] font-bold text-slate-500 group-hover:text-blue-600 transition-colors uppercase tracking-wide text-center leading-tight">Unggah<br>Bukti</span>
+                                        <input name="lampiran" id="lampiran" type="file" class="hidden" accept="image/*,.pdf" />
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -371,7 +374,7 @@
                     <img id="preview-image-keluar" src="" class="w-full h-full object-cover" alt="Pratinjau Foto"/>
                     <div class="absolute top-20 right-4 z-30 flex flex-col items-end gap-2">
                         <span class="success-chip"><i class="fas fa-check-circle"></i> Foto Tersimpan</span>
-                        <button type="button" id="retake-btn-keluar" class="bg-white/20 backdrop-blur-md text-white border border-white/50 font-bold py-2.5 px-4 rounded-full shadow-lg flex items-center gap-2 text-xs">
+                        <button type="button" id="retake-btn-keluar" class="bg-red-600 text-white border border-red-500 font-bold py-2.5 px-4 rounded-full shadow-lg flex items-center gap-2 text-xs">
                             <i class="fas fa-sync-alt"></i> Ulang
                         </button>
                     </div>
@@ -438,7 +441,7 @@
                     <img id="preview-image-keluar-unfinished" src="" class="w-full h-full object-cover" alt="Pratinjau Foto"/>
                     <div class="absolute top-20 right-4 z-30 flex flex-col items-end gap-2">
                         <span class="success-chip"><i class="fas fa-check-circle"></i> Foto Tersimpan</span>
-                        <button type="button" id="retake-btn-keluar-unfinished" class="bg-white/20 backdrop-blur-md text-white border border-white/50 font-bold py-2.5 px-4 rounded-full shadow-lg flex items-center gap-2 text-xs">
+                        <button type="button" id="retake-btn-keluar-unfinished" class="bg-red-600 text-white border border-red-500 font-bold py-2.5 px-4 rounded-full shadow-lg flex items-center gap-2 text-xs">
                             <i class="fas fa-sync-alt"></i> Ulang
                         </button>
                     </div>
@@ -506,7 +509,7 @@
                     <img id="preview-image-lembur" src="" class="w-full h-full object-cover" alt="Pratinjau Foto"/>
                     <div class="absolute top-20 right-4 z-30 flex flex-col items-end gap-2">
                         <span class="success-chip"><i class="fas fa-check-circle"></i> Foto Tersimpan</span>
-                        <button type="button" id="retake-btn-lembur" class="bg-white/20 backdrop-blur-md text-white border border-white/50 font-bold py-2.5 px-4 rounded-full shadow-lg flex items-center gap-2 text-xs">
+                        <button type="button" id="retake-btn-lembur" class="bg-red-600 text-white border border-red-500 font-bold py-2.5 px-4 rounded-full shadow-lg flex items-center gap-2 text-xs">
                             <i class="fas fa-sync-alt"></i> Ulang
                         </button>
                     </div>
@@ -569,7 +572,7 @@
                     <img id="preview-image-keluar-lembur" src="" class="w-full h-full object-cover" alt="Pratinjau Foto"/>
                     <div class="absolute top-20 right-4 z-30 flex flex-col items-end gap-2">
                         <span class="success-chip"><i class="fas fa-check-circle"></i> Foto Tersimpan</span>
-                        <button type="button" id="retake-btn-keluar-lembur" class="bg-white/20 backdrop-blur-md text-white border border-white/50 font-bold py-2.5 px-4 rounded-full shadow-lg flex items-center gap-2 text-xs">
+                        <button type="button" id="retake-btn-keluar-lembur" class="bg-red-600 text-white border border-red-500 font-bold py-2.5 px-4 rounded-full shadow-lg flex items-center gap-2 text-xs">
                             <i class="fas fa-sync-alt"></i> Ulang
                         </button>
                     </div>
@@ -610,8 +613,36 @@
     @endif
 
     @push('scripts')
+    <!-- Load MediaPipe Face Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+
+        // =========================================================================
+        // MEDIAPIPE FACE DETECTION SETUP
+        // =========================================================================
+        const faceDetection = new FaceDetection({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`;
+        }});
+        faceDetection.setOptions({
+            model: 'short',
+            minDetectionConfidence: 0.5
+        });
+
+        let faceDetectionResolver = null;
+        faceDetection.onResults((results) => {
+            if (faceDetectionResolver) {
+                faceDetectionResolver(results.detections.length > 0);
+                faceDetectionResolver = null;
+            }
+        });
+
+        function detectFaceWithMediaPipe(imageElement) {
+            return new Promise((resolve) => {
+                faceDetectionResolver = resolve;
+                faceDetection.send({image: imageElement});
+            });
+        }
 
         // =========================================================================
         // JAM REALTIME
@@ -710,7 +741,7 @@
                 snap.disabled = true;
             };
 
-            snap.addEventListener('click', () => {
+            snap.addEventListener('click', async () => {
                 const context = canvas.getContext('2d');
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
@@ -727,16 +758,56 @@
                 if (snapUi) snapUi.classList.add('hidden');
                 previewUi.classList.remove('hidden');
 
-                canvas.toBlob((blob) => {
-                    const fileName = `selfie${prefix.replace(/-/g, '_')}_${Date.now()}.jpg`;
-                    const file = new File([blob], fileName, { type: 'image/jpeg' });
-                    const dt = new DataTransfer();
-                    dt.items.add(file);
-                    if (fileInput) fileInput.files = dt.files;
+                // Tambahkan spinner overlay jika belum ada
+                let spinnerOverlay = document.getElementById(`spinner-overlay${prefix}`);
+                if (!spinnerOverlay) {
+                    spinnerOverlay = document.createElement('div');
+                    spinnerOverlay.id = `spinner-overlay${prefix}`;
+                    spinnerOverlay.className = 'absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm z-50 rounded-3xl';
+                    spinnerOverlay.innerHTML = `<i class="fas fa-spinner fa-spin text-4xl text-white mb-2"></i><span class="text-white text-xs font-bold mt-2">Memindai Wajah...</span>`;
+                    previewUi.appendChild(spinnerOverlay);
+                }
+                // Restore the original innerHTML in case it was changed by error message
+                spinnerOverlay.innerHTML = `<i class="fas fa-spinner fa-spin text-4xl text-white mb-2"></i><span class="text-white text-xs font-bold mt-2">Memindai Wajah...</span>`;
+                spinnerOverlay.classList.remove('hidden');
 
-                    stopCamera();
-                    document.dispatchEvent(new CustomEvent(`photoReady${prefix}`, { detail: { isReady: true } }));
-                }, 'image/jpeg', 0.85);
+                try {
+                    const hasFace = await detectFaceWithMediaPipe(canvas);
+
+                    if (hasFace) {
+                        spinnerOverlay.classList.add('hidden');
+                        canvas.toBlob((blob) => {
+                            const fileName = `selfie${prefix.replace(/-/g, '_')}_${Date.now()}.jpg`;
+                            const file = new File([blob], fileName, { type: 'image/jpeg' });
+                            const dt = new DataTransfer();
+                            dt.items.add(file);
+                            if (fileInput) fileInput.files = dt.files;
+
+                            stopCamera();
+                            document.dispatchEvent(new CustomEvent(`photoReady${prefix}`, { detail: { isReady: true } }));
+                        }, 'image/jpeg', 0.85);
+                    } else {
+                        // Tampilkan pesan error di dalam overlay secara visual
+                        spinnerOverlay.innerHTML = `<i class="fas fa-exclamation-triangle text-4xl text-rose-500 mb-2"></i><span class="text-white text-xs font-bold text-center px-4 mt-2">Wajah tidak terdeteksi!<br>Harap pastikan wajah Anda terlihat.</span>`;
+                        
+                        document.dispatchEvent(new CustomEvent(`photoReady${prefix}`, { detail: { isReady: false } }));
+                        
+                        // Auto refresh ke kamera setelah 2 detik
+                        setTimeout(() => {
+                            spinnerOverlay.classList.add('hidden');
+                            if (retakeBtn) retakeBtn.click();
+                        }, 2000);
+                    }
+                } catch (error) {
+                    console.error("Error MediaPipe:", error);
+                    spinnerOverlay.innerHTML = `<i class="fas fa-times-circle text-4xl text-red-500 mb-2"></i><span class="text-white text-xs font-bold text-center px-4 mt-2">Terjadi Kesalahan Sistem.</span>`;
+                    document.dispatchEvent(new CustomEvent(`photoReady${prefix}`, { detail: { isReady: false } }));
+                    
+                    setTimeout(() => {
+                        spinnerOverlay.classList.add('hidden');
+                        if (retakeBtn) retakeBtn.click();
+                    }, 2000);
+                }
             });
 
             if (retakeBtn) {

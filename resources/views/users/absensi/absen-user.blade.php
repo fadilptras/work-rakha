@@ -4,7 +4,6 @@
     @push('styles')
     <style>
         /* ===== Modern Premium Styles ===== */
-
         /* Wrapper */
         .absen-page-wrapper { 
             padding: 16px 16px 40px; 
@@ -1083,8 +1082,8 @@
                 
                 if(isPhotoReady) {
                     const successMsg = document.createElement('div');
-                    successMsg.className = 'success-message mt-2 text-center text-xs text-green-600 font-semibold p-1 bg-green-50 rounded-lg';
-                    successMsg.innerHTML = `<i class="fas fa-check-circle"></i> Foto berhasil.`;
+                    successMsg.className = 'success-message mt-2 text-center text-xs text-white font-bold p-2 bg-emerald-500 rounded-lg shadow-md shadow-emerald-500/20';
+                    successMsg.innerHTML = `<i class="fas fa-check-circle"></i> Foto berhasil tersimpan.`;
                     cameraContainer.parentNode.insertBefore(successMsg, cameraContainer.nextSibling);
                 }
                 checkFormReadiness();
@@ -1237,8 +1236,8 @@
                 
                 if(isPhotoReady) {
                     const successMsg = document.createElement('div');
-                    successMsg.className = 'success-message mt-2 text-center text-sm text-green-600 font-semibold p-2 bg-green-50 rounded-lg';
-                    successMsg.innerHTML = `<i class="fas fa-check-circle"></i> Foto berhasil diambil.`;
+                    successMsg.className = 'success-message mt-2 text-center text-sm text-white font-bold p-2.5 bg-emerald-500 rounded-lg shadow-md shadow-emerald-500/20';
+                    successMsg.innerHTML = `<i class="fas fa-check-circle"></i> Foto berhasil tersimpan.`;
                     cameraContainer.parentNode.insertBefore(successMsg, cameraContainer.nextSibling);
                 }
             });

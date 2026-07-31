@@ -269,7 +269,7 @@ class AbsenController extends Controller
             return redirect()->route('absen')->with('error', 'Absensi masuk Anda melewati batas waktu. Status Anda otomatis menjadi Tidak Hadir.');
         }
 
-        return redirect()->route('absen')->with('success', "Absensi masuk berhasil direkam pada pukul " . $jamMasuk->format('H:i') . " WIB.");
+        return redirect()->route('absen')->with('success', "Absensi masuk Anda telah tercatat pada pukul " . $jamMasuk->format('H:i') . " WIB. Selamat bekerja, tetap fokus, dan semangat memberikan yang terbaik hari ini!");
     }
 
     public function updateKeluar(Request $request, Absensi $absensi)
@@ -301,7 +301,7 @@ class AbsenController extends Controller
         // Mengaktifkan kembali untuk In-App Notification (WA di-bypass)
         Auth::user()->notify(new AbsensiNotification($absensi, 'keluar'));
 
-        return redirect()->route('absen')->with('success', "Absensi keluar berhasil direkam pada pukul " . now()->format('H:i') . " WIB. Selamat beristirahat!");
+        return redirect()->route('absen')->with('success', "Absensi pulang Anda telah tercatat pada pukul " . now()->format('H:i') . " WIB. Terima kasih atas dedikasi dan kerja keras Anda hari ini. Selamat beristirahat!");
     }
 
     public function storeLembur(Request $request)
@@ -353,7 +353,7 @@ class AbsenController extends Controller
     
         $user->notify(new \App\Notifications\AbsensiNotification($lembur, 'lembur_masuk'));
     
-        return redirect()->route('absen')->with('success', "Lembur masuk berhasil dimulai pada pukul " . now()->format('H:i') . " WIB. Semangat bekerja!");
+        return redirect()->route('absen')->with('success', "Lembur masuk telah tercatat pada pukul " . now()->format('H:i') . " WIB. Semangat melanjutkan tugas, dan pastikan tetap jaga kesehatan!");
     }
 
     public function updateLemburKeluar(Request $request, Lembur $lembur)
@@ -387,6 +387,6 @@ class AbsenController extends Controller
         // Perbaikan: sama seperti absen biasa, menggunakan Auth::user() langsung
         Auth::user()->notify(new AbsensiNotification($lembur, 'lembur_keluar'));
     
-        return redirect()->route('absen')->with('success', "Lembur keluar berhasil direkam pada pukul " . now()->format('H:i') . " WIB. Terima kasih atas dedikasinya hari ini!");
+        return redirect()->route('absen')->with('success', "Lembur selesai pada pukul " . now()->format('H:i') . " WIB. Terima kasih atas usaha ekstra Anda hari ini. Hati-hati di jalan dan selamat beristirahat!");
     }
 }

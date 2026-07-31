@@ -938,6 +938,8 @@
     </div>
 
     @push('scripts')
+    <!-- Load MediaPipe Face Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
     <script>
     window.openRekapModal = function() {
         const modalContent = document.getElementById('modal-rekap-content');
@@ -971,6 +973,32 @@
             }
             setInterval(updateJam, 1000);
             updateJam();
+        }
+
+        // =========================================================================
+        // MEDIAPIPE FACE DETECTION SETUP
+        // =========================================================================
+        const faceDetection = new FaceDetection({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`;
+        }});
+        faceDetection.setOptions({
+            model: 'short',
+            minDetectionConfidence: 0.5
+        });
+
+        let faceDetectionResolver = null;
+        faceDetection.onResults((results) => {
+            if (faceDetectionResolver) {
+                faceDetectionResolver(results.detections.length > 0);
+                faceDetectionResolver = null;
+            }
+        });
+
+        function detectFaceWithMediaPipe(imageElement) {
+            return new Promise((resolve) => {
+                faceDetectionResolver = resolve;
+                faceDetection.send({image: imageElement});
+            });
         }
 
         // =========================================================================
@@ -1019,7 +1047,7 @@
                 snapButton.disabled = true;
             };
 
-            snapButton.addEventListener("click", function() {
+            snapButton.addEventListener("click", async function() {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext('2d');
@@ -1032,7 +1060,48 @@
                 video.classList.add('hidden');
                 snapUI.classList.add('hidden');
                 previewUI.classList.remove('hidden');
-                retakeButton.parentNode.classList.remove('hidden'); // Pastikan tombol terlihat
+                
+                // Tampilkan container tombol, tapi sembunyikan tombol pakai terlebih dahulu
+                retakeButton.parentNode.classList.remove('hidden');
+                usePhotoButton.classList.add('hidden');
+                
+                // Tambahkan spinner overlay jika belum ada
+                let spinnerOverlay = document.getElementById(`spinner-overlay${prefix}`);
+                if (!spinnerOverlay) {
+                    spinnerOverlay = document.createElement('div');
+                    spinnerOverlay.id = `spinner-overlay${prefix}`;
+                    spinnerOverlay.className = 'absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-50';
+                    spinnerOverlay.innerHTML = `<i class="fas fa-spinner fa-spin text-4xl text-white mb-2"></i><span class="text-white text-xs font-bold">Memindai Wajah...</span>`;
+                    previewUI.appendChild(spinnerOverlay);
+                }
+                // Restore the original innerHTML in case it was changed by error message
+                spinnerOverlay.innerHTML = `<i class="fas fa-spinner fa-spin text-4xl text-white mb-2"></i><span class="text-white text-xs font-bold">Memindai Wajah...</span>`;
+                spinnerOverlay.classList.remove('hidden');
+
+                try {
+                    const hasFace = await detectFaceWithMediaPipe(canvas);
+                    
+                    if (hasFace) {
+                        spinnerOverlay.classList.add('hidden');
+                        usePhotoButton.classList.remove('hidden');
+                    } else {
+                        // Tampilkan pesan error di dalam overlay secara visual
+                        spinnerOverlay.innerHTML = `<i class="fas fa-exclamation-triangle text-4xl text-rose-500 mb-2"></i><span class="text-white text-xs font-bold text-center px-4">Wajah tidak terdeteksi!<br>Harap pastikan wajah Anda terlihat.</span>`;
+                        
+                        // Auto refresh ke kamera setelah 2 detik
+                        setTimeout(() => {
+                            spinnerOverlay.classList.add('hidden');
+                            retakeButton.click();
+                        }, 2000);
+                    }
+                } catch (error) {
+                    console.error("Error MediaPipe:", error);
+                    spinnerOverlay.innerHTML = `<i class="fas fa-times-circle text-4xl text-red-500 mb-2"></i><span class="text-white text-xs font-bold">Terjadi Kesalahan Sistem.</span>`;
+                    setTimeout(() => {
+                        spinnerOverlay.classList.add('hidden');
+                        retakeButton.click();
+                    }, 2000);
+                }
             });
             
             retakeButton.addEventListener('click', function() {
@@ -1083,8 +1152,8 @@
                 
                 if(isPhotoReady) {
                     const successMsg = document.createElement('div');
-                    successMsg.className = 'success-message mt-2 text-center text-xs text-green-600 font-semibold p-1 bg-green-50 rounded-lg';
-                    successMsg.innerHTML = `<i class="fas fa-check-circle"></i> Foto berhasil.`;
+                    successMsg.className = 'success-message mt-2 text-center text-xs text-white font-bold p-2 bg-emerald-500 rounded-lg shadow-md shadow-emerald-500/20';
+                    successMsg.innerHTML = `<i class="fas fa-check-circle"></i> Foto berhasil tersimpan.`;
                     cameraContainer.parentNode.insertBefore(successMsg, cameraContainer.nextSibling);
                 }
                 checkFormReadiness();
@@ -1237,8 +1306,8 @@
                 
                 if(isPhotoReady) {
                     const successMsg = document.createElement('div');
-                    successMsg.className = 'success-message mt-2 text-center text-sm text-green-600 font-semibold p-2 bg-green-50 rounded-lg';
-                    successMsg.innerHTML = `<i class="fas fa-check-circle"></i> Foto berhasil diambil.`;
+                    successMsg.className = 'success-message mt-2 text-center text-sm text-white font-bold p-2.5 bg-emerald-500 rounded-lg shadow-md shadow-emerald-500/20';
+                    successMsg.innerHTML = `<i class="fas fa-check-circle"></i> Foto berhasil tersimpan.`;
                     cameraContainer.parentNode.insertBefore(successMsg, cameraContainer.nextSibling);
                 }
             });
