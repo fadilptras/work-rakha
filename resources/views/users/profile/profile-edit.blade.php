@@ -112,15 +112,12 @@
                 <input type="hidden" name="cropped_image" id="cropped_image">
 
                 {{-- CARD 1: HEADER & FOTO --}}
+                <!-- lock user gabisa edit / set foto profile --> 
                 <div class="bg-white shadow-xl rounded-3xl overflow-hidden mb-6 border border-slate-200">
                     <div class="bg-gradient-to-r from-blue-800 to-indigo-600 p-8 flex flex-col md:flex-row items-center gap-8">
                         <div class="relative group">
                             <img id="preview-img" src="{{ $user->profile_picture ? asset('storage/' . $user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($user->name) }}" 
                                  class="w-32 h-32 rounded-full border-4 border-white shadow-2xl object-cover">
-                            <label class="absolute bottom-1 right-1 bg-white p-2.5 rounded-full shadow-lg cursor-pointer hover:scale-110 transition-transform">
-                                <i class="fas fa-camera text-blue-600"></i>
-                                <input type="file" id="profile_picture_input" name="profile_picture" class="hidden" accept="image/*">
-                            </label>
                         </div>
                         <div class="text-white text-center md:text-left flex-1">
                             <h2 class="text-3xl font-black">{{ $user->name }}</h2>
