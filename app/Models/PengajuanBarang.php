@@ -12,8 +12,8 @@ class PengajuanBarang extends Model
 
     protected $table = 'pengajuan_barang';
     protected $fillable = [
-        'user_id', 'judul_pengajuan', 'divisi', 'rincian_barang', 'lampiran',
-        'status', 
+        'user_id', 'judul_pengajuan', 'divisi', 'catatan_pemohon', 'rincian_barang', 'lampiran',
+        'status', 'status_monitoring', 'riwayat_monitoring',
         'approver_barang_1_id', 'status_appr_1', 'catatan_approver_1', 'tanggal_approved_1',
         'approver_barang_2_id', 'status_appr_2', 'catatan_approver_2', 'tanggal_approved_2',
         'approver_barang_3_id', 'status_appr_3', 'catatan_approver_3', 'tanggal_approved_3',
@@ -23,6 +23,7 @@ class PengajuanBarang extends Model
     protected $casts = [
         'rincian_barang' => 'array',
         'lampiran' => 'array',
+        'riwayat_monitoring' => 'array',
         'tanggal_approved_1' => 'datetime', 
         'tanggal_approved_2' => 'datetime',
         'tanggal_approved_3' => 'datetime',

@@ -336,6 +336,7 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
         Route::delete('/{pengajuanBarang}', [AdminPengajuanBarangController::class, 'destroy'])->name('destroy');
         Route::get('/{pengajuanBarang}/download', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'downloadPDF'])->name('downloadPdf');
         Route::put('/{pengajuanBarang}/status', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'updateStatus'])->name('updateStatus');
+        Route::post('/{pengajuanBarang}/update-monitoring', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'updateMonitoring'])->name('updateMonitoring');
     });
     
     Route::resource('holidays', AdminHolidayController::class);

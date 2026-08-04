@@ -192,6 +192,36 @@
                 </div>
             </div>
 
+            {{-- LACAK PENGIRIMAN & MONITORING --}}
+            @if(!empty($pengajuanBarang->status_monitoring) || !empty($pengajuanBarang->riwayat_monitoring))
+                <div class="glass-card mb-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-3.5 mb-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-truck-loading"></i></div>
+                            <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">Lacak Pengadaan & Status Monitoring</h4>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-[11px] font-black bg-blue-50 text-blue-700 border border-blue-200 w-fit">
+                            <i class="fas fa-shipping-fast mr-1 text-blue-500"></i> {{ $pengajuanBarang->status_monitoring ?? 'Belum Diproses' }}
+                        </span>
+                    </div>
+
+                    @if(!empty($pengajuanBarang->riwayat_monitoring))
+                        <div class="relative border-l-2 border-blue-400 ml-3 space-y-4 pl-4 py-1">
+                            @foreach(array_reverse($pengajuanBarang->riwayat_monitoring) as $log)
+                            <div class="relative">
+                                <div class="absolute -left-[23px] top-1 w-3 h-3 rounded-full bg-blue-500 border-2 border-white"></div>
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-1">
+                                    <span class="font-black text-blue-800">{{ $log['status'] }}</span>
+                                    <span class="text-[10px] text-slate-400 font-semibold"><i class="fas fa-clock mr-1"></i> {{ $log['waktu'] }} • {{ $log['oleh'] }}</span>
+                                </div>
+                                <p class="text-xs text-slate-600 mt-1 font-medium bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">{{ $log['catatan'] }}</p>
+                            </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            @endif
+
             {{-- RINCIAN BARANG (TABEL) --}}
             <div class="glass-card mb-6">
                 <div class="flex items-center gap-3 border-b border-slate-200/60" style="padding-bottom: 14px; margin-bottom: 20px;">
@@ -204,9 +234,10 @@
                         <thead class="bg-slate-50 text-slate-600 uppercase font-black border-b border-slate-200">
                             <tr>
                                 <th class="px-6 py-4 text-center w-16">No</th>
-                                <th class="px-6 py-4 text-left">Deskripsi Barang</th>
-                                <th class="px-6 py-4 text-center w-36">Satuan</th>
-                                <th class="px-6 py-4 text-center w-28">Jumlah</th>
+                                <th class="px-6 py-4 text-left">Nama / Deskripsi Barang</th>
+                                <th class="px-6 py-4 text-left">Supplier</th>
+                                <th class="px-6 py-4 text-center w-36">Jumlah & Satuan</th>
+                                <th class="px-6 py-4 text-left">Keterangan</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">
@@ -214,17 +245,25 @@
                             <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="px-6 py-4.5 text-center text-slate-500 font-extrabold">{{ $loop->iteration }}</td>
                                 <td class="px-6 py-4.5 text-slate-800 font-bold leading-normal">{{ $item['nama_barang'] ?? $item['deskripsi'] ?? '-' }}</td>
-                                <td class="px-6 py-4.5 text-center text-slate-600 font-semibold">{{ $item['satuan'] ?? '-' }}</td>
-                                <td class="px-6 py-4.5 text-center font-black text-blue-700">{{ $item['jumlah'] ?? 0 }}</td>
+                                <td class="px-6 py-4.5 text-slate-600 font-medium">{{ $item['supplier'] ?? '-' }}</td>
+                                <td class="px-6 py-4.5 text-center font-black text-blue-700">{{ $item['jumlah'] ?? 0 }} {{ $item['satuan'] ?? '' }}</td>
+                                <td class="px-6 py-4.5 text-slate-600 font-medium">{{ $item['keterangan'] ?? '-' }}</td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center text-slate-400 font-bold" style="padding: 32px 16px;">Data rincian tidak tersedia.</td>
+                                <td colspan="5" class="text-center text-slate-400 font-bold" style="padding: 32px 16px;">Data rincian tidak tersedia.</td>
                             </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
+
+                @if(!empty($pengajuanBarang->catatan_pemohon))
+                <div class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span class="text-xs font-bold text-slate-700 block mb-1"><i class="fas fa-sticky-note text-blue-600 mr-1"></i> Catatan Pemohon:</span>
+                    <p class="text-xs text-slate-600 leading-relaxed">{{ $pengajuanBarang->catatan_pemohon }}</p>
+                </div>
+                @endif
             </div>
 
             {{-- FORM TINDAKAN PERSETUJUAN --}}

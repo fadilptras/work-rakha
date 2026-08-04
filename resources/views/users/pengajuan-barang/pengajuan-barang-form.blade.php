@@ -45,9 +45,9 @@
         /* Custom Dynamic Row Grid Layouts */
         .rincian-row-desktop {
             display: grid !important;
-            grid-template-columns: 5fr 3fr 3fr 1fr !important;
-            gap: 16px !important;
-            padding: 16px !important;
+            grid-template-columns: 3fr 3fr 2fr 3fr 40px !important;
+            gap: 12px !important;
+            padding: 12px 16px !important;
             align-items: center !important;
             background: #ffffff !important;
         }
@@ -172,32 +172,11 @@
                             </div>
                             @endif
                         </div>
+                        <input type="hidden" name="divisi" value="{{ Auth::user()->divisi ?? 'Umum' }}">
                         <div class="grid grid-cols-2 gap-3 md:gap-5">
-                            <!-- <div>
-                                <label class="modern-label">Nama Pemohon</label>
-                                <input type="text" class="modern-input-readonly" value="{{ Auth::user()->name }}" readonly>
-                                <input type="hidden" name="nama_pemohon" value="{{ Auth::user()->name }}">
-                            </div>
-                            <div>
-                                <label class="modern-label">Divisi</label>
-                                <input type="text" class="modern-input-readonly" value="{{ Auth::user()->divisi }}" readonly>
-                                <input type="hidden" name="divisi" value="{{ Auth::user()->divisi }}">
-                            </div>
-                            <div>
-                                <label class="modern-label">Jabatan Pemohon</label>
-                                <input type="text" class="modern-input-readonly" value="{{ Auth::user()->jabatan ?? '-' }}" readonly>
-                            </div>
-                            <div>
-                                <label class="modern-label">Email Pemohon</label>
-                                <input type="text" class="modern-input-readonly" value="{{ Auth::user()->email }}" readonly>
-                            </div> -->
                             <div class="col-span-2">
                                 <label class="modern-label" for="judul-pengajuan">Judul Pengajuan <span class="text-red-500">*</span></label>
-                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Contoh: Pengadaan Perlengkapan Kantor & ATK" value="{{ old('judul_pengajuan') }}" required>
-                            </div>
-                            <div class="col-span-2">
-                                <label class="modern-label" for="judul-pengajuan">Keterangan Pengajuan <span class="text-red-500">*</span></label>
-                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Keterangan: Pengadaan Perlengkapan Kantor & ATK" value="{{ old('judul_pengajuan') }}" required>
+                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Pengadaan Barang ...." value="{{ old('judul_pengajuan') }}" required>
                             </div>
                             <div class="col-span-2 md:col-span-1">
                                 <label class="modern-label">Tanggal Pengajuan</label>
@@ -214,7 +193,7 @@
                             <div>
                                 <h4 class="text-lg font-black text-slate-800">2. Rincian Barang yang Diajukan</h4>
                                 @if(!$isMobile)
-                                <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Tambahkan satu atau lebih item barang beserta satuan dan jumlahnya</p>
+                                <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Tambahkan satu atau lebih item barang beserta supplier, satuan, jumlah, dan keterangan</p>
                                 @endif
                             </div>
                         </div>
@@ -224,12 +203,12 @@
                             </div>
                         @else
                             <div class="rounded-2xl border border-slate-200 overflow-hidden mb-5">
-                                {{-- Header: Hidden on mobile, visible as grid on desktop --}}
+                                {{-- Header: Visible as grid on desktop --}}
                                 <div class="hidden md:grid grid-cols-12 bg-slate-50 text-slate-600 uppercase font-black text-xs border-b border-slate-200 p-4 gap-4">
-                                    <div class="col-span-5">Deskripsi Barang</div>
+                                    <div class="col-span-3">Nama Barang</div>
                                     <div class="col-span-3">Supplier</div>
-                                    <div class="col-span-3">Satuan</div>
-                                    <div class="col-span-3">Jumlah</div>
+                                    <div class="col-span-2">Jumlah & Satuan</div>
+                                    <div class="col-span-3">Keterangan</div>
                                     <div class="col-span-1 text-center">Aksi</div>
                                 </div>
                                 {{-- Container for rows --}}
@@ -238,10 +217,28 @@
                                 </div>
                             </div>
                         @endif
-                        <button id="tambah-baris-btn" type="button" class="bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 font-black py-2 px-4 rounded-xl text-xs flex items-center gap-1.5 transition">
-                            <i class="fas fa-plus"></i> Tambah Item Barang
-                        </button>
+                        
+                        <div class="flex items-center justify-between">
+                            <button id="tambah-baris-btn" type="button" class="bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 font-black py-2 px-4 rounded-xl text-xs flex items-center gap-1.5 transition">
+                                <i class="fas fa-plus"></i> Tambah Item Barang
+                            </button>
+                        </div>
+
+                        {{-- Form Note / Catatan di bawah poin 2 --}}
+                        <div class="mt-5 pt-4 border-t border-slate-200/80">
+                            <label for="catatan_pemohon" class="modern-label flex items-center gap-1.5 text-slate-700 font-bold mb-1.5">
+                                <i class="fas fa-sticky-note text-blue-600"></i> Catatan / Note Pengajuan <span class="text-slate-400 font-normal text-xs">(Opsional)</span>
+                            </label>
+                            <textarea id="catatan_pemohon" name="catatan_pemohon" rows="3" class="modern-input w-full" placeholder="Contoh: Pemenuhan PO untuk vendor PT Maju Jaya...">{{ old('catatan_pemohon') }}</textarea>
+                        </div>
                     </div>
+
+                    {{-- Datalist Supplier dari Database --}}
+                    <datalist id="supplier-list-options">
+                        @foreach($supplierList as $sup)
+                            <option value="{{ $sup }}"></option>
+                        @endforeach
+                    </datalist>
 
                     {{-- 3. FILE PENDUKUNG --}}
                     <div class="glass-card">
@@ -296,7 +293,7 @@
 
         const isMobile = @json($isMobile);
 
-        function addRow(deskripsi = '', satuan = '', jumlah = '') {
+        function addRow(deskripsi = '', supplier = '', satuan = '', jumlah = '', keterangan = '') {
             const newRow = document.createElement('div');
             
             let localUnitOptions = unitOptions;
@@ -308,16 +305,29 @@
                 newRow.className = 'rincian-row-mobile';
                 newRow.innerHTML = `
                     <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">Nama Barang</label>
                         <input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Nama barang" required>
                     </div>
-                    <div class="rincian-row-mobile-second-row">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">Supplier</label>
+                        <input list="supplier-list-options" name="rincian_supplier[]" value="${supplier}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Pilih / Ketik Supplier..." autocomplete="off">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <select name="rincian_satuan[]" class="modern-select !py-1.5 !px-2.5 !rounded-lg !text-xs">${localUnitOptions}</select>
-                        </div>
-                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase">Jumlah</label>
                             <input type="number" name="rincian_jumlah[]" value="${jumlah}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Jumlah" min="1" required>
                         </div>
-                        <div style="display: flex; justify-content: center; align-items: center;">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase">Satuan</label>
+                            <select name="rincian_satuan[]" class="modern-select !py-1.5 !px-2.5 !rounded-lg !text-xs">${localUnitOptions}</select>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase">Keterangan Item</label>
+                            <input type="text" name="rincian_keterangan[]" value="${keterangan}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Keterangan item">
+                        </div>
+                        <div class="pt-4">
                             <button type="button" class="delete-row-btn text-red-500 hover:text-red-700 p-1.5 text-base">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
@@ -328,13 +338,17 @@
                 newRow.className = 'rincian-row-desktop';
                 newRow.innerHTML = `
                     <div>
-                        <input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-2 !px-3.5 !rounded-xl !text-xs" placeholder="Masukkan deskripsi barang" required>
+                        <input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Nama barang" required>
                     </div>
                     <div>
-                        <select name="rincian_satuan[]" class="modern-select !py-2 !px-3.5 !rounded-xl !text-xs">${localUnitOptions}</select>
+                        <input list="supplier-list-options" name="rincian_supplier[]" value="${supplier}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Pilih / Ketik Supplier..." autocomplete="off">
+                    </div>
+                    <div class="flex gap-1.5">
+                        <input type="number" name="rincian_jumlah[]" value="${jumlah}" class="modern-input !py-2 !px-2.5 !rounded-xl !text-xs w-1/2" placeholder="0" min="1" required>
+                        <select name="rincian_satuan[]" class="modern-select !py-2 !px-2.5 !rounded-xl !text-xs w-1/2">${localUnitOptions}</select>
                     </div>
                     <div>
-                        <input type="number" name="rincian_jumlah[]" value="${jumlah}" class="modern-input !py-2 !px-3.5 !rounded-xl !text-xs" placeholder="0" min="1" required>
+                        <input type="text" name="rincian_keterangan[]" value="${keterangan}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Keterangan item">
                     </div>
                     <div style="display: flex; justify-content: center; align-items: center;">
                         <button type="button" class="delete-row-btn text-slate-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-xl text-sm transition-all">
@@ -348,15 +362,19 @@
         }
 
         const oldRincianDeskripsi = @json(old('rincian_deskripsi', []));
+        const oldRincianSupplier = @json(old('rincian_supplier', []));
         const oldRincianSatuan = @json(old('rincian_satuan', []));
         const oldRincianJumlah = @json(old('rincian_jumlah', []));
+        const oldRincianKeterangan = @json(old('rincian_keterangan', []));
 
         if (tambahBarisBtn) { 
             if (oldRincianDeskripsi && oldRincianDeskripsi.length > 0) {
                 oldRincianDeskripsi.forEach((deskripsi, index) => {
+                    const supplier = oldRincianSupplier[index] !== undefined ? oldRincianSupplier[index] : '';
                     const satuan = oldRincianSatuan[index] !== undefined ? oldRincianSatuan[index] : '';
                     const jumlah = oldRincianJumlah[index] !== undefined ? oldRincianJumlah[index] : '';
-                    addRow(deskripsi, satuan, jumlah);
+                    const keterangan = oldRincianKeterangan[index] !== undefined ? oldRincianKeterangan[index] : '';
+                    addRow(deskripsi, supplier, satuan, jumlah, keterangan);
                 });
             } else {
                 addRow(); 

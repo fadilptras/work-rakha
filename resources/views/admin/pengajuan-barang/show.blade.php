@@ -74,9 +74,10 @@
                         <thead class="bg-zinc-900/80">
                             <tr>
                                 <th class="px-4 py-3 text-left font-semibold text-zinc-400 w-12 text-xs uppercase tracking-wider">No</th>
-                                <th class="px-4 py-3 text-left font-semibold text-zinc-400 text-xs uppercase tracking-wider">Deskripsi / Nama Barang</th>
-                                <th class="px-4 py-3 text-center font-semibold text-zinc-400 w-32 text-xs uppercase tracking-wider">Satuan</th>
-                                <th class="px-4 py-3 text-center font-semibold text-zinc-400 w-32 text-xs uppercase tracking-wider">Jumlah</th>
+                                <th class="px-4 py-3 text-left font-semibold text-zinc-400 text-xs uppercase tracking-wider">Nama Barang</th>
+                                <th class="px-4 py-3 text-left font-semibold text-zinc-400 text-xs uppercase tracking-wider">Supplier</th>
+                                <th class="px-4 py-3 text-center font-semibold text-zinc-400 w-32 text-xs uppercase tracking-wider">Jumlah & Satuan</th>
+                                <th class="px-4 py-3 text-left font-semibold text-zinc-400 text-xs uppercase tracking-wider">Keterangan</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-zinc-700/60">
@@ -84,17 +85,25 @@
                                 @foreach($pengajuanBarang->rincian_barang as $index => $item)
                                     <tr class="hover:bg-zinc-700/30 transition-colors">
                                         <td class="px-4 py-3 text-zinc-400 text-center">{{ $loop->iteration }}</td>
-                                        <td class="px-4 py-3 text-white font-medium">{{ $item['deskripsi'] ?? '-' }}</td>
-                                        <td class="px-4 py-3 text-center text-zinc-300">{{ $item['satuan'] ?? '-' }}</td>
-                                        <td class="px-4 py-3 text-center font-bold text-amber-400 bg-amber-500/5">{{ $item['jumlah'] ?? 0 }}</td>
+                                        <td class="px-4 py-3 text-white font-medium">{{ $item['nama_barang'] ?? $item['deskripsi'] ?? '-' }}</td>
+                                        <td class="px-4 py-3 text-zinc-300 font-medium">{{ $item['supplier'] ?? '-' }}</td>
+                                        <td class="px-4 py-3 text-center font-bold text-amber-400 bg-amber-500/5">{{ $item['jumlah'] ?? 0 }} {{ $item['satuan'] ?? '' }}</td>
+                                        <td class="px-4 py-3 text-zinc-300 font-medium">{{ $item['keterangan'] ?? '-' }}</td>
                                     </tr>
                                 @endforeach
                             @else
-                                <tr><td colspan="4" class="px-4 py-6 text-center text-zinc-500">Tidak ada rincian barang.</td></tr>
+                                <tr><td colspan="5" class="px-4 py-6 text-center text-zinc-500">Tidak ada rincian barang.</td></tr>
                             @endif
                         </tbody>
                     </table>
                 </div>
+
+                @if(!empty($pengajuanBarang->catatan_pemohon))
+                <div class="mt-4 p-4 bg-zinc-800/80 border border-zinc-700/80 rounded-xl">
+                    <span class="text-xs font-bold text-amber-400 block mb-1"><i class="fas fa-sticky-note mr-1"></i> Catatan Pemohon:</span>
+                    <p class="text-xs text-zinc-300 leading-relaxed">{{ $pengajuanBarang->catatan_pemohon }}</p>
+                </div>
+                @endif
             </div>
 
             {{-- 4. LAMPIRAN DOKUMEN --}}
@@ -168,6 +177,85 @@
                         </div>
                     @endforeach
                 </div>
+            </div>
+
+            {{-- MONITORING & TRACKING STATUS BARANG (KONTROL ADMIN) --}}
+            <div class="mt-8 pt-6 border-t border-zinc-700">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fas fa-truck-loading text-sky-400"></i> Monitoring & Tracking Proses Barang
+                        </h3>
+                        <p class="text-xs text-zinc-400 mt-1">Pantau & perbarui status pengiriman/pengadaan barang secara real-time untuk pemohon.</p>
+                    </div>
+                    
+                    {{-- Status Monitoring Badge Saat Ini --}}
+                    <div>
+                        <span class="text-xs text-zinc-400 mr-2 font-medium">Status Monitoring:</span>
+                        <span class="px-3 py-1.5 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/40">
+                            <i class="fas fa-shipping-fast mr-1"></i> {{ $pengajuanBarang->status_monitoring ?? 'Belum Diproses' }}
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Form Update Monitoring oleh Admin --}}
+                <div class="bg-zinc-900 rounded-xl border border-zinc-700 p-6 mb-6">
+                    <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                        <i class="fas fa-edit text-sky-400"></i> Perbarui Status Monitoring Barang
+                    </h4>
+                    <form action="{{ route('admin.pengajuan_barang.updateMonitoring', $pengajuanBarang->id) }}" method="POST" class="space-y-4">
+                        @csrf
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="md:col-span-1">
+                                <label class="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Status Monitoring</label>
+                                <select name="status_monitoring" id="status_monitoring_select" class="w-full bg-zinc-800 border-zinc-700 rounded-lg text-xs text-white p-2.5 focus:ring-sky-500 focus:border-sky-500">
+                                    <option value="Proses Pembelian" {{ ($pengajuanBarang->status_monitoring == 'Proses Pembelian') ? 'selected' : '' }}>Proses Pembelian</option>
+                                    <option value="Sedang Dipesan" {{ ($pengajuanBarang->status_monitoring == 'Sedang Dipesan') ? 'selected' : '' }}>Sedang Dipesan</option>
+                                    <option value="Dikirim Kurir (Dalam Pengiriman)" {{ ($pengajuanBarang->status_monitoring == 'Dikirim Kurir (Dalam Pengiriman)') ? 'selected' : '' }}>Dikirim Kurir (Dalam Pengiriman)</option>
+                                    <option value="Barang Tiba di Kantor" {{ ($pengajuanBarang->status_monitoring == 'Barang Tiba di Kantor') ? 'selected' : '' }}>Barang Tiba di Kantor</option>
+                                    <option value="Siap Diambil Pemohon" {{ ($pengajuanBarang->status_monitoring == 'Siap Diambil Pemohon') ? 'selected' : '' }}>Siap Diambil Pemohon</option>
+                                    <option value="Selesai / Barang Diterima" {{ ($pengajuanBarang->status_monitoring == 'Selesai / Barang Diterima') ? 'selected' : '' }}>Selesai / Barang Diterima</option>
+                                </select>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Catatan / Resi / Note Update</label>
+                                <input type="text" name="catatan_monitoring" class="w-full bg-zinc-800 border-zinc-700 rounded-lg text-xs text-white p-2.5 focus:ring-sky-500 focus:border-sky-500" placeholder="Contoh: Resi JNE: 12345678, barang diperkirakan sampai sore ini...">
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                            <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs py-2.5 px-5 rounded-lg transition flex items-center gap-2">
+                                <i class="fas fa-sync-alt"></i> Update Status Monitoring
+                            </button>
+
+                            @if($pengajuanBarang->status != 'selesai')
+                            <button type="submit" name="tandai_selesai" value="1" onclick="return confirm('Apakah Anda yakin ingin menandai pengajuan barang ini sebagai SELESAI?');" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-5 rounded-lg transition flex items-center gap-2">
+                                <i class="fas fa-check-double"></i> Tandai Selesai & Diterima
+                            </button>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+
+                {{-- Riwayat / Timeline Monitoring --}}
+                @if(!empty($pengajuanBarang->riwayat_monitoring))
+                <div class="bg-zinc-900/70 rounded-xl border border-zinc-700/60 p-5">
+                    <h4 class="text-xs font-bold text-zinc-400 uppercase mb-4 tracking-wider">Riwayat Log Monitoring & Tracking</h4>
+                    <div class="relative border-l-2 border-sky-500/40 ml-3 space-y-4 pl-4">
+                        @foreach(array_reverse($pengajuanBarang->riwayat_monitoring) as $log)
+                        <div class="relative">
+                            <div class="absolute -left-[23px] top-0.5 w-3 h-3 rounded-full bg-sky-500 border-2 border-zinc-900"></div>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold text-sky-400">{{ $log['status'] }}</span>
+                                <span class="text-[10px] text-zinc-500"><i class="fas fa-clock mr-1"></i> {{ $log['waktu'] }} oleh {{ $log['oleh'] }}</span>
+                            </div>
+                            <p class="text-xs text-zinc-300 mt-1 font-medium bg-zinc-800/80 p-2.5 rounded-lg border border-zinc-700/50">{{ $log['catatan'] }}</p>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
             </div>
 
             {{-- 6. FORM TINDAKAN ADMIN (BERURUTAN KETAT / STRICTLY SEQUENTIAL) --}}

@@ -170,6 +170,16 @@ class AdminPengajuanDanaController extends Controller
 
         // [OPTIONAL] Ubah judul file agar admin tau ini rekap apa
         $fileTag = strtoupper($activeTab); 
+        
+        $tabLabelMap = [
+            'pending'   => 'Diproses (Aktif)',
+            'approved'  => 'Selesai',
+            'rejected'  => 'Ditolak',
+            'cancelled' => 'Dibatalkan',
+            'all'       => 'Semua Data'
+        ];
+        $statusLabel = $tabLabelMap[$activeTab] ?? 'Semua Data';
+        $printedAt   = Carbon::now()->translatedFormat('d F Y H:i');
 
         $pdf = Pdf::loadView('admin.pengajuan-dana.pdf_rekap', compact(
             'pengajuanDanas', 
@@ -177,7 +187,9 @@ class AdminPengajuanDanaController extends Controller
             'endDate', 
             'karyawanName', 
             'divisiName',
-            'activeTab' // Kirim juga tab nya jika ingin ditampilkan di judul PDF
+            'activeTab',
+            'statusLabel',
+            'printedAt'
         ));
         
         $filename = "rekap-pengajuan-dana-{$fileTag}-" . Carbon::now()->format('Y-m-d') . ".pdf";

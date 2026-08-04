@@ -224,4 +224,46 @@ class AdminPengajuanBarangController extends Controller
         $pengajuan->delete();
         return redirect()->back()->with('success', 'Data pengajuan barang berhasil dihapus.');
     }
+
+    /**
+     * Memperbarui status monitoring & log pengiriman/proses barang oleh Admin.
+     */
+    public function updateMonitoring(Request $request, $id)
+    {
+        $request->validate([
+            'status_monitoring' => 'required|string|max:255',
+            'catatan_monitoring' => 'nullable|string|max:1000',
+            'tandai_selesai' => 'nullable|boolean',
+        ]);
+
+        $pengajuan = PengajuanBarang::findOrFail($id);
+        $user = Auth::user();
+
+        $statusMonitoring = $request->status_monitoring;
+        $catatan = $request->catatan_monitoring;
+        $nowFormatted = Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
+
+        $riwayat = $pengajuan->riwayat_monitoring ?? [];
+        $riwayat[] = [
+            'status' => $statusMonitoring,
+            'catatan' => $catatan ?: '-',
+            'waktu' => $nowFormatted,
+            'oleh' => $user->name,
+        ];
+
+        $updateData = [
+            'status_monitoring' => $statusMonitoring,
+            'riwayat_monitoring' => $riwayat,
+        ];
+
+        // Jika tombol "Tandai Selesai" diklik atau status monitoring diset Selesai
+        if ($request->filled('tandai_selesai') || in_array(strtolower($statusMonitoring), ['selesai', 'barang diterima', 'selesai / diterima'])) {
+            $updateData['status'] = 'selesai';
+            $updateData['status_monitoring'] = 'Selesai / Barang Diterima';
+        }
+
+        $pengajuan->update($updateData);
+
+        return redirect()->back()->with('success', 'Status monitoring barang berhasil diperbarui!');
+    }
 }

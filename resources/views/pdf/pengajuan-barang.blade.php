@@ -116,25 +116,35 @@
         <table class="items-table">
             <thead>
                 <tr>
-                    <th width="8%">No</th>
-                    <th width="70%">Deskripsi / Nama Barang</th>
-                    <th width="22%">Jumlah</th>
+                    <th width="6%">No</th>
+                    <th width="34%">Nama Barang</th>
+                    <th width="20%">Supplier</th>
+                    <th width="18%">Jumlah & Satuan</th>
+                    <th width="22%">Keterangan</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($pengajuanBarang->rincian_barang as $item)
                 <tr>
                     <td class="text-center">{{ $loop->iteration }}</td>
-                    <td>{{ $item['deskripsi'] }}</td>
-                    <td class="text-center"><strong>{{ $item['jumlah'] }} {{ $item['satuan'] }}</strong></td>
+                    <td>{{ $item['nama_barang'] ?? $item['deskripsi'] ?? '-' }}</td>
+                    <td>{{ $item['supplier'] ?? '-' }}</td>
+                    <td class="text-center"><strong>{{ $item['jumlah'] ?? 0 }} {{ $item['satuan'] ?? '' }}</strong></td>
+                    <td>{{ $item['keterangan'] ?? '-' }}</td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="3" class="text-center" style="font-style: italic; color: #888;">Tidak ada rincian barang.</td>
+                    <td colspan="5" class="text-center" style="font-style: italic; color: #888;">Tidak ada rincian barang.</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
+
+        @if(!empty($pengajuanBarang->catatan_pemohon))
+        <div style="margin-top: 10px; padding: 8px 10px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 9px;">
+            <strong>Catatan Pemohon:</strong> {{ $pengajuanBarang->catatan_pemohon }}
+        </div>
+        @endif
 
         {{-- III. LEMBAR PERSETUJUAN (4 KOLOM) --}}
         <div class="section-title">III. LEMBAR PERSETUJUAN</div>

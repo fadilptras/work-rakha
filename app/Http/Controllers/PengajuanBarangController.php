@@ -10,13 +10,36 @@ use App\Notifications\PengajuanBarangNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Cache;
+
 class PengajuanBarangController extends Controller
 {
     public function index()
     {
         $title = 'Pengajuan Barang';
         $totalPengajuan = Auth::user()->pengajuanBarangs()->count();
-        return view('users.pengajuan-barang.pengajuan-barang-form', compact('title', 'totalPengajuan'));
+
+        // Skema Ringan: Ambil murni daftar supplier dari database (tabel suppliers / clients)
+        $supplierList = Cache::remember('supplier_list_dropdown', 300, function () {
+            if (Schema::hasTable('suppliers')) {
+                $dbSuppliers = \App\Models\Supplier::orderBy('nama_supplier')->pluck('nama_supplier')->toArray();
+                if (!empty($dbSuppliers)) {
+                    return $dbSuppliers;
+                }
+            }
+
+            // Fallback: ambil nama perusahaan dari tabel clients jika tabel suppliers masih kosong
+            return \App\Models\Client::whereNotNull('nama_perusahaan')
+                ->where('nama_perusahaan', '!=', '')
+                ->orderBy('nama_perusahaan')
+                ->pluck('nama_perusahaan')
+                ->unique()
+                ->values()
+                ->toArray();
+        });
+
+        return view('users.pengajuan-barang.pengajuan-barang-form', compact('title', 'totalPengajuan', 'supplierList'));
     }
 
     public function history(Request $request)
@@ -42,16 +65,43 @@ class PengajuanBarangController extends Controller
      */
     public function store(Request $request)
     {
+        $user = Auth::user();
+
+        // Jika divisi tidak dikirim dari form, ambil dari profil user
+        if (!$request->filled('divisi')) {
+            $request->merge(['divisi' => $user->divisi ?: 'Umum']);
+        }
+
         // 1. Validasi input dari form
         $request->validate([
             'judul_pengajuan' => 'required|string|max:255',
             'divisi' => 'required|string|max:255',
             'rincian_deskripsi.*' => 'required|string',
+            'rincian_supplier.*' => 'nullable|string',
             'rincian_jumlah.*' => 'required|integer|min:1',
             'rincian_satuan.*' => 'required|string',
+            'rincian_keterangan.*' => 'nullable|string',
+            'catatan_pemohon' => 'nullable|string',
             'file_pendukung' => 'nullable|array|max:10',
             'file_pendukung.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:10240',
         ]);
+
+        // Auto-save supplier baru ke tabel suppliers database jika belum ada
+        if ($request->has('rincian_supplier') && is_array($request->rincian_supplier)) {
+            $hasNew = false;
+            foreach ($request->rincian_supplier as $sup) {
+                $supName = trim($sup ?? '');
+                if (!empty($supName) && !in_array($supName, ['-', 'Lainnya'])) {
+                    if (Schema::hasTable('suppliers')) {
+                        \App\Models\Supplier::firstOrCreate(['nama_supplier' => $supName]);
+                        $hasNew = true;
+                    }
+                }
+            }
+            if ($hasNew) {
+                Cache::forget('supplier_list_dropdown');
+            }
+        }
 
         $user = Auth::user();
 
@@ -77,6 +127,7 @@ class PengajuanBarangController extends Controller
             'user_id' => $user->id,
             'judul_pengajuan' => $request->judul_pengajuan,
             'divisi' => $request->divisi,
+            'catatan_pemohon' => $request->catatan_pemohon,
             'rincian_barang' => $this->parseRincian($request),
             'lampiran' => $this->uploadFiles($request),
             'status' => 'diajukan',
@@ -210,9 +261,11 @@ class PengajuanBarangController extends Controller
         if ($request->has('rincian_deskripsi')) {
             foreach ($request->rincian_deskripsi as $index => $deskripsi) {
                 $rincian[] = [
-                    'deskripsi' => $deskripsi,
-                    'satuan' => $request->rincian_satuan[$index] ?? '-',
-                    'jumlah' => $request->rincian_jumlah[$index] ?? 0,
+                    'deskripsi'  => $deskripsi,
+                    'supplier'   => $request->rincian_supplier[$index] ?? '-',
+                    'satuan'     => $request->rincian_satuan[$index] ?? 'Pcs',
+                    'jumlah'     => $request->rincian_jumlah[$index] ?? 0,
+                    'keterangan' => $request->rincian_keterangan[$index] ?? '-',
                 ];
             }
         }
