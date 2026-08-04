@@ -130,7 +130,7 @@
                         <i class="fas fa-box text-lg md:text-2xl text-white"></i>
                     </div>
                     <div>
-                        <h1 class="text-base md:text-2xl font-black tracking-tight text-white uppercase">Form Pengajuan Barang</h1>
+                        <h1 class="text-base md:text-2xl font-black tracking-tight text-white uppercase">Form Permintaan Barang</h1>
                         @if(!$isMobile)
                         <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
                             Ajukan permohonan barang atau perlengkapan operasional, tambahkan rincian item, lampirkan dokumen pendukung, dan pantau status persetujuan.
@@ -173,7 +173,7 @@
                             @endif
                         </div>
                         <div class="grid grid-cols-2 gap-3 md:gap-5">
-                            <div>
+                            <!-- <div>
                                 <label class="modern-label">Nama Pemohon</label>
                                 <input type="text" class="modern-input-readonly" value="{{ Auth::user()->name }}" readonly>
                                 <input type="hidden" name="nama_pemohon" value="{{ Auth::user()->name }}">
@@ -190,10 +190,14 @@
                             <div>
                                 <label class="modern-label">Email Pemohon</label>
                                 <input type="text" class="modern-input-readonly" value="{{ Auth::user()->email }}" readonly>
-                            </div>
+                            </div> -->
                             <div class="col-span-2">
                                 <label class="modern-label" for="judul-pengajuan">Judul Pengajuan <span class="text-red-500">*</span></label>
                                 <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Contoh: Pengadaan Perlengkapan Kantor & ATK" value="{{ old('judul_pengajuan') }}" required>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="modern-label" for="judul-pengajuan">Keterangan Pengajuan <span class="text-red-500">*</span></label>
+                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Keterangan: Pengadaan Perlengkapan Kantor & ATK" value="{{ old('judul_pengajuan') }}" required>
                             </div>
                             <div class="col-span-2 md:col-span-1">
                                 <label class="modern-label">Tanggal Pengajuan</label>
@@ -219,10 +223,11 @@
                                 {{-- Rows appended here dynamically --}}
                             </div>
                         @else
-                            <div class="rounded-2xl border border-slate-200 overflow-hidden mb-3">
+                            <div class="rounded-2xl border border-slate-200 overflow-hidden mb-5">
                                 {{-- Header: Hidden on mobile, visible as grid on desktop --}}
                                 <div class="hidden md:grid grid-cols-12 bg-slate-50 text-slate-600 uppercase font-black text-xs border-b border-slate-200 p-4 gap-4">
                                     <div class="col-span-5">Deskripsi Barang</div>
+                                    <div class="col-span-3">Supplier</div>
                                     <div class="col-span-3">Satuan</div>
                                     <div class="col-span-3">Jumlah</div>
                                     <div class="col-span-1 text-center">Aksi</div>

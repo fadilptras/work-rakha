@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\AdminCrmController;
 use App\Http\Controllers\PengajuanBarangController;
 use App\Http\Controllers\Admin\AdminPengajuanBarangController;
 use App\Http\Controllers\Admin\AdminHolidayController;
+use App\Http\Controllers\KpiController;
 
 // Awalan
 Route::get('/', fn() => redirect()->route('login'));
@@ -59,6 +60,13 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
         $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
         return view("users.dashboard.dashboard_{$viewSuffix}", ['title' => 'Dashboard']);
     })->name('dashboard');
+
+    // KPI
+    // KPI Routes
+    Route::get('/kpi', [App\Http\Controllers\KpiController::class, 'index'])->name('kpi.index');
+    Route::get('/kpi/evaluate/{id}', [App\Http\Controllers\KpiController::class, 'evaluate'])->name('kpi.evaluate');
+    Route::post('/kpi/evaluate/{id}', [App\Http\Controllers\KpiController::class, 'storeEvaluate'])->name('kpi.storeEvaluate');
+    Route::get('/kpi/export-pdf/{id}', [App\Http\Controllers\KpiController::class, 'exportPdf'])->name('kpi.exportPdf');
 
     // Absensi
     Route::get('/absen', [AbsenController::class, 'absen'])->name('absen');
@@ -270,6 +278,17 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
         Route::put('/{agenda}', [AdminAgendaController::class, 'update'])->name('update');
         Route::delete('/{agenda}', [AdminAgendaController::class, 'destroy'])->name('destroy');
     });
+
+    // KPI Admin (Evaluasi)
+    Route::prefix('kpi')->name('kpi.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\AdminKpiController::class, 'index'])->name('index');
+        Route::get('/evaluate/{id}', [App\Http\Controllers\Admin\AdminKpiController::class, 'evaluate'])->name('evaluate');
+        Route::post('/evaluate/{id}', [App\Http\Controllers\Admin\AdminKpiController::class, 'storeEvaluate'])->name('storeEvaluate');
+        
+        // KPI Indicators
+        Route::resource('indicators', App\Http\Controllers\Admin\AdminKpiIndicatorController::class)->names('indicators');
+    });
+
 
     Route::prefix('aktivitas')->name('aktivitas.')->group(function () {
         Route::get('/', [AdminAktivitasController::class, 'index'])->name('index');

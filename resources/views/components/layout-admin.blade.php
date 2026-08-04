@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     {{-- Alpine.js untuk fitur dropdown --}}
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
     @stack('styles')
 
     <style>
@@ -59,6 +59,36 @@
                             <i class="fas fa-chart-line text-xl w-8 text-center"></i>
                             <span class="ml-3 font-semibold">CRM</span>
                         </a>
+                    </li>
+
+                    {{-- KPI --}}
+                    <li x-data="{ open: {{ request()->routeIs('admin.kpi.*') ? 'true' : 'false' }} }">
+                        <a @click.prevent="open = !open" href="#" 
+                            class="flex items-center p-3 rounded-lg transition-colors duration-200 cursor-pointer 
+                            {{ request()->routeIs('admin.kpi.*') ? 'bg-sky-600 text-white shadow-lg' : 'hover:bg-zinc-700' }}">
+                            <i class="fas fa-chart-bar text-xl w-8 text-center"></i> 
+                            <span class="ml-3 font-semibold flex-1">Manajemen KPI</span>
+                            <i class="fas fa-chevron-down text-sm transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                        </a>
+                        
+                        <div x-show="open" x-collapse>
+                            <ul class="ml-12 mt-2 space-y-1">
+                                <li>
+                                    <a href="{{ route('admin.kpi.index') }}" 
+                                        class="flex items-center p-2 rounded-lg transition-colors duration-200 text-sm
+                                        {{ request()->routeIs('admin.kpi.index') || request()->routeIs('admin.kpi.evaluate') ? 'text-sky-400 font-bold' : 'hover:bg-zinc-700' }}">
+                                        Evaluasi KPI
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.kpi.indicators.index') }}" 
+                                        class="flex items-center p-2 rounded-lg transition-colors duration-200 text-sm
+                                        {{ request()->routeIs('admin.kpi.indicators.*') ? 'text-sky-400 font-bold' : 'hover:bg-zinc-700' }}">
+                                        Kelola Indikator
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </li>
 
                     {{-- Absensi --}}

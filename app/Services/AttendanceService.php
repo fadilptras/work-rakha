@@ -107,7 +107,10 @@ class AttendanceService
                     $statusKey = '-';
                     $statusTeks = '-';
                     $keterangan = 'Belum Bergabung';
-                } elseif ($user && ($user->divisi ?? null) === 'Top Management') {
+                } elseif ($user && (
+                    ($user->divisi ?? null) === 'Top Management' || 
+                    (($user->is_kepala_divisi ?? false) && in_array($user->divisi ?? null, ['Marketing dan Operasional', 'Finance dan Gudang', 'Fianance dan Gudang']))
+                )) {
                     $statusKey = '-';
                     $statusTeks = '-';
                     $keterangan = 'Bebas Absen';

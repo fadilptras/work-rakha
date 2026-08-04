@@ -272,15 +272,30 @@
             color: #fff;
             font-weight: 800;
         }
-        .weekly-strip .day-num.has-event::after {
-            content: '';
-            display: block;
-            width: 4px; height: 4px;
-            border-radius: 50%;
-            background: #10b981; /* emerald-500 */
-            margin: 1px auto 0;
+        .weekly-strip .day-num.has-event {
+            background: var(--event-color, #10b981);
+            color: #fff;
+            box-shadow: 0 2px 8px var(--event-shadow, rgba(16,185,129,0.3));
         }
-        .weekly-strip .day-num.today.has-event::after { background: #fff; }
+        .weekly-strip .day-num.has-event.selected {
+            filter: brightness(0.85);
+        }
+        .weekly-strip .day-num.has-event::after {
+            display: none;
+        }
+
+        .weekly-strip .day-num.birthday {
+            background: var(--event-color, #ec4899);
+            color: #fff;
+            box-shadow: 0 2px 8px var(--event-shadow, rgba(236,72,153,0.3));
+        }
+        .weekly-strip .day-num.birthday.selected {
+            filter: brightness(0.85);
+        }
+        .weekly-strip .day-num.birthday.has-event {
+            background: var(--event-color, #ec4899);
+            box-shadow: 0 2px 8px var(--event-shadow, rgba(236,72,153,0.3));
+        }
 
         /* == Absensi Buttons Mobile == */
         .absensi-grid-mobile {
@@ -790,23 +805,37 @@
 
     {{-- Notifikasi Bar --}}
     <div class="px-4 pb-4">
-        <div class="mobile-notif-bar bg-gradient-to-r from-[#001BB7] to-blue-600 text-white rounded-2xl p-3 flex items-center justify-between shadow-xl shadow-blue-900/10">
-            <div class="flex items-center gap-3 overflow-hidden">
-                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                    <i class="fas fa-bell text-white text-sm"></i>
-                </div>
-                @php
-                    $latestNotif = Auth::user()->notifications->first();
-                @endphp
-                <span class="text-sm font-medium truncate">
-                    @if($latestNotif)
-                        {{ $latestNotif->data['title'] ?? 'Notifikasi baru' }}
-                    @else
-                        Tidak ada notifikasi baru.
+        @php
+            $unreadCount = Auth::user()->unreadNotifications->count();
+            $latestNotif = Auth::user()->notifications()->latest()->first();
+        @endphp
+        
+        <div class="rounded-2xl p-4 shadow-lg border border-slate-700 flex items-center justify-between relative overflow-hidden" style="background-color: #1a1f2e;">
+            <div class="flex items-center gap-3 w-full">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 relative" style="{{ $unreadCount > 0 ? 'background: rgba(251,191,36,0.2); color: #fcd34d;' : 'background: rgba(255,255,255,0.1); color: #93c5fd;' }}">
+                    <i class="fas fa-bell text-lg"></i>
+                    @if($unreadCount > 0)
+                        <span class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" style="border: 2px solid #1a1f2e;"></span>
                     @endif
-                </span>
+                </div>
+                
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-extrabold uppercase tracking-wider mb-0.5" style="{{ $unreadCount > 0 ? 'color: #fcd34d;' : 'color: #94a3b8;' }}">
+                        {{ $unreadCount > 0 ? $unreadCount . ' Belum Dibaca' : 'Notifikasi Terbaru' }}
+                    </p>
+                    <p class="text-sm font-semibold truncate" style="color: #ffffff;">
+                        @if($latestNotif)
+                            {{ $latestNotif->data['title'] ?? 'Cek pembaruan info Anda.' }}
+                        @else
+                            Semua sudah terbaca.
+                        @endif
+                    </p>
+                </div>
+                
+                <a href="{{ route('notifikasi.index') }}" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1;">
+                    <i class="fas fa-chevron-right text-sm"></i>
+                </a>
             </div>
-            <a href="{{ route('notifikasi.index') }}" class="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ml-2">Lihat &rsaquo;</a>
         </div>
     </div>
 
@@ -965,7 +994,7 @@
 
                     const eventsThisWeek = allEvents.filter(event => {
                         const eventDate = new Date(event.start);
-                        return eventDate >= startOfWeek && eventDate <= endOfWeek;
+                        return eventDate >= startOfWeek && eventDate <= endOfWeek && event.extendedProps.type !== 'birthday';
                     });
 
                     if (agendaListContainer) {
@@ -1069,7 +1098,7 @@
                     });
                 }
 
-                function showAgendaDetails(event) {
+                window.showAgendaDetails = function(event) {
                     const props = event.extendedProps;
                     const startTime = event.allDay ? 'Seharian' : formatTime(event.start);
                     const endTime = (!event.allDay && event.end) ? formatTime(event.end) : '';
@@ -1371,11 +1400,21 @@
                 });
 
             function getEventDates() {
-                return allEvents.map(ev => {
+                const regular = {};
+                const birthday = {};
+                allEvents.forEach(ev => {
                     const d = new Date(ev.start);
                     d.setHours(0,0,0,0);
-                    return d.getTime();
+                    const time = d.getTime();
+                    if (ev.extendedProps && ev.extendedProps.type === 'birthday') {
+                        birthday[time] = ev.backgroundColor || '#ec4899';
+                    } else {
+                        if (!regular[time]) {
+                            regular[time] = ev.backgroundColor || '#10b981';
+                        }
+                    }
                 });
+                return { regular, birthday };
             }
 
             function renderWeek(startDate) {
@@ -1389,13 +1428,13 @@
 
                 const eventTimes = getEventDates();
                 daysNumEl.innerHTML = '';
-
                 for (let i = 0; i < 7; i++) {
                     const day = new Date(startDate);
                     day.setDate(startDate.getDate() + i);
 
-                    const isToday    = isSameDay(day, today);
-                    const hasEvent   = eventTimes.includes(day.getTime());
+                    const dayTime    = day.getTime();
+                    const hasAgenda  = eventTimes.regular[dayTime] !== undefined;
+                    const hasBirthday = eventTimes.birthday[dayTime] !== undefined;
 
                     const div = document.createElement('div');
                     div.style.display = 'flex';
@@ -1403,8 +1442,26 @@
                     div.style.alignItems = 'center';
 
                     const span = document.createElement('span');
-                    span.className = 'day-num' + (isToday ? ' today' : '') + (hasEvent ? ' has-event' : '');
+                    let classStr = 'day-num';
+                    if (hasBirthday) {
+                        classStr += ' birthday';
+                        span.style.setProperty('--event-color', eventTimes.birthday[dayTime]);
+                        span.style.setProperty('--event-shadow', eventTimes.birthday[dayTime] + '4D'); // 30% alpha
+                    } else if (isToday) {
+                        classStr += ' today';
+                    } else if (hasAgenda) {
+                        classStr += ' has-event';
+                        span.style.setProperty('--event-color', eventTimes.regular[dayTime]);
+                        span.style.setProperty('--event-shadow', eventTimes.regular[dayTime] + '4D');
+                    }
+                    span.className = classStr;
                     span.textContent = day.getDate();
+
+                    const indicators = document.createElement('div');
+                    indicators.className = 'flex justify-center gap-0.5 mt-0.5 h-1';
+                    if (hasAgenda && !hasBirthday && !isToday) {
+                        // Jika bukan today dan bukan birthday, dot event berwarna hijau. (Jika today atau birthday, border/background span sudah menangani dot via CSS ::after)
+                    }
 
                     span.addEventListener('click', () => {
                         // Highlight selected
@@ -1412,10 +1469,24 @@
                             el.classList.remove('selected');
                         });
                         if (!isToday) span.classList.add('selected');
+                        
                         renderDayAgenda(day);
+
+                        if (hasBirthday) {
+                            const bdayEvent = allEvents.find(e => {
+                                const eDate = new Date(e.start);
+                                eDate.setHours(0,0,0,0);
+                                return e.extendedProps?.type === 'birthday' && isSameDay(eDate, day);
+                            });
+                            if (bdayEvent) {
+                                if (typeof bdayEvent.start === 'string') bdayEvent.start = new Date(bdayEvent.start);
+                                window.showAgendaDetails(bdayEvent);
+                            }
+                        }
                     });
 
                     div.appendChild(span);
+                    div.appendChild(indicators);
                     daysNumEl.appendChild(div);
                 }
             }
@@ -1435,7 +1506,7 @@
                 const dayEvents = allEvents.filter(ev => {
                     const evDate = new Date(ev.start);
                     evDate.setHours(0,0,0,0);
-                    return isSameDay(evDate, day);
+                    return isSameDay(evDate, day) && ev.extendedProps?.type !== 'birthday';
                 });
 
                 if (dayEvents.length === 0) {
@@ -1455,7 +1526,7 @@
                     const color = ev.backgroundColor || '#3B82F6';
                     const timeStr = ev.allDay ? 'Seharian' : formatTime(ev.start);
                     html += `
-                        <div class="flex items-center gap-3 p-3 rounded-xl border" style="border-left: 4px solid ${color}; background:#f9fafb;">
+                        <div class="agenda-item-clickable flex items-center gap-3 p-3 rounded-xl border cursor-pointer" data-event-id="${ev.id}" style="border-left: 4px solid ${color}; background:#f9fafb;">
                             <div>
                                 <p class="font-semibold text-gray-800 text-sm">${ev.title || ev.extendedProps?.fullTitle || 'Agenda'}</p>
                                 <p class="text-xs text-gray-500">${timeStr}</p>
@@ -1464,6 +1535,18 @@
                 });
                 html += '</div>';
                 agendaTodayContainer.innerHTML = html;
+
+                agendaTodayContainer.querySelectorAll('.agenda-item-clickable').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const eventId = item.dataset.eventId;
+                        const ev = allEvents.find(e => e.id === eventId);
+                        if (ev) {
+                            if (typeof ev.start === 'string') ev.start = new Date(ev.start);
+                            if (ev.end && typeof ev.end === 'string') ev.end = new Date(ev.end);
+                            window.showAgendaDetails(ev);
+                        }
+                    });
+                });
             }
 
             prevBtn.addEventListener('click', () => {

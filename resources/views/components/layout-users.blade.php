@@ -41,19 +41,20 @@
         <div class="flex-grow overflow-y-auto">
             <nav class="p-4 pt-6">
                 <ul class="space-y-4">
-                    <li><a href="{{ route('dashboard') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50"><i class="fas fa-th-large text-xl"></i></a></li>
-                    <li><a href="{{ route('pengajuan_dana.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50"><i class="fas fa-coins text-xl"></i></a></li>
-                    <li><a href="{{ route('pengajuan_barang.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50"><i class="fas fa-box-open text-xl"></i></a></li>
-                    <li><a href="{{ route('crm.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50"><i class="fas fa-users text-xl"></i></a></li>
+                    <li><a href="{{ route('dashboard') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Dashboard"><i class="fas fa-th-large text-xl"></i></a></li>
+                    <li><a href="{{ route('pengajuan_dana.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Pengajuan Dana"><i class="fas fa-coins text-xl"></i></a></li>
+                    <li><a href="{{ route('pengajuan_barang.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Pengajuan Barang"><i class="fas fa-box-open text-xl"></i></a></li>
+                    <li><a href="{{ route('crm.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="CRM"><i class="fas fa-users text-xl"></i></a></li>
+                    <li><a href="{{ route('kpi.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="KPI"><i class="fas fa-chart-line text-xl"></i></a></li>
                 </ul>
             </nav>
         </div>
         <div class="p-4 border-t border-blue-500 space-y-4">
-            <a href="{{ route('notifikasi.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50"><i class="fas fa-envelope-open-text text-xl"></i></a>
-            <a href="{{ route('profil.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50"><i class="fas fa-user-cog text-xl"></i></a>
+            <a href="{{ route('notifikasi.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Notifikasi"><i class="fas fa-envelope-open-text text-xl"></i></a>
+            <a href="{{ route('profil.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Profil"><i class="fas fa-user-cog text-xl"></i></a>
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
-                <button type="submit" class="w-full flex items-center justify-center p-3 rounded-lg hover:bg-red-500"><i class="fas fa-sign-out-alt text-xl"></i></button>
+                <button type="submit" class="w-full flex items-center justify-center p-3 rounded-lg hover:bg-red-500" title="Logout"><i class="fas fa-sign-out-alt text-xl"></i></button>
             </form>
         </div>
     </div>

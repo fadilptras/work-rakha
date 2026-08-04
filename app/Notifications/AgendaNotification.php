@@ -64,8 +64,8 @@ class AgendaNotification extends Notification implements ShouldQueue
     {
         $nama = $notifiable->name;
         $title = $this->agenda->title;
-        $start = Carbon::parse($this->agenda->start_date)->translatedFormat('d F Y H:i');
-        $end = $this->agenda->end_date ? ' s/d ' . Carbon::parse($this->agenda->end_date)->translatedFormat('d F Y H:i') : '';
+        $start = Carbon::parse($this->agenda->start_time)->translatedFormat('d F Y H:i');
+        $end = $this->agenda->end_time ? ' s/d ' . Carbon::parse($this->agenda->end_time)->translatedFormat('d F Y H:i') : '';
         $waktu = $start . $end;
         $location = $this->agenda->location ?? '-';
         $desc = $this->agenda->description ?? '-';

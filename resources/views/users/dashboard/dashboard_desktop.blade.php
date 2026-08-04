@@ -1047,7 +1047,7 @@
 
                 const eventsThisWeek = allEvents.filter(event => {
                     const eventDate = new Date(event.start);
-                    return eventDate >= startOfWeek && eventDate <= endOfWeek;
+                    return eventDate >= startOfWeek && eventDate <= endOfWeek && event.extendedProps.type !== 'birthday';
                 });
 
                 agendaListContainer.innerHTML = '';
@@ -1067,7 +1067,7 @@
                                     <p class="font-bold text-slate-800 text-base leading-snug">${event.extendedProps.fullTitle}</p>
                                     <p class="text-xs text-slate-500 mt-0.5">${formatFullDate(event.start)}</p>
                                     ${event.extendedProps.location ? `<p class="text-sm text-slate-600 mt-1"><i class="fas fa-map-marker-alt mr-1 text-xs text-emerald-600"></i> ${event.extendedProps.location}</p>` : ''}
-                                    ${event.extendedProps.type === 'holiday' ? `<p class="text-sm font-bold mt-1" style="color: ${event.backgroundColor};">${event.extendedProps.description}</p>` : ''}
+                                    ${(event.extendedProps.type === 'holiday' || event.extendedProps.type === 'birthday') ? `<p class="text-sm font-bold mt-1" style="color: ${event.backgroundColor};">${event.extendedProps.description}</p>` : ''}
                                 </div>
                             </div>`;
                         agendaListContainer.innerHTML += agendaHTML;
@@ -1102,10 +1102,10 @@
                 fixedWeekCount: false,
                 dayMaxEvents: true,
 
-                eventDidMount: function(info) {
-                    if (info.event.extendedProps.type === 'holiday') {
-                        // Paksa background menggunakan warna dari database (merah/oranye)
-                        info.el.style.setProperty('background-color', info.event.backgroundColor, 'important');
+                  eventDidMount: function(info) {
+                      if (info.event.extendedProps.type === 'holiday' || info.event.extendedProps.type === 'birthday') {
+                          // Paksa background menggunakan warna dari database/controller
+                          info.el.style.setProperty('background-color', info.event.backgroundColor, 'important');
                         info.el.style.setProperty('border', 'none', 'important');
                         
                         // Paksa teks menjadi putih agar terbaca
@@ -1225,7 +1225,7 @@
                     </div>
                     
                     <div class="modal-body space-y-4 max-h-[55vh] overflow-y-auto custom-scrollbar">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="${props.location ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : 'flex flex-col gap-4'}">
                             <div class="detail-row">
                                 <div class="detail-icon-box"><i class="fas fa-calendar-alt"></i></div>
                                 <div>

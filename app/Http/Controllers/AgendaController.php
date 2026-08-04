@@ -28,14 +28,14 @@ class AgendaController extends Controller
                     $subQuery->where('user_id', $user->id);
                 });
         })
-        ->with(['creator', 'guests'])
-        ->get();
+            ->with(['creator', 'guests'])
+            ->get();
 
         $events = [];
         foreach ($agendas as $agenda) {
             if ($agenda->creator) {
                 $events[] = [
-                    'id' => 'agenda_' . $agenda->id, 
+                    'id' => 'agenda_' . $agenda->id,
                     'title' => $agenda->title,
                     'start' => $agenda->start_time,
                     'end' => $agenda->end_time,
@@ -61,24 +61,53 @@ class AgendaController extends Controller
         $holidays = Holiday::whereYear('tanggal', '>=', now()->year)->get();
 
         foreach ($holidays as $holiday) {
-            $color = $holiday->is_cuti_bersama ? '#F59E0B' : '#EF4444'; 
+            $color = $holiday->is_cuti_bersama ? '#F59E0B' : '#EF4444';
 
             $events[] = [
                 'id' => 'holiday_' . $holiday->id,
-                'title' => $holiday->keterangan, 
+                'title' => $holiday->keterangan,
                 'start' => $holiday->tanggal->format('Y-m-d'),
                 'allDay' => true,
                 'backgroundColor' => $color,
                 'borderColor' => $color,
                 // TAMBAHKAN BARIS INI:
-                'className' => 'holiday-event', 
+                'className' => 'holiday-event',
                 'extendedProps' => [
-                    'type' => 'holiday', 
+                    'type' => 'holiday',
                     'fullTitle' => $holiday->keterangan,
                     'description' => $holiday->is_cuti_bersama ? 'Cuti Bersama' : 'Libur Nasional',
-                    'is_creator' => false 
+                    'is_creator' => false
                 ]
             ];
+        }
+
+        // --- 3. MENGAMBIL DATA ULANG TAHUN KARYAWAN ---
+        $karyawans = User::whereNotNull('tanggal_lahir')->get();
+        $currentYear = now()->year;
+
+        foreach ($karyawans as $karyawan) {
+            $dob = \Carbon\Carbon::parse($karyawan->tanggal_lahir);
+            
+            foreach ([$currentYear, $currentYear + 1] as $year) {
+                $birthdayDate = $dob->copy()->year($year);
+                $age = $year - $dob->year;
+                
+                $events[] = [
+                    'id' => 'birthday_' . $karyawan->id . '_' . $year,
+                    'title' => 'Ultah ' . $karyawan->name,
+                    'start' => $birthdayDate->format('Y-m-d'),
+                    'allDay' => true,
+                    'backgroundColor' => '#ec4899', // Pink Tailwind
+                    'borderColor' => '#ec4899',
+                    'className' => 'birthday-event',
+                    'extendedProps' => [
+                        'type' => 'birthday',
+                        'fullTitle' => 'Ulang Tahun ' . $karyawan->name,
+                        'description' => "Hari ini adalah ulang tahun ke-{$age} bagi {$karyawan->name}. Jangan lupa berikan ucapan selamat!",
+                        'is_creator' => false
+                    ]
+                ];
+            }
         }
 
         return response()->json($events);
@@ -99,7 +128,7 @@ class AgendaController extends Controller
             'guests' => 'nullable|array',
             'guests.*' => 'exists:users,id',
         ]);
-        
+
         $agenda = Agenda::create([
             'title' => $validated['title'],
             'description' => $validated['description'],
@@ -117,7 +146,7 @@ class AgendaController extends Controller
             // Ambil model User dari ID tamu yang diundang
             $guestsToNotify = User::whereIn('id', $validated['guests'])->get();
             $creatorName = Auth::user()->name;
-            
+
             // Kirim notifikasi ke semua tamu
             if ($guestsToNotify->isNotEmpty()) {
                 Notification::send($guestsToNotify, new AgendaNotification($agenda, 'undangan_baru', $creatorName));
@@ -127,7 +156,7 @@ class AgendaController extends Controller
 
         return redirect()->route('dashboard')->with('success', 'Agenda berhasil dibuat!');
     }
-    
+
     /**
      * Update agenda yang sudah ada.
      */
@@ -154,7 +183,7 @@ class AgendaController extends Controller
 
         // =================== LOGIKA NOTIFIKASI (BARU) ===================
         // Ambil daftar tamu yang terbaru setelah di-sync
-        $guestsToNotify = $agenda->fresh()->guests; 
+        $guestsToNotify = $agenda->fresh()->guests;
         $creatorName = $agenda->creator->name;
 
         if ($guestsToNotify->isNotEmpty()) {
@@ -174,20 +203,20 @@ class AgendaController extends Controller
         if ($agenda->user_id !== Auth::id()) {
             return response()->json(['error' => 'Anda tidak memiliki izin untuk menghapus agenda ini.'], 403);
         }
-        
+
+        // =================== LOGIKA NOTIFIKASI (BARU) ===================
         // =================== LOGIKA NOTIFIKASI (BARU) ===================
         // Ambil daftar tamu SEBELUM relasinya dihapus
-        $guestsToNotify = $agenda->guests; 
+        $guestsToNotify = $agenda->guests;
         $creatorName = $agenda->creator->name;
         // ================================================================
 
-        $agenda->guests()->sync([]); // Lepaskan semua relasi tamu
-        $agenda->delete();
-
-        // Kirim notifikasi setelah agenda benar-benar dihapus
         if ($guestsToNotify->isNotEmpty()) {
             Notification::send($guestsToNotify, new AgendaNotification($agenda, 'agenda_dibatalkan', $creatorName));
         }
+
+        $agenda->guests()->sync([]); // Lepaskan semua relasi tamu
+        $agenda->delete();
 
         return redirect()->route('dashboard')->with('success', 'Agenda berhasil dihapus!');
     }
@@ -198,9 +227,9 @@ class AgendaController extends Controller
     public function getUsers()
     {
         $users = User::where('id', '!=', Auth::id())
-                     ->select('id', 'name')
-                     ->orderBy('name', 'asc')
-                     ->get();
+            ->select('id', 'name')
+            ->orderBy('name', 'asc')
+            ->get();
         return response()->json($users);
     }
 }
