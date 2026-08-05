@@ -23,8 +23,12 @@
                <i class="fas fa-clock mr-2"></i> Diproses
             </a>
             <a href="{{ route('admin.pengajuan_barang.index', array_merge(request()->query(), ['tab' => 'approved', 'page' => 1])) }}" 
-               class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'approved' ? 'border-emerald-500 text-emerald-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
-               <i class="fas fa-check-circle mr-2"></i> Selesai
+               class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'approved' ? 'border-indigo-500 text-indigo-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
+               <i class="fas fa-thumbs-up mr-2"></i> Disetujui
+            </a>
+            <a href="{{ route('admin.pengajuan_barang.index', array_merge(request()->query(), ['tab' => 'selesai', 'page' => 1])) }}" 
+               class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'selesai' ? 'border-emerald-500 text-emerald-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
+               <i class="fas fa-check-double mr-2"></i> Selesai
             </a>
             <a href="{{ route('admin.pengajuan_barang.index', array_merge(request()->query(), ['tab' => 'rejected', 'page' => 1])) }}" 
                class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'rejected' ? 'border-red-500 text-red-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
@@ -139,11 +143,13 @@
                         <td class="px-6 py-4 font-mono whitespace-nowrap">{{ count($pengajuan->rincian_barang ?? []) }} Item</td>
                         <td class="px-6 py-4">
                             @if ($pengajuan->status == 'selesai')
-                                <span class="font-bold bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full text-xs">Selesai</span>
+                                <span class="font-bold bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full text-xs">Selesai / Diterima</span>
+                            @elseif ($pengajuan->status == 'disetujui')
+                                <span class="font-bold bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded-full text-xs">Disetujui</span>
                             @elseif ($pengajuan->status == 'ditolak')
                                 <span class="font-bold bg-red-500/10 text-red-400 px-2 py-1 rounded-full text-xs">Ditolak</span>
                             @elseif ($pengajuan->status == 'diproses')
-                                <span class="font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-xs">Diproses Gudang</span>
+                                <span class="font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-xs">Diproses</span>
                             @elseif ($pengajuan->status == 'dibatalkan')
                                 <span class="font-bold bg-zinc-500/10 text-zinc-400 px-2 py-1 rounded-full text-xs">Dibatalkan</span>
                             @else

@@ -61,6 +61,56 @@ class PengajuanBarangController extends Controller
     }
 
     /**
+     * Menampilkan seluruh pengajuan barang untuk keperluan pemantauan khusus oleh manajemen.
+     * Hanya dapat diakses oleh divisi/jabatan tertentu sesuai kebijakan perusahaan.
+     */
+    public function monitoringAll(Request $request)
+    {
+        $user = Auth::user();
+        
+        // 1. Validasi Otorisasi: Cek apakah user berhak mengakses fitur monitoring
+        $isTopManagement = ($user->divisi === 'Top Management');
+        $isKadivMO = ($user->is_kepala_divisi == 1 && $user->divisi === 'Marketing dan Operasional');
+        $isKadivFG = ($user->is_kepala_divisi == 1 && $user->divisi === 'Finance dan Gudang');
+
+        if (!($isTopManagement || $isKadivMO || $isKadivFG || $user->role === 'admin')) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
+
+        // 2. Inisialisasi Query: Ambil seluruh data pengajuan urut dari yang terbaru
+        $query = PengajuanBarang::with('user')->latest();
+        
+        // 3. Filter berdasarkan Status (jika ada)
+        if ($request->filled('status') && $request->status != 'semua') {
+            if ($request->status == 'diproses') {
+                $query->whereIn('status', ['diajukan', 'diproses']);
+            } else {
+                $query->where('status', $request->status);
+            }
+        }
+        
+        // 4. Pencarian berdasarkan kata kunci (Judul, Nomor Surat, atau Nama Pemohon)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('judul_pengajuan', 'like', "%{$search}%")
+                  ->orWhere('nomor_surat', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // 5. Paginate hasil query dan pertahankan parameter filter/pencarian di URL
+        $pengajuanBarangs = $query->paginate(15)->appends($request->query());
+
+        return view('users.pengajuan-barang.pengajuan-barang-monitoring', [
+            'title' => 'Monitoring Seluruh Pengajuan Barang',
+            'pengajuanBarangs' => $pengajuanBarangs,
+        ]);
+    }
+
+    /**
      * Menyimpan pengajuan barang baru dengan dukungan hingga 4 Approver Dinamis.
      */
     public function store(Request $request)
@@ -212,14 +262,14 @@ class PengajuanBarangController extends Controller
             "tanggal_approved_{$currentStage}" => Carbon::now(),
         ]);
 
-        // 4. Periksa apakah setelah tahap ini masih ada Approver berikutnya yang berstatus 'menunggu'
+        // 4. Periksa apakah setelah tahap ini masih ada Approver berikutnya yang berstatus 'menunggu' (hanya sampai Approver 3)
         $nextApprover = null;
-        if ($currentStage < 2 && $pengajuan->status_appr_2 == 'menunggu') {
-            $nextApprover = $pengajuan->approver2;
-        } elseif ($currentStage < 3 && $pengajuan->status_appr_3 == 'menunggu') {
-            $nextApprover = $pengajuan->approver3;
-        } elseif ($currentStage < 4 && $pengajuan->status_appr_4 == 'menunggu') {
-            $nextApprover = $pengajuan->approver4;
+        if ($currentStage < 4) {
+            if ($pengajuan->status_appr_2 == 'menunggu') {
+                $nextApprover = $pengajuan->approver2;
+            } elseif ($pengajuan->status_appr_3 == 'menunggu') {
+                $nextApprover = $pengajuan->approver3;
+            }
         }
 
         // 5. Eksekusi lanjutan berdasarkan ketersediaan Approver berikutnya
@@ -229,9 +279,20 @@ class PengajuanBarangController extends Controller
             $nextApprover->notify(new PengajuanBarangNotification($pengajuan, 'baru'));
             $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_parsial'));
         } else {
-            // TIDAK ADA LAGI YANG MENUNGGU (FINISH 100%) -> Sahkan barang menjadi selesai!
-            $pengajuan->update(['status' => 'selesai']);
-            $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_final'));
+            if ($currentStage < 4) {
+                // SEMUA APPROVER (1-3) SUDAH SETUJU -> Ubah status utama menjadi disetujui untuk diproses Admin
+                $pengajuan->update(['status' => 'disetujui']);
+                $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_final'));
+                
+                // Beri notif ke admin (approver 4) jika ada
+                if ($pengajuan->approver4 && $pengajuan->status_appr_4 == 'menunggu') {
+                    $pengajuan->approver4->notify(new PengajuanBarangNotification($pengajuan, 'baru'));
+                }
+            } else {
+                // Jika stage 4 (Admin) menyetujui dari form ini, tapi biasanya admin update via updateMonitoring
+                // Kita biarkan logika ini berjaga-jaga jika Admin menyetujui langsung
+                $pengajuan->update(['status' => 'disetujui']);
+            }
         }
 
         return redirect()->back()->with('success', 'Status pengajuan barang berhasil diperbarui.');
@@ -242,14 +303,12 @@ class PengajuanBarangController extends Controller
      */
     public function download(PengajuanBarang $pengajuanBarang)
     {
-        $pdf = Pdf::loadView('pdf.pengajuan-barang', [
+        $pengajuanBarang->load(['user', 'approver1', 'approver2', 'approver3', 'approver4']);
+        $pdf = Pdf::loadView('pdf.documents.pengajuan-barang', [
             'pengajuanBarang' => $pengajuanBarang,
-            'approver1' => User::find($pengajuanBarang->approver_barang_1_id),
-            'approver2' => User::find($pengajuanBarang->approver_barang_2_id),
-            'approver3' => User::find($pengajuanBarang->approver_barang_3_id),
-            'approver4' => User::find($pengajuanBarang->approver_barang_4_id), // Ditambahkan
         ]);
-        return $pdf->download('Pengajuan_' . $pengajuanBarang->id . '.pdf');
+        $filename = 'SPB_' . str_replace('/', '-', $pengajuanBarang->nomor_surat) . '_' . ($pengajuanBarang->user->name ?? 'Unknown') . '_' . $pengajuanBarang->judul_pengajuan . '.pdf';
+        return $pdf->download($filename);
     }
 
     /**
@@ -295,12 +354,83 @@ class PengajuanBarangController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk membatalkan pengajuan ini.');
         }
 
+        // Ketika approver 1 sudah approve tidak bisa dibatalkan
+        if ($pengajuanBarang->status_appr_1 === 'disetujui') {
+            return redirect()->back()->with('error', 'Pengajuan sudah disetujui oleh Approver 1 dan tidak dapat dibatalkan.');
+        }
+
         if (!in_array($pengajuanBarang->status, ['diajukan', 'diproses'])) {
             return redirect()->back()->with('error', 'Pengajuan sudah selesai diproses, tidak bisa dibatalkan.');
         }
 
-        $pengajuanBarang->update(['status' => 'dibatalkan']);
+        $pengajuanBarang->update([
+            'status' => 'dibatalkan',
+            'status_appr_1' => $pengajuanBarang->status_appr_1 === 'menunggu' ? 'dibatalkan' : $pengajuanBarang->status_appr_1,
+            'status_appr_2' => $pengajuanBarang->status_appr_2 === 'menunggu' ? 'dibatalkan' : $pengajuanBarang->status_appr_2,
+            'status_appr_3' => $pengajuanBarang->status_appr_3 === 'menunggu' ? 'dibatalkan' : $pengajuanBarang->status_appr_3,
+            'status_appr_4' => $pengajuanBarang->status_appr_4 === 'menunggu' ? 'dibatalkan' : $pengajuanBarang->status_appr_4,
+        ]);
 
         return redirect()->back()->with('success', 'Pengajuan barang berhasil dibatalkan.');
+    }
+
+    /**
+     * Memperbarui status monitoring & log pengiriman/proses barang oleh Approver 4 dari User side.
+     */
+    public function updateMonitoring(Request $request, $id)
+    {
+        $request->validate([
+            'status_monitoring' => 'required|string|max:255',
+            'catatan_monitoring' => 'nullable|string|max:1000',
+            'tandai_selesai' => 'nullable|boolean',
+            'lampiran_monitoring' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
+        ]);
+
+        $pengajuan = PengajuanBarang::findOrFail($id);
+        $user = Auth::user();
+        
+        // Ensure only approver 4 (or admin) can update this
+        if ($user->id != $pengajuan->approver_barang_4_id && $user->role !== 'admin') {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $statusMonitoring = $request->status_monitoring;
+        $catatan = $request->catatan_monitoring;
+        $nowFormatted = Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
+
+        $lampiranPath = null;
+        if ($request->hasFile('lampiran_monitoring')) {
+            // Simpan di folder lampiran_barang sesuai permintaan
+            $lampiranPath = $request->file('lampiran_monitoring')->store('lampiran_barang', 'public');
+            
+            // Tambahkan ke array lampiran utama
+            $existingLampiran = is_array($pengajuan->lampiran) ? $pengajuan->lampiran : json_decode($pengajuan->lampiran, true) ?? [];
+            $existingLampiran[] = $lampiranPath;
+            $updateData['lampiran'] = $existingLampiran;
+        }
+
+        $riwayat = $pengajuan->riwayat_monitoring ?? [];
+        $riwayat[] = [
+            'status' => $statusMonitoring,
+            'catatan' => $catatan ?: '-',
+            'waktu' => $nowFormatted,
+            'oleh' => $user->name,
+            'lampiran' => $lampiranPath, // tetap disimpan di riwayat juga untuk history
+        ];
+
+        $updateData['status_monitoring'] = $statusMonitoring;
+        $updateData['riwayat_monitoring'] = $riwayat;
+
+        // Jika tombol "Tandai Selesai" diklik atau status monitoring diset Selesai
+        if ($request->filled('tandai_selesai') || in_array(strtolower($statusMonitoring), ['selesai', 'barang diterima', 'selesai / barang diterima'])) {
+            $updateData['status'] = 'selesai';
+            $updateData['status_monitoring'] = 'Selesai / Barang Diterima';
+            $updateData['status_appr_4'] = 'selesai';
+            $updateData['tanggal_approved_4'] = Carbon::now();
+        }
+
+        $pengajuan->update($updateData);
+
+        return redirect()->back()->with('success', 'Status monitoring barang berhasil diperbarui!');
     }
 }

@@ -27,6 +27,9 @@ class AdminPengajuanBarangController extends Controller
                 $query->whereIn('status', ['diajukan', 'diproses']);
                 break;
             case 'approved':
+                $query->where('status', 'disetujui');
+                break;
+            case 'selesai':
                 $query->where('status', 'selesai');
                 break;
             case 'rejected':
@@ -167,18 +170,17 @@ class AdminPengajuanBarangController extends Controller
             "tanggal_approved_{$currentStage}" => Carbon::now(),
         ]);
 
-        // 4. Periksa apakah setelah tahap ini masih ada Approver berikutnya yang berstatus 'menunggu'
+        // 4. Periksa apakah setelah tahap ini masih ada Approver berikutnya yang berstatus 'menunggu' (hanya sampai Approver 3)
         $nextApprover = null;
         if ($currentStage < 2 && $pengajuan->status_appr_2 == 'menunggu') $nextApprover = $pengajuan->approver2;
         elseif ($currentStage < 3 && $pengajuan->status_appr_3 == 'menunggu') $nextApprover = $pengajuan->approver3;
-        elseif ($currentStage < 4 && $pengajuan->status_appr_4 == 'menunggu') $nextApprover = $pengajuan->approver4;
 
         if ($nextApprover) {
             // Masih ada antrean berikutnya -> Ubah status jadi diproses
             $pengajuan->update(['status' => 'diproses']);
         } else {
-            // Admin adalah approver terakhir -> Tutup status utama jadi selesai!
-            $pengajuan->update(['status' => 'selesai']);
+            // Approver 1-3 selesai -> Ubah status utama jadi disetujui (siap diproses oleh Admin/Approver 4)
+            $pengajuan->update(['status' => 'disetujui']);
         }
 
         return redirect()->back()->with('success', 'Persetujuan berhasil disimpan!');
@@ -190,9 +192,10 @@ class AdminPengajuanBarangController extends Controller
     public function downloadPdf($id)
     {
         $pengajuan = PengajuanBarang::with(['user', 'approver1', 'approver2', 'approver3', 'approver4'])->findOrFail($id);
-        $pdf = Pdf::loadView('pdf.pengajuan-barang', ['pengajuanBarang' => $pengajuan])->setPaper('a4', 'portrait');
-        return $pdf->download($pengajuan->nomor_pengajuan . '.pdf');
-    }       
+        $pdf = Pdf::loadView('pdf.documents.pengajuan-barang', ['pengajuanBarang' => $pengajuan])->setPaper('a4', 'portrait');
+        $filename = 'SPB_' . str_replace('/', '-', $pengajuan->nomor_surat) . '_' . ($pengajuan->user->name ?? 'Unknown') . '_' . $pengajuan->judul_pengajuan . '.pdf';
+        return $pdf->download($filename);
+    }
 
     /**
      * Download Rekap PDF berdasarkan filter tanggal/karyawan.
@@ -234,6 +237,7 @@ class AdminPengajuanBarangController extends Controller
             'status_monitoring' => 'required|string|max:255',
             'catatan_monitoring' => 'nullable|string|max:1000',
             'tandai_selesai' => 'nullable|boolean',
+            'lampiran_monitoring' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
         ]);
 
         $pengajuan = PengajuanBarang::findOrFail($id);
@@ -243,23 +247,33 @@ class AdminPengajuanBarangController extends Controller
         $catatan = $request->catatan_monitoring;
         $nowFormatted = Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
 
+        $lampiranPath = null;
+        if ($request->hasFile('lampiran_monitoring')) {
+            $lampiranPath = $request->file('lampiran_monitoring')->store('lampiran_barang', 'public');
+            
+            $existingLampiran = is_array($pengajuan->lampiran) ? $pengajuan->lampiran : json_decode($pengajuan->lampiran, true) ?? [];
+            $existingLampiran[] = $lampiranPath;
+            $updateData['lampiran'] = $existingLampiran;
+        }
+
         $riwayat = $pengajuan->riwayat_monitoring ?? [];
         $riwayat[] = [
             'status' => $statusMonitoring,
             'catatan' => $catatan ?: '-',
             'waktu' => $nowFormatted,
             'oleh' => $user->name,
+            'lampiran' => $lampiranPath,
         ];
 
-        $updateData = [
-            'status_monitoring' => $statusMonitoring,
-            'riwayat_monitoring' => $riwayat,
-        ];
+        $updateData['status_monitoring'] = $statusMonitoring;
+        $updateData['riwayat_monitoring'] = $riwayat;
 
         // Jika tombol "Tandai Selesai" diklik atau status monitoring diset Selesai
-        if ($request->filled('tandai_selesai') || in_array(strtolower($statusMonitoring), ['selesai', 'barang diterima', 'selesai / diterima'])) {
+        if ($request->filled('tandai_selesai') || in_array(strtolower($statusMonitoring), ['selesai', 'barang diterima', 'selesai / barang diterima'])) {
             $updateData['status'] = 'selesai';
             $updateData['status_monitoring'] = 'Selesai / Barang Diterima';
+            $updateData['status_appr_4'] = 'selesai';
+            $updateData['tanggal_approved_4'] = Carbon::now();
         }
 
         $pengajuan->update($updateData);
