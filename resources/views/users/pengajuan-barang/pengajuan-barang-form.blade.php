@@ -1,6 +1,12 @@
 @php
     $agent = new \Jenssegers\Agent\Agent();
     $isMobile = $agent->isMobile();
+
+    $user = Auth::user();
+    $isTopManagement = ($user->divisi === 'Top Management');
+    $isKadivMO = ($user->is_kepala_divisi == 1 && $user->divisi === 'Marketing dan Operasional');
+    $isKadivFG = ($user->is_kepala_divisi == 1 && $user->divisi === 'Finance dan Gudang');
+    $canMonitor = $isTopManagement || $isKadivMO || $isKadivFG || $user->role === 'admin';
 @endphp
 <x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
@@ -142,8 +148,13 @@
 
             <div class="space-y-4 md:space-y-6 pb-10">
                 @if($isMobile)
-                <div class="flex justify-end mb-4">
-                    <a href="{{ route('pengajuan_barang.history') }}" class="text-sm text-blue-600 font-bold hover:underline flex items-center gap-2 bg-blue-50 px-5 py-2.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
+                <div class="flex flex-col gap-2 mb-4">
+                    @if($canMonitor)
+                    <a href="{{ route('pengajuan_barang.monitoring_all') }}" class="text-sm text-emerald-700 font-bold hover:underline flex items-center justify-center gap-2 bg-emerald-50 px-5 py-2.5 rounded-full border border-emerald-200 transition-all hover:bg-emerald-100 shadow-sm w-full">
+                        <i class="fas fa-desktop"></i> Monitoring Seluruh Pengajuan
+                    </a>
+                    @endif
+                    <a href="{{ route('pengajuan_barang.history') }}" class="text-sm text-blue-600 font-bold hover:underline flex items-center justify-center gap-2 bg-blue-50 px-5 py-2.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-full">
                         <i class="fas fa-history"></i> Lihat Riwayat Pengajuan
                     </a>
                 </div>
@@ -165,7 +176,12 @@
                                 </div>
                             </div>
                             @if(!$isMobile)
-                            <div class="w-full flex justify-end sm:w-auto">
+                            <div class="w-full flex justify-end gap-2 sm:w-auto">
+                                @if($canMonitor)
+                                <a href="{{ route('pengajuan_barang.monitoring_all') }}" class="text-xs text-emerald-700 font-bold hover:underline flex items-center gap-1.5 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-200 transition-all hover:bg-emerald-100 shadow-sm w-fit">
+                                    <i class="fas fa-desktop"></i> Monitoring Seluruh Pengajuan
+                                </a>
+                                @endif
                                 <a href="{{ route('pengajuan_barang.history') }}" class="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
                                     <i class="fas fa-history"></i> Lihat Riwayat Pengajuan
                                 </a>
@@ -176,7 +192,7 @@
                         <div class="grid grid-cols-2 gap-3 md:gap-5">
                             <div class="col-span-2">
                                 <label class="modern-label" for="judul-pengajuan">Judul Pengajuan <span class="text-red-500">*</span></label>
-                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Pengadaan Barang ...." value="{{ old('judul_pengajuan') }}" required>
+                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Pengadaan Alat dan Barang ..." value="{{ old('judul_pengajuan') }}" required>
                             </div>
                             <div class="col-span-2 md:col-span-1">
                                 <label class="modern-label">Tanggal Pengajuan</label>
@@ -204,12 +220,12 @@
                         @else
                             <div class="rounded-2xl border border-slate-200 overflow-hidden mb-5">
                                 {{-- Header: Visible as grid on desktop --}}
-                                <div class="hidden md:grid grid-cols-12 bg-slate-50 text-slate-600 uppercase font-black text-xs border-b border-slate-200 p-4 gap-4">
-                                    <div class="col-span-3">Nama Barang</div>
-                                    <div class="col-span-3">Supplier</div>
-                                    <div class="col-span-2">Jumlah & Satuan</div>
-                                    <div class="col-span-3">Keterangan</div>
-                                    <div class="col-span-1 text-center">Aksi</div>
+                                <div class="hidden md:grid bg-slate-50 text-slate-600 uppercase font-black text-xs border-b border-slate-200 text-center" style="grid-template-columns: 3fr 3fr 2fr 3fr 40px; gap: 12px; padding: 16px;">
+                                    <div>Nama Barang</div>
+                                    <div>Supplier</div>
+                                    <div>Jumlah & Satuan</div>
+                                    <div>Keterangan</div>
+                                    <div>Aksi</div>
                                 </div>
                                 {{-- Container for rows --}}
                                 <div id="rincian-barang-body" class="bg-white divide-y divide-slate-100">
@@ -289,7 +305,7 @@
         const tambahBarisBtn = document.getElementById('tambah-baris-btn');
         const rincianBarangBody = document.getElementById('rincian-barang-body');
 
-        const unitOptions = `<option value="Pcs">Pcs</option><option value="Box">Box</option><option value="Pack">Pack</option><option value="Unit">Unit</option><option value="Set">Set</option><option value="Lusin">Lusin</option><option value="Rim">Rim</option><option value="Buah">Buah</option><option value="Roll">Roll</option><option value="Lainnya">Lainnya</option>`;
+        const unitOptions = `<option value="box">box</option><option value="botol">botol</option><option value="galon">galon</option><option value="Jerigen">Jerigen</option><option value="karton">karton</option><option value="pack">pack</option><option value="paket">paket</option><option value="pcs">pcs</option><option value="polybag">polybag</option><option value="pouches">pouches</option><option value="roll">roll</option>`;
 
         const isMobile = @json($isMobile);
 

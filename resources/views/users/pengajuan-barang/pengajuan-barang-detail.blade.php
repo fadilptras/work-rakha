@@ -46,10 +46,17 @@
 
             {{-- NAVIGASI --}}
             <div class="flex justify-between items-center mb-6 relative z-10">
-                <a href="{{ route('pengajuan_barang.history') }}" class="btn-back-modern">
-                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                    Kembali ke Riwayat
-                </a>
+                @if(request('from') === 'monitoring')
+                    <a href="{{ route('pengajuan_barang.monitoring_all') }}" class="btn-back-modern">
+                        <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                        Kembali ke Monitoring
+                    </a>
+                @else
+                    <a href="{{ route('pengajuan_barang.history') }}" class="btn-back-modern">
+                        <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                        Kembali ke Riwayat
+                    </a>
+                @endif
 
                 @if(Auth::id() == $pengajuanBarang->user_id || Auth::user()->role === 'admin')
                     <a href="{{ route('pengajuan_barang.download', $pengajuanBarang) }}" 
@@ -107,47 +114,47 @@
             
             
 
-            {{-- GRID: INFO PEMOHON + TIMELINE --}}
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-
-                {{-- INFO PEMOHON --}}
-                <div class="glass-card lg:col-span-1">
-                    <div class="flex items-center gap-3 border-b border-slate-200/60" style="padding-bottom: 14px; margin-bottom: 20px;">
-                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-user-circle"></i></div>
-                        <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">Informasi Pemohon</h4>
+            {{-- INFORMASI PEMOHON --}}
+            <div class="glass-card mb-6">
+                <div class="flex items-center gap-3 border-b border-slate-200/60" style="padding-bottom: 14px; margin-bottom: 16px;">
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-user-circle"></i></div>
+                    <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">Informasi Pemohon</h4>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-sm">
+                    <div class="flex flex-col border-b md:border-b-0 md:border-r border-slate-100 pb-3 md:pb-0 md:pr-4">
+                        <span class="text-slate-500 font-semibold text-[10px] uppercase mb-1">Nama</span>
+                        <span class="font-bold text-slate-800 text-xs truncate" title="{{ $pengajuanBarang->user->name ?? '-' }}">{{ $pengajuanBarang->user->name ?? '-' }}</span>
                     </div>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between items-center border-b border-slate-50 pb-2.5">
-                            <span class="text-slate-500 font-semibold text-xs">Nama</span>
-                            <span class="font-bold text-slate-800 text-xs text-right">{{ $pengajuanBarang->user->name ?? '-' }}</span>
-                        </div>
-                        <div class="flex justify-between items-center border-b border-slate-50 pb-2.5">
-                            <span class="text-slate-500 font-semibold text-xs">Divisi</span>
-                            <span class="font-bold text-slate-800 text-xs text-right">{{ $pengajuanBarang->divisi }}</span>
-                        </div>
-                        <div class="flex justify-between items-center border-b border-slate-50 pb-2.5">
-                            <span class="text-slate-500 font-semibold text-xs">Email</span>
-                            <span class="font-bold text-slate-800 text-xs text-right">{{ $pengajuanBarang->user->email ?? '-' }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-500 font-semibold text-xs">Tanggal</span>
-                            <span class="font-bold text-slate-800 text-xs text-right">{{ $pengajuanBarang->created_at->locale('id')->isoFormat('D MMMM YYYY') }}</span>
-                        </div>
+                    <div class="flex flex-col border-b md:border-b-0 md:border-r border-slate-100 pb-3 md:pb-0 md:pr-4">
+                        <span class="text-slate-500 font-semibold text-[10px] uppercase mb-1">Divisi</span>
+                        <span class="font-bold text-slate-800 text-xs truncate" title="{{ $pengajuanBarang->divisi }}">{{ $pengajuanBarang->divisi }}</span>
+                    </div>
+                    <div class="flex flex-col border-b md:border-b-0 md:border-r border-slate-100 pb-3 md:pb-0 md:pr-4">
+                        <span class="text-slate-500 font-semibold text-[10px] uppercase mb-1">Email</span>
+                        <span class="font-bold text-slate-800 text-xs truncate" title="{{ $pengajuanBarang->user->email ?? '-' }}">{{ $pengajuanBarang->user->email ?? '-' }}</span>
+                    </div>
+                    <div class="flex flex-col pb-3 md:pb-0">
+                        <span class="text-slate-500 font-semibold text-[10px] uppercase mb-1">Tanggal</span>
+                        <span class="font-bold text-slate-800 text-xs">{{ $pengajuanBarang->created_at->locale('id')->isoFormat('D MMMM YYYY') }}</span>
                     </div>
                 </div>
+            </div>
 
+            {{-- GRID: TIMELINE + RINCIAN BARANG --}}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                
                 {{-- TIMELINE PERSETUJUAN --}}
-                <div class="glass-card lg:col-span-2">
+                <div class="glass-card flex flex-col">
                     <div class="flex items-center gap-3 border-b border-slate-200/60" style="padding-bottom: 14px; margin-bottom: 20px;">
                         <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-history"></i></div>
                         <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">Timeline Persetujuan</h4>
                     </div>
-                    <div class="space-y-3.5 flex-1 overflow-y-auto">
+                    <div class="space-y-3.5 flex-1 overflow-y-auto max-h-[500px] pr-2">
                         @foreach ([
                             ['label' => 'Tahap 1', 'approver' => $pengajuanBarang->approver1, 'status' => $pengajuanBarang->status_appr_1, 'catatan' => $pengajuanBarang->catatan_approver_1, 'tanggal' => $pengajuanBarang->tanggal_approved_1],
                             ['label' => 'Tahap 2', 'approver' => $pengajuanBarang->approver2, 'status' => $pengajuanBarang->status_appr_2, 'catatan' => $pengajuanBarang->catatan_approver_2, 'tanggal' => $pengajuanBarang->tanggal_approved_2],
                             ['label' => 'Tahap 3', 'approver' => $pengajuanBarang->approver3, 'status' => $pengajuanBarang->status_appr_3, 'catatan' => $pengajuanBarang->catatan_approver_3, 'tanggal' => $pengajuanBarang->tanggal_approved_3],
-                            ['label' => 'Tahap 4 (Final)', 'approver' => $pengajuanBarang->approver4, 'status' => $pengajuanBarang->status_appr_4, 'catatan' => $pengajuanBarang->catatan_approver_4, 'tanggal' => $pengajuanBarang->tanggal_approved_4],
+                            ['label' => 'Tahap 4 (Admin / Pengadaan)', 'approver' => $pengajuanBarang->approver4, 'status' => $pengajuanBarang->status_appr_4, 'catatan' => $pengajuanBarang->catatan_approver_4, 'tanggal' => $pengajuanBarang->tanggal_approved_4],
                         ] as $tahap)
                             @if($tahap['approver'])
                                 @php
@@ -190,10 +197,55 @@
                         @endforeach
                     </div>
                 </div>
+
+                {{-- RINCIAN BARANG --}}
+                <div class="glass-card flex flex-col">
+                    <div class="flex items-center gap-3 border-b border-slate-200/60" style="padding-bottom: 14px; margin-bottom: 20px;">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-list-ul"></i></div>
+                        <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">Rincian Barang</h4>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200/80 mb-4" style="border-radius: 16px;">
+                        <table class="min-w-full text-xs">
+                            <thead class="bg-slate-50 text-slate-600 uppercase font-black border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3 text-center w-12">No</th>
+                                    <th class="px-4 py-3 text-left min-w-[150px]">Nama Barang</th>
+                                    <th class="px-4 py-3 text-center whitespace-nowrap">Jumlah</th>
+                                    <th class="px-4 py-3 text-left min-w-[120px]">Keterangan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                @forelse($pengajuanBarang->rincian_barang ?? [] as $index => $item)
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-3 text-center text-slate-500 font-extrabold">{{ $loop->iteration }}</td>
+                                    <td class="px-4 py-3 text-slate-800 font-bold leading-normal">
+                                        {{ $item['nama_barang'] ?? $item['deskripsi'] ?? '-' }}
+                                        <div class="text-[10px] text-slate-500 font-normal mt-0.5"><i class="fas fa-store mr-1 text-slate-400"></i>{{ $item['supplier'] ?? '-' }}</div>
+                                    </td>
+                                    <td class="px-4 py-3 text-center font-black text-blue-700 whitespace-nowrap">{{ $item['jumlah'] ?? 0 }} {{ $item['satuan'] ?? '' }}</td>
+                                    <td class="px-4 py-3 text-slate-600 font-medium">{{ $item['keterangan'] ?? '-' }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="text-center text-slate-400 font-bold" style="padding: 32px 16px;">Data rincian tidak tersedia.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if(!empty($pengajuanBarang->catatan_pemohon))
+                    <div class="mt-auto p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                        <span class="text-xs font-bold text-slate-700 block mb-1"><i class="fas fa-sticky-note text-blue-600 mr-1"></i> Catatan Pemohon:</span>
+                        <p class="text-xs text-slate-600 leading-relaxed">{{ $pengajuanBarang->catatan_pemohon }}</p>
+                    </div>
+                    @endif
+                </div>
             </div>
 
             {{-- LACAK PENGIRIMAN & MONITORING --}}
-            @if(!empty($pengajuanBarang->status_monitoring) || !empty($pengajuanBarang->riwayat_monitoring))
+            @if(!empty($pengajuanBarang->status_monitoring) || !empty($pengajuanBarang->riwayat_monitoring) || Auth::id() == $pengajuanBarang->approver_barang_4_id || (Auth::check() && Auth::user()->role === 'admin'))
                 <div class="glass-card mb-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-3.5 mb-5">
                         <div class="flex items-center gap-3">
@@ -205,65 +257,107 @@
                         </span>
                     </div>
 
+                    @if(Auth::id() == $pengajuanBarang->approver_barang_4_id || (Auth::check() && Auth::user()->role === 'admin'))
+                        <form action="{{ route('pengajuan_barang.updateMonitoring', $pengajuanBarang->id) }}" method="POST" enctype="multipart/form-data" class="mb-6 space-y-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200 shadow-sm">
+                            @csrf
+                            <h5 class="text-xs font-bold text-slate-700 mb-2"><i class="fas fa-edit text-blue-500 mr-1"></i> Perbarui Status (Oleh Admin / Purchasing)</h5>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="md:col-span-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase">Status Monitoring</label>
+                                    <select name="status_monitoring" class="w-full bg-white border border-slate-300 rounded-lg text-xs text-slate-700 p-2.5 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="Proses Purchasing" {{ ($pengajuanBarang->status_monitoring == 'Proses Purchasing') ? 'selected' : '' }}>Proses Purchasing</option>
+                                        <option value="PO Diterbitkan" {{ ($pengajuanBarang->status_monitoring == 'PO Diterbitkan') ? 'selected' : '' }}>PO Diterbitkan</option>
+                                        <option value="Sedang Diproses Vendor" {{ ($pengajuanBarang->status_monitoring == 'Sedang Diproses Vendor') ? 'selected' : '' }}>Sedang Diproses Vendor</option>
+                                        <option value="Dalam Pengiriman (ekspedisi)" {{ ($pengajuanBarang->status_monitoring == 'Dalam Pengiriman (ekspedisi)') ? 'selected' : '' }}>Dalam Pengiriman (ekspedisi)</option>
+                                        <option value="Barang Tiba di Gudang Rakha" {{ ($pengajuanBarang->status_monitoring == 'Barang Tiba di Gudang Rakha') ? 'selected' : '' }}>Barang Tiba di Gudang Rakha</option>
+                                        <option value="Selesai / Barang Diterima" {{ ($pengajuanBarang->status_monitoring == 'Selesai / Barang Diterima') ? 'selected' : '' }}>Selesai / Barang Diterima</option>
+                                    </select>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase">Catatan / Keterangan</label>
+                                    <input type="text" name="catatan_monitoring" class="w-full bg-white border border-slate-300 rounded-lg text-xs text-slate-700 p-2.5 focus:ring-blue-500 focus:border-blue-500" placeholder="Contoh: Resi JNE: 12345678, PO: 001...">
+                                </div>
+                                <div class="md:col-span-3">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase">Lampiran (Foto Resi, PO, Faktur dll) <span class="font-normal text-slate-400">- Opsional (Maks. 2MB)</span></label>
+                                    <input type="file" name="lampiran_monitoring" 
+                                        class="w-full bg-white border border-slate-300 rounded-lg text-xs text-slate-700 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 file:cursor-pointer file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition-all cursor-pointer" 
+                                        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3 pt-2">
+                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-4 rounded-lg transition flex items-center gap-2">
+                                    <i class="fas fa-sync-alt"></i> Update Status
+                                </button>
+                                @if($pengajuanBarang->status != 'selesai')
+                                <button type="button" onclick="confirmTandaiSelesai(this)" class="bg-green-600 hover:bg-green-700 text-white font-bold text-xs py-2 px-4 rounded-lg transition flex items-center gap-2">
+                                    <i class="fas fa-check-double"></i> Tandai Selesai & Diterima
+                                </button>
+                                @endif
+                            </div>
+                        </form>
+                        
+                        <script>
+                            function confirmTandaiSelesai(btn) {
+                                Swal.fire({
+                                    position: 'center',
+                                    title: 'Konfirmasi',
+                                    text: 'Anda yakin ingin menandai pengajuan ini sebagai SELESAI?',
+                                    icon: 'warning',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Ya, Tandai Selesai',
+                                    cancelButtonText: 'Batal',
+                                    customClass: {
+                                        popup: 'bg-white shadow-[0_15px_50px_rgba(0,0,0,0.15)] border border-gray-100 rounded-3xl p-6 text-center',
+                                        title: 'text-lg font-black text-slate-800 tracking-tight mt-2 m-0',
+                                        htmlContainer: 'text-sm text-slate-500 font-medium leading-relaxed m-0 mt-3 mb-6',
+                                        icon: 'scale-75 m-0 mx-auto border-0 text-amber-500 -mt-2',
+                                        actions: 'flex justify-center gap-3 w-full m-0',
+                                        confirmButton: 'bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 m-0',
+                                        cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold px-5 py-2.5 rounded-xl transition-all m-0'
+                                    },
+                                    width: '340px',
+                                    buttonsStyling: false,
+                                    background: '#ffffff',
+                                    backdrop: 'rgba(0,0,0,0.5)',
+                                    showClass: { popup: 'animate__animated animate__zoomIn animate__faster' },
+                                    hideClass: { popup: 'animate__animated animate__zoomOut animate__faster' }
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        const input = document.createElement('input');
+                                        input.type = 'hidden';
+                                        input.name = 'tandai_selesai';
+                                        input.value = '1';
+                                        btn.form.appendChild(input);
+                                        btn.form.submit();
+                                    }
+                                });
+                            }
+                        </script>
+                    @endif
+
                     @if(!empty($pengajuanBarang->riwayat_monitoring))
-                        <div class="relative border-l-2 border-blue-400 ml-3 space-y-4 pl-4 py-1">
+                        <div class="relative border-l-2 border-blue-400 ml-3 space-y-5 py-2 mt-4">
                             @foreach(array_reverse($pengajuanBarang->riwayat_monitoring) as $log)
-                            <div class="relative">
-                                <div class="absolute -left-[23px] top-1 w-3 h-3 rounded-full bg-blue-500 border-2 border-white"></div>
+                            <div class="relative pl-6">
+                                <div class="absolute w-3.5 h-3.5 rounded-full bg-blue-500 border-2 border-white" style="left: -8px; top: 3px;"></div>
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-1">
                                     <span class="font-black text-blue-800">{{ $log['status'] }}</span>
                                     <span class="text-[10px] text-slate-400 font-semibold"><i class="fas fa-clock mr-1"></i> {{ $log['waktu'] }} • {{ $log['oleh'] }}</span>
                                 </div>
-                                <p class="text-xs text-slate-600 mt-1 font-medium bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">{{ $log['catatan'] }}</p>
+                                <p class="text-xs text-slate-600 mt-1.5 font-medium bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">{{ $log['catatan'] }}</p>
+                                @if(!empty($log['lampiran']))
+                                <div class="mt-2">
+                                    <a href="{{ Storage::url($log['lampiran']) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-[10px] font-bold text-slate-600 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-all shadow-sm w-fit">
+                                        <i class="fas fa-paperclip text-slate-400"></i> Lihat Lampiran
+                                    </a>
+                                </div>
+                                @endif
                             </div>
                             @endforeach
                         </div>
                     @endif
                 </div>
             @endif
-
-            {{-- RINCIAN BARANG (TABEL) --}}
-            <div class="glass-card mb-6">
-                <div class="flex items-center gap-3 border-b border-slate-200/60" style="padding-bottom: 14px; margin-bottom: 20px;">
-                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fas fa-list-ul"></i></div>
-                    <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">Rincian Barang yang Diajukan</h4>
-                </div>
-
-                <div class="overflow-x-auto rounded-2xl border border-slate-200/80" style="border-radius: 16px;">
-                    <table class="min-w-full text-xs">
-                        <thead class="bg-slate-50 text-slate-600 uppercase font-black border-b border-slate-200">
-                            <tr>
-                                <th class="px-6 py-4 text-center w-16">No</th>
-                                <th class="px-6 py-4 text-left">Nama / Deskripsi Barang</th>
-                                <th class="px-6 py-4 text-left">Supplier</th>
-                                <th class="px-6 py-4 text-center w-36">Jumlah & Satuan</th>
-                                <th class="px-6 py-4 text-left">Keterangan</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 bg-white">
-                            @forelse($pengajuanBarang->rincian_barang ?? [] as $index => $item)
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4.5 text-center text-slate-500 font-extrabold">{{ $loop->iteration }}</td>
-                                <td class="px-6 py-4.5 text-slate-800 font-bold leading-normal">{{ $item['nama_barang'] ?? $item['deskripsi'] ?? '-' }}</td>
-                                <td class="px-6 py-4.5 text-slate-600 font-medium">{{ $item['supplier'] ?? '-' }}</td>
-                                <td class="px-6 py-4.5 text-center font-black text-blue-700">{{ $item['jumlah'] ?? 0 }} {{ $item['satuan'] ?? '' }}</td>
-                                <td class="px-6 py-4.5 text-slate-600 font-medium">{{ $item['keterangan'] ?? '-' }}</td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="text-center text-slate-400 font-bold" style="padding: 32px 16px;">Data rincian tidak tersedia.</td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                @if(!empty($pengajuanBarang->catatan_pemohon))
-                <div class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                    <span class="text-xs font-bold text-slate-700 block mb-1"><i class="fas fa-sticky-note text-blue-600 mr-1"></i> Catatan Pemohon:</span>
-                    <p class="text-xs text-slate-600 leading-relaxed">{{ $pengajuanBarang->catatan_pemohon }}</p>
-                </div>
-                @endif
             </div>
 
             {{-- FORM TINDAKAN PERSETUJUAN --}}
@@ -275,8 +369,8 @@
                 $isAppr1 = ($user->id == $pengajuanBarang->approver_barang_1_id && $pengajuanBarang->status_appr_1 == 'menunggu');
                 $isAppr2 = ($user->id == $pengajuanBarang->approver_barang_2_id && $afterAppr1 && $pengajuanBarang->status_appr_2 == 'menunggu');
                 $isAppr3 = ($user->id == $pengajuanBarang->approver_barang_3_id && $afterAppr2 && $pengajuanBarang->status_appr_3 == 'menunggu');
-                $isAppr4 = ($user->id == $pengajuanBarang->approver_barang_4_id && $afterAppr3 && $pengajuanBarang->status_appr_4 == 'menunggu');
-                $showForm = $isAppr1 || $isAppr2 || $isAppr3 || $isAppr4;
+                
+                $showForm = $isAppr1 || $isAppr2 || $isAppr3;
             @endphp            {{-- AREA TINDAKAN / ACTION --}}
             <div class="space-y-6 mt-8 pb-12">
                 
@@ -284,9 +378,9 @@
                 @if($showForm)
                 <div class="glass-card border-t-4 border-t-blue-500">
                     <h3 class="text-lg font-black text-slate-800 mb-6 flex items-center">
-                        <i class="fas fa-gavel text-slate-700 mr-2"></i> Tindakan Persetujuan {{ $isAppr4 ? '(Final)' : '' }}
+                        <i class="fas fa-gavel text-slate-700 mr-2"></i> Tindakan Persetujuan
                     </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
                         <form action="{{ route('pengajuan_barang.updateStatus', $pengajuanBarang) }}" method="POST" class="bg-green-50/70 p-5 rounded-2xl border border-green-100 shadow-sm flex flex-col gap-3">
                             @csrf @method('PATCH')
                             
