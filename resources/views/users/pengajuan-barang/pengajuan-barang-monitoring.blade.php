@@ -63,16 +63,16 @@
             </a>
 
             {{-- HEADER --}}
-            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
+            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
                 <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-                <div class="relative z-10 flex items-center gap-3 md:gap-5">
-                    <div class="h-10 w-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                        <i class="fas fa-history text-lg md:text-2xl text-white"></i>
+                <div class="relative z-10 flex items-center gap-3 md:gap-4">
+                    <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
+                        <i class="fas fa-history text-lg md:text-xl text-white"></i>
                     </div>
-                    <div>
-                        <h1 class="text-base md:text-2xl font-black tracking-tight text-white uppercase">Monitoring Seluruh Pengajuan</h1>
+                    <div class="flex-1">
+                        <h1 class="text-base md:text-xl font-black tracking-tight text-white uppercase">Monitoring Seluruh Pengajuan</h1>
                         @if(!$isMobile)
-                        <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
+                        <p class="text-blue-100 text-xs md:text-sm mt-0.5 font-medium leading-relaxed w-full">
                             Pantau status, detail, dan alur persetujuan seluruh permohonan barang di perusahaan.
                         </p>
                         @endif

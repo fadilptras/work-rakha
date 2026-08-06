@@ -128,17 +128,17 @@
             </a>
 
             {{-- HEADER --}}
-            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
+            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
                 <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
                 <div class="absolute right-20 -bottom-10 w-24 h-24 bg-white/10 rounded-full blur-lg pointer-events-none"></div>
-                <div class="relative z-10 flex items-center gap-3 md:gap-5">
-                    <div class="h-10 w-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                        <i class="fas fa-box text-lg md:text-2xl text-white"></i>
+                <div class="relative z-10 flex items-center gap-3 md:gap-4">
+                    <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
+                        <i class="fas fa-box text-lg md:text-xl text-white"></i>
                     </div>
-                    <div>
-                        <h1 class="text-base md:text-2xl font-black tracking-tight text-white uppercase">Form Permintaan Barang</h1>
+                    <div class="flex-1">
+                        <h1 class="text-base md:text-xl font-black tracking-tight text-white uppercase">Form Permintaan Barang</h1>
                         @if(!$isMobile)
-                        <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
+                        <p class="text-blue-100 text-xs md:text-sm mt-0.5 font-medium leading-relaxed w-full">
                             Ajukan permohonan barang atau perlengkapan operasional, tambahkan rincian item, lampirkan dokumen pendukung, dan pantau status persetujuan.
                         </p>
                         @endif
@@ -165,7 +165,8 @@
 
                     {{-- 1. INFORMASI PEMOHON --}}
                     <div class="glass-card">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-3 md:pb-4 mb-4 md:mb-7">
+                        {{-- Perhatikan class mb-3 md:mb-4 di ujung baris bawah ini untuk mengurangi jarak --}}
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-3 md:pb-4 mb-3 md:mb-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-user-tie"></i></div>
                                 <div>
@@ -188,6 +189,7 @@
                             </div>
                             @endif
                         </div>
+                        
                         <input type="hidden" name="divisi" value="{{ Auth::user()->divisi ?? 'Umum' }}">
                         <div class="grid grid-cols-2 gap-3 md:gap-5">
                             <div class="col-span-2">
@@ -203,11 +205,12 @@
                     </div>
 
                     {{-- 2. RINCIAN BARANG --}}
-                    <div class="glass-card">
-                        <div class="form-section-header">
-                            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-list-ol"></i></div>
-                            <div>
-                                <h4 class="text-lg font-black text-slate-800">2. Rincian Barang yang Diajukan</h4>
+<div class="glass-card">
+    {{-- Perhatikan margin-bottom di ujung baris bawah --}}
+    <div class="flex items-center gap-3 border-b border-slate-200/60 pb-3 md:pb-4 mb-3 md:mb-4">
+        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-list-ol"></i></div>
+        <div>
+            <h4 class="text-lg font-black text-slate-800">2. Rincian Barang yang Diajukan</h4>
                                 @if(!$isMobile)
                                 <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Tambahkan satu atau lebih item barang beserta supplier, satuan, jumlah, dan keterangan</p>
                                 @endif
