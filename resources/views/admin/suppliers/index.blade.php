@@ -10,6 +10,7 @@
             
             // Form Values
             namaValue: '',
+            emailValue: '',
             pic1Value: '',
             kontak1Value: '',
             pic2Value: '',
@@ -22,6 +23,7 @@
                 this.formUrl = '{{ route('admin.suppliers.store') }}';
                 
                 this.namaValue = '';
+                this.emailValue = '';
                 this.pic1Value = '';
                 this.kontak1Value = '';
                 this.pic2Value = '';
@@ -30,12 +32,13 @@
                 
                 this.showDrawer = true;
             },
-            openEdit(id, nama, pic1, kontak1, pic2, kontak2, alamat) {
+            openEdit(id, nama, email, pic1, kontak1, pic2, kontak2, alamat) {
                 this.isEdit = true;
                 this.drawerTitle = 'Edit Data Supplier';
                 this.formUrl = '{{ route('admin.suppliers.update', ':id') }}'.replace(':id', id);
                 
                 this.namaValue = nama;
+                this.emailValue = email;
                 this.pic1Value = pic1;
                 this.kontak1Value = kontak1;
                 this.pic2Value = pic2;
@@ -111,9 +114,12 @@
                             
                             {{-- Nama --}}
                             <td class="px-6 py-4">
-                                <span class="text-white font-medium text-sm">
-                                    {{ $supplier->nama_supplier }}
-                                </span>
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-white font-medium text-sm">
+                                        {{ $supplier->nama_supplier }}
+                                    </span>
+                                    <span class="text-sky-400 text-xs"><i class="fas fa-envelope text-zinc-500 w-4"></i> {{ $supplier->email ?: '-' }}</span>
+                                </div>
                             </td>
 
                             {{-- PIC 1 --}}
@@ -147,7 +153,7 @@
                                     
                                     {{-- TOMBOL EDIT (Trigger Drawer) --}}
                                     <button type="button" 
-                                            @click="openEdit('{{ $supplier->id }}', '{{ addslashes($supplier->nama_supplier) }}', '{{ addslashes($supplier->pic_1) }}', '{{ addslashes($supplier->kontak_pic1) }}', '{{ addslashes($supplier->pic_2) }}', '{{ addslashes($supplier->kontak_pic2) }}', '{{ preg_replace('/\r|\n/', ' ', addslashes($supplier->alamat)) }}')"
+                                            @click="openEdit('{{ $supplier->id }}', '{{ addslashes($supplier->nama_supplier) }}', '{{ addslashes($supplier->email) }}', '{{ addslashes($supplier->pic_1) }}', '{{ addslashes($supplier->kontak_pic1) }}', '{{ addslashes($supplier->pic_2) }}', '{{ addslashes($supplier->kontak_pic2) }}', '{{ preg_replace('/\r|\n/', ' ', addslashes($supplier->alamat)) }}')"
                                             class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-sky-400 hover:bg-sky-500/10 transition-all border border-transparent hover:border-sky-500/20 text-xs"
                                             title="Edit">
                                         <i class="fas fa-edit"></i>
@@ -227,6 +233,13 @@
                     <div class="space-y-1.5">
                         <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Nama Supplier / PT <span class="text-red-500">*</span></label>
                         <input type="text" name="nama_supplier" required x-model="namaValue" placeholder="Contoh: PT. Sumber Makmur"
+                               class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm">
+                    </div>
+                    
+                    {{-- Input Email --}}
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Email Supplier</label>
+                        <input type="email" name="email" x-model="emailValue" placeholder="Contoh: info@sumbermakmur.com"
                                class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm">
                     </div>
 

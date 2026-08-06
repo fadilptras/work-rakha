@@ -13,6 +13,7 @@ class Supplier extends Model
         'pic_2', 
         'kontak_pic1', 
         'kontak_pic2', 
-        'alamat'
+        'alamat',
+        'email'
     ];
 }
