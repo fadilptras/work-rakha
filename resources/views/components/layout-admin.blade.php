@@ -202,11 +202,11 @@
                         </div>
                     </li>
 
-                    {{-- Pengajuan Barang --}}
-                    <li x-data="{ open: {{ request()->routeIs('admin.pengajuan_barang.*') ? 'true' : 'false' }} }">
+                    {{-- Pengajuan Barang & Supplier --}}
+                    <li x-data="{ open: {{ request()->routeIs('admin.pengajuan_barang.*') || request()->routeIs('admin.suppliers.*') ? 'true' : 'false' }} }">
                         <a @click.prevent="open = !open" href="#" 
                             class="flex items-center p-3 rounded-lg transition-colors duration-200 cursor-pointer 
-                            {{ request()->routeIs('admin.pengajuan_barang.*') ? 'bg-sky-600 text-white shadow-lg' : 'hover:bg-zinc-700' }}">
+                            {{ request()->routeIs('admin.pengajuan_barang.*') || request()->routeIs('admin.suppliers.*') ? 'bg-sky-600 text-white shadow-lg' : 'hover:bg-zinc-700' }}">
                             <i class="fas fa-box text-xl w-8 text-center"></i>
                             <span class="ml-3 font-semibold flex-1">Kelola Barang</span>
                             @if(isset($pending_barang_count) && $pending_barang_count > 0)
@@ -221,6 +221,13 @@
                                         class="flex items-center p-2 rounded-lg transition-colors duration-200 text-sm 
                                         {{ request()->routeIs('admin.pengajuan_barang.index') ? 'text-sky-400 font-bold' : 'hover:bg-zinc-700' }}">
                                         Pengajuan Barang
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.suppliers.index') }}" 
+                                        class="flex items-center p-2 rounded-lg transition-colors duration-200 text-sm 
+                                        {{ request()->routeIs('admin.suppliers.*') ? 'text-sky-400 font-bold' : 'hover:bg-zinc-700' }}">
+                                        Data Supplier
                                     </a>
                                 </li>
                                 <li>
