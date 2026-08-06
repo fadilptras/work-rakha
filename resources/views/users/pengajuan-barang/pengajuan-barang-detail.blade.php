@@ -358,7 +358,6 @@
                     @endif
                 </div>
             @endif
-            </div>
 
             {{-- FORM TINDAKAN PERSETUJUAN --}}
             @php
@@ -380,32 +379,32 @@
                     <h3 class="text-lg font-black text-slate-800 mb-6 flex items-center">
                         <i class="fas fa-gavel text-slate-700 mr-2"></i> Tindakan Persetujuan
                     </h3>
-                    <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <form action="{{ route('pengajuan_barang.updateStatus', $pengajuanBarang) }}" method="POST" class="bg-green-50/70 p-5 rounded-2xl border border-green-100 shadow-sm flex flex-col gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <form action="{{ route('pengajuan_barang.updateStatus', $pengajuanBarang) }}" method="POST" class="bg-green-50/70 p-5 rounded-2xl border border-green-100 shadow-sm flex flex-col gap-3 h-full">
                             @csrf @method('PATCH')
                             
                             <label class="block text-xs font-black text-green-800">
                                 Catatan Persetujuan <span class="font-semibold text-green-600">(Opsional)</span>
                             </label>
                             <textarea name="alasan" rows="3" 
-                                class="w-full p-3 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-xs font-semibold"
+                                class="w-full p-3 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-xs font-semibold flex-1"
                                 placeholder="Tulis catatan persetujuan jika perlu..."></textarea>
                             <input type="hidden" name="status" value="disetujui">
-                            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-md shadow-green-200 flex items-center justify-center gap-2">
+                            <button type="submit" class="mt-auto w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-md shadow-green-200 flex items-center justify-center gap-2">
                                 <i class="fas fa-check-circle"></i> Setujui Pengajuan
                             </button>
                         </form>
                         
-                        <form action="{{ route('pengajuan_barang.updateStatus', $pengajuanBarang) }}" method="POST" class="bg-red-50/70 p-5 rounded-2xl border border-red-100 shadow-sm flex flex-col gap-3">
+                        <form action="{{ route('pengajuan_barang.updateStatus', $pengajuanBarang) }}" method="POST" class="bg-red-50/70 p-5 rounded-2xl border border-red-100 shadow-sm flex flex-col gap-3 h-full">
                             @csrf @method('PATCH')
                             <label class="block text-xs font-black text-red-800">
                                 Catatan Penolakan <span class="text-red-600 font-bold">*</span>
                             </label>
                             <textarea name="alasan" rows="3" 
-                                class="w-full p-3 border border-red-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-xs font-semibold"
+                                class="w-full p-3 border border-red-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-xs font-semibold flex-1"
                                 placeholder="Tulis alasan penolakan wajib..." required></textarea>
                             <input type="hidden" name="status" value="ditolak">
-                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-md shadow-red-200 flex items-center justify-center gap-2">
+                            <button type="submit" class="mt-auto w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-md shadow-red-200 flex items-center justify-center gap-2">
                                 <i class="fas fa-times-circle"></i> Tolak Pengajuan
                             </button>
                         </form>

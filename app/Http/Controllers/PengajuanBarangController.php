@@ -20,7 +20,7 @@ class PengajuanBarangController extends Controller
         $title = 'Pengajuan Barang';
         $totalPengajuan = Auth::user()->pengajuanBarangs()->count();
 
-        // Skema Ringan: Ambil murni daftar supplier dari database (tabel suppliers / clients)
+        // Skema Ringan: Ambil murni daftar supplier dari database (tabel suppliers)
         $supplierList = Cache::remember('supplier_list_dropdown', 300, function () {
             if (Schema::hasTable('suppliers')) {
                 $dbSuppliers = \App\Models\Supplier::orderBy('nama_supplier')->pluck('nama_supplier')->toArray();
@@ -28,15 +28,7 @@ class PengajuanBarangController extends Controller
                     return $dbSuppliers;
                 }
             }
-
-            // Fallback: ambil nama perusahaan dari tabel clients jika tabel suppliers masih kosong
-            return \App\Models\Client::whereNotNull('nama_perusahaan')
-                ->where('nama_perusahaan', '!=', '')
-                ->orderBy('nama_perusahaan')
-                ->pluck('nama_perusahaan')
-                ->unique()
-                ->values()
-                ->toArray();
+            return [];
         });
 
         return view('users.pengajuan-barang.pengajuan-barang-form', compact('title', 'totalPengajuan', 'supplierList'));
