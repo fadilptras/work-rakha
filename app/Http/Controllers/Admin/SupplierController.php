@@ -23,6 +23,7 @@ class SupplierController extends Controller
     {
         $request->validate([
             'nama_supplier' => 'required|string|max:255|unique:suppliers,nama_supplier',
+            'email' => 'nullable|email|max:255',
             'pic_1' => 'nullable|string|max:255',
             'pic_2' => 'nullable|string|max:255',
             'kontak_pic1' => 'nullable|string|max:255',
@@ -44,6 +45,7 @@ class SupplierController extends Controller
     {
         $request->validate([
             'nama_supplier' => 'required|string|max:255|unique:suppliers,nama_supplier,' . $supplier->id,
+            'email' => 'nullable|email|max:255',
             'pic_1' => 'nullable|string|max:255',
             'pic_2' => 'nullable|string|max:255',
             'kontak_pic1' => 'nullable|string|max:255',
