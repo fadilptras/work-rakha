@@ -7,35 +7,18 @@
         html { scroll-behavior: smooth; }
 
         .mesh-bg {
-            background-color: #f0f6fc;
-            background-image:
-                radial-gradient(at 40% 20%, rgba(147, 197, 253, 0.45) 0px, transparent 50%),
-                radial-gradient(at 80% 0%, rgba(167, 139, 250, 0.35) 0px, transparent 50%),
-                radial-gradient(at 0% 50%, rgba(191, 219, 254, 0.45) 0px, transparent 50%),
-                radial-gradient(at 80% 50%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, rgba(221, 214, 254, 0.4) 0px, transparent 50%),
-                radial-gradient(at 80% 100%, rgba(96, 165, 250, 0.35) 0px, transparent 50%),
-                radial-gradient(at 0% 0%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
-            background-attachment: fixed;
+            background-color: #ede9fe; /* Warna dari halaman pengajuan dana */
         }
-        @keyframes float {
-            0%   { transform: translateY(0px) rotate(0deg); }
-            50%  { transform: translateY(-20px) rotate(5deg); }
-            100% { transform: translateY(0px) rotate(0deg); }
-        }
-        .animate-float         { animation: float 8s ease-in-out infinite; }
-        .animate-float-delayed { animation: float 10s ease-in-out infinite; animation-delay: 2s; }
 
         .btn-back-modern {
             display: inline-flex; align-items: center; gap: 10px;
             padding: 8px 18px 8px 8px;
-            background: rgba(255,255,255,0.7);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.9); border-radius: 9999px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0; border-radius: 9999px;
             color: #1e293b; font-size: 0.9rem; font-weight: 700;
             text-decoration: none;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             margin-bottom: 24px; 
             width: 100%;
             justify-content: center;
@@ -44,16 +27,15 @@
         @media (min-width: 768px) {
             .btn-back-modern { width: fit-content; justify-content: flex-start; }
         }
-        .btn-back-modern:hover { background: rgba(255,255,255,0.95); box-shadow: 0 10px 15px -3px rgba(59,130,246,0.15); transform: translateY(-2px); color: #1d4ed8; }
-        .btn-back-modern .icon-circle { width: 32px; height: 32px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(0,0,0,0.06); transition: transform 0.3s ease; }
-        .btn-back-modern:hover .icon-circle { transform: translateX(-3px); background: #EFF6FF; }
+        .btn-back-modern:hover { background: #f1f5f9; border-color: #cbd5e1; transform: translateY(-1px); }
+        .btn-back-modern .icon-circle { width: 32px; height: 32px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 0.85rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.2s ease; }
+        .btn-back-modern:hover .icon-circle { transform: translateX(-3px); }
 
         .glass-card {
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,255,255,1);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
             padding: 16px;
         }
         @media (min-width: 768px) {
@@ -65,10 +47,10 @@
             display: inline-flex; align-items: center; justify-content: center;
             padding: 8px 16px; border-radius: 9999px;
             font-size: 0.75rem; font-weight: 800;
-            border: 2px solid #e2e8f0;
-            background: rgba(255,255,255,0.9);
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
             color: #475569; text-decoration: none;
-            transition: all 0.18s;
+            transition: all 0.15s;
             letter-spacing: 0.03em;
             text-transform: uppercase;
             white-space: nowrap;
@@ -78,31 +60,31 @@
             .filter-chip { padding: 7px 18px; min-height: auto; }
         }
         .filter-chip:hover { border-color: #93c5fd; color: #1d4ed8; background: #eff6ff; }
-        .filter-chip.active { background: #1d4ed8; border-color: #1d4ed8; color: #fff; box-shadow: 0 4px 12px rgba(29,78,216,0.25); }
+        .filter-chip.active { background: #1d4ed8; border-color: #1d4ed8; color: #ffffff; box-shadow: 0 2px 4px rgba(29,78,216,0.2); }
 
         /* Notif item */
         .notif-item {
             display: flex; align-items: flex-start; gap: 12px;
             padding: 14px 16px;
-            border-bottom: 1px solid rgba(241,245,249,0.8);
+            border-bottom: 1px solid #f1f5f9;
             text-decoration: none;
             transition: background 0.15s;
             position: relative;
         }
         .notif-item:last-child { border-bottom: none; }
-        .notif-item:hover { background: rgba(239,246,255,0.6); }
-        .notif-item.unread { background: rgba(239,246,255,0.5); }
+        .notif-item:hover { background: #f8fafc; }
+        .notif-item.unread { background: #eff6ff; }
         .notif-item.unread::before {
             content: '';
             position: absolute; left: 0; top: 0; bottom: 0;
             width: 4px;
-            background: linear-gradient(to bottom, #2563eb, #60a5fa);
+            background: #3b82f6;
             border-radius: 0 3px 3px 0;
         }
 
         .notif-icon-box {
             width: 44px; height: 44px;
-            border-radius: 14px;
+            border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0; font-size: 1rem;
         }
@@ -133,19 +115,16 @@
             width: 8px; height: 8px;
             background: #2563eb; border-radius: 50%;
             flex-shrink: 0; margin-top: 7px;
-            box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
         }
 
         /* Group header */
         .notif-group-header {
             display: flex; align-items: center; gap: 8px;
-            padding: 8px 20px;
-            background: rgba(248,250,252,0.8);
-            border-bottom: 1px solid rgba(241,245,249,1);
+            padding: 10px 20px;
         }
         .notif-group-header span {
-            font-size: 0.68rem; font-weight: 800;
-            text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8;
+            font-size: 0.75rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.1em;
         }
 
         @media (min-width: 640px) {
@@ -157,13 +136,7 @@
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
-        {{-- BG Animations --}}
-        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div class="absolute top-[10%] left-[5%] w-32 h-32 bg-white/40 backdrop-blur-md border border-white/50 rounded-full animate-float"></div>
-            <div class="absolute bottom-[15%] right-[10%] w-48 h-48 bg-white/30 backdrop-blur-md border border-white/40 rounded-full animate-float-delayed"></div>
-            <div class="absolute inset-0" style="background-image: radial-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px); background-size: 24px 24px;"></div>
-        </div>
+    <div class="flex flex-col flex-1 min-h-screen mesh-bg relative">
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
 
@@ -213,14 +186,23 @@
                             <p class="text-[10px] sm:text-xs text-slate-500 font-semibold mt-1">Filter berdasarkan kategori notifikasi yang ingin ditampilkan.</p>
                         </div>
                     </div>
+                    
+                    @php
+                        $categoryIcons = [
+                            'Pengajuan Dana' => 'fas fa-wallet',
+                            'Pengajuan Barang' => 'fas fa-box-open',
+                            'Pengajuan Cuti' => 'fas fa-calendar-alt',
+                            'Lainnya' => 'fas fa-ellipsis-h',
+                        ];
+                    @endphp
+
                     <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2 w-full sm:w-auto">
-                        <a href="{{ route('notifikasi.index') }}"
-                           class="filter-chip {{ $filterType === 'semua' ? 'active' : '' }}">
-                            <i class="fas fa-th-large mr-1.5 text-[10px]"></i> Semua
-                        </a>
                         @foreach ($availableTypes as $type)
                             <a href="{{ route('notifikasi.index', ['type' => $type]) }}"
                                class="filter-chip {{ $filterType === $type ? 'active' : '' }}">
+                                @if(isset($categoryIcons[$type]))
+                                    <i class="{{ $categoryIcons[$type] }} mr-1.5 text-[10px]"></i>
+                                @endif
                                 {{ ucfirst($type) }}
                             </a>
                         @endforeach
@@ -232,10 +214,19 @@
 
                     @forelse ($groupOrder as $groupName)
                         @if (isset($groupedNotifications[$groupName]) && $groupedNotifications[$groupName]->isNotEmpty())
+                            @php
+                                $groupStyles = [
+                                    'Pengajuan Dana' => ['icon' => 'fas fa-wallet', 'color' => 'text-emerald-600', 'bg' => 'bg-emerald-50 border-emerald-100', 'iconColor' => 'text-emerald-500'],
+                                    'Pengajuan Barang' => ['icon' => 'fas fa-box-open', 'color' => 'text-blue-600', 'bg' => 'bg-blue-50 border-blue-100', 'iconColor' => 'text-blue-500'],
+                                    'Pengajuan Cuti' => ['icon' => 'fas fa-calendar-alt', 'color' => 'text-purple-600', 'bg' => 'bg-purple-50 border-purple-100', 'iconColor' => 'text-purple-500'],
+                                    'Lainnya' => ['icon' => 'fas fa-ellipsis-h', 'color' => 'text-slate-600', 'bg' => 'bg-slate-50 border-slate-200', 'iconColor' => 'text-slate-400'],
+                                ];
+                                $gStyle = $groupStyles[$groupName] ?? $groupStyles['Lainnya'];
+                            @endphp
 
-                            <div class="notif-group-header">
-                                <i class="far fa-clock text-slate-300 text-[10px]"></i>
-                                <span>{{ $groupName }}</span>
+                            <div class="notif-group-header {{ $gStyle['bg'] }} border-b-2">
+                                <i class="{{ $gStyle['icon'] }} {{ $gStyle['iconColor'] }} text-[12px] mr-1"></i>
+                                <span class="{{ $gStyle['color'] }} font-extrabold text-xs ml-1">{{ $groupName }}</span>
                             </div>
 
                             @foreach ($groupedNotifications[$groupName] as $notification)
@@ -288,18 +279,12 @@
                             </div>
                             <h3 class="text-sm font-black text-slate-600 mb-1.5">Tidak ada notifikasi</h3>
                             <p class="text-xs text-slate-400 font-semibold max-w-xs leading-relaxed">
-                                @if($filterType !== 'semua')
-                                    Tidak ada notifikasi untuk kategori "<strong class="text-slate-500">{{ $filterType }}</strong>".
-                                @else
-                                    Anda sudah melihat semua pembaruan terbaru.
-                                @endif
+                                Tidak ada notifikasi untuk kategori "<strong class="text-slate-500">{{ $filterType }}</strong>".
                             </p>
-                            @if($filterType !== 'semua')
-                                <a href="{{ route('notifikasi.index') }}"
-                                   class="mt-4 inline-flex w-full md:w-auto min-h-[44px] justify-center items-center gap-1.5 px-4 py-1.5 bg-blue-600 text-white text-[11px] font-black rounded-full hover:bg-blue-700 transition shadow-sm uppercase tracking-wider">
-                                    <i class="fas fa-th-large text-[9px]"></i> Lihat Semua
-                                </a>
-                            @endif
+                            <a href="{{ route('notifikasi.index') }}"
+                               class="mt-4 inline-flex w-full md:w-auto min-h-[44px] justify-center items-center gap-1.5 px-4 py-1.5 bg-blue-600 text-white text-[11px] font-black rounded-full hover:bg-blue-700 transition shadow-sm uppercase tracking-wider">
+                                <i class="fas fa-redo text-[9px]"></i> Refresh
+                            </a>
                         </div>
                     @endif
                 </div>

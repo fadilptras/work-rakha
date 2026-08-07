@@ -27,8 +27,8 @@ class NotifikasiController extends Controller
              ->where('created_at', '<', Carbon::now()->subMonth())
              ->delete();
         
-        // Ambil filter tipe dari URL, defaultnya 'semua'
-        $filterType = $request->query('type', 'semua');
+        // Ambil filter tipe dari URL, defaultnya 'Pengajuan Dana'
+        $filterType = $request->query('type', 'Pengajuan Dana');
 
         // === LOGIKA PENGELOMPOKAN (Sesuai Request) ===
         $determineType = function ($notification) {
@@ -36,12 +36,12 @@ class NotifikasiController extends Controller
             $title = strtolower($notification->data['title'] ?? '');
 
             // 1. Pengajuan Dana
-            if (Str::contains($url, 'dana') || Str::contains($title, 'dana')) {
+            if (Str::contains($url, 'pengajuan-dana') || Str::contains($title, 'dana')) {
                 return 'Pengajuan Dana';
             }
 
             // 2. Pengajuan Barang
-            if (Str::contains($url, 'barang') || Str::contains($url, 'inventory') || Str::contains($title, 'barang')) {
+            if (Str::contains($url, 'pengajuan-barang') || Str::contains($url, 'inventory') || Str::contains($title, 'barang')) {
                 return 'Pengajuan Barang';
             }
 
@@ -50,12 +50,7 @@ class NotifikasiController extends Controller
                 return 'Pengajuan Cuti';
             }
 
-            // 4. Agenda
-            if (Str::contains($url, 'agenda') || Str::contains($title, 'agenda')) {
-                return 'Agenda';
-            }
-
-            // 5. Lainnya (Ultah, Dokumen, Sistem, dll)
+            // 4. Lainnya (Sistem, dll)
             return 'Lainnya';
         };
 
@@ -64,38 +59,39 @@ class NotifikasiController extends Controller
             'Pengajuan Dana', 
             'Pengajuan Barang', 
             'Pengajuan Cuti', 
-            'Agenda', 
             'Lainnya'
         ];
 
         // Query notifikasi
         $query = $user->notifications()->latest();
 
-        if ($filterType !== 'semua') {
-            // Filter langsung di database menggunakan JSON LIKE query (lebih efisien dari filter PHP)
-            $keywordMap = [
-                'Pengajuan Dana'    => ['dana'],
-                'Pengajuan Barang'  => ['barang', 'inventory'],
-                'Pengajuan Cuti'    => ['cuti'],
-                'Agenda'            => ['agenda'],
-                'Lainnya'           => [],
-            ];
+        // Filter langsung di database menggunakan JSON LIKE query
+        $keywordMap = [
+            'Pengajuan Dana'    => ['dana'],
+            'Pengajuan Barang'  => ['barang', 'inventory'],
+            'Pengajuan Cuti'    => ['cuti'],
+            'Lainnya'           => [],
+        ];
 
-            $keywords = $keywordMap[$filterType] ?? [];
+        $keywords = $keywordMap[$filterType] ?? [];
 
-            if ($filterType === 'Lainnya') {
-                // Lainnya = tidak mengandung keyword manapun
-                $query->where(function ($q) {
-                    foreach (['dana', 'barang', 'inventory', 'cuti', 'agenda'] as $kw) {
-                        $q->where('data', 'NOT LIKE', "%{$kw}%");
-                    }
-                });
-            } elseif (!empty($keywords)) {
-                $query->where(function ($q) use ($keywords) {
-                    foreach ($keywords as $kw) {
-                        $q->orWhere('data', 'LIKE', "%{$kw}%");
-                    }
-                });
+        if ($filterType === 'Lainnya') {
+            // Lainnya = tidak mengandung keyword manapun
+            $query->where(function ($q) {
+                foreach (['dana', 'barang', 'inventory', 'cuti'] as $kw) {
+                    $q->where('data', 'NOT LIKE', "%{$kw}%");
+                }
+            });
+        } elseif (!empty($keywords)) {
+            $query->where(function ($q) use ($keywords, $filterType) {
+                foreach ($keywords as $kw) {
+                    $q->orWhere('data', 'LIKE', "%{$kw}%");
+                }
+            });
+
+            // Exclude 'dana' if we are looking for 'barang', to prevent overlap
+            if ($filterType === 'Pengajuan Barang') {
+                $query->where('data', 'NOT LIKE', "%dana%");
             }
         }
 
@@ -117,7 +113,6 @@ class NotifikasiController extends Controller
             'Pengajuan Dana',
             'Pengajuan Barang',
             'Pengajuan Cuti',
-            'Agenda',
             'Lainnya',
         ];
 
