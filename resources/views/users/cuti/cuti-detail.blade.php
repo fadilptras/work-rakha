@@ -144,10 +144,17 @@
             
             {{-- 1. NAVIGASI & AKSI --}}
             <div class="flex justify-between items-center mb-6 relative z-10">
-                <a href="{{ route('cuti.create') }}" class="btn-back-modern">
-                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                    Kembali ke Riwayat
-                </a>
+                @if(Auth::id() != $cuti->user_id)
+                    <a href="{{ route('notifikasi.index') }}" class="btn-back-modern">
+                        <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                        Kembali ke Notifikasi
+                    </a>
+                @else
+                    <a href="{{ route('cuti.create') }}" class="btn-back-modern">
+                        <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                        Kembali ke Riwayat
+                    </a>
+                @endif
 
                 <a href="{{ route('cuti.download', $cuti->id) }}" 
                    class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-black text-white bg-red-600 rounded-full shadow-md hover:bg-red-700 hover:shadow-lg transition-all duration-300">

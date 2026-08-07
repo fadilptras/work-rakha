@@ -46,7 +46,12 @@
 
             {{-- NAVIGASI --}}
             <div class="flex justify-between items-center mb-6 relative z-10">
-                @if(request('from') === 'monitoring')
+                @if(Auth::id() != $pengajuanBarang->user_id)
+                    <a href="{{ route('notifikasi.index') }}" class="btn-back-modern">
+                        <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                        Kembali ke Notifikasi
+                    </a>
+                @elseif(request('from') === 'monitoring')
                     <a href="{{ route('pengajuan_barang.monitoring_all') }}" class="btn-back-modern">
                         <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                         Kembali ke Monitoring
@@ -430,5 +435,3 @@
         </div>
     </div>
 </x-layout-users>
-
-

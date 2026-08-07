@@ -77,10 +77,17 @@
 
             {{-- 1. NAVIGASI (BACK & DOWNLOAD) --}}
             <div class="flex justify-between items-center mb-6 relative z-10">
-                <a href="{{ route('pengajuan_dana.history') }}" class="btn-back-modern">
-                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                    Kembali ke Riwayat
-                </a>
+                @if(Auth::id() != $pengajuanDana->user_id)
+                    <a href="{{ route('notifikasi.index') }}" class="btn-back-modern">
+                        <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                        Kembali ke Notifikasi
+                    </a>
+                @else
+                    <a href="{{ route('pengajuan_dana.history') }}" class="btn-back-modern">
+                        <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                        Kembali ke Riwayat
+                    </a>
+                @endif
 
                 @if(Auth::id() == $pengajuanDana->user_id || Auth::user()->role == 'admin' || Auth::user()->can('approve', $pengajuanDana))
                     <a href="{{ route('pengajuan_dana.download', $pengajuanDana) }}" 
