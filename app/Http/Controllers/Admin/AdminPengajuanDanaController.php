@@ -101,8 +101,9 @@ class AdminPengajuanDanaController extends Controller
     {
         $pengajuanDana->load(['user', 'approverDana1', 'approverDana2', 'approverDana3', 'approverDana4']);
         
-        $pdf = PDF::loadView('pdf.pdf_pengajuan_dana', compact('pengajuanDana'));
-        $filename = "{$pengajuanDana->nomor_pengajuan}.pdf";
+        $pdf = PDF::loadView('pdf.documents.pengajuan-dana', compact('pengajuanDana'));
+        $filename = 'SPD_' . $pengajuanDana->nomor_surat . '_' . ($pengajuanDana->user->name ?? 'Unknown') . '_' . $pengajuanDana->judul_pengajuan . '.pdf';
+        $filename = str_replace(['/', '\\'], '-', $filename);
         return $pdf->download($filename);
     }
 

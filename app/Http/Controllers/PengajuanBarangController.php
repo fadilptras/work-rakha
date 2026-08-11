@@ -327,7 +327,8 @@ class PengajuanBarangController extends Controller
         $pdf = Pdf::loadView('pdf.documents.pengajuan-barang', [
             'pengajuanBarang' => $pengajuanBarang,
         ]);
-        $filename = 'SPB_' . str_replace('/', '-', $pengajuanBarang->nomor_surat) . '_' . ($pengajuanBarang->user->name ?? 'Unknown') . '_' . $pengajuanBarang->judul_pengajuan . '.pdf';
+        $filename = 'SPB_' . $pengajuanBarang->nomor_surat . '_' . ($pengajuanBarang->user->name ?? 'Unknown') . '_' . $pengajuanBarang->judul_pengajuan . '.pdf';
+        $filename = str_replace(['/', '\\'], '-', $filename);
         return $pdf->download($filename);
     }
 

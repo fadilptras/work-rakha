@@ -193,7 +193,8 @@ class AdminPengajuanBarangController extends Controller
     {
         $pengajuan = PengajuanBarang::with(['user', 'approver1', 'approver2', 'approver3', 'approver4'])->findOrFail($id);
         $pdf = Pdf::loadView('pdf.documents.pengajuan-barang', ['pengajuanBarang' => $pengajuan])->setPaper('a4', 'portrait');
-        $filename = 'SPB_' . str_replace('/', '-', $pengajuan->nomor_surat) . '_' . ($pengajuan->user->name ?? 'Unknown') . '_' . $pengajuan->judul_pengajuan . '.pdf';
+        $filename = 'SPB_' . $pengajuan->nomor_surat . '_' . ($pengajuan->user->name ?? 'Unknown') . '_' . $pengajuan->judul_pengajuan . '.pdf';
+        $filename = str_replace(['/', '\\'], '-', $filename);
         return $pdf->download($filename);
     }
 

@@ -167,6 +167,10 @@ Route::controller(SalesController::class)->prefix('sales')->name('sales.')->grou
     Route::get('/target', 'target')->name('target');
     Route::post('/target', 'storeTarget')->name('target.store');
 
+    // Halaman Visualisasi Analytics (Power BI style)
+    Route::get('/visualisasi', 'visualisasi')->name('visualisasi');
+    Route::get('/visualisasi/data', 'visualisasiData')->name('visualisasi.data');
+
     // Halaman Riwayat & Kelola Data
     Route::get('/history', 'history')->name('history');
     Route::put('/{sale}', 'update')->name('update');

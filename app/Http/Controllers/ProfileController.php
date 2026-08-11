@@ -175,6 +175,8 @@ class ProfileController extends Controller
         $pdf->setPaper('a4', 'portrait');
 
         // Render & Download PDF dengan format nama file otomatis: CV_Profil_NamaKaryawan.pdf
-        return $pdf->download('CV_Profil_' . str_replace(' ', '_', $user->name) . '.pdf');
+        $filename = 'CV_Profil_' . str_replace(' ', '_', $user->name) . '.pdf';
+        $filename = str_replace(['/', '\\'], '-', $filename);
+        return $pdf->download($filename);
     }
 }

@@ -291,7 +291,8 @@ class PengajuanDanaController extends Controller
     {
         $pengajuanDana->load(['user', 'approverDana1', 'approverDana2', 'approverDana3', 'approverDana4']);
         $pdf = PDF::loadView('pdf.documents.pengajuan-dana', compact('pengajuanDana'));
-        $filename = 'SPD_' . str_replace('/', '-', $pengajuanDana->nomor_surat) . '_' . ($pengajuanDana->user->name ?? 'Unknown') . '_' . \Illuminate\Support\Str::slug($pengajuanDana->judul_pengajuan, '_') . '.pdf';
+        $filename = 'SPD_' . $pengajuanDana->nomor_surat . '_' . ($pengajuanDana->user->name ?? 'Unknown') . '_' . $pengajuanDana->judul_pengajuan . '.pdf';
+        $filename = str_replace(['/', '\\'], '-', $filename);
         return $pdf->download($filename);
     }
 }

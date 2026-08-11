@@ -200,7 +200,8 @@ class CutiController extends Controller
             'sisaCuti' => $sisaCuti 
         ])->setPaper('a4', 'portrait');
 
-        $fileName = 'Cuti_' . str_replace('/', '-', $cuti->nomor_surat) . '_' . ($cuti->user->name ?? 'Unknown') . '_' . str_replace(' ', '_', $cuti->jenis_cuti) . '.pdf';
+        $fileName = 'Cuti_' . $cuti->nomor_surat . '_' . ($cuti->user->name ?? 'Unknown') . '_' . str_replace(' ', '_', $cuti->jenis_cuti) . '.pdf';
+        $fileName = str_replace(['/', '\\'], '-', $fileName);
         return $pdf->download($fileName);
     }
 

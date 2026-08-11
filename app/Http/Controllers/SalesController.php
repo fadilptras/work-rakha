@@ -655,4 +655,236 @@ class SalesController extends Controller
 
         return redirect()->back()->with('success', 'Data sales berhasil dihapus!');
     }
+
+    /* =========================================================================
+     |  HALAMAN VISUALISASI ANALYTICS (POWER BI STYLE)
+     |  ========================================================================= */
+
+    public function visualisasi(Request $request)
+    {
+        $tahun = $request->input('tahun', date('Y'));
+        $bulanTerpilih = $request->input('bulan', ''); // '' = semua bulan
+        $psTerpilih = $request->input('ps', ''); // '' = semua PS
+
+        $listPs = Sales::whereNotNull('ps')
+            ->where('ps', '!=', '')
+            ->distinct()
+            ->orderBy('ps', 'asc')
+            ->pluck('ps')
+            ->toArray();
+
+        $listTahun = Sales::whereNotNull('tanggal')
+            ->selectRaw('DISTINCT YEAR(tanggal) as tahun')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun')
+            ->toArray();
+
+        if (!in_array(date('Y'), $listTahun)) {
+            array_unshift($listTahun, date('Y'));
+        }
+
+        $analytics = $this->getVisualisasiDataPayload($tahun, $bulanTerpilih, $psTerpilih, $listPs);
+
+        return view('users.sales.visualisasi', array_merge([
+            'title'         => 'Visualisasi Analytics Sales (Power BI)',
+            'tahun'         => $tahun,
+            'bulanTerpilih' => $bulanTerpilih,
+            'psTerpilih'    => $psTerpilih,
+            'listTahun'     => $listTahun,
+            'listBulan'     => $this->urutanBulan,
+            'listPs'        => $listPs,
+        ], $analytics));
+    }
+
+    public function visualisasiData(Request $request)
+    {
+        $tahun = $request->input('tahun', date('Y'));
+        $bulanTerpilih = $request->input('bulan', '');
+        $psTerpilih = $request->input('ps', '');
+
+        $listPs = Sales::whereNotNull('ps')
+            ->where('ps', '!=', '')
+            ->distinct()
+            ->orderBy('ps', 'asc')
+            ->pluck('ps')
+            ->toArray();
+
+        $analytics = $this->getVisualisasiDataPayload($tahun, $bulanTerpilih, $psTerpilih, $listPs);
+
+        return response()->json($analytics);
+    }
+
+    private function getVisualisasiDataPayload($tahun, $bulanTerpilih, $psTerpilih, $listPs)
+    {
+        $tahunLalu = (int)$tahun - 1;
+
+        // 1. Ambil target tahun ini
+        $targetsQuery = SalesTarget::where('tahun', $tahun);
+        if ($psTerpilih) {
+            $targetsQuery->where('ps', $psTerpilih);
+        }
+        $targets = $targetsQuery->get();
+
+        // Target tahun lalu
+        $targetsLastYear = SalesTarget::where('tahun', $tahunLalu)->get();
+
+        // 2. Sales tahun ini
+        $salesCurrentQuery = Sales::whereYear('tanggal', $tahun);
+        if ($psTerpilih) {
+            $salesCurrentQuery->where('ps', $psTerpilih);
+        }
+        $salesCurrent = $salesCurrentQuery
+            ->select('bulan', 'ps', 'nama_produk', DB::raw('SUM(harga_nett) as total_sales'), DB::raw('SUM(qty) as total_qty'))
+            ->groupBy('bulan', 'ps', 'nama_produk')
+            ->get();
+
+        // 3. Sales tahun lalu
+        $salesLastYearQuery = Sales::whereYear('tanggal', $tahunLalu);
+        if ($psTerpilih) {
+            $salesLastYearQuery->where('ps', $psTerpilih);
+        }
+        $salesLastYear = $salesLastYearQuery
+            ->select('bulan', 'ps', DB::raw('SUM(harga_nett) as total_sales'))
+            ->groupBy('bulan', 'ps')
+            ->get();
+
+        // A. Monthly Achievement Rate & YoY Growth
+        $monthlyOverview = [];
+        $totalTargetYear = 0;
+        $totalSalesYear = 0;
+        $totalSalesLastYear = 0;
+
+        foreach ($this->urutanBulan as $b) {
+            $tVal = $targets->where('bulan', $b)->sum('target_amount');
+            $sVal = $salesCurrent->where('bulan', $b)->sum('total_sales');
+            $sPrevVal = $salesLastYear->where('bulan', $b)->sum('total_sales');
+
+            $achRate = $tVal > 0 ? round(($sVal / $tVal) * 100, 1) : 0;
+            $growthRate = $sPrevVal > 0 ? round((($sVal - $sPrevVal) / $sPrevVal) * 100, 1) : 0;
+
+            $monthlyOverview[$b] = [
+                'target'           => (float)$tVal,
+                'sales'            => (float)$sVal,
+                'achievement_rate' => $achRate,
+                'sales_last_year'  => (float)$sPrevVal,
+                'growth_rate'      => $growthRate,
+            ];
+
+            $totalTargetYear += $tVal;
+            $totalSalesYear += $sVal;
+            $totalSalesLastYear += $sPrevVal;
+        }
+
+        // B. Per PS Performance (Monthly / Selected Month)
+        $targetBulan = $bulanTerpilih;
+        if (!$targetBulan) {
+            $lastSalesMonth = $salesCurrent->pluck('bulan')->last();
+            $targetBulan = $lastSalesMonth ?: 'Juli';
+        }
+
+        $bulanPrevIndex = array_search($targetBulan, $this->urutanBulan);
+        $bulanPrevName = $bulanPrevIndex > 0 ? $this->urutanBulan[$bulanPrevIndex - 1] : null;
+
+        $psPerformance = [];
+        foreach ($listPs as $ps) {
+            $tPs = $targets->where('bulan', $targetBulan)->where('ps', $ps)->sum('target_amount');
+            $sPs = $salesCurrent->where('bulan', $targetBulan)->where('ps', $ps)->sum('total_sales');
+            
+            $sPsPrevMonth = $bulanPrevName ? $salesCurrent->where('bulan', $bulanPrevName)->where('ps', $ps)->sum('total_sales') : 0;
+            
+            $achPs = $tPs > 0 ? round(($sPs / $tPs) * 100, 1) : 0;
+            $momGrowth = $sPsPrevMonth > 0 ? round((($sPs - $sPsPrevMonth) / $sPsPrevMonth) * 100, 1) : 0;
+
+            $psPerformance[$ps] = [
+                'target'            => (float)$tPs,
+                'sales'             => (float)$sPs,
+                'achievement_rate'  => $achPs,
+                'sales_last_month'  => (float)$sPsPrevMonth,
+                'growth_last_month' => $momGrowth,
+            ];
+        }
+
+        // C. Cumulative Achievement Rate per PS
+        $limitBulanIndex = $bulanTerpilih ? array_search($bulanTerpilih, $this->urutanBulan) : (date('Y') == $tahun ? date('n') - 1 : 11);
+        $bulanAkumulasi = array_slice($this->urutanBulan, 0, max(1, $limitBulanIndex + 1));
+
+        $psCumulative = [];
+        foreach ($listPs as $ps) {
+            $cumTarget = $targets->whereIn('bulan', $bulanAkumulasi)->where('ps', $ps)->sum('target_amount');
+            $cumSales = $salesCurrent->whereIn('bulan', $bulanAkumulasi)->where('ps', $ps)->sum('total_sales');
+            $cumSalesLastYear = $salesLastYear->whereIn('bulan', $bulanAkumulasi)->where('ps', $ps)->sum('total_sales');
+
+            $cumAchRate = $cumTarget > 0 ? round(($cumSales / $cumTarget) * 100, 1) : 0;
+            $cumGrowthRate = $cumSalesLastYear > 0 ? round((($cumSales - $cumSalesLastYear) / $cumSalesLastYear) * 100, 1) : 0;
+
+            $monthlySalesPs = [];
+            foreach ($this->urutanBulan as $b) {
+                $monthlySalesPs[$b] = (float)$salesCurrent->where('bulan', $b)->where('ps', $ps)->sum('total_sales');
+            }
+
+            $psCumulative[$ps] = [
+                'cum_target'      => (float)$cumTarget,
+                'cum_sales'       => (float)$cumSales,
+                'cum_ach_rate'    => $cumAchRate,
+                'cum_growth_rate' => $cumGrowthRate,
+                'monthly_sales'   => $monthlySalesPs
+            ];
+        }
+
+        // D. Sales by Product Category per PS
+        $productsQuery = Sales::whereYear('tanggal', $tahun);
+        if ($bulanTerpilih) {
+            $productsQuery->where('bulan', $bulanTerpilih);
+        }
+        if ($psTerpilih) {
+            $productsQuery->where('ps', $psTerpilih);
+        }
+
+        $productSalesRaw = $productsQuery
+            ->select('nama_produk', 'ps', DB::raw('SUM(harga_nett) as total_nett'), DB::raw('SUM(qty) as total_qty'))
+            ->whereNotNull('nama_produk')
+            ->where('nama_produk', '!=', '')
+            ->groupBy('nama_produk', 'ps')
+            ->get();
+
+        $productCategoryPs = [];
+        foreach ($productSalesRaw as $row) {
+            $prod = $row->nama_produk;
+            $psName = $row->ps ?: 'Other';
+            if (!isset($productCategoryPs[$prod])) {
+                $productCategoryPs[$prod] = [
+                    'nama_produk' => $prod,
+                    'total_nett'  => 0,
+                    'per_ps'      => []
+                ];
+                foreach ($listPs as $p) {
+                    $productCategoryPs[$prod]['per_ps'][$p] = 0;
+                }
+            }
+            $productCategoryPs[$prod]['total_nett'] += (float)$row->total_nett;
+            if (isset($productCategoryPs[$prod]['per_ps'][$psName])) {
+                $productCategoryPs[$prod]['per_ps'][$psName] += (float)$row->total_nett;
+            }
+        }
+        usort($productCategoryPs, fn($a, $b) => $b['total_nett'] <=> $a['total_nett']);
+        $topProductCategoryPs = array_slice($productCategoryPs, 0, 15);
+
+        $overallAchievement = $totalTargetYear > 0 ? round(($totalSalesYear / $totalTargetYear) * 100, 1) : 0;
+        $overallGrowth = $totalSalesLastYear > 0 ? round((($totalSalesYear - $totalSalesLastYear) / $totalSalesLastYear) * 100, 1) : 0;
+
+        return [
+            'summary' => [
+                'total_target'        => (float)$totalTargetYear,
+                'total_sales'         => (float)$totalSalesYear,
+                'overall_achievement' => $overallAchievement,
+                'overall_growth'      => $overallGrowth,
+                'bulan_aktif'         => $targetBulan,
+            ],
+            'monthlyOverview'      => $monthlyOverview,
+            'psPerformance'        => $psPerformance,
+            'psCumulative'         => $psCumulative,
+            'topProductCategoryPs' => $topProductCategoryPs,
+            'allProductsCount'     => count($productCategoryPs),
+        ];
+    }
 }

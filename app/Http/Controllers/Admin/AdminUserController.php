@@ -241,9 +241,11 @@ class AdminUserController extends Controller
             'tanggal_cetak' => now()->translatedFormat('d F Y H:i')
         ];
 
-        $pdf = Pdf::loadView('pdf.profile', $data)->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadView('pdf.documents.profile', $data)->setPaper('a4', 'portrait');
 
-        return $pdf->download('Profil_' . str_replace(' ', '_', $user->name) . '.pdf');
+        $filename = 'CV_Profil_' . str_replace(' ', '_', $user->name) . '.pdf';
+        $filename = str_replace(['/', '\\'], '-', $filename);
+        return $pdf->download($filename);
     }
 
     /**

@@ -150,8 +150,11 @@
                 <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Riwayat & Kelola Sales</h1>
                 <p class="text-blue-100 text-sm md:text-base opacity-90 max-w-2xl font-medium">Lihat, cari, ubah, atau hapus seluruh data sales yang telah tersimpan di sistem.</p>
             </div>
-            <div class="header-content">
-                <a href="{{ route('sales.index') }}" class="bg-white/20 hover:bg-white/30 text-white border border-white/40 font-bold py-2.5 px-6 rounded-xl transition-all shadow-lg flex items-center backdrop-blur-sm">
+            <div class="header-content flex flex-wrap gap-2">
+                <a href="{{ route('sales.visualisasi') }}" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2.5 px-5 rounded-xl transition-all shadow-lg flex items-center text-sm">
+                    <i class="fas fa-chart-pie mr-2"></i> Power BI Visualisasi
+                </a>
+                <a href="{{ route('sales.index') }}" class="bg-white/20 hover:bg-white/30 text-white border border-white/40 font-bold py-2.5 px-5 rounded-xl transition-all shadow-lg flex items-center backdrop-blur-sm text-sm">
                     <i class="fas fa-arrow-left mr-2"></i> Kembali
                 </a>
             </div>

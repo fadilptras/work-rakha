@@ -47,8 +47,11 @@
                     </div>
                 </div>
                 <div class="mt-4 md:mt-0 relative z-10 flex flex-wrap gap-2">
+                    <a href="{{ route('sales.visualisasi') }}" class="inline-flex items-center px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold transition-all border border-sky-400 text-sm shadow-lg hover:shadow-sky-500/50">
+                        <i class="fas fa-chart-pie mr-2"></i> Power BI Visualisasi
+                    </a>
                     <a href="{{ route('sales.monitoring') }}" class="inline-flex items-center px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all border border-indigo-400 text-sm shadow-lg hover:shadow-indigo-500/50">
-                        <i class="fas fa-chart-pie mr-2"></i> Dashboard Monitoring
+                        <i class="fas fa-chart-line mr-2"></i> Monitoring
                     </a>
                     <a href="{{ route('sales.download_template') }}" class="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl font-bold transition-all border border-white/30 text-sm backdrop-blur-md shadow-lg hover:shadow-indigo-500/30">
                         <i class="fas fa-file-excel mr-2"></i> Template CSV

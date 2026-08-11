@@ -193,17 +193,15 @@ class AdminCutiController extends Controller
 
         $sisaCuti = $cuti->user->sisa_cuti ?? 0;
 
-        $pdf = Pdf::loadView('pdf.cuti', [
+        $pdf = Pdf::loadView('pdf.documents.pengajuan-cuti', [
             'cuti'      => $cuti,
-            'approver1' => $cuti->approver1,
-            'approver2' => $cuti->approver2,
-            'approver3' => $cuti->approver3,
-            'approver4' => $cuti->approver4,
             'sisaCuti'  => $sisaCuti
         ]);
         
         $pdf->setPaper('a4', 'portrait');
-        return $pdf->download($cuti->nomor_pengajuan . '.pdf');
+        $filename = 'Cuti_' . $cuti->nomor_surat . '_' . ($cuti->user->name ?? 'Unknown') . '_' . str_replace(' ', '_', $cuti->jenis_cuti) . '.pdf';
+        $filename = str_replace(['/', '\\'], '-', $filename);
+        return $pdf->download($filename);
     }
 
     public function pengaturanCuti()

@@ -32,7 +32,11 @@
                 <p class="text-slate-500 font-medium">Monitoring Achievement Rate dan Target Sales (Tahun {{ $tahun }})</p>
             </div>
             
-            <div class="flex gap-3 w-full md:w-auto">
+            <div class="flex flex-wrap gap-3 w-full md:w-auto items-center">
+                <a href="{{ route('sales.visualisasi') }}" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg shadow transition flex items-center text-sm">
+                    <i class="fas fa-chart-pie mr-2"></i> Power BI Visualisasi
+                </a>
+                
                 {{-- Year Filter Form --}}
                 <form action="{{ route('sales.target') }}" method="GET" class="flex gap-2">
                     <select name="tahun" class="modern-input !w-32" onchange="this.form.submit()">
@@ -42,7 +46,7 @@
                     </select>
                 </form>
 
-                <button @click="showModal = true" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow transition flex items-center">
+                <button @click="showModal = true" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow transition flex items-center text-sm">
                     <i class="fas fa-bullseye mr-2"></i> Set Target
                 </button>
             </div>
