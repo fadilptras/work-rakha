@@ -30,6 +30,9 @@ use App\Http\Controllers\PengajuanBarangController;
 use App\Http\Controllers\Admin\AdminPengajuanBarangController;
 use App\Http\Controllers\Admin\AdminHolidayController;
 use App\Http\Controllers\KpiController;
+use App\Http\Controllers\Admin\AdminBarangController;
+use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\SalesController;
 
 // Awalan
 Route::get('/', fn() => redirect()->route('login'));
@@ -66,6 +69,7 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     Route::get('/kpi', [App\Http\Controllers\KpiController::class, 'index'])->name('kpi.index');
     Route::get('/kpi/evaluate/{id}', [App\Http\Controllers\KpiController::class, 'evaluate'])->name('kpi.evaluate');
     Route::post('/kpi/evaluate/{id}', [App\Http\Controllers\KpiController::class, 'storeEvaluate'])->name('kpi.storeEvaluate');
+    Route::post('/kpi/approve/{id}', [App\Http\Controllers\KpiController::class, 'approve'])->name('kpi.approve');
     Route::get('/kpi/export-pdf/{id}', [App\Http\Controllers\KpiController::class, 'exportPdf'])->name('kpi.exportPdf');
 
     // Absensi
@@ -149,6 +153,26 @@ Route::controller(CrmController::class)->group(function () {
     ->name('crm.interaction.update');
 });
 
+Route::controller(SalesController::class)->prefix('sales')->name('sales.')->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/manual', 'storeManual')->name('store_manual');
+    Route::post('/import', 'importExcel')->name('import_excel');
+    Route::get('/template', 'downloadTemplate')->name('download_template');
+
+    // Halaman Monitoring
+    Route::get('/monitoring', 'monitoring')->name('monitoring');
+    Route::get('/monitoring/data', 'monitoringData')->name('monitoring.data');
+    
+    // Halaman Target
+    Route::get('/target', 'target')->name('target');
+    Route::post('/target', 'storeTarget')->name('target.store');
+
+    // Halaman Riwayat & Kelola Data
+    Route::get('/history', 'history')->name('history');
+    Route::put('/{sale}', 'update')->name('update');
+    Route::delete('/{sale}', 'destroy')->name('destroy');
+});
+
     Route::resource('aktivitas', AktivitasController::class)
         ->only(['index', 'store']) // Kita hanya butuh method index() dan store()
         ->middleware('auth');
@@ -168,6 +192,9 @@ Route::controller(CrmController::class)->group(function () {
             Route::post('/', 'store')->name('store');
             
             Route::get('/history', 'history')->name('history');
+            
+            // Halaman Monitoring (Khusus Manajemen)
+            Route::get('/monitoring-all', 'monitoringAll')->name('monitoring_all');
 
             // Halaman Detail
             Route::get('/{pengajuanBarang}', 'show')->name('show');
@@ -179,12 +206,17 @@ Route::controller(CrmController::class)->group(function () {
             // Download & Cancel
             Route::get('/{pengajuanBarang}/download', 'download')->name('download');
             Route::post('/{pengajuanBarang}/cancel', 'cancel')->name('cancel');
+            
+            // Tambahan untuk Admin (Approver 4) di sisi user
+            Route::post('/{pengajuanBarang}/update-monitoring', 'updateMonitoring')->name('updateMonitoring');
         });
         
 
 });
 
 Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('barangs', AdminBarangController::class);
+    Route::resource('suppliers', SupplierController::class);
     
     Route::get('/', fn() => redirect()->route('admin.employees.index'));
 
@@ -284,6 +316,7 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
         Route::get('/', [App\Http\Controllers\Admin\AdminKpiController::class, 'index'])->name('index');
         Route::get('/evaluate/{id}', [App\Http\Controllers\Admin\AdminKpiController::class, 'evaluate'])->name('evaluate');
         Route::post('/evaluate/{id}', [App\Http\Controllers\Admin\AdminKpiController::class, 'storeEvaluate'])->name('storeEvaluate');
+        Route::post('/approve/{id}', [App\Http\Controllers\Admin\AdminKpiController::class, 'approve'])->name('approve');
         
         // KPI Indicators
         Route::resource('indicators', App\Http\Controllers\Admin\AdminKpiIndicatorController::class)->names('indicators');

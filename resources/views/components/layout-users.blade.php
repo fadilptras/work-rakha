@@ -18,7 +18,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     @stack('styles')
-
     <style>
         #sidebar { transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1), translate 1.5s cubic-bezier(0.25, 1, 0.5, 1); will-change: transform, translate; }
         ::-webkit-scrollbar { width: 10px; }
@@ -45,6 +44,7 @@
                     <li><a href="{{ route('pengajuan_dana.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Pengajuan Dana"><i class="fas fa-coins text-xl"></i></a></li>
                     <li><a href="{{ route('pengajuan_barang.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Pengajuan Barang"><i class="fas fa-box-open text-xl"></i></a></li>
                     <li><a href="{{ route('crm.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="CRM"><i class="fas fa-users text-xl"></i></a></li>
+                    <li><a href="{{ route('sales.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Data Sales"><i class="fas fa-file-invoice-dollar text-xl"></i></a></li>
                     <li><a href="{{ route('kpi.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="KPI"><i class="fas fa-chart-line text-xl"></i></a></li>
                 </ul>
             </nav>
