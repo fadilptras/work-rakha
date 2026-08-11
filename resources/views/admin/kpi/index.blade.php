@@ -19,6 +19,24 @@
                     <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Evaluasi KPI Karyawan</h1>
                     <p class="text-slate-500 text-sm mt-1">Kelola dan nilai indikator kinerja utama karyawan.</p>
                 </div>
+                <div>
+                    <form action="{{ route('admin.kpi.index') }}" method="GET" class="flex items-center gap-2">
+                        <label for="period" class="text-sm font-semibold text-slate-700">Periode:</label>
+                        <select name="period" id="period" onchange="this.form.submit()" class="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm">
+                            @php
+                                $currentYear = date('Y');
+                                $periods = [];
+                                for ($i = $currentYear - 1; $i <= $currentYear + 1; $i++) {
+                                    $periods[] = "Semester 1 $i";
+                                    $periods[] = "Semester 2 $i";
+                                }
+                            @endphp
+                            @foreach($periods as $p)
+                                <option value="{{ $p }}" {{ $period == $p ? 'selected' : '' }}>{{ $p }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
             </div>
 
             {{-- Table Card --}}
@@ -67,7 +85,7 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 text-right space-x-2">
-                                            <a href="{{ route('admin.kpi.evaluate', $karyawan->id) }}" class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-transform hover:-translate-y-0.5 shadow-md shadow-blue-500/30">
+                                            <a href="{{ route('admin.kpi.evaluate', $karyawan->id) }}?period={{ urlencode($period) }}" class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-transform hover:-translate-y-0.5 shadow-md shadow-blue-500/30">
                                                 <i class="fas fa-edit mr-2"></i> Nilai KPI
                                             </a>
 

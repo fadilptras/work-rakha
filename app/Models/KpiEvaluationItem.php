@@ -12,6 +12,7 @@ class KpiEvaluationItem extends Model
     protected $fillable = [
         'kpi_evaluation_id',
         'kpi_indicator_id',
+        'target_value',
         'achievement_value',
         'hasil_value',
         'result_index',

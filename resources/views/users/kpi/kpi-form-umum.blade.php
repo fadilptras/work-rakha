@@ -81,9 +81,9 @@
                     <div class="text-left md:text-right relative z-10">
                         <p class="text-blue-100 text-sm font-medium tracking-wide mb-1 uppercase">Periode Penilaian</p>
                         <p class="text-xl sm:text-2xl font-bold bg-white text-blue-700 px-4 py-1.5 rounded-lg inline-block shadow-md border-b-4 border-blue-200">
-                            {{ $evaluation ? $evaluation->period : 'Juli 2026' }}
+                            {{ $period }}
                         </p>
-                        @if($evaluation && $evaluation->status == 'approved')
+                        @if($evaluation && in_array($evaluation->status, ['disetujui_direktur', 'acknowledged']))
                             <div class="mt-3">
                                 <span class="bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1.5 w-fit md:ml-auto">
                                     <i class="fas fa-check-circle"></i> Approved
@@ -114,7 +114,7 @@
             {{-- Main Form --}}
             <form action="{{ route('kpi.storeEvaluate', $targetUser->id) }}" method="POST" id="kpi-form-umum" class="space-y-6">
                 @csrf
-                <input type="hidden" name="period" value="{{ $evaluation->period ?? 'July 2026' }}">
+                <input type="hidden" name="period" value="{{ $period }}">
                 
                 {{-- KINERJA (60%) --}}
                 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-shadow duration-300">
@@ -166,7 +166,7 @@
                                                             class="kpi-input-umum w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm font-medium text-slate-700 bg-white"
                                                             data-weight="{{ $indicator->weight_percentage }}"
                                                             data-group="kinerja"
-                                                            {{ ($evaluation && $evaluation->status == 'approved') ? 'disabled' : 'required' }}>
+                                                            {{ ($evaluation && in_array($evaluation->status, ['disetujui_direktur', 'acknowledged'])) ? 'disabled' : 'required' }}>
                                                         <option value="" disabled selected>Pilih 1-5</option>
                                                         <option value="1" {{ $resultIndex == '1' ? 'selected' : '' }}>1 - Jauh di bawah harapan</option>
                                                         <option value="2" {{ $resultIndex == '2' ? 'selected' : '' }}>2 - Perlu peningkatan</option>
@@ -253,7 +253,7 @@
                                                                 class="kpi-input-umum w-full border-gray-300 rounded-lg shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200 focus:ring-opacity-50 text-sm font-medium text-slate-700 bg-white"
                                                                 data-weight="{{ $indicator->weight_percentage }}"
                                                                 data-group="perilaku"
-                                                                {{ ($evaluation && $evaluation->status == 'approved') ? 'disabled' : 'required' }}>
+                                                                {{ ($evaluation && in_array($evaluation->status, ['disetujui_direktur', 'acknowledged'])) ? 'disabled' : 'required' }}>
                                                             <option value="" disabled selected>Pilih 1-4</option>
                                                             <option value="1" {{ $resultIndex == '1' ? 'selected' : '' }}>1 - Kurang</option>
                                                             <option value="2" {{ $resultIndex == '2' ? 'selected' : '' }}>2 - Cukup</option>
@@ -329,7 +329,7 @@
                                                             class="kpi-input-umum w-full border-gray-300 rounded-lg shadow-sm focus:border-amber-500 focus:ring focus:ring-amber-200 focus:ring-opacity-50 text-sm font-medium text-slate-700 bg-white"
                                                             data-weight="100"
                                                             data-group="kehadiran"
-                                                            {{ ($evaluation && $evaluation->status == 'approved') ? 'disabled' : 'required' }}>
+                                                            {{ ($evaluation && in_array($evaluation->status, ['disetujui_direktur', 'acknowledged'])) ? 'disabled' : 'required' }}>
                                                         <option value="" disabled selected>Pilih 1-4</option>
                                                         <option value="1" {{ $resultIndex == '1' ? 'selected' : '' }}>1 - Kurang</option>
                                                         <option value="2" {{ $resultIndex == '2' ? 'selected' : '' }}>2 - Cukup</option>
@@ -358,14 +358,14 @@
                             <label class="flex items-center text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">
                                 <i class="fas fa-comment-dots text-sky-500 mr-2 text-lg"></i> Catatan Evaluasi
                             </label>
-                            <textarea name="evaluation_notes" rows="3" class="w-full border-gray-300 rounded-xl shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 bg-slate-50 transition-colors duration-200" {{ ($evaluation && $evaluation->status == 'approved') ? 'readonly' : '' }} placeholder="Tuliskan catatan evaluasi di sini...">{{ $evaluation->evaluation_notes ?? '' }}</textarea>
+                            <textarea name="evaluation_notes" rows="3" class="w-full border-gray-300 rounded-xl shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 bg-slate-50 transition-colors duration-200" {{ ($evaluation && in_array($evaluation->status, ['disetujui_direktur', 'acknowledged'])) ? 'readonly' : '' }} placeholder="Tuliskan catatan evaluasi di sini...">{{ $evaluation->evaluation_notes ?? '' }}</textarea>
                         </div>
                         
                         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
                             <label class="flex items-center text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">
                                 <i class="fas fa-tasks text-sky-500 mr-2 text-lg"></i> Rencana Tindak Lanjut
                             </label>
-                            <textarea name="action_plan" rows="3" class="w-full border-gray-300 rounded-xl shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 bg-slate-50 transition-colors duration-200" {{ ($evaluation && $evaluation->status == 'approved') ? 'readonly' : '' }} placeholder="Tuliskan rencana perbaikan ke depan...">{{ $evaluation->action_plan ?? '' }}</textarea>
+                            <textarea name="action_plan" rows="3" class="w-full border-gray-300 rounded-xl shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 bg-slate-50 transition-colors duration-200" {{ ($evaluation && in_array($evaluation->status, ['disetujui_direktur', 'acknowledged'])) ? 'readonly' : '' }} placeholder="Tuliskan rencana perbaikan ke depan...">{{ $evaluation->action_plan ?? '' }}</textarea>
                         </div>
                     </div>
 
@@ -408,13 +408,13 @@
                         <i class="fas fa-arrow-left"></i> Kembali
                     </a>
                     
-                    @if(Auth::user()->id !== $targetUser->id && (!$evaluation || $evaluation->status != 'approved'))
+                    @if(Auth::user()->id !== $targetUser->id && (!$evaluation || !in_array($evaluation->status, ['disetujui_direktur', 'acknowledged'])))
                         <button type="submit" class="px-8 py-3 bg-gradient-to-r from-blue-600 to-sky-500 text-white rounded-xl hover:from-blue-700 hover:to-sky-600 font-bold shadow-lg shadow-blue-500/30 transform transition-all hover:-translate-y-0.5 text-center flex items-center justify-center gap-2">
                             <i class="fas fa-save"></i> Simpan Evaluasi
                         </button>
                     @endif
                     
-                    @if($evaluation && Auth::user()->id === $targetUser->id && $evaluation->status == 'approved')
+                    @if($evaluation && Auth::user()->id === $targetUser->id && in_array($evaluation->status, ['disetujui_direktur', 'acknowledged']))
                         <button type="button" class="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-400 text-white rounded-xl hover:from-emerald-600 hover:to-teal-500 font-bold shadow-lg shadow-emerald-500/30 transform transition-all hover:-translate-y-0.5 text-center flex items-center justify-center gap-2">
                             <i class="fas fa-check-double"></i> Saya Mengetahui Hasil Ini
                         </button>

@@ -16,13 +16,22 @@ class AdminKpiController extends Controller
     public function index()
     {
         // For Admin, fetch all users and their evaluations
+        $currentMonth = date('n');
+        $currentYear = date('Y');
+        $defaultPeriod = $currentMonth <= 6 ? "Semester 2 " . ($currentYear - 1) : "Semester 1 " . $currentYear;
+        if ($currentMonth == 12) {
+            $defaultPeriod = "Semester 2 " . $currentYear;
+        }
+        $period = request()->get('period', $defaultPeriod);
+
         $karyawans = User::all();
-        $evaluations = KpiEvaluation::with(['user', 'evaluator'])->get();
+        $evaluations = KpiEvaluation::with(['user', 'evaluator'])->where('period', $period)->get();
 
         return view('admin.kpi.index', [
             'title' => 'Daftar Evaluasi KPI Karyawan',
             'karyawans' => $karyawans,
-            'evaluations' => $evaluations
+            'evaluations' => $evaluations,
+            'period' => $period
         ]);
     }
 
@@ -38,12 +47,20 @@ class AdminKpiController extends Controller
         $indicators = KpiIndicator::where('type', $type)->get();
         $groupedIndicators = $indicators->groupBy('category');
 
+        $currentMonth = date('n');
+        $currentYear = date('Y');
+        $defaultPeriod = $currentMonth <= 6 ? "Semester 2 " . ($currentYear - 1) : "Semester 1 " . $currentYear;
+        if ($currentMonth == 12) {
+            $defaultPeriod = "Semester 2 " . $currentYear;
+        }
+        $period = request()->get('period', $defaultPeriod);
+
         $evaluation = KpiEvaluation::with('items')->where('user_id', $id)
-                        ->where('period', 'July 2026') // or pass from request
+                        ->where('period', $period) // or pass from request
                         ->first();
         
         // We will use a unified view that handles both formats
-        return view('admin.kpi.evaluate', compact('targetUser', 'groupedIndicators', 'evaluation', 'is_frontliner'));
+        return view('admin.kpi.evaluate', compact('targetUser', 'groupedIndicators', 'evaluation', 'is_frontliner', 'period'));
     }
 
     public function storeEvaluate(Request $request, $id)
@@ -51,13 +68,13 @@ class AdminKpiController extends Controller
         $targetUser = User::findOrFail($id);
         
         $evaluation = KpiEvaluation::updateOrCreate(
-            ['user_id' => $id, 'period' => $request->period ?? 'July 2026'],
+            ['user_id' => $id, 'period' => $request->period],
             [
                 'evaluator_id' => Auth::id(),
                 'evaluation_date' => now(),
                 'evaluation_notes' => $request->evaluation_notes,
                 'action_plan' => $request->action_plan,
-                'status' => $request->status ?? 'submitted',
+                'status' => $request->status ?? 'disetujui_kepala_divisi',
                 'total_score' => $request->total_score 
             ]
         );
@@ -69,10 +86,12 @@ class AdminKpiController extends Controller
                     $index = $request->result_indexes[$indicator_id] ?? 1;
                     $final = $request->final_scores[$indicator_id] ?? 0;
                     $hasil = $request->hasil_values[$indicator_id] ?? '';
+                    $target = $request->target_values[$indicator_id] ?? null;
                     
                     KpiEvaluationItem::updateOrCreate(
                         ['kpi_evaluation_id' => $evaluation->id, 'kpi_indicator_id' => $indicator_id],
                         [
+                            'target_value' => $target,
                             'achievement_value' => $achieve,
                             'hasil_value' => $hasil,
                             'result_index' => $index,
@@ -101,5 +120,12 @@ class AdminKpiController extends Controller
         }
 
         return redirect()->route('admin.kpi.index')->with('success', 'Evaluasi KPI berhasil disimpan!');
+    }
+
+    public function approve($id)
+    {
+        $evaluation = KpiEvaluation::findOrFail($id);
+        $evaluation->update(['status' => 'disetujui_direktur']);
+        return redirect()->back()->with('success', 'Evaluasi KPI berhasil disetujui.');
     }
 }
