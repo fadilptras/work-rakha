@@ -27,6 +27,8 @@
     </style>
 </head>
 <body>
+
+    @include('pdf.partials.kop-surat')
     <div class="header">
         <h2>FORM PENILAIAN KINERJA KARYAWAN</h2>
         <h3>PT. RAKHA NUSANTARA MEDIKA</h3>

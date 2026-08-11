@@ -169,7 +169,7 @@ class ProfileController extends Controller
         $tanggal_cetak = Carbon::now()->translatedFormat('d F Y H:i');
 
         // Muat halaman view resources/views/pdf/profile.blade.php
-        $pdf = Pdf::loadView('pdf.profile', compact('user', 'tanggal_cetak'));
+        $pdf = Pdf::loadView('pdf.documents.profile', compact('user', 'tanggal_cetak'));
         
         // Atur ukuran kertas ke A4 dengan orientasi Portrait
         $pdf->setPaper('a4', 'portrait');

@@ -195,12 +195,12 @@ class CutiController extends Controller
         $cuti = Cuti::with(['user', 'approver1', 'approver2', 'approver3', 'approver4'])->findOrFail($id);
         $sisaCuti = $cuti->user->sisa_cuti ?? 0;
 
-        $pdf = Pdf::loadView('pdf.cuti', [
+        $pdf = Pdf::loadView('pdf.documents.pengajuan-cuti', [
             'cuti' => $cuti,
             'sisaCuti' => $sisaCuti 
         ])->setPaper('a4', 'portrait');
 
-        $fileName = 'Cuti_' . ($cuti->user->name ?? 'User') . '_' . $cuti->id . '.pdf';
+        $fileName = 'Cuti_' . str_replace('/', '-', $cuti->nomor_surat) . '_' . ($cuti->user->name ?? 'Unknown') . '_' . str_replace(' ', '_', $cuti->jenis_cuti) . '.pdf';
         return $pdf->download($fileName);
     }
 

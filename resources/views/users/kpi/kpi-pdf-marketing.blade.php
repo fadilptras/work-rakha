@@ -34,6 +34,8 @@
 </head>
 <body>
 
+    @include('pdf.partials.kop-surat')
+
     <div class="company-title">
         FORM KEY PERFORMANCE INDICATORS<br>
         PT RAKHA NUSANTARA MEDIKA
@@ -81,7 +83,7 @@
                 <td class="text-center">{{ $loop->iteration }}</td>
                 <td>{{ $item->indicator->name }}</td>
                 <td>{{ $item->indicator->definition }}</td>
-                <td class="text-center">{{ $item->indicator->target }}</td>
+                <td class="text-center">{{ $item->target_value ?? $item->indicator->target }}</td>
                 <td class="text-center">{{ $item->achievement_value }}</td>
                 <td class="text-center">{{ $item->hasil_value }}</td>
                 <td class="text-center">{{ $item->result_index }}</td>
