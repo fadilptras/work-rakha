@@ -97,10 +97,10 @@
                     <thead class="bg-zinc-900/50 text-xs uppercase font-bold text-zinc-400 border-b border-zinc-700">
                         <tr>
                             <th scope="col" class="px-6 py-4 w-16 text-center">No</th>
-                            <th scope="col" class="px-6 py-4">Nama Supplier</th>
-                            <th scope="col" class="px-6 py-4">PIC 1 & Kontak</th>
-                            <th scope="col" class="px-6 py-4">PIC 2 & Kontak</th>
-                            <th scope="col" class="px-6 py-4">Alamat</th>
+                            <th scope="col" class="px-6 py-4 min-w-[200px]">Nama Supplier</th>
+                            <th scope="col" class="px-6 py-4 min-w-[180px]">PIC 1 & Kontak</th>
+                            <th scope="col" class="px-6 py-4 min-w-[180px]">PIC 2 & Kontak</th>
+                            <th scope="col" class="px-6 py-4 max-w-[250px]">Alamat</th>
                             <th scope="col" class="px-6 py-4 text-center w-28">Aksi</th>
                         </tr>
                     </thead>
@@ -114,44 +114,61 @@
                             
                             {{-- Nama --}}
                             <td class="px-6 py-4">
-                                <div class="flex flex-col gap-1">
-                                    <span class="text-white font-medium text-sm">
+                                <div class="flex flex-col gap-1.5">
+                                    <span class="text-white font-semibold text-sm">
                                         {{ $supplier->nama_supplier }}
                                     </span>
-                                    <span class="text-sky-400 text-xs"><i class="fas fa-envelope text-zinc-500 w-4"></i> {{ $supplier->email ?: '-' }}</span>
+                                    <div class="flex items-center gap-1.5 text-sky-400 text-xs">
+                                        <i class="fas fa-envelope text-zinc-500 w-3 text-center"></i>
+                                        <span>{{ $supplier->email ?: '-' }}</span>
+                                    </div>
                                 </div>
                             </td>
 
                             {{-- PIC 1 --}}
                             <td class="px-6 py-4 text-zinc-300 font-medium text-xs">
-                                <div class="flex flex-col gap-1">
-                                    <span><i class="fas fa-user text-zinc-500 w-4"></i> {{ $supplier->pic_1 ?: '-' }}</span>
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fas fa-user text-zinc-500 w-3 text-center"></i> 
+                                        <span class="truncate">{{ $supplier->pic_1 ?: '-' }}</span>
+                                    </div>
                                     @if($supplier->kontak_pic1)
-                                        <span class="text-sky-400"><i class="fas fa-phone-alt text-zinc-500 w-4"></i> {{ $supplier->kontak_pic1 }}</span>
+                                        <div class="flex items-center gap-1.5 text-sky-400">
+                                            <i class="fas fa-phone-alt text-zinc-500 w-3 text-center"></i> 
+                                            <span>{{ $supplier->kontak_pic1 }}</span>
+                                        </div>
                                     @endif
                                 </div>
                             </td>
 
                             {{-- PIC 2 --}}
                             <td class="px-6 py-4 text-zinc-300 font-medium text-xs">
-                                <div class="flex flex-col gap-1">
-                                    <span><i class="fas fa-user text-zinc-500 w-4"></i> {{ $supplier->pic_2 ?: '-' }}</span>
+                                <div class="flex flex-col gap-1.5">
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fas fa-user text-zinc-500 w-3 text-center"></i> 
+                                        <span class="truncate">{{ $supplier->pic_2 ?: '-' }}</span>
+                                    </div>
                                     @if($supplier->kontak_pic2)
-                                        <span class="text-sky-400"><i class="fas fa-phone-alt text-zinc-500 w-4"></i> {{ $supplier->kontak_pic2 }}</span>
+                                        <div class="flex items-center gap-1.5 text-sky-400">
+                                            <i class="fas fa-phone-alt text-zinc-500 w-3 text-center"></i> 
+                                            <span>{{ $supplier->kontak_pic2 }}</span>
+                                        </div>
                                     @endif
                                 </div>
                             </td>
 
                             {{-- Alamat --}}
-                            <td class="px-6 py-4 text-zinc-400 text-xs">
-                                {{ $supplier->alamat ?: '-' }}
+                            <td class="px-6 py-4">
+                                <p class="text-zinc-400 text-xs line-clamp-2 max-w-[250px]" title="{{ $supplier->alamat }}">
+                                    {{ $supplier->alamat ?: '-' }}
+                                </p>
                             </td>
 
                             {{-- Aksi --}}
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     
-                                    {{-- TOMBOL EDIT (Trigger Drawer) --}}
+                                    {{-- TOMBOL EDIT --}}
                                     <button type="button" 
                                             @click="openEdit('{{ $supplier->id }}', '{{ addslashes($supplier->nama_supplier) }}', '{{ addslashes($supplier->email) }}', '{{ addslashes($supplier->pic_1) }}', '{{ addslashes($supplier->kontak_pic1) }}', '{{ addslashes($supplier->pic_2) }}', '{{ addslashes($supplier->kontak_pic2) }}', '{{ preg_replace('/\r|\n/', ' ', addslashes($supplier->alamat)) }}')"
                                             class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-sky-400 hover:bg-sky-500/10 transition-all border border-transparent hover:border-sky-500/20 text-xs"

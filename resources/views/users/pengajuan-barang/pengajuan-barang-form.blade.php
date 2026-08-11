@@ -259,6 +259,15 @@
                         @endforeach
                     </datalist>
 
+                    {{-- Datalist Barang dari Database --}}
+                    <datalist id="barang-list-options">
+                        @isset($barangList)
+                            @foreach($barangList as $brg)
+                                <option value="{{ $brg }}"></option>
+                            @endforeach
+                        @endisset
+                    </datalist>
+
                     {{-- 3. FILE PENDUKUNG --}}
                     <div class="glass-card">
                         <div class="form-section-header">
@@ -325,7 +334,7 @@
                 newRow.innerHTML = `
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 uppercase">Nama Barang</label>
-                        <input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Nama barang" required>
+                        <input list="barang-list-options" type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Pilih / Ketik Nama Barang..." required autocomplete="off">
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 uppercase">Supplier</label>
@@ -357,7 +366,7 @@
                 newRow.className = 'rincian-row-desktop';
                 newRow.innerHTML = `
                     <div>
-                        <input type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Nama barang" required>
+                        <input list="barang-list-options" type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Pilih / Ketik Nama Barang..." required autocomplete="off">
                     </div>
                     <div>
                         <input list="supplier-list-options" name="rincian_supplier[]" value="${supplier}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Pilih / Ketik Supplier..." autocomplete="off">

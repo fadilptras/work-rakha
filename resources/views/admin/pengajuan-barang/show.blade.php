@@ -3,7 +3,12 @@
 
     <div class="p-6">
         {{-- TOMBOL KEMBALI --}}
-        <x-back-button href="{{ route('admin.pengajuan_barang.index') }}">Kembali ke Rekap Barang</x-back-button>
+        @php
+            $isFromNotif = str_contains(url()->previous(), 'notifikasi');
+            $backUrl = $isFromNotif ? route('notifikasi.index') : route('admin.pengajuan_barang.index');
+            $backText = $isFromNotif ? 'Kembali ke Notifikasi' : 'Kembali ke Rekap Barang';
+        @endphp
+        <x-back-button href="{{ $backUrl }}">{{ $backText }}</x-back-button>
 
         
         

@@ -31,7 +31,18 @@ class PengajuanBarangController extends Controller
             return [];
         });
 
-        return view('users.pengajuan-barang.pengajuan-barang-form', compact('title', 'totalPengajuan', 'supplierList'));
+        // Skema Ringan: Ambil murni daftar barang dari database (tabel barangs)
+        $barangList = Cache::remember('barang_list_dropdown', 300, function () {
+            if (Schema::hasTable('barangs')) {
+                $dbBarangs = \App\Models\Barang::orderBy('nama_barang')->pluck('nama_barang')->toArray();
+                if (!empty($dbBarangs)) {
+                    return $dbBarangs;
+                }
+            }
+            return [];
+        });
+
+        return view('users.pengajuan-barang.pengajuan-barang-form', compact('title', 'totalPengajuan', 'supplierList', 'barangList'));
     }
 
     public function history(Request $request)
@@ -142,6 +153,23 @@ class PengajuanBarangController extends Controller
             }
             if ($hasNew) {
                 Cache::forget('supplier_list_dropdown');
+            }
+        }
+
+        // Auto-save barang baru ke tabel barangs database jika belum ada
+        if ($request->has('rincian_deskripsi') && is_array($request->rincian_deskripsi)) {
+            $hasNewBarang = false;
+            foreach ($request->rincian_deskripsi as $brg) {
+                $brgName = trim($brg ?? '');
+                if (!empty($brgName) && !in_array(strtolower($brgName), ['-', 'lainnya'])) {
+                    if (Schema::hasTable('barangs')) {
+                        \App\Models\Barang::firstOrCreate(['nama_barang' => $brgName]);
+                        $hasNewBarang = true;
+                    }
+                }
+            }
+            if ($hasNewBarang) {
+                Cache::forget('barang_list_dropdown');
             }
         }
 
