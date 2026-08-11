@@ -127,4 +127,31 @@ class PengajuanDana extends Model
         
         return "{$prefix}-{$userId}-{$tanggal}-{$urutan}";
     }
+
+    /**
+     * Accessor untuk nomor surat resmi (PDF)
+     */
+    public function getNomorSuratAttribute()
+    {
+        $bulanAngka = $this->created_at ? $this->created_at->format('m') : date('m');
+        $tahunAngka = $this->created_at ? $this->created_at->format('Y') : date('Y');
+        
+        if ($this->id) {
+            $urutanBulanan = self::whereYear('created_at', $tahunAngka)
+                ->whereMonth('created_at', $bulanAngka)
+                ->where('id', '<=', $this->id)
+                ->count();
+        } else {
+            $urutanBulanan = self::whereYear('created_at', $tahunAngka)
+                ->whereMonth('created_at', $bulanAngka)
+                ->count() + 1;
+        }
+
+        $urutanPad = str_pad($urutanBulanan, 3, '0', STR_PAD_LEFT);
+        $romawi = [1=>'I',2=>'II',3=>'III',4=>'IV',5=>'V',6=>'VI',7=>'VII',8=>'VIII',9=>'IX',10=>'X',11=>'XI',12=>'XII'];
+        $bulan = $this->created_at ? $romawi[$this->created_at->format('n')] : $romawi[date('n')];
+        $tahun = $this->created_at ? $this->created_at->format('Y') : date('Y');
+        
+        return "{$urutanPad}/RAKHA/{$bulan}/{$tahun}";
+    }
 }
