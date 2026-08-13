@@ -6,7 +6,6 @@
     <title>{{ $title ?? 'Dashboard' }}</title>
     
     <meta name="theme-color" content="#2563eb"> 
-    {{-- [FIX] Meta CSRF Token Wajib Ada --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
@@ -44,7 +43,29 @@
                     <li><a href="{{ route('pengajuan_dana.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Pengajuan Dana"><i class="fas fa-coins text-xl"></i></a></li>
                     <li><a href="{{ route('pengajuan_barang.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Pengajuan Barang"><i class="fas fa-box-open text-xl"></i></a></li>
                     <li><a href="{{ route('crm.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="CRM"><i class="fas fa-users text-xl"></i></a></li>
-                    <li><a href="{{ route('sales.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Data Sales"><i class="fas fa-file-invoice-dollar text-xl"></i></a></li>
+                    <li><a href="{{ route('sales.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Sales Command Center"> 
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="5 5 90 85" fill="currentColor" class="w-7 h-7 inline-block">
+                            <defs>
+                                <mask id="trend-cutout">
+                                <rect x="0" y="0" width="100" height="100" fill="white" />
+                                <path d="M 10 82 L 40 52 L 50 62 L 82 30" fill="none" stroke="black" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+                                <polygon points="68,30 90,22 82,44" fill="black" />
+                                </mask>
+                            </defs>
+                            
+                            <g mask="url(#trend-cutout)">
+                                <rect x="15" y="70" width="9" height="20" rx="2" />
+                                <rect x="27" y="60" width="9" height="30" rx="2" />
+                                <rect x="39" y="50" width="9" height="40" rx="2" />
+                                <rect x="51" y="55" width="9" height="35" rx="2" />
+                                <rect x="63" y="35" width="9" height="55" rx="2" />
+                                <rect x="75" y="25" width="9" height="65" rx="2" />
+                            </g>
+                            <path d="M 10 82 L 40 52 L 50 62 L 80 32" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                            <polygon points="70,32 88,24 80,42" />
+                            <path d="M55,19 C55,17 53,16 50,16 C47,16 45,17 45,19 C45,21 47,22 51,23 C56,24 59,27 59,31 C59,36 55,39 51,39 L51,43 L47,43 L47,39 C43,38 40,35 40,31 L44,31 C44,34 46,35 49,35 C53,35 55,34 55,31 C55,29 53,28 49,27 C44,26 41,23 41,19 C41,14 45,11 49,11 L49,7 L53,7 L53,11 C56,12 58,14 59,17 L55,19 Z"/>
+                        </svg>
+                    </a></li>
                     <li><a href="{{ route('kpi.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="KPI"><i class="fas fa-chart-line text-xl"></i></a></li>
                 </ul>
             </nav>
