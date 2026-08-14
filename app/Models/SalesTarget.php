@@ -14,5 +14,6 @@ class SalesTarget extends Model
         'bulan',
         'ps',
         'target_amount',
+        'sales_last_year_amount',
     ];
 }

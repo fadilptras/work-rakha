@@ -36,16 +36,29 @@ class SalesImport implements ToModel, WithHeadingRow, WithChunkReading, WithBatc
             }
         }
 
+        $qty = (isset($row['qty']) && trim($row['qty']) !== '') ? intval($row['qty']) : null;
+        $hna = (isset($row['hna']) && trim($row['hna']) !== '') ? floatval(str_replace(',', '', $row['hna'])) : 0;
+        
+        $diskon = null;
+        if (isset($row['diskon']) && trim($row['diskon']) !== '') {
+            $diskon = floatval(str_replace(',', '', $row['diskon']));
+            if ($diskon <= 1 && $diskon > 0) {
+                $diskon = $diskon * 100;
+            }
+        }
+        
+        $harga_nett = (isset($row['harga_nett']) && trim($row['harga_nett']) !== '') ? floatval(str_replace(',', '', $row['harga_nett'])) : null;
+
         return new Sales([
             'tanggal'       => $tanggal,
             'nama_customer' => $row['nama_customer'] ?? null,
             'nama_produk'   => $row['nama_produk'] ?? null,
-            'qty'           => isset($row['qty']) ? intval($row['qty']) : null,
+            'qty'           => $qty,
             'satuan'        => $row['satuan'] ?? null,
-            'hna'           => $row['hna'] ?? 0,
-            'diskon'        => isset($row['diskon']) && is_numeric($row['diskon']) ? ($row['diskon'] <= 1 ? $row['diskon'] * 100 : $row['diskon']) : 0,
-            'harga_nett'    => isset($row['harga_nett']) ? floatval($row['harga_nett']) : null,
-            'bulan'         => $row['bulan'] ?? null,
+            'hna'           => $hna,
+            'diskon'        => $diskon,
+            'harga_nett'    => $harga_nett,
+            'bulan'         => $tanggal ? ['01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei','06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember'][date('m', strtotime($tanggal))] : null,
             'ps'            => $row['ps'] ?? null,
         ]);
     }
