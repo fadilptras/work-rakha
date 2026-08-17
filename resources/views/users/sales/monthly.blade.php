@@ -550,7 +550,7 @@
                     let psOutletSelect = document.getElementById('filterOutletPs');
                     let psPduSelect = document.getElementById('filterPduPs');
                     psOutletSelect.innerHTML = '<option value="all">All</option>';
-                    psPduSelect.innerHTML = '<option value="all">All</option>';
+                    psPduSelect.innerHTML = '<option value="all">All</option><option value="Sales Team">Sales Team</option>';
                     
                     data.outlet.forEach(ps => {
                         psOutletSelect.innerHTML += `<option value="${ps.nama}">${ps.nama}</option>`;
@@ -652,9 +652,10 @@
             const fRp = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n||0));
             const fNum = (n) => new Intl.NumberFormat('id-ID').format(n||0);
             
-            if (psFilter === 'all') {
+            if (psFilter === 'all' || psFilter === 'Sales Team') {
                 let aggTgl = {};
                 data.pdu.forEach(ps => {
+                    if (psFilter === 'Sales Team' && ps.nama.toLowerCase() === 'office') return;
                     totalQtyPdu += ps.total_qty;
                     totalNettPdu += ps.total_nett;
                     ps.tanggal.forEach(tgl => {
@@ -782,7 +783,11 @@
             // 2. Tampilkan Grafik PDU
             if (pduChartInstance) pduChartInstance.destroy();
             
-            let filteredPdu = data.pdu.filter(p => psFilter === 'all' || p.nama === psFilter);
+            let filteredPdu = data.pdu.filter(p => {
+                if (psFilter === 'all') return true;
+                if (psFilter === 'Sales Team') return p.nama.toLowerCase() !== 'office';
+                return p.nama === psFilter;
+            });
             let pduLabels = filteredPdu.map(p => p.nama);
             let pduTarget = filteredPdu.map(p => p.target_amount);
             let pduSales = filteredPdu.map(p => p.total_nett);

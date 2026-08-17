@@ -254,7 +254,10 @@
                             <p class="text-xs text-slate-500 font-semibold mt-1">Total: {{ $sales->total() }} data ditemukan.</p>
                         </div>
                     </div>
-                    <div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="confirmBulkDelete()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow-sm hidden" id="btn-bulk-delete">
+                            <i class="fas fa-trash-alt mr-1"></i> Hapus (<span id="selected-count">0</span>)
+                        </button>
                         <select onchange="window.location.href=this.value" class="modern-input !py-1.5 !px-3 !w-auto text-xs font-semibold text-slate-600 bg-white border-slate-200 cursor-pointer shadow-sm rounded-lg hover:border-blue-400 transition-colors focus:ring-2 focus:ring-blue-100">
                             <option value="{{ request()->fullUrlWithQuery(['sort' => 'terbaru']) }}" {{ request('sort', 'terbaru') == 'terbaru' ? 'selected' : '' }}>Urutkan: Terbaru</option>
                             <option value="{{ request()->fullUrlWithQuery(['sort' => 'terlama']) }}" {{ request('sort') == 'terlama' ? 'selected' : '' }}>Urutkan: Terlama</option>
@@ -265,22 +268,28 @@
                 </div>
                 
                 <div class="overflow-x-auto flex-1">
-                    <table class="w-full text-sm text-left text-slate-600">
-                        <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
-                            <tr>
-                                <th class="px-4 py-4 w-12 text-center">No</th>
-                                <th class="px-4 py-4">Tanggal</th>
-                                <th class="px-4 py-4">Customer</th>
-                                <th class="px-4 py-4 text-center">PS</th>
-                                <th class="px-4 py-4">Produk</th>
-                                <th class="px-4 py-4">Qty</th>
-                                <th class="px-4 py-4 text-right">Harga Nett</th>
-                                <th class="px-4 py-4 text-center">Aksi</th>
-                            </tr>
-                        </thead>
+                        <table class="w-full text-sm text-left text-slate-600">
+                            <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-4 w-10 text-center">
+                                        <input type="checkbox" id="check-all" class="rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer">
+                                    </th>
+                                    <th class="px-4 py-4 w-12 text-center">No</th>
+                                    <th class="px-4 py-4">Tanggal</th>
+                                    <th class="px-4 py-4">Customer</th>
+                                    <th class="px-4 py-4 text-center">PS</th>
+                                    <th class="px-4 py-4">Produk</th>
+                                    <th class="px-4 py-4">Qty</th>
+                                    <th class="px-4 py-4 text-right">Harga Nett</th>
+                                    <th class="px-4 py-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
                         <tbody class="divide-y divide-slate-100">
                             @forelse($sales as $index => $item)
                             <tr class="hover:bg-indigo-50/50 transition-colors">
+                                <td class="px-4 py-3 text-center">
+                                    <input type="checkbox" name="ids[]" value="{{ $item->id }}" class="row-checkbox rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer">
+                                </td>
                                 <td class="px-4 py-3 text-center text-slate-400 font-medium">{{ $sales->firstItem() + $index }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap font-medium text-slate-700">{{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}</td>
                                 <td class="px-4 py-3 font-bold text-slate-900">{{ $item->nama_customer ?? '-' }}</td>
@@ -458,11 +467,11 @@
                     <div class="glass-card bg-blue-50 border-blue-200">
                         <h4 class="font-bold text-blue-800 mb-3 flex items-center text-sm"><i class="fas fa-info-circle mr-2"></i> Petunjuk Import</h4>
                         <ul class="text-xs text-blue-700 space-y-2 list-disc list-inside font-medium leading-relaxed">
-                            <li>Gunakan template <b>XLSX / CSV</b> terbaru yang didownload dari tombol di atas (tanpa kolom Bulan).</li>
-                            <li>Pastikan format <b>Tanggal</b> valid (contoh: 2026-08-01). Baris petunjuk pada template akan <b>otomatis diabaikan</b> oleh sistem.</li>
-                            <li><b class="text-blue-800">Penting (Auto-Sync):</b> Sistem akan mendeteksi bulan dari data Anda, lalu otomatis <b>menghapus & mengganti</b> seluruh data pada bulan tersebut.</li>
-                            <li>Kolom angka (HNA, Diskon, Harga Nett) <b>harus berupa angka murni</b> (tanpa 'Rp' atau titik ribuan).</li>
-                            <li>Maksimal ukuran file <b>10MB</b>.</li>
+                            <li>Gunakan <b>template CSV terbaru</b> yang didownload dari tombol di atas.</li>
+                            <li><b>Mulai input data pada Baris ke-3 (Cell A3) ke bawah.</b> Baris ke-1 (Header) dan Baris ke-2 (Petunjuk Format) akan <b>otomatis diabaikan</b> oleh sistem. Anda bebas menimpa/menghapus baris ke-3.</li>
+                            <li><b class="text-blue-800">CARA PASTE YANG BENAR:</b> Saat copy-paste dari file Export, klik kanan pada cell tujuan di template, lalu pilih menu <b>Paste Formulas & Number Formatting (O)</b> atau <b>Paste Values & Number Formatting (V & %)</b> di Excel.</li>
+                            <li>Kolom Angka (HNA, Diskon, Harga Nett) sekarang <b>mendukung format teks bebas</b> (Contoh: ketik `Rp 529.500` atau `12.69%` langsung). Sistem akan membersihkannya otomatis.</li>
+                            <li><b class="text-red-600">Penting (Auto-Sync):</b> Sistem mendeteksi <b>Bulan</b> dari kolom Tanggal, lalu akan <b>menghapus & mengganti</b> seluruh data sales pada bulan tersebut dengan data yang baru di-upload.</li>
                         </ul>
                     </div>
                 </div>
@@ -627,6 +636,86 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('form-delete-' + id).submit();
+                }
+            });
+        }
+
+        // Bulk Delete Logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkAll = document.getElementById('check-all');
+            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+            const btnBulkDelete = document.getElementById('btn-bulk-delete');
+            const selectedCount = document.getElementById('selected-count');
+
+            function updateBulkDeleteButton() {
+                const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+                if (checkedCount > 0) {
+                    btnBulkDelete.classList.remove('hidden');
+                    selectedCount.textContent = checkedCount;
+                } else {
+                    btnBulkDelete.classList.add('hidden');
+                }
+                
+                // Update checkAll state
+                if (checkAll && rowCheckboxes.length > 0) {
+                    checkAll.checked = checkedCount === rowCheckboxes.length;
+                }
+            }
+
+            if (checkAll) {
+                checkAll.addEventListener('change', function() {
+                    rowCheckboxes.forEach(cb => cb.checked = this.checked);
+                    updateBulkDeleteButton();
+                });
+            }
+
+            rowCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateBulkDeleteButton);
+            });
+        });
+
+        function confirmBulkDelete() {
+            const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+            if (selectedIds.length === 0) return;
+
+            Swal.fire({
+                title: 'Hapus ' + selectedIds.length + ' Data Terpilih?',
+                text: "Data sales yang dihapus tidak dapat dikembalikan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, hapus semua!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Buat form dinamis
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("sales.bulk_destroy") }}';
+                    
+                    const csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = '{{ csrf_token() }}';
+                    form.appendChild(csrf);
+                    
+                    const method = document.createElement('input');
+                    method.type = 'hidden';
+                    method.name = '_method';
+                    method.value = 'DELETE';
+                    form.appendChild(method);
+                    
+                    selectedIds.forEach(id => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'ids[]';
+                        input.value = id;
+                        form.appendChild(input);
+                    });
+                    
+                    document.body.appendChild(form);
+                    form.submit();
                 }
             });
         }

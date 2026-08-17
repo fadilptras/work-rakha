@@ -250,25 +250,25 @@ class SalesController extends Controller
                 'FORMAT WAJIB: Bln/Tgl/Tahun', 
                 'Wajib Diisi', 
                 'Wajib Diisi', 
-                'Angka Saja', 
+                'Angka', 
                 'Teks', 
-                'Angka Saja (Tanpa Rp/Titik)', 
-                'Angka Saja (Cth: 5 untuk 5%)', 
-                'Angka Saja (Tanpa Rp/Titik)', 
-                'Teks (Contoh: Daffa)'
+                'Format Bebas (Cth: Rp 529.500)', 
+                'Format Bebas (Cth: 12.69%)', 
+                'Format Bebas (Cth: Rp 32.361.500)', 
+                'Teks (Cth: Arief)'
             ]);
             
-            // Baris 3: Contoh Data Benar
+            // Baris 3: Contoh Data Benar (Bisa langsung Anda timpa/hapus)
             fputcsv($file, [
-                '2026-08-01', 
-                'PT. Sejahtera', 
-                'Obat A', 
-                '10', 
-                'Box', 
-                '50000', 
-                '5', 
-                '475000', 
-                'Arif'
+                '8/18/2026', 
+                'RSUD SAYANG', 
+                'RAKHA Kasa Katun Premium', 
+                '70', 
+                'Polybag', 
+                'Rp 529.500', 
+                '12.69%', 
+                'Rp 32.361.500', 
+                'Arief'
             ]);
             
             fclose($file);
@@ -1251,4 +1251,22 @@ class SalesController extends Controller
             'allProductsCount'     => count($productCategoryPs),
         ];
     }
+
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids'   => 'required|array',
+            'ids.*' => 'exists:sales,id',
+        ]);
+
+        try {
+            $count = count($request->ids);
+            Sales::whereIn('id', $request->ids)->delete();
+            return redirect()->back()->with('success', "Berhasil menghapus $count data sales terpilih.");
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Bulk Delete Sales Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menghapus data terpilih.');
+        }
+    }
 }
+

@@ -58,18 +58,42 @@ class SalesImport implements ToCollection, WithHeadingRow
                 ];
             }
 
-            $qty = (isset($row['qty']) && trim($row['qty']) !== '') ? intval($row['qty']) : null;
-            $hna = (isset($row['hna']) && trim($row['hna']) !== '') ? floatval(str_replace(',', '', $row['hna'])) : 0;
+            $qty = (isset($row['qty']) && trim($row['qty']) !== '') ? intval(preg_replace('/[^0-9]/', '', $row['qty'])) : null;
+            
+            // Fungsi pembersih angka (menghapus Rp, spasi, pemisah ribuan)
+            $cleanNumber = function($val) {
+                if (!isset($val) || trim($val) === '') return null;
+                $val = str_ireplace(['rp', ' '], '', $val);
+                // Jika mengandung titik lebih dari satu, atau titik dan koma, kita asumsikan titik adalah ribuan.
+                // Pendekatan teraman untuk format Rp 1.500.000: hapus semua titik, ubah koma jadi titik
+                if (strpos($val, '.') !== false && strpos($val, ',') === false) {
+                    // Cek apakah titik itu desimal atau ribuan. (Biasanya ribuan di format Indo)
+                    // Hapus saja titiknya (asumsi ribuan)
+                    $val = str_replace('.', '', $val);
+                } else {
+                    $val = str_replace('.', '', $val); // hapus ribuan
+                    $val = str_replace(',', '.', $val); // jadikan koma desimal
+                }
+                $val = preg_replace('/[^0-9.]/', '', $val);
+                return $val !== '' ? floatval($val) : null;
+            };
+
+            $hna = $cleanNumber($row['hna']) ?? 0;
             
             $diskon = null;
             if (isset($row['diskon']) && trim($row['diskon']) !== '') {
-                $diskon = floatval(str_replace(',', '', $row['diskon']));
-                if ($diskon <= 1 && $diskon > 0) {
+                $hasPercent = strpos($row['diskon'], '%') !== false;
+                $diskonStr = str_replace(['%', ' '], '', $row['diskon']);
+                $diskonStr = str_replace(',', '.', $diskonStr); // antisipasi 5,5%
+                $diskonStr = preg_replace('/[^0-9.]/', '', $diskonStr);
+                $diskon = floatval($diskonStr);
+                
+                if (!$hasPercent && $diskon <= 1 && $diskon > 0) {
                     $diskon = $diskon * 100;
                 }
             }
             
-            $harga_nett = (isset($row['harga_nett']) && trim($row['harga_nett']) !== '') ? floatval(str_replace(',', '', $row['harga_nett'])) : null;
+            $harga_nett = $cleanNumber($row['harga_nett']);
 
             $salesToInsert[] = [
                 'tanggal'       => $tanggal,
