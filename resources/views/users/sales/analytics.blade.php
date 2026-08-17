@@ -7,7 +7,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    <!-- Alpine JS is already loaded in x-layout-users normally, but just in case we use it -->
 
     @push('styles')
     <style>
@@ -23,7 +22,7 @@
             font-size: 0.9rem; font-weight: 700;
             text-decoration: none;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-bottom: 20px;
+            margin-bottom: 0px;
             width: fit-content;
         }
         .btn-back-modern:hover { 
@@ -100,8 +99,7 @@
     <div class="flex flex-col flex-1 min-h-screen analytics-bg relative overflow-hidden">
         <div class="relative z-10 w-full max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col gap-6">
 
-            {{-- TOMBOL KEMBALI --}}
-            <a href="{{ route('sales.index') }}" class="btn-back-modern mb-2">
+            <a href="{{ route('sales.index') }}" class="btn-back-modern">
                 <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                 Kembali ke Dashboard
             </a>
@@ -136,11 +134,8 @@
                 </div>
             </div>
 
-            {{-- =========================================================================
-                 TAB 1: VISUALISASI POWER BI
-                 ========================================================================= --}}
+            <!-- Tab 1 - Visualisasi -->
             <div id="tab-pbi" class="main-tab-content {{ $activeTab == 'tab-pbi' ? 'active' : '' }} space-y-6">
-                {{-- Slicer / Filter Panel --}}
                 <div class="glass-panel border-t-2 border-t-sky-500">
                     <form id="filterFormPbi" method="GET" action="{{ route('sales.analytics') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                         <div>
@@ -178,7 +173,7 @@
                         <h3 class="text-xl md:text-2xl font-black text-sky-400 mt-1">Rp {{ number_format($summary['total_sales'] ?? 0, 0, ',', '.') }}</h3>
                     </div>
                     <div class="pbi-kpi bg-gradient-to-br from-slate-800 to-emerald-900 border-l-4 border-l-emerald-400">
-                        <p class="pbi-label">Achievement Rate %</p>
+                        <p class="pbi-label">Achievement Rate % (Tahun)</p>
                         <h3 class="text-xl md:text-2xl font-black text-emerald-400 mt-1">{{ $summary['overall_achievement'] ?? 0 }}%</h3>
                         <div class="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
                             <div class="bg-emerald-400 h-1.5 rounded-full" style="width: {{ min(100, $summary['overall_achievement'] ?? 0) }}%"></div>
@@ -202,13 +197,6 @@
                 <div class="glass-panel mt-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
                         <h2 class="text-base font-black text-white"><i class="fas fa-users-viewfinder text-indigo-400 mr-2"></i> PS Achievement Rate & Growth Trend ({{ $tahun }})</h2>
-                        <div>
-                            <select id="localPsMonthFilter" class="pbi-slicer !w-auto min-w-[150px]">
-                                @foreach($listBulan as $b)
-                                    <option value="{{ $b }}" {{ ($summary['bulan_aktif'] ?? '') == $b ? 'selected' : '' }}>{{ $b }}</option>
-                                @endforeach
-                            </select>
-                        </div>
                     </div>
                     <div class="relative h-[350px] w-full"><canvas id="chartPsOverview"></canvas></div>
                 </div>
@@ -222,7 +210,6 @@
                     <div class="glass-panel">
                         <h2 class="text-base font-black text-white mb-4 flex justify-between items-center">
                             <span><i class="fas fa-chart-column text-purple-400 mr-2"></i> Monthly Sales per PS</span>
-                            <span class="text-xs text-slate-400 font-normal"><i class="fas fa-search-plus"></i> Scroll to zoom</span>
                         </h2>
                         <div class="relative h-[300px] w-full"><canvas id="chartMonthlySalesPs"></canvas></div>
                     </div>
@@ -368,9 +355,7 @@
                 </div>
             </div>
 
-            {{-- =========================================================================
-                 TAB 2: MONITORING MATRIX
-                 ========================================================================= --}}
+            <!-- Tab 2 - Matrix -->
             <div id="tab-mon" class="main-tab-content {{ $activeTab == 'tab-mon' ? 'active' : '' }} space-y-6">
                 {{-- Filter Bar Monitoring --}}
                 <div class="glass-panel border-t-2 border-t-emerald-500 relative z-50">
@@ -379,7 +364,7 @@
                             <label class="pbi-label">Tahun</label>
                             <select id="m-tahun" class="pbi-slicer">
                                 <option value="">All</option>
-                                @foreach($listTahun as $t) <option value="{{ $t }}">{{ $t }}</option> @endforeach
+                                @foreach($listTahun as $t) <option value="{{ $t }}" {{ $t == date('Y') ? 'selected' : '' }}>{{ $t }}</option> @endforeach
                             </select>
                         </div>
                         <div>
@@ -432,7 +417,7 @@
                         <h3 id="m-sum-produk" class="text-2xl font-black text-purple-400 mt-1">0</h3>
                     </div>
                     <div class="glass-panel text-center py-4">
-                        <p class="text-xs text-slate-400 uppercase font-bold">Achievement Rate</p>
+                        <p class="text-xs text-slate-400 uppercase font-bold">Achievement Rate (YTD)</p>
                         <h3 id="m-sum-rate" class="text-2xl font-black text-amber-400 mt-1">-</h3>
                     </div>
                 </div>
@@ -494,12 +479,9 @@
                 </div>
             </div>
 
-            {{-- =========================================================================
-                 TAB 3: TARGET SALES
-                 ========================================================================= --}}
+            <!-- Tab 3 - Target Sales -->
             <div id="tab-tgt" class="main-tab-content {{ $activeTab == 'tab-tgt' ? 'active' : '' }} space-y-6">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                    <h2 class="text-xl font-black text-white"><i class="fas fa-bullseye text-amber-400 mr-2"></i> Pengelolaan Target Sales ({{ $tahun }})</h2>
+                <div class="flex flex-col md:flex-row justify-end items-start md:items-center gap-4 mb-6">
                     <button onclick="document.getElementById('modal-target').classList.remove('hidden')" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-amber-500/20">
                         <i class="fas fa-plus mr-1"></i> Set Target Individu
                     </button>
@@ -520,7 +502,7 @@
                         <h3 class="text-xl font-black text-emerald-400 mt-1">Rp {{ number_format($summary['total_sales'] ?? 0, 0, ',', '.') }}</h3>
                     </div>
                     <div class="glass-panel text-center py-5 border-t-2 border-t-amber-400">
-                        <p class="text-xs text-slate-400 uppercase font-bold">Total Achv. Rate</p>
+                        <p class="text-xs text-slate-400 uppercase font-bold">Achievement Rate % (Tahun)</p>
                         <h3 class="text-xl font-black text-amber-400 mt-1">{{ $summary['overall_achievement'] ?? 0 }}%</h3>
                     </div>
                 </div>
@@ -675,19 +657,14 @@
                 </div>
             </div>
 
-            {{-- =========================================================================
-                 TAB 4: HISTORY SALES
-                 ========================================================================= --}}
+            <!-- Tab 4 - History Sales -->
             <div id="tab-history" class="main-tab-content {{ $activeTab == 'tab-history' ? 'active' : '' }} space-y-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-black text-white"><i class="fas fa-history text-purple-400 mr-2"></i> Riwayat Sales Tahun Sebelumnya</h2>
-                    <button onclick="document.getElementById('modal-history').classList.remove('hidden')" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-purple-500/20">
-                        <i class="fas fa-plus mr-1"></i> Input Riwayat Sales
-                    </button>
                 </div>
 
                 <div class="glass-panel">
-                    <p class="text-sm text-slate-400 mb-4">Data di tabel ini digunakan untuk keperluan kalkulasi <b>YoY Growth</b> jika data transaksi tahun sebelumnya tidak tersedia di sistem.</p>
+                    <p class="text-sm text-slate-400 mb-4">Data di tabel ini dihitung secara otomatis dari <b>akumulasi transaksi aktual penjualan</b> pada tahun-tahun sebelumnya.</p>
                     
                     <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
                         <table class="w-full text-xs text-center whitespace-nowrap">
@@ -701,30 +678,31 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-700/50">
-                                @php
-                                    $hasHistory = collect($targets ?? [])->sum('sales_last_year_amount') > 0;
-                                @endphp
-                                @if($hasHistory)
-                                    <tr class="hover:bg-slate-800/30 transition">
-                                        <td class="px-4 py-4 font-bold text-slate-200 text-left text-sm">{{ $tahun - 1 }}</td>
-                                        @php $totalHistory = 0; @endphp
-                                        @foreach($urutanBulan as $b)
-                                            @php
-                                                // Sum all history for this month
-                                                $monthHistory = collect($targets ?? [])->where('bulan', $b)->sum('sales_last_year_amount');
-                                                $totalHistory += $monthHistory;
+                                @if($historySales && $historySales->count() > 0)
+                                    @foreach($historySales as $history)
+                                        <tr class="hover:bg-slate-800/30 transition">
+                                            <td class="px-4 py-4 font-bold text-slate-200 text-left text-sm">{{ $history->tahun }}</td>
+                                            @php 
+                                                $totalHistory = 0; 
+                                                $months = ['jan', 'feb', 'mar', 'apr', 'mei', 'jun', 'jul', 'agu', 'sep', 'okt', 'nov', 'des'];
                                             @endphp
-                                            <td class="px-3 py-4 text-slate-300 border-l border-slate-700/30 {{ $monthHistory > 0 ? 'font-bold text-emerald-400' : '' }}">
-                                                {{ $monthHistory > 0 ? 'Rp ' . number_format($monthHistory, 0, ',', '.') : '-' }}
+                                            @foreach($months as $m)
+                                                @php
+                                                    $monthHistory = $history->$m ?? 0;
+                                                    $totalHistory += $monthHistory;
+                                                @endphp
+                                                <td class="px-3 py-4 text-slate-300 border-l border-slate-700/30 {{ $monthHistory > 0 ? 'font-bold text-emerald-400' : '' }}">
+                                                    {{ $monthHistory > 0 ? 'Rp ' . number_format($monthHistory, 0, ',', '.') : '-' }}
+                                                </td>
+                                            @endforeach
+                                            <td class="px-4 py-4 font-black text-purple-400 bg-purple-900/10 border-l border-slate-700/50 text-sm">
+                                                Rp {{ number_format($totalHistory, 0, ',', '.') }}
                                             </td>
-                                        @endforeach
-                                        <td class="px-4 py-4 font-black text-purple-400 bg-purple-900/10 border-l border-slate-700/50 text-sm">
-                                            Rp {{ number_format($totalHistory, 0, ',', '.') }}
-                                        </td>
-                                    </tr>
+                                        </tr>
+                                    @endforeach
                                 @else
                                     <tr>
-                                        <td colspan="14" class="px-4 py-12 text-center text-slate-500 italic">Belum ada data riwayat manual yang diinput untuk tahun {{ $tahun - 1 }}.</td>
+                                        <td colspan="14" class="px-4 py-12 text-center text-slate-500 italic">Belum ada data riwayat penjualan.</td>
                                     </tr>
                                 @endif
                             </tbody>
@@ -784,51 +762,6 @@
                 <div class="mt-8 pt-4 border-t border-slate-700 flex justify-end gap-3">
                     <button type="button" onclick="document.getElementById('modal-target').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white">Batal</button>
                     <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2 rounded-lg font-bold transition">Simpan Target</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- Modal Riwayat Sales Tahun Lalu --}}
-    <div id="modal-history" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="document.getElementById('modal-history').classList.add('hidden')"></div>
-        <div class="relative bg-slate-800 border border-slate-600 rounded-2xl w-full max-w-xl p-6 shadow-2xl z-10 max-h-[85vh] overflow-y-auto">
-            <h3 class="text-xl font-black text-white mb-6 border-b border-slate-700 pb-4"><i class="fas fa-history text-purple-400 mr-2"></i> Input Riwayat Sales</h3>
-            <p class="text-sm text-slate-400 mb-6">Masukkan data sales historis agar sistem dapat menghitung <b>Year-over-Year (YoY) Growth</b> dengan akurat, meskipun data tahun lalu belum ada di tabel utama.</p>
-            <form action="{{ route('sales.target.store') }}" method="POST">
-                @csrf
-                <input type="hidden" name="form_type" value="history">
-                <div class="space-y-6">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Tahun (Riwayat)</label>
-                            <input type="number" name="tahun" value="{{ date('Y') - 1 }}" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-3 outline-none focus:border-purple-500 transition" required>
-                            <span class="text-[10px] text-slate-500 mt-1 block">Tahun data historis</span>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Bulan</label>
-                            <div class="relative">
-                                <select name="bulan" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-3 appearance-none outline-none focus:border-purple-500 transition" required>
-                                    @foreach($urutanBulan as $b)
-                                        <option value="{{ $b }}">{{ $b }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                    <i class="fas fa-chevron-down text-xs"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {{-- Note: History input no longer requires PS, it will be saved as null (Keseluruhan Tim) --}}
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Actual Sales Tahun LALU (Rp)</label>
-                        <input type="text" id="sales_last_year_amount_display" placeholder="Misal: 45.000.000" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-3 outline-none focus:border-purple-500 transition text-lg font-bold text-purple-400" required oninput="formatCurrency(this, 'sales_last_year_amount')">
-                        <input type="hidden" name="sales_last_year_amount" id="sales_last_year_amount" required>
-                    </div>
-                </div>
-                <div class="mt-8 pt-4 border-t border-slate-700 flex justify-end gap-3">
-                    <button type="button" onclick="document.getElementById('modal-history').classList.add('hidden')" class="px-4 py-2 text-slate-300 hover:text-white">Batal</button>
-                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg font-bold transition">Simpan Riwayat</button>
                 </div>
             </form>
         </div>
@@ -996,27 +929,29 @@
                     }
                 });
 
-                // New PBI Chart: PS Performance with Local Month Filter
+                // PBI Chart: PS Performance (Cumulative)
                 let chartPsOverview = null;
-                const psMonthFilter = document.getElementById('localPsMonthFilter');
                 
-                function renderChartPsOverview(month) {
+                function renderChartPsOverview() {
                     const ctx = document.getElementById('chartPsOverview');
                     if (!ctx) return;
                     
-                    const monthData = allPsPerformanceByMonth[month] || {};
-                    const labels = Object.keys(monthData);
-                    const targetData2 = labels.map(ps => monthData[ps].target);
-                    const salesData2 = labels.map(ps => monthData[ps].sales);
-                    const achvData2 = labels.map(ps => monthData[ps].achievement_rate);
-                    const growthData2 = labels.map(ps => monthData[ps].growth_rate);
+                    const activeLabels = listPs.filter(ps => {
+                        const data = psCumulative[ps];
+                        return data && (data.cum_target > 0 || data.cum_sales > 0);
+                    });
+                    
+                    const targetData2 = activeLabels.map(ps => psCumulative[ps].cum_target);
+                    const salesData2 = activeLabels.map(ps => psCumulative[ps].cum_sales);
+                    const achvData2 = activeLabels.map(ps => psCumulative[ps].cum_ach_rate);
+                    const growthData2 = activeLabels.map(ps => psCumulative[ps].cum_growth_rate);
 
                     if (chartPsOverview) chartPsOverview.destroy();
 
                     chartPsOverview = new Chart(ctx, {
                         type: 'bar',
                         data: {
-                            labels: labels,
+                            labels: activeLabels,
                             datasets: [
                                 { label: 'Target', data: targetData2, backgroundColor: 'rgba(100,116,139,0.4)', borderRadius: 4, datalabels: { display: false } },
                                 { 
@@ -1072,12 +1007,7 @@
                     });
                 }
                 
-                if (psMonthFilter) {
-                    renderChartPsOverview(psMonthFilter.value);
-                    psMonthFilter.addEventListener('change', (e) => {
-                        renderChartPsOverview(e.target.value);
-                    });
-                }
+                renderChartPsOverview();
 
 
                 // PBI Chart 2: Top Customers Contribution (Doughnut)
@@ -1130,10 +1060,6 @@
                         responsive: true, maintainAspectRatio: false, 
                         scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
                         plugins: {
-                            zoom: {
-                                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
-                                pan: { enabled: true, mode: 'x' }
-                            },
                             tooltip: {
                                 callbacks: {
                                     label: (context) => context.dataset.label + ': ' + new Intl.NumberFormat('id-ID').format(context.raw)
@@ -1168,10 +1094,6 @@
                         maintainAspectRatio: false, 
                         scales: { x:{stacked:true}, y:{stacked:true} },
                         plugins: {
-                            zoom: {
-                                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
-                                pan: { enabled: true, mode: 'x' }
-                            },
                             tooltip: {
                                 callbacks: {
                                     label: (context) => context.dataset.label + ': ' + new Intl.NumberFormat('id-ID').format(context.raw)

@@ -11,10 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class SalesController extends Controller
 {
-    /**
-     * Cek apakah user saat ini memiliki akses penuh ke Sales Dashboard.
-     * Top Management, Kepala Divisi Marketing & Operasional, Admin Marketing.
-     */
+    // akses untuk direktur, kepala divisi marketing, admin support, dan test
     private function hasFullSalesAccess()
     {
         $user = \Illuminate\Support\Facades\Auth::user();
@@ -22,19 +19,16 @@ class SalesController extends Controller
 
         $jabatan = strtolower($user->jabatan ?? '');
         $divisi = strtolower($user->divisi ?? '');
-        $role = strtolower($user->role ?? '');
 
         $isTopManagement = \Illuminate\Support\Str::contains($jabatan, 'direktur') || $divisi === 'top management';
         $isKepalaDivisiMO = (($user->is_kepala_divisi == 1) || \Illuminate\Support\Str::contains($jabatan, 'kepala')) && in_array($divisi, ['marketing dan operasional']);
         $isAdminMarketing = \Illuminate\Support\Str::contains($jabatan, 'admin support');
         $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
 
-        return $isTopManagement || $isKepalaDivisiMO || $isAdminMarketing || $isTest ;
+        return $isTopManagement || $isKepalaDivisiMO || $isAdminMarketing || $isTest;
     }
 
-    /**
-     * Cek apakah user memiliki akses parsial (anggota biasa Divisi Marketing / Operasional)
-     */
+    // akses div marketing & operasional
     private function hasAnySalesAccess()
     {
         if ($this->hasFullSalesAccess()) return true;
@@ -46,9 +40,7 @@ class SalesController extends Controller
         return in_array($divisi, ['marketing dan operasional']);
     }
 
-    /**
-     * Urutan bulan standar (dipakai untuk sorting & label, karena kolom `bulan` disimpan sbg string).
-     */
+    // urutan bulan standar untuk sorting dan label
     protected array $urutanBulan = [
         'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -57,7 +49,7 @@ class SalesController extends Controller
     public function index(Request $request)
     {
         return view('users.sales.dashboard')->with([
-            'title' => 'Super Dashboard Sales',
+            'title' => 'Sales Command Center',
             'hasFullAccess' => $this->hasFullSalesAccess(),
             'hasAnyAccess' => $this->hasAnySalesAccess()
         ]);
@@ -67,7 +59,7 @@ class SalesController extends Controller
     {
         if (!$this->hasFullSalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Analitik Penjualan.');
 
-        // Data filter untuk dashboard (monitoring & visualisasi)
+        // data filter dashboard
         $listPs = Sales::whereNotNull('ps')->where('ps', '!=', '')->distinct()->orderBy('ps', 'asc')->pluck('ps')->toArray();
         $listCustomer = Sales::whereNotNull('nama_customer')->where('nama_customer', '!=', '')->distinct()->orderBy('nama_customer', 'asc')->pluck('nama_customer');
         $listProduk = Sales::whereNotNull('nama_produk')->where('nama_produk', '!=', '')->distinct()->orderBy('nama_produk', 'asc')->pluck('nama_produk');
@@ -85,7 +77,7 @@ class SalesController extends Controller
             array_unshift($listTahun, date('Y'));
         }
 
-        // Data khusus untuk Target (Bagian Bawah Dashboard)
+        // data target sales
         $tahun = $request->input('tahun', date('Y'));
         $tahunLalu = (int)$tahun - 1;
         
@@ -119,8 +111,7 @@ class SalesController extends Controller
         foreach ($this->urutanBulan as $bulan) {
             $targetAll = $targets->where('bulan', $bulan)->sum('target_amount');
             $salesAll = $salesCurrent->where('bulan', $bulan)->sum('total_sales');
-            $salesPrevManual = $targets->where('bulan', $bulan)->sum('sales_last_year_amount');
-            $salesPrev = $salesPrevManual > 0 ? $salesPrevManual : ($salesLastYear[$bulan] ?? 0);
+            $salesPrev = $salesLastYear[$bulan] ?? 0;
             
             $achievementRate = $targetAll > 0 ? round(($salesAll / $targetAll) * 100, 2) : 0;
             $growthRate = $salesPrev > 0 ? round((($salesAll - $salesPrev) / $salesPrev) * 100, 2) : 0;
@@ -153,26 +144,27 @@ class SalesController extends Controller
             $allPsAchievement[$ps]['rate'] = $data['target'] > 0 ? round(($data['sales'] / $data['target']) * 100, 2) : 0;
         }
 
-        // Data khusus untuk Visualisasi Power BI
+        // data visualisasi power bi
         $bulanTerpilih = $request->input('bulan', '');
         $psTerpilih = $request->input('ps', '');
         $analyticsData = $this->getVisualisasiDataPayload($tahun, $bulanTerpilih, $psTerpilih, $listPs);
 
         $urutanBulan = $this->urutanBulan;
-        $historySales = \App\Models\SalesTarget::select('tahun',
-            \DB::raw('SUM(CASE WHEN bulan = "Januari" THEN sales_last_year_amount ELSE 0 END) as jan'),
-            \DB::raw('SUM(CASE WHEN bulan = "Februari" THEN sales_last_year_amount ELSE 0 END) as feb'),
-            \DB::raw('SUM(CASE WHEN bulan = "Maret" THEN sales_last_year_amount ELSE 0 END) as mar'),
-            \DB::raw('SUM(CASE WHEN bulan = "April" THEN sales_last_year_amount ELSE 0 END) as apr'),
-            \DB::raw('SUM(CASE WHEN bulan = "Mei" THEN sales_last_year_amount ELSE 0 END) as mei'),
-            \DB::raw('SUM(CASE WHEN bulan = "Juni" THEN sales_last_year_amount ELSE 0 END) as jun'),
-            \DB::raw('SUM(CASE WHEN bulan = "Juli" THEN sales_last_year_amount ELSE 0 END) as jul'),
-            \DB::raw('SUM(CASE WHEN bulan = "Agustus" THEN sales_last_year_amount ELSE 0 END) as agu'),
-            \DB::raw('SUM(CASE WHEN bulan = "September" THEN sales_last_year_amount ELSE 0 END) as sep'),
-            \DB::raw('SUM(CASE WHEN bulan = "Oktober" THEN sales_last_year_amount ELSE 0 END) as okt'),
-            \DB::raw('SUM(CASE WHEN bulan = "November" THEN sales_last_year_amount ELSE 0 END) as nov'),
-            \DB::raw('SUM(CASE WHEN bulan = "Desember" THEN sales_last_year_amount ELSE 0 END) as des')
-        )->groupBy('tahun')->orderBy('tahun', 'desc')->get();
+        $historySales = Sales::select(
+            DB::raw('YEAR(tanggal) as tahun'),
+            DB::raw('SUM(CASE WHEN bulan = "Januari" THEN harga_nett ELSE 0 END) as jan'),
+            DB::raw('SUM(CASE WHEN bulan = "Februari" THEN harga_nett ELSE 0 END) as feb'),
+            DB::raw('SUM(CASE WHEN bulan = "Maret" THEN harga_nett ELSE 0 END) as mar'),
+            DB::raw('SUM(CASE WHEN bulan = "April" THEN harga_nett ELSE 0 END) as apr'),
+            DB::raw('SUM(CASE WHEN bulan = "Mei" THEN harga_nett ELSE 0 END) as mei'),
+            DB::raw('SUM(CASE WHEN bulan = "Juni" THEN harga_nett ELSE 0 END) as jun'),
+            DB::raw('SUM(CASE WHEN bulan = "Juli" THEN harga_nett ELSE 0 END) as jul'),
+            DB::raw('SUM(CASE WHEN bulan = "Agustus" THEN harga_nett ELSE 0 END) as agu'),
+            DB::raw('SUM(CASE WHEN bulan = "September" THEN harga_nett ELSE 0 END) as sep'),
+            DB::raw('SUM(CASE WHEN bulan = "Oktober" THEN harga_nett ELSE 0 END) as okt'),
+            DB::raw('SUM(CASE WHEN bulan = "November" THEN harga_nett ELSE 0 END) as nov'),
+            DB::raw('SUM(CASE WHEN bulan = "Desember" THEN harga_nett ELSE 0 END) as des')
+        )->whereNotNull('tanggal')->groupBy(DB::raw('YEAR(tanggal)'))->orderBy(DB::raw('YEAR(tanggal)'), 'desc')->get();
 
         return view('users.sales.analytics', array_merge(compact(
             'listPs', 'listCustomer', 'listProduk', 'listBulan', 'listTahun',
@@ -188,9 +180,7 @@ class SalesController extends Controller
         return view('users.sales.monthly', compact('tahun'));
     }
 
-    /**
-     * Menyimpan data dari form input manual.
-     */
+    // simpan data dari form manual
     public function storeManual(Request $request)
     {
         $request->validate([
@@ -215,9 +205,7 @@ class SalesController extends Controller
         return redirect()->back()->with('success', 'Data sales manual berhasil disimpan!');
     }
 
-    /**
-     * Menyimpan data dari upload file Excel.
-     */
+    // import data dari excel
     public function importExcel(Request $request)
     {
         $request->validate([
@@ -225,17 +213,24 @@ class SalesController extends Controller
         ]);
 
         try {
-            Excel::import(new SalesImport, $request->file('file'));
-            return redirect()->back()->with('success', 'Data sales dari Excel berhasil diimpor!');
+            $import = new SalesImport();
+            Excel::import($import, $request->file('file'));
+            
+            $months = implode(', ', $import->refreshedMonths);
+            $count = number_format($import->importedCount, 0, ',', '.');
+            
+            if ($import->importedCount > 0) {
+                return redirect()->back()->with('success', "Sukses! $count baris data telah diimpor, me-refresh data untuk periode: $months.");
+            } else {
+                return redirect()->back()->with('success', 'File berhasil diproses namun tidak ada baris data valid yang diimpor.');
+            }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Upload Excel Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengimpor data! Pastikan format tanggal dan angka di Excel sudah benar. (Info sistem: ' . $e->getMessage() . ')');
         }
     }
 
-    /**
-     * Mengunduh template excel kosong.
-     */
+    // download template excel/csv
     public function downloadTemplate()
     {
         $headers = [
@@ -244,22 +239,138 @@ class SalesController extends Controller
 
         $callback = function () {
             $file = fopen('php://output', 'w');
+            
+            // Baris 1: Header Kolom Asli (Wajib ada)
             fputcsv($file, [
                 'tanggal', 'nama_customer', 'nama_produk', 'qty', 'satuan', 'hna', 'diskon', 'harga_nett', 'ps'
             ]);
+            
+            // Baris 2: Petunjuk Format (Akan otomatis di-skip oleh sistem import karena tanggal tidak valid)
             fputcsv($file, [
-                '2026-08-01', 'PT. Sejahtera', 'Obat A', '10', 'Box', '50000', '0', '50000', 'PS1'
+                'FORMAT WAJIB: Bln/Tgl/Tahun', 
+                'Wajib Diisi', 
+                'Wajib Diisi', 
+                'Angka Saja', 
+                'Teks', 
+                'Angka Saja (Tanpa Rp/Titik)', 
+                'Angka Saja (Cth: 5 untuk 5%)', 
+                'Angka Saja (Tanpa Rp/Titik)', 
+                'Teks (Contoh: Daffa)'
             ]);
+            
+            // Baris 3: Contoh Data Benar
+            fputcsv($file, [
+                '2026-08-01', 
+                'PT. Sejahtera', 
+                'Obat A', 
+                '10', 
+                'Box', 
+                '50000', 
+                '5', 
+                '475000', 
+                'Arif'
+            ]);
+            
             fclose($file);
         };
 
-        return response()->streamDownload($callback, 'Template_Sales.csv', $headers);
+        return response()->streamDownload($callback, 'Template_Import_Sales_'.date('Ymd').'.csv', $headers);
     }
 
-    /**
-     * Endpoint AJAX: mengembalikan semua data agregat (JSON) sesuai filter yang dikirim.
-     * Query params: tahun, bulan[], ps[], nama_customer[], nama_produk[]
-     */
+    // export data ke csv
+    public function export(Request $request)
+    {
+        if (!$this->hasFullSalesAccess()) abort(403, 'Anda tidak memiliki hak akses untuk export Data Sales.');
+        $query = Sales::query();
+
+        // pencarian (search)
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('nama_customer', 'like', "%{$search}%")
+                  ->orWhere('nama_produk', 'like', "%{$search}%")
+                  ->orWhere('ps', 'like', "%{$search}%");
+            });
+        }
+
+        // filter tanggal
+        if ($request->filled('tanggal')) {
+            $query->whereDate('tanggal', $request->input('tanggal'));
+        }
+
+        // filter bulan
+        if ($request->filled('bulan')) {
+            $query->where('bulan', $request->input('bulan'));
+        }
+
+        // filter tahun
+        if ($request->filled('tahun')) {
+            $query->whereYear('tanggal', $request->input('tahun'));
+        }
+
+        // filter customer
+        if ($request->filled('nama_customer')) {
+            $query->where('nama_customer', $request->input('nama_customer'));
+        }
+
+        // filter produk
+        if ($request->filled('nama_produk')) {
+            $query->where('nama_produk', $request->input('nama_produk'));
+        }
+
+        // filter ps
+        if ($request->filled('ps')) {
+            $query->where('ps', $request->input('ps'));
+        }
+
+        $sort = $request->input('sort', 'terbaru');
+        if ($sort === 'terlama') {
+            $query->orderBy('tanggal', 'asc');
+        } elseif ($sort === 'tertinggi') {
+            $query->orderBy('harga_nett', 'desc');
+        } elseif ($sort === 'terendah') {
+            $query->orderBy('harga_nett', 'asc');
+        } else {
+            $query->orderBy('tanggal', 'desc');
+        }
+
+        $sales = $query->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+        ];
+
+        $callback = function () use ($sales) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, [
+                'tanggal', 'nama_customer', 'nama_produk', 'qty', 'satuan', 'hna', 'diskon', 'harga_nett', 'ps'
+            ]);
+            
+            foreach ($sales as $item) {
+                $diskon_val = $item->diskon;
+                if (is_numeric($diskon_val) && $diskon_val > 0 && $diskon_val <= 1) {
+                    $diskon_val = $diskon_val * 100;
+                }
+                
+                fputcsv($file, [
+                    $item->tanggal ? date('Y-m-d', strtotime($item->tanggal)) : '',
+                    $item->nama_customer ?? '',
+                    $item->nama_produk ?? '',
+                    $item->qty ?? '',
+                    $item->satuan ?? '',
+                    isset($item->hna) ? 'Rp ' . number_format($item->hna, 0, ',', '.') : '',
+                    (isset($item->diskon) && $item->diskon !== '') ? $diskon_val . '%' : '',
+                    isset($item->harga_nett) ? 'Rp ' . number_format($item->harga_nett, 0, ',', '.') : '',
+                    $item->ps ?? ''
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->streamDownload($callback, 'Export_Data_Sales_'.date('YmdHis').'.csv', $headers);
+    }
+
+    // ajax endpoint untuk data agregat dashboard
     public function monitoringData(Request $request)
     {
         $tahun         = $request->input('tahun');
@@ -292,14 +403,14 @@ class SalesController extends Controller
             $baseQuery->whereIn('nama_produk', $produkFilter);
         }
 
-        // ---------- Summary Cards ----------
+        // summary cards
         $summaryQuery = clone $baseQuery;
         $totalNett = (clone $summaryQuery)->sum('harga_nett');
         $totalQty  = (clone $summaryQuery)->sum('qty');
         $totalCustomer = (clone $summaryQuery)->whereNotNull('nama_customer')->where('nama_customer', '!=', '')->distinct('nama_customer')->count('nama_customer');
         $totalProduk = (clone $summaryQuery)->whereNotNull('nama_produk')->where('nama_produk', '!=', '')->distinct('nama_produk')->count('nama_produk');
 
-        // ---------- Trend Sales Nett per Bulan ----------
+        // trend sales per bulan
         $trendRawDb = (clone $baseQuery)
             ->select('bulan', DB::raw('SUM(harga_nett) as total'))
             ->groupBy('bulan')
@@ -319,7 +430,7 @@ class SalesController extends Controller
             }
         }
 
-        // ---------- Target vs Achievement per Bulan ----------
+        // target vs achievement per bulan
         $targetQuery = SalesTarget::query();
         if ($tahun) {
             $targetQuery->where('tahun', $tahun);
@@ -357,7 +468,7 @@ class SalesController extends Controller
             ];
         }
 
-        // ---------- Menentukan List Bulan Dinamis ----------
+        // list bulan dinamis
         $listBulanDinamic = $this->urutanBulan;
         if (!empty($bulanFilter)) {
             $listBulanDinamic = array_values(array_intersect($this->urutanBulan, array_map(fn($b) => ucfirst(strtolower($b)), $bulanFilter)));
@@ -370,7 +481,7 @@ class SalesController extends Controller
             }
         }
 
-        // Achievement rate keseluruhan sesuai bulan yang dipilih (untuk summary card)
+        // achievement rate keseluruhan
         $sumTarget = 0;
         $sumActual = 0;
         foreach ($listBulanDinamic as $b) {
@@ -458,19 +569,19 @@ class SalesController extends Controller
             return $result;
         };
 
-        // ---------- Sales per RS/Customer ----------
+        // sales per customer
         $perCustomer = $formatMatrix(clone $baseQuery, 'nama_customer');
 
-        // ---------- Sales per RS/Customer & Produk ----------
+        // sales per customer & produk
         $perCustomerProduk = $formatMatrix(clone $baseQuery, 'nama_customer', 'nama_produk');
 
-        // ---------- Sales per Produk ----------
+        // sales per produk
         $perProduk = $formatMatrix(clone $baseQuery, 'nama_produk');
 
-        // ---------- Sales per Produk (Khusus Pivot / Cross-Tab) ----------
+        // sales per produk (pivot)
         $pivotProdukPs = $formatMatrix(clone $baseQuery, 'nama_produk', 'ps');
 
-        // ---------- List Seluruh PS aktif untuk kolom Pivot ----------
+        // list ps aktif (pivot)
         $listPsPivot = (clone $baseQuery)
             ->whereNotNull('ps')
             ->where('ps', '!=', '')
@@ -479,13 +590,10 @@ class SalesController extends Controller
             ->pluck('ps')
             ->toArray();
 
-        // ---------- Sales per PS ----------
+        // sales per ps
         $perPs = $formatMatrix(clone $baseQuery, 'ps');
 
-        // ---------- Stock Forecast (SF) ----------
-        // Formula: rata-rata qty per produk selama 7 bulan terakhir yang ADA datanya, lalu +20%.
-        // Menghormati filter produk/customer/ps yang sedang aktif, tapi mengambil 7 bulan terakhir
-        // berdasarkan urutan kalender (bukan cuma bulan yang difilter) agar rata-ratanya representatif.
+        // stock forecast (rata-rata 7 bulan terakhir + 20%)
         $sfQuery = Sales::query();
         if ($tahun) {
             $sfQuery->whereYear('tanggal', $tahun);
@@ -500,7 +608,7 @@ class SalesController extends Controller
             $sfQuery->whereIn('nama_produk', $produkFilter);
         }
 
-        // Ambil qty per produk per bulan
+        // qty per produk per bulan
         $qtyPerProdukBulan = $sfQuery
             ->select('nama_produk', 'bulan', DB::raw('SUM(qty) as total_qty'))
             ->whereNotNull('nama_produk')
@@ -508,7 +616,7 @@ class SalesController extends Controller
             ->get()
             ->groupBy('nama_produk');
 
-        // Ambil 7 bulan kalender terakhir yang benar-benar punya data (dari urutanBulan)
+        // 7 bulan terakhir yang ada data
         $tujuhBulanTerakhir = array_slice($this->urutanBulan, 0, 7); // fallback default Jan-Jul
         $bulanTersedia = Sales::whereNotNull('bulan')->distinct()->pluck('bulan')->toArray();
         $bulanTersediaUrut = array_values(array_intersect($this->urutanBulan, $bulanTersedia));
@@ -562,16 +670,13 @@ class SalesController extends Controller
         ]);
     }
 
-    /* =========================================================================
-     |  HALAMAN KELOLA DATA (CRUD, Import, Export)
-     |  ========================================================================= */
-
+    // --- kelola data (crud, import, export) ---
     public function manage(Request $request)
     {
         if (!$this->hasFullSalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Kelola Data Sales.');
         $query = Sales::query();
 
-        // Pencarian (search)
+        // pencarian (search)
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -581,32 +686,32 @@ class SalesController extends Controller
             });
         }
 
-        // Filter by Tanggal
+        // filter tanggal
         if ($request->filled('tanggal')) {
             $query->whereDate('tanggal', $request->input('tanggal'));
         }
 
-        // Filter by Bulan
+        // filter bulan
         if ($request->filled('bulan')) {
             $query->where('bulan', $request->input('bulan'));
         }
 
-        // Filter by Tahun
+        // filter tahun
         if ($request->filled('tahun')) {
             $query->whereYear('tanggal', $request->input('tahun'));
         }
 
-        // Filter by Customer
+        // filter customer
         if ($request->filled('nama_customer')) {
             $query->where('nama_customer', $request->input('nama_customer'));
         }
 
-        // Filter by Produk
+        // filter produk
         if ($request->filled('nama_produk')) {
             $query->where('nama_produk', $request->input('nama_produk'));
         }
 
-        // Filter by PS
+        // filter ps
         if ($request->filled('ps')) {
             $query->where('ps', $request->input('ps'));
         }
@@ -624,7 +729,7 @@ class SalesController extends Controller
 
         $sales = $query->paginate(30)->withQueryString();
 
-        // Data for filters
+        // data untuk filter
         $bulanAda = Sales::whereNotNull('bulan')->distinct()->pluck('bulan')->toArray();
         $bulanAda = array_map(fn($b) => ucfirst(strtolower($b)), $bulanAda);
         $listBulan = array_values(array_intersect($this->urutanBulan, $bulanAda));
@@ -682,10 +787,7 @@ class SalesController extends Controller
         return redirect()->back()->with('success', 'Data sales berhasil dihapus!');
     }
 
-    /* =========================================================================
-     |  Target & Visualisasi Helpers
-     |  ========================================================================= */
-
+    // --- target & visualisasi helpers ---
     public function storeTarget(Request $request)
     {
         $request->validate([
@@ -702,7 +804,7 @@ class SalesController extends Controller
         $ps = $request->ps;
 
         if ($request->has('targets') && is_array($request->targets)) {
-            // Handle multiple months at once (for Target Form)
+            // input multiple bulan (form target)
             foreach ($request->targets as $bulan => $amount) {
                 $bulanAngka = array_search($bulan, $this->urutanBulan) + 1;
                 // clean up amount from non-numeric characters if necessary, but we format via JS and store raw hidden
@@ -714,7 +816,7 @@ class SalesController extends Controller
                     'ps' => $ps,
                 ])->first();
 
-                // Preserve last year amount
+                // simpan riwayat tahun lalu
                 $lastYearAmount = $existing->sales_last_year_amount ?? 0;
 
                 SalesTarget::updateOrCreate(
@@ -731,7 +833,7 @@ class SalesController extends Controller
                 );
             }
         } else {
-            // Handle single month (for History Form)
+            // input single bulan (form history)
             $bulanAngka = array_search($request->bulan, $this->urutanBulan) + 1;
 
             $existing = SalesTarget::where([
@@ -775,12 +877,12 @@ class SalesController extends Controller
 
         $query = Sales::whereYear('tanggal', $tahun)->where('bulan', $bulan);
         
-        // Filter PS Office untuk user dengan Akses Parsial
+        // filter ps office untuk user dengan akses parsial
         if (!$this->hasFullSalesAccess()) {
             $query->whereRaw("LOWER(ps) != 'office'");
         }
 
-        // Group 1: PDU (PS -> Tanggal -> Customer -> Produk)
+        // group 1: pdu (ps -> tanggal -> customer -> produk)
         $pduRaw = (clone $query)->select('ps', 'tanggal', 'nama_customer', 'nama_produk', DB::raw('SUM(qty) as total_qty'), DB::raw('SUM(harga_nett) as total_nett'))
             ->groupBy('ps', 'tanggal', 'nama_customer', 'nama_produk')
             ->orderBy('ps')->orderBy('tanggal')->orderBy('nama_customer')->orderBy('nama_produk')
@@ -818,6 +920,23 @@ class SalesController extends Controller
             ->get()
             ->keyBy('ps');
 
+        $bulanIndex = array_search($bulan, $this->urutanBulan);
+        if ($bulanIndex === false) $bulanIndex = 0;
+        
+        $tahunPrevMonth = $tahun;
+        if ($bulanIndex == 0) { // Januari
+            $bulanPrev = 'Desember';
+            $tahunPrevMonth = $tahun - 1;
+        } else {
+            $bulanPrev = $this->urutanBulan[$bulanIndex - 1];
+        }
+
+        $salesPrevMonthQuery = Sales::whereYear('tanggal', $tahunPrevMonth)->where('bulan', $bulanPrev);
+        if (!$this->hasFullSalesAccess()) {
+            $salesPrevMonthQuery->whereRaw("LOWER(ps) != 'office'");
+        }
+        $salesPrevMonth = $salesPrevMonthQuery->select('ps', DB::raw('SUM(harga_nett) as total_sales'))->groupBy('ps')->get()->keyBy('ps');
+
         $pduList = array_values($pdu);
         foreach ($pduList as &$psData) {
             $psData['tanggal'] = array_values($psData['tanggal']);
@@ -826,9 +945,16 @@ class SalesController extends Controller
             }
             $targetObj = $targetData->get($psData['nama']);
             $psData['target_amount'] = $targetObj ? (float)$targetObj->target_amount : 0;
+            
+            $sPrevValActual = isset($salesPrevMonth[$psData['nama']]) ? (float)$salesPrevMonth[$psData['nama']]->total_sales : 0;
+            
+            $sVal = $psData['total_nett'];
+            $growthRate = $sPrevValActual > 0 ? round((($sVal - $sPrevValActual) / $sPrevValActual) * 100, 1) : 0;
+            if ($sPrevValActual == 0 && $sVal > 0) $growthRate = 100;
+            $psData['growth_rate'] = $growthRate;
         }
 
-        // Group 2: By Outlet (PS -> Customer)
+        // group 2: by outlet (ps -> customer)
         $outletRaw = (clone $query)->select('ps', 'nama_customer', DB::raw('SUM(harga_nett) as total_nett'))
             ->groupBy('ps', 'nama_customer')
             ->orderBy('ps')->orderBy('total_nett', 'desc')
@@ -845,7 +971,7 @@ class SalesController extends Controller
             $outlet[$ps]['total_nett'] += $row->total_nett;
         }
 
-        // Group 3: By Product (PS -> Produk)
+        // group 3: by product (ps -> produk)
         $productRaw = (clone $query)->select('ps', 'nama_produk', DB::raw('SUM(qty) as total_qty'), DB::raw('SUM(harga_nett) as total_nett'))
             ->groupBy('ps', 'nama_produk')
             ->orderBy('ps')->orderBy('total_nett', 'desc')
@@ -889,7 +1015,7 @@ class SalesController extends Controller
         return response()->json($analytics);
     }
 
-    private function applyPsFilter($query, $psTerpilih)
+    private function applyPsFilter($query, ?string $psTerpilih)
     {
         if ($psTerpilih) {
             if ($psTerpilih === 'Sales Team') {
@@ -901,7 +1027,7 @@ class SalesController extends Controller
         return $query;
     }
 
-    private function getVisualisasiDataPayload($tahun, $bulanTerpilih, $psTerpilih, $listPs)
+    private function getVisualisasiDataPayload($tahun, ?string $bulanTerpilih, ?string $psTerpilih, array $listPs)
     {
         $tahunLalu = (int)$tahun - 1;
 
@@ -950,8 +1076,7 @@ class SalesController extends Controller
             $sVal = $salesCurrent->where('bulan', $b)->sum('total_sales');
             
             $sPrevValActual = $salesLastYear->where('bulan', $b)->sum('total_sales');
-            $sPrevValManual = $targets->where('bulan', $b)->sum('sales_last_year_amount');
-            $sPrevVal = $sPrevValManual > 0 ? $sPrevValManual : $sPrevValActual;
+            $sPrevVal = $sPrevValActual;
 
             $achRate = $tVal > 0 ? round(($sVal / $tVal) * 100, 1) : 0;
             $growthRate = $sPrevVal > 0 ? round((($sVal - $sPrevVal) / $sPrevVal) * 100, 1) : 0;
@@ -1023,8 +1148,7 @@ class SalesController extends Controller
             $cumSales = $salesCurrent->whereIn('bulan', $bulanAkumulasi)->where('ps', $ps)->sum('total_sales');
             
             $cumSalesLastYearActual = $salesLastYear->whereIn('bulan', $bulanAkumulasi)->where('ps', $ps)->sum('total_sales');
-            $cumSalesLastYearManual = $targets->whereIn('bulan', $bulanAkumulasi)->where('ps', $ps)->sum('sales_last_year_amount');
-            $cumSalesLastYear = $cumSalesLastYearManual > 0 ? $cumSalesLastYearManual : $cumSalesLastYearActual;
+            $cumSalesLastYear = $cumSalesLastYearActual;
 
             $cumAchRate = $cumTarget > 0 ? round(($cumSales / $cumTarget) * 100, 1) : 0;
             $cumGrowthRate = $cumSalesLastYear > 0 ? round((($cumSales - $cumSalesLastYear) / $cumSalesLastYear) * 100, 1) : 0;

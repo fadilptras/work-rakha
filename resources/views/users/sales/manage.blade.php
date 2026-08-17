@@ -7,6 +7,7 @@
     
     @push('styles')
     <style>
+        [x-cloak] { display: none !important; }
         body { font-family: 'Outfit', sans-serif; background-color: #ede9fe; }
 
         /* == Background == */
@@ -22,7 +23,7 @@
         /* == Header Style == */
         .page-header {
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            border-radius: 1.5rem; padding: 1.5rem 2.5rem; color: white; margin-bottom: 2rem;
+            border-radius: 1.25rem; padding: 1rem 1.5rem; color: white;
             box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3); position: relative; overflow: hidden;
         }
         .page-header::before {
@@ -34,13 +35,13 @@
 
         /* == Cards & Tabs == */
         .glass-card {
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 1);
-            border-radius: 24px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 1.5rem;
+            padding: 1rem 1.5rem;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
-            padding: 28px;
         }
         /* == Modern Back Button == */
         .btn-back-modern {
@@ -56,7 +57,7 @@
             text-decoration: none;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            margin-bottom: 20px;
+            margin-bottom: 0;
             width: fit-content;
         }
         .btn-back-modern:hover { 
@@ -81,14 +82,17 @@
         }
 
         .tab-btn {
-            padding: 0.65rem 1.5rem; border-radius: 999px; font-weight: 700;
-            color: #64748b; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid transparent;
+            padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 1.25rem; font-weight: 700;
+            color: #64748b; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent;
+        }
+        @media (min-width: 768px) {
+            .tab-btn { padding: 0.5rem 1.25rem; font-size: 0.9rem; }
         }
         .tab-btn:hover { color: #3b82f6; background: #f8fafc; }
         .tab-btn.active { 
             color: #ffffff; 
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
             border-color: transparent;
         }
 
@@ -99,6 +103,15 @@
         }
         .modern-input:focus { background: #ffffff; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); outline: none; }
         .modern-label { display: block; font-size: 0.75rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+        
+        select.modern-input {
+            appearance: none; -webkit-appearance: none; -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 1rem center;
+            background-repeat: no-repeat;
+            background-size: 1.2em 1.2em;
+            padding-right: 2.5rem !important;
+        }
 
         /* == Button == */
         .btn-primary { background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
@@ -111,24 +124,22 @@
     @endpush
 
     <div class="mesh-bg flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800">
-        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-12 flex-1 flex flex-col justify-start" x-data="manageData()">
+        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start" x-data="manageData()">
 
-        {{-- Tombol Kembali --}}
-        <a href="{{ route('sales.index') }}" class="btn-back-modern">
-            <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-            Kembali ke Dashboard
-        </a>
-
-        {{-- Header Halaman --}}
+        {{-- Header Halaman & Tombol Kembali --}}
         <div class="page-header flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="header-content">
                 <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Kelola Data Sales</h1>
                 <p class="text-blue-100 text-sm md:text-base opacity-90 max-w-2xl font-medium">Satu pusat untuk semua data sales. Input manual, import dari Excel, dan kelola riwayat data.</p>
             </div>
+            <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0 mb-0">
+                <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                Kembali ke Dashboard
+            </a>
         </div>
 
         {{-- Navigasi Tab --}}
-        <div class="flex space-x-2 mb-6 bg-white p-2 rounded-full shadow-sm border border-slate-200 overflow-x-auto">
+        <div class="flex space-x-2 bg-white p-2.5 rounded-3xl shadow-sm border border-slate-200 overflow-x-auto">
             <button @click="activeTab = 'table'" :class="{ 'active': activeTab === 'table' }" class="tab-btn whitespace-nowrap flex items-center">
                 <i class="fas fa-table mr-2"></i> Riwayat Data
             </button>
@@ -136,14 +147,14 @@
                 <i class="fas fa-keyboard mr-2"></i> Input Manual
             </button>
             <button @click="activeTab = 'import'" :class="{ 'active': activeTab === 'import' }" class="tab-btn whitespace-nowrap flex items-center">
-                <i class="fas fa-cloud-upload-alt mr-2"></i> Import / Export
+                <i class="fas fa-cloud-upload-alt mr-2"></i> Import Data
             </button>
         </div>
 
         {{-- [TAB 1] Tabel Riwayat Data --}}
-        <div x-show="activeTab === 'table'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+        <div x-show="activeTab === 'table'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-4 flex-1 flex flex-col">
             {{-- Form Filter Pencarian --}}
-            <div class="glass-card mb-6 relative z-10 p-4">
+            <div class="glass-card relative z-10">
                 <form action="{{ route('sales.manage') }}" method="GET">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 md:gap-4 items-end">
                         {{-- Pencarian --}}
@@ -160,7 +171,7 @@
                         {{-- Filter Customer --}}
                         <div class="lg:col-span-4 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Customer</label>
-                            <select name="nama_customer" class="modern-input">
+                            <select name="nama_customer" class="modern-input" onchange="this.form.submit()">
                                 <option value="">Semua Customer</option>
                                 @foreach($listCustomer as $customer)
                                     <option value="{{ $customer }}" {{ request('nama_customer') == $customer ? 'selected' : '' }}>{{ $customer }}</option>
@@ -171,7 +182,7 @@
                         {{-- Filter Produk --}}
                         <div class="lg:col-span-4 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Produk</label>
-                            <select name="nama_produk" class="modern-input">
+                            <select name="nama_produk" class="modern-input" onchange="this.form.submit()">
                                 <option value="">Semua Produk</option>
                                 @foreach($listProduk as $produk)
                                     <option value="{{ $produk }}" {{ request('nama_produk') == $produk ? 'selected' : '' }}>{{ $produk }}</option>
@@ -182,7 +193,7 @@
                         {{-- Filter PS --}}
                         <div class="lg:col-span-2 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">PS</label>
-                            <select name="ps" class="modern-input !px-2">
+                            <select name="ps" class="modern-input !px-2" onchange="this.form.submit()">
                                 <option value="">Semua</option>
                                 @foreach($listPs as $ps)
                                     <option value="{{ $ps }}" {{ request('ps') == $ps ? 'selected' : '' }}>{{ $ps }}</option>
@@ -193,13 +204,13 @@
                         {{-- Filter Tanggal --}}
                         <div class="lg:col-span-3 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tanggal</label>
-                            <input type="date" name="tanggal" value="{{ request('tanggal') }}" class="modern-input !px-2 text-sm">
+                            <input type="date" name="tanggal" value="{{ request('tanggal') }}" class="modern-input !px-2 text-sm" onchange="this.form.submit()">
                         </div>
 
                         {{-- Filter Bulan --}}
                         <div class="lg:col-span-2 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Bulan</label>
-                            <select name="bulan" class="modern-input !px-2">
+                            <select name="bulan" class="modern-input !px-2" onchange="this.form.submit()">
                                 <option value="">Semua</option>
                                 @foreach($listBulan as $bulan)
                                     <option value="{{ $bulan }}" {{ request('bulan') == $bulan ? 'selected' : '' }}>{{ $bulan }}</option>
@@ -210,7 +221,7 @@
                         {{-- Filter Tahun --}}
                         <div class="lg:col-span-2 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tahun</label>
-                            <select name="tahun" class="modern-input !px-2">
+                            <select name="tahun" class="modern-input !px-2" onchange="this.form.submit()">
                                 <option value="">Semua</option>
                                 @foreach($listTahun as $tahun)
                                     <option value="{{ $tahun }}" {{ request('tahun') == $tahun ? 'selected' : '' }}>{{ $tahun }}</option>
@@ -220,21 +231,21 @@
                         
                         {{-- Action Buttons --}}
                         <div class="lg:col-span-3 md:col-span-2 flex gap-2">
-                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg text-sm transition-all shadow-sm flex items-center justify-center flex-1">
-                                <i class="fas fa-filter mr-1.5 text-xs"></i> Terapkan
-                            </button>
                             @if(request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']))
-                                <a href="{{ route('sales.manage') }}" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 px-3 rounded-lg text-sm transition-all shadow-sm flex items-center justify-center w-10 shrink-0" title="Reset Filter">
-                                    <i class="fas fa-sync-alt"></i>
+                                <a href="{{ route('sales.manage') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 px-2 rounded-xl text-xs md:text-sm transition-all flex items-center justify-center border-[1.5px] border-slate-200" title="Reset Filter">
+                                    <i class="fas fa-undo mr-1"></i> Reset
                                 </a>
                             @endif
+                            <button type="submit" formaction="{{ route('sales.export') }}" class="{{ request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'w-1/2' : 'w-full' }} bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-3 px-2 rounded-xl text-xs md:text-sm transition-all flex items-center justify-center border-[1.5px] border-emerald-200" title="Export Hasil Filter ke CSV">
+                                <i class="fas fa-file-export mr-1"></i> Export
+                            </button>
                         </div>
                     </div>
                 </form>
             </div>
 
             {{-- Tabel Data --}}
-            <div class="glass-card !p-0 overflow-hidden mb-8 flex-1 flex flex-col">
+            <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col">
                 <div class="px-6 py-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl"><i class="fas fa-table"></i></div>
@@ -288,7 +299,7 @@
                                         <form action="{{ route('sales.destroy', $item->id) }}" method="POST" id="form-delete-{{ $item->id }}" class="inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="button" onclick="confirmDelete({{ $item->id }})" class="btn-danger" title="Hapus">
+                                            <button type="button" onclick="confirmDelete('{{ $item->id }}')" class="btn-danger" title="Hapus">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </form>
@@ -319,7 +330,7 @@
         </div>
 
         {{-- [TAB 2] Input Data Manual --}}
-        <div x-show="activeTab === 'input'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+        <div x-show="activeTab === 'input'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
             <div class="glass-card">
                 <h3 class="text-lg font-black text-slate-800 flex items-center mb-6">
                     <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg mr-3"><i class="fas fa-keyboard"></i></div>
@@ -410,7 +421,7 @@
         </div>
 
         {{-- [TAB 3] Import & Export --}}
-        <div x-show="activeTab === 'import'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+        <div x-show="activeTab === 'import'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div class="lg:col-span-7 glass-card border-t-4 border-t-emerald-500 flex flex-col h-full">
                     <h3 class="text-lg font-black text-slate-800 flex items-center mb-6">
@@ -448,8 +459,9 @@
                         <h4 class="font-bold text-blue-800 mb-3 flex items-center text-sm"><i class="fas fa-info-circle mr-2"></i> Petunjuk Import</h4>
                         <ul class="text-xs text-blue-700 space-y-2 list-disc list-inside font-medium leading-relaxed">
                             <li>Gunakan template <b>XLSX / CSV</b> terbaru yang didownload dari tombol di atas (tanpa kolom Bulan).</li>
-                            <li>Pastikan format <b>Tanggal</b> valid. Sistem akan otomatis mengisi bulan.</li>
-                            <li>Kolom angka (Qty, HNA, Diskon, Harga Nett) bisa <b>dibiarkan kosong</b> jika tidak ada datanya.</li>
+                            <li>Pastikan format <b>Tanggal</b> valid (contoh: 2026-08-01). Baris petunjuk pada template akan <b>otomatis diabaikan</b> oleh sistem.</li>
+                            <li><b class="text-blue-800">Penting (Auto-Sync):</b> Sistem akan mendeteksi bulan dari data Anda, lalu otomatis <b>menghapus & mengganti</b> seluruh data pada bulan tersebut.</li>
+                            <li>Kolom angka (HNA, Diskon, Harga Nett) <b>harus berupa angka murni</b> (tanpa 'Rp' atau titik ribuan).</li>
                             <li>Maksimal ukuran file <b>10MB</b>.</li>
                         </ul>
                     </div>
@@ -532,7 +544,7 @@
     <script>
         function manageData() {
             return {
-                activeTab: '{{ request()->hasAny(['search', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'table' : 'table' }}',
+                activeTab: "{{ request()->hasAny(['search', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'table' : 'table' }}",
                 showEditModal: false,
                 editUrl: '',
                 formData: { id: '', tanggal: '', bulan: '', nama_customer: '', ps: '', nama_produk: '', qty: 0, satuan: '', hna: 0, diskon: 0, harga_nett: 0 },
