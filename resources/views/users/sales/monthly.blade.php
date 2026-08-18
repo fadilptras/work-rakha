@@ -384,9 +384,10 @@
             let totalNettOutlet = 0;
             const fRp = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n||0));
 
-            if (psFilter === 'all') {
+            if (psFilter === 'all' || psFilter === 'Sales Team') {
                 let aggCust = {};
                 data.outlet.forEach(ps => {
+                    if (psFilter === 'Sales Team' && ps.nama.toLowerCase() === 'office') return;
                     totalNettOutlet += ps.total_nett;
                     if (!psColorMap[ps.nama]) {
                         psColorMap[ps.nama] = colorPalette[colorIndex % colorPalette.length];
@@ -539,7 +540,8 @@
 
                     // Isi pilihan dropdown filter Product
                     let psProductSelect = document.getElementById('filterProductPs');
-                    psProductSelect.innerHTML = '<option value="all">All</option>';
+                    let defaultOption = @json(isset($hasFullAccess) && !$hasFullAccess) ? '<option value="Sales Team">Sales Team</option>' : '<option value="all">All</option><option value="Sales Team">Sales Team</option>';
+                    psProductSelect.innerHTML = defaultOption;
                     data.product.forEach(ps => {
                         psProductSelect.innerHTML += `<option value="${ps.nama}">${ps.nama}</option>`;
                     });
@@ -549,8 +551,8 @@
                     // Isi pilihan dropdown filter PS (Project Sales)
                     let psOutletSelect = document.getElementById('filterOutletPs');
                     let psPduSelect = document.getElementById('filterPduPs');
-                    psOutletSelect.innerHTML = '<option value="all">All</option>';
-                    psPduSelect.innerHTML = '<option value="all">All</option><option value="Sales Team">Sales Team</option>';
+                    psOutletSelect.innerHTML = defaultOption;
+                    psPduSelect.innerHTML = defaultOption;
                     
                     data.outlet.forEach(ps => {
                         psOutletSelect.innerHTML += `<option value="${ps.nama}">${ps.nama}</option>`;
@@ -584,9 +586,10 @@
             const fRp = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n||0));
             const fNum = (n) => new Intl.NumberFormat('id-ID').format(n||0);
 
-            if (psFilter === 'all') {
+            if (psFilter === 'all' || psFilter === 'Sales Team') {
                 let aggProd = {};
                 data.product.forEach(ps => {
+                    if (psFilter === 'Sales Team' && ps.nama.toLowerCase() === 'office') return;
                     totalQtyProd += ps.total_qty;
                     totalNettProd += ps.total_nett;
                     ps.produk.forEach(p => {

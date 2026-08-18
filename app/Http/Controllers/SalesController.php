@@ -48,6 +48,10 @@ class SalesController extends Controller
 
     public function index(Request $request)
     {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403, 'Anda tidak memiliki hak akses ke modul Sales.');
+        }
+
         return view('users.sales.dashboard')->with([
             'title' => 'Sales Command Center',
             'hasFullAccess' => $this->hasFullSalesAccess(),
@@ -177,7 +181,8 @@ class SalesController extends Controller
     {
         if (!$this->hasAnySalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Monthly Monitoring.');
         $tahun = $request->input('tahun', date('Y'));
-        return view('users.sales.monthly', compact('tahun'));
+        $hasFullAccess = $this->hasFullSalesAccess();
+        return view('users.sales.monthly', compact('tahun', 'hasFullAccess'));
     }
 
     // simpan data dari form manual
@@ -323,15 +328,15 @@ class SalesController extends Controller
             $query->where('ps', $request->input('ps'));
         }
 
-        $sort = $request->input('sort', 'terbaru');
-        if ($sort === 'terlama') {
-            $query->orderBy('tanggal', 'asc');
+        $sort = $request->input('sort', 'terlama');
+        if ($sort === 'terbaru') {
+            $query->orderBy('tanggal', 'desc');
         } elseif ($sort === 'tertinggi') {
             $query->orderBy('harga_nett', 'desc');
         } elseif ($sort === 'terendah') {
             $query->orderBy('harga_nett', 'asc');
         } else {
-            $query->orderBy('tanggal', 'desc');
+            $query->orderBy('tanggal', 'asc');
         }
 
         $sales = $query->get();
@@ -879,7 +884,9 @@ class SalesController extends Controller
         
         // filter ps office untuk user dengan akses parsial
         if (!$this->hasFullSalesAccess()) {
-            $query->whereRaw("LOWER(ps) != 'office'");
+            $query->where(function($q) {
+                $q->whereRaw("LOWER(ps) != 'office'")->orWhereNull('ps');
+            });
         }
 
         // group 1: pdu (ps -> tanggal -> customer -> produk)
@@ -933,7 +940,9 @@ class SalesController extends Controller
 
         $salesPrevMonthQuery = Sales::whereYear('tanggal', $tahunPrevMonth)->where('bulan', $bulanPrev);
         if (!$this->hasFullSalesAccess()) {
-            $salesPrevMonthQuery->whereRaw("LOWER(ps) != 'office'");
+            $salesPrevMonthQuery->where(function($q) {
+                $q->whereRaw("LOWER(ps) != 'office'")->orWhereNull('ps');
+            });
         }
         $salesPrevMonth = $salesPrevMonthQuery->select('ps', DB::raw('SUM(harga_nett) as total_sales'))->groupBy('ps')->get()->keyBy('ps');
 
