@@ -350,8 +350,8 @@
                     <div class="grid grid-cols-1 gap-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="modern-label">Tanggal</label>
-                                <input type="date" name="tanggal" class="modern-input">
+                                <label class="modern-label">Tanggal <span class="text-red-500">*</span></label>
+                                <input type="date" name="tanggal" required class="modern-input">
                             </div>
                             <div>
                                 <label class="modern-label">Nama PS</label>
@@ -360,40 +360,40 @@
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div>
+                            <div class="md:col-span-3">
                                 <label class="modern-label">Nama Customer <span class="text-red-500">*</span></label>
-                                <input list="customer-list-options" type="text" name="nama_customer" required placeholder="Nama Customer" class="modern-input" autocomplete="off">
-                            </div>
-                            <div>
-                                <label class="modern-label">Nama Produk <span class="text-red-500">*</span></label>
-                                <input list="produk-list-options" type="text" name="nama_produk" required placeholder="Nama Barang" class="modern-input" autocomplete="off">
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="modern-label">Qty</label>
-                                    <input type="number" id="input-qty" name="qty" min="1" placeholder="0" class="modern-input">
-                                </div>
-                                <div>
-                                    <label class="modern-label">Satuan</label>
-                                    <input list="satuan-list-options" type="text" name="satuan" placeholder="Pcs/Box" class="modern-input" autocomplete="off">
-                                </div>
+                                <input list="customer-list-options" type="text" name="nama_customer" required placeholder="Nama Customer (Contoh: RSUD Sayang)" class="modern-input bg-white shadow-sm" autocomplete="off">
                             </div>
                         </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div>
-                                <label class="modern-label">HNA (Rp)</label>
-                                <input type="text" id="display-hna" placeholder="0" class="modern-input">
-                                <input type="hidden" id="input-hna" name="hna" value="0">
+
+                        <div>
+                            <div class="flex justify-between items-center mb-4 mt-6 border-t border-slate-200 pt-6">
+                                <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide flex items-center">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-box-open"></i></div>
+                                    Rincian Produk
+                                </h4>
+                                <button type="button" id="tambah-produk-btn" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-bold py-2 px-4 rounded-xl transition-all shadow-sm flex items-center">
+                                    <i class="fas fa-plus mr-2"></i> Tambah Baris Produk
+                                </button>
                             </div>
-                            <div>
-                                <label class="modern-label">Diskon (%)</label>
-                                <input type="number" id="input-diskon" name="diskon" min="0" step="0.01" placeholder="0" class="modern-input">
+                            
+                            <div class="space-y-3" id="rincian-produk-container">
+                                <!-- Vanilla JS goes here -->
                             </div>
-                            <div>
-                                <label class="modern-label text-indigo-700">Harga Nett (Rp)</label>
-                                <input type="text" id="display-harga-nett" placeholder="0" class="modern-input font-bold !bg-indigo-50 !border-indigo-200" readonly>
-                                <input type="hidden" id="input-harga-nett" name="harga_nett" value="0">
+                            
+                            <div class="mt-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-4 flex flex-col md:flex-row justify-between items-center shadow-sm gap-3">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-indigo-500 mr-3 text-lg">
+                                        <i class="fas fa-coins"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-black text-indigo-900 text-sm">Total Keseluruhan</h4>
+                                        <p class="text-[10px] text-indigo-600 font-medium mt-0.5 uppercase tracking-wider">Grand Total Penjualan</p>
+                                    </div>
+                                </div>
+                                <div class="text-right bg-white py-2 px-4 rounded-lg shadow-sm border border-indigo-50 w-full md:w-auto">
+                                    <span class="text-xl font-black text-indigo-700 tracking-tight" id="grand-total-text">Rp 0</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -553,7 +553,7 @@
     <script>
         function manageData() {
             return {
-                activeTab: "{{ request()->hasAny(['search', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'table' : 'table' }}",
+                activeTab: "{{ session('active_tab', request()->hasAny(['search', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'table' : 'table') }}",
                 showEditModal: false,
                 editUrl: '',
                 formData: { id: '', tanggal: '', bulan: '', nama_customer: '', ps: '', nama_produk: '', qty: 0, satuan: '', hna: 0, diskon: 0, harga_nett: 0 },
@@ -640,6 +640,154 @@
             });
         }
 
+        // Vanilla JS Logic untuk Form Input Multi Produk (Mengadaptasi sistem Pengajuan Barang)
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('rincian-produk-container');
+            const addBtn = document.getElementById('tambah-produk-btn');
+            const grandTotalEl = document.getElementById('grand-total-text');
+            let productCounter = 0;
+
+            function formatRupiah(num) {
+                return new Intl.NumberFormat('id-ID').format(Math.round(num));
+            }
+
+            function calculateGrandTotal() {
+                let total = 0;
+                document.querySelectorAll('.input-harga-nett').forEach(input => {
+                    total += parseFloat(input.value) || 0;
+                });
+                if(grandTotalEl) grandTotalEl.textContent = 'Rp ' + formatRupiah(total);
+            }
+
+            function addProductRow() {
+                productCounter++;
+                const rowId = 'product-row-' + Date.now() + Math.random().toString(36).substr(2, 9);
+                const row = document.createElement('div');
+                row.className = 'p-3 bg-white border border-slate-200 rounded-xl relative shadow-sm hover:border-blue-300 transition-colors animate-[fadeIn_0.3s_ease-in-out]';
+                row.id = rowId;
+                
+                row.innerHTML = `
+                    <div class="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
+                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md product-number-badge">Produk #${productCounter}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
+                        <div>
+                            <label class="modern-label !text-[10px] !mb-1">Nama Produk <span class="text-red-500">*</span></label>
+                            <input list="produk-list-options" type="text" name="nama_produk[]" required placeholder="Nama Barang" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100" autocomplete="off">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="modern-label !text-[10px] !mb-1">Qty <span class="text-red-500">*</span></label>
+                                <input type="number" name="qty[]" min="1" required placeholder="0" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100 input-qty">
+                            </div>
+                            <div>
+                                <label class="modern-label !text-[10px] !mb-1">Satuan</label>
+                                <input list="satuan-list-options" type="text" name="satuan[]" placeholder="Pcs/Box" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100" autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="modern-label !text-[10px] !mb-1">HNA (Rp)</label>
+                                <input type="text" placeholder="0" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100 input-hna-display" autocomplete="off">
+                                <input type="hidden" name="hna[]" class="input-hna-raw" value="0">
+                            </div>
+                            <div>
+                                <label class="modern-label !text-[10px] !mb-1">Diskon (%)</label>
+                                <input type="number" name="diskon[]" step="0.01" min="0" placeholder="0" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100 input-diskon">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex justify-between items-center border-t border-slate-100 pt-3">
+                        <button type="button" class="btn-remove-product text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors flex items-center shadow-sm border border-red-100" title="Hapus baris ini">
+                            <i class="fas fa-trash-alt mr-1.5"></i> Hapus Produk
+                        </button>
+                        
+                        <div class="flex items-center">
+                            <span class="text-[10px] font-bold text-slate-400 mr-2 uppercase tracking-wider">Subtotal Nett:</span>
+                            <span class="text-indigo-600 font-black text-lg subtotal-text">Rp 0</span>
+                            <input type="hidden" name="harga_nett[]" value="0" class="input-harga-nett">
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(row);
+                
+                // Add event listeners for calculation
+                const qtyInput = row.querySelector('.input-qty');
+                const hnaDisplay = row.querySelector('.input-hna-display');
+                const hnaRaw = row.querySelector('.input-hna-raw');
+                const diskonInput = row.querySelector('.input-diskon');
+                const subtotalText = row.querySelector('.subtotal-text');
+                const hargaNettInput = row.querySelector('.input-harga-nett');
+                
+                function calculateRow() {
+                    const qty = parseFloat(qtyInput.value) || 0;
+                    const hna = parseFloat(hnaRaw.value) || 0;
+                    const diskon = parseFloat(diskonInput.value) || 0;
+                    const subtotal = qty * hna;
+                    const diskonNominal = subtotal * (diskon / 100);
+                    const finalNett = Math.max(0, subtotal - diskonNominal);
+                    
+                    hargaNettInput.value = finalNett;
+                    subtotalText.textContent = 'Rp ' + formatRupiah(finalNett);
+                    calculateGrandTotal();
+                }
+                
+                hnaDisplay.addEventListener('input', function() {
+                    // Hanya izinkan angka
+                    let val = this.value.replace(/[^0-9]/g, '');
+                    if (val !== "") {
+                        this.value = formatRupiah(val);
+                        hnaRaw.value = val; // Simpan nilai asli tanpa titik
+                    } else {
+                        this.value = "";
+                        hnaRaw.value = 0;
+                    }
+                    calculateRow();
+                });
+                
+                qtyInput.addEventListener('input', calculateRow);
+                diskonInput.addEventListener('input', calculateRow);
+                
+                // Add event listener for delete
+                const removeBtn = row.querySelector('.btn-remove-product');
+                removeBtn.addEventListener('click', function() {
+                    row.remove();
+                    updateProductNumbers();
+                    calculateGrandTotal();
+                    checkRemoveButtons();
+                });
+                
+                checkRemoveButtons();
+            }
+            
+            function updateProductNumbers() {
+                const badges = container.querySelectorAll('.product-number-badge');
+                badges.forEach((badge, index) => {
+                    badge.textContent = 'Produk #' + (index + 1);
+                });
+                productCounter = badges.length;
+            }
+            
+            function checkRemoveButtons() {
+                const removeBtns = container.querySelectorAll('.btn-remove-product');
+                if(removeBtns.length <= 1) {
+                    removeBtns.forEach(btn => btn.style.display = 'none');
+                } else {
+                    removeBtns.forEach(btn => btn.style.display = 'flex');
+                }
+            }
+            
+            if(addBtn && container) {
+                addBtn.addEventListener('click', addProductRow);
+                // Initialize first row
+                addProductRow();
+            }
+        });
+
         // Bulk Delete Logic
         document.addEventListener('DOMContentLoaded', function() {
             const checkAll = document.getElementById('check-all');
@@ -664,13 +812,19 @@
 
             if (checkAll) {
                 checkAll.addEventListener('change', function() {
-                    rowCheckboxes.forEach(cb => cb.checked = this.checked);
+                    rowCheckboxes.forEach(cb => {
+                        cb.checked = this.checked;
+                    });
                     updateBulkDeleteButton();
                 });
             }
 
             rowCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateBulkDeleteButton);
+                cb.addEventListener('change', function() {
+                    const allChecked = document.querySelectorAll('.row-checkbox:checked').length === rowCheckboxes.length;
+                    if (checkAll) checkAll.checked = allChecked;
+                    updateBulkDeleteButton();
+                });
             });
         });
 
