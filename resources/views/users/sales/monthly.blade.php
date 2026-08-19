@@ -37,15 +37,15 @@
 
         /* == Modern Back Button == */
         .btn-back-modern {
-            display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 18px 8px 8px;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 14px 6px 6px;
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.9);
             border-radius: 9999px;
             color: #1e293b;
-            font-size: 0.9rem; font-weight: 700;
+            font-size: 0.8rem; font-weight: 700;
             text-decoration: none;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
@@ -59,12 +59,12 @@
             color: #1d4ed8;
         }
         .btn-back-modern .icon-circle {
-            width: 32px; height: 32px;
+            width: 26px; height: 26px;
             background: #fff;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             color: #3b82f6;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             box-shadow: 0 2px 6px rgba(0,0,0,0.06);
             transition: transform 0.3s ease;
         }
@@ -152,24 +152,39 @@
     <div class="mesh-bg min-h-screen">
         <div class="p-4 sm:p-6 lg:p-10 w-full max-w-7xl mx-auto space-y-4 relative z-10">
         
-        <div class="page-header flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="page-header flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="header-content">
                 <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Monthly Monitoring</h1>
                 <p class="text-blue-100 text-sm md:text-base opacity-90 max-w-2xl font-medium">Pantau detail performa bulanan dan drill-down data penjualan.</p>
             </div>
-            <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0 mb-0">
+            <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0 mb-0 self-end md:self-auto">
                 <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                 Kembali ke Dashboard
             </a>
         </div>
 
         <div class="glass-panel border-t-4 border-t-blue-500">
-            <div class="flex items-center justify-between mb-0 cursor-pointer group" onclick="toggleMonthGrid()">
-                <h3 class="flex flex-wrap items-center gap-2 text-base font-black text-slate-700 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
-                    <span><i class="fas fa-calendar-alt text-blue-500 mr-2"></i> Pilih Bulan (Tahun {{ $tahun }})</span>
-                    <span id="selectedMonthLabel" class="hidden px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-bold leading-none"></span>
-                </h3>
-                <i class="fas fa-chevron-up text-slate-500 transition-transform duration-300" id="monthGridToggleIcon"></i>
+            <div class="flex items-center justify-between mb-0">
+                <div class="flex-1 flex items-center gap-4">
+                    <h3 class="flex flex-wrap items-center gap-2 text-base font-black text-slate-700 uppercase tracking-wide cursor-pointer group hover:text-blue-600 transition-colors" onclick="toggleMonthGrid()">
+                        <span><i class="fas fa-calendar-alt text-blue-500 mr-2"></i> Pilih Bulan</span>
+                        <span id="selectedMonthLabel" class="hidden px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-bold leading-none"></span>
+                    </h3>
+                    
+                    <form method="GET" action="{{ route('sales.monthly') }}" class="relative inline-block z-20">
+                        <select name="tahun" class="appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-1.5 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="this.form.submit()">
+                            @foreach($listTahun ?? [date('Y')] as $t)
+                                <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>Tahun {{ $t }}</option>
+                            @endforeach
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-blue-700">
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </div>
+                    </form>
+                </div>
+                <div class="ml-2 cursor-pointer" onclick="toggleMonthGrid()">
+                    <i class="fas fa-chevron-up text-slate-500 transition-transform duration-300" id="monthGridToggleIcon"></i>
+                </div>
             </div>
             
             <div id="monthGridContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-2 mt-4 transition-all duration-500 origin-top">
@@ -435,7 +450,7 @@
                         ps.customer.forEach(c => {
                             htmlOutlet += `
                                 <tr class="row-level-2 hover:bg-slate-50 transition-colors">
-                                    <td class="py-2 pr-4 pl-12"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${c.nama}</span></div></td>
+                                    <td class="py-2 pr-4 pl-6 md:pl-10"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${c.nama}</span></div></td>
                                     <td class="px-4 py-2 text-right border-l border-slate-200">${fRp(c.nett)}</td>
                                 </tr>
                             `;
@@ -622,7 +637,7 @@
                     ps.produk.forEach(p => {
                         htmlProd += `
                             <tr class="row-level-2 hover:bg-slate-50 transition-colors">
-                                <td class="py-2 pr-4 pl-12"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${p.nama}</span></div></td>
+                                <td class="py-2 pr-4 pl-6 md:pl-10"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${p.nama}</span></div></td>
                                 <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(p.qty)}</td>
                                 <td class="px-4 py-2 text-right border-l border-slate-200">${fRp(p.nett)}</td>
                             </tr>
@@ -700,7 +715,7 @@
                     Object.values(tgl.customer).forEach(cust => {
                         htmlPdu += `
                             <tr class="row-level-2 hover:bg-slate-50 transition-colors">
-                                <td class="py-2 pr-4 pl-12"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4 text-center"></i><span>${cust.nama}</span></div></td>
+                                <td class="py-2 pr-4 pl-4 md:pl-6"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4 text-center"></i><span>${cust.nama}</span></div></td>
                                 <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(cust.total_qty)}</td>
                                 <td class="px-4 py-2 text-right text-emerald-600 border-l border-slate-200">${fRp(cust.total_nett)}</td>
                             </tr>
@@ -708,7 +723,7 @@
                         Object.values(cust.produk).forEach(prod => {
                             htmlPdu += `
                                 <tr class="row-level-3 hover:bg-slate-50 transition-colors">
-                                    <td class="py-2 pr-4 pl-12 break-words whitespace-normal leading-tight"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${prod.nama}</span></div></td>
+                                    <td class="py-2 pr-4 pl-8 md:pl-10 break-words whitespace-normal leading-tight"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${prod.nama}</span></div></td>
                                     <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(prod.qty)}</td>
                                     <td class="px-4 py-2 text-right text-emerald-600 border-l border-slate-200">${fRp(prod.nett)}</td>
                                 </tr>
@@ -745,7 +760,7 @@
                     sortedTgl.forEach(tgl => {
                         htmlPdu += `
                             <tr class="row-level-2 hover:bg-slate-50 transition-colors">
-                                <td class="py-2 pr-4 pl-12"><div class="flex items-start"><i class="far fa-calendar-alt mr-3 mt-1 text-blue-500 w-4 text-center"></i><span>${tgl.nama}</span></div></td>
+                                <td class="py-2 pr-4 pl-4 md:pl-6"><div class="flex items-start"><i class="far fa-calendar-alt mr-3 mt-1 text-blue-500 w-4 text-center"></i><span>${tgl.nama}</span></div></td>
                                 <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(tgl.total_qty)}</td>
                                 <td class="px-4 py-2 text-right text-emerald-600 border-l border-slate-200">${fRp(tgl.total_nett)}</td>
                             </tr>
@@ -753,7 +768,7 @@
                         tgl.customer.forEach(cust => {
                             htmlPdu += `
                                 <tr class="row-level-3 hover:bg-slate-50 transition-colors">
-                                    <td class="py-2 pr-4 pl-12"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4 text-center"></i><span>${cust.nama}</span></div></td>
+                                    <td class="py-2 pr-4 pl-4 md:pl-6"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4 text-center"></i><span>${cust.nama}</span></div></td>
                                     <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(cust.total_qty)}</td>
                                     <td class="px-4 py-2 text-right text-emerald-600 border-l border-slate-200">${fRp(cust.total_nett)}</td>
                                 </tr>
@@ -761,7 +776,7 @@
                             cust.produk.forEach(prod => {
                                 htmlPdu += `
                                     <tr class="row-level-4 hover:bg-slate-50 transition-colors">
-                                        <td class="py-2 pr-4 pl-12 break-words whitespace-normal leading-tight"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${prod.nama}</span></div></td>
+                                        <td class="py-2 pr-4 pl-8 md:pl-10 break-words whitespace-normal leading-tight"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${prod.nama}</span></div></td>
                                         <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(prod.qty)}</td>
                                         <td class="px-4 py-2 text-right text-emerald-600 border-l border-slate-200">${fRp(prod.nett)}</td>
                                     </tr>

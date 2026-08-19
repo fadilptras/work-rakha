@@ -23,9 +23,9 @@ class SalesController extends Controller
         $isTopManagement = \Illuminate\Support\Str::contains($jabatan, 'direktur') || $divisi === 'top management';
         $isKepalaDivisiMO = (($user->is_kepala_divisi == 1) || \Illuminate\Support\Str::contains($jabatan, 'kepala')) && in_array($divisi, ['marketing dan operasional']);
         $isAdminMarketing = \Illuminate\Support\Str::contains($jabatan, 'admin support');
-        $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
+        // $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
 
-        return $isTopManagement || $isKepalaDivisiMO || $isAdminMarketing || $isTest;
+        return $isTopManagement || $isKepalaDivisiMO || $isAdminMarketing;
     }
 
     // akses div marketing & operasional
@@ -182,32 +182,68 @@ class SalesController extends Controller
         if (!$this->hasAnySalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Monthly Monitoring.');
         $tahun = $request->input('tahun', date('Y'));
         $hasFullAccess = $this->hasFullSalesAccess();
-        return view('users.sales.monthly', compact('tahun', 'hasFullAccess'));
+
+        $listTahun = Sales::whereNotNull('tanggal')
+            ->selectRaw('DISTINCT YEAR(tanggal) as tahun')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun')
+            ->toArray();
+            
+        if (!in_array(date('Y'), $listTahun)) {
+            array_unshift($listTahun, date('Y'));
+        }
+
+        return view('users.sales.monthly', compact('tahun', 'hasFullAccess', 'listTahun'));
     }
 
     // simpan data dari form manual
     public function storeManual(Request $request)
     {
         $request->validate([
-            'tanggal'       => 'nullable|date',
-            'nama_customer' => 'nullable|string|max:255',
-            'nama_produk'   => 'nullable|string|max:255',
-            'qty'           => 'nullable|integer|min:1',
-            'satuan'        => 'nullable|string|max:50',
-            'hna'           => 'nullable|numeric|min:0',
-            'diskon'        => 'nullable|numeric|min:0',
-            'harga_nett'    => 'nullable|numeric|min:0',
-            'ps'            => 'nullable|string|max:255',
+            'tanggal'         => 'required|date',
+            'nama_customer'   => 'nullable|string|max:255',
+            'ps'              => 'nullable|string|max:255',
+            'nama_produk'     => 'required|array|min:1',
+            'nama_produk.*'   => 'nullable|string|max:255',
+            'qty'             => 'required|array|min:1',
+            'qty.*'           => 'nullable|integer|min:1',
+            'satuan'          => 'required|array',
+            'satuan.*'        => 'nullable|string|max:50',
+            'hna'             => 'required|array',
+            'hna.*'           => 'nullable|numeric|min:0',
+            'diskon'          => 'required|array',
+            'diskon.*'        => 'nullable|numeric|min:0',
+            'harga_nett'      => 'required|array',
+            'harga_nett.*'    => 'nullable|numeric|min:0',
         ]);
 
-        $data = $request->except('bulan');
-        if ($request->filled('tanggal')) {
-            $data['bulan'] = ['01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei','06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember'][date('m', strtotime($request->tanggal))];
+        $tanggal = $request->tanggal;
+        $customer = $request->nama_customer;
+        $ps = $request->ps;
+        $bulan = null;
+
+        if ($tanggal) {
+            $bulan = ['01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei','06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember'][date('m', strtotime($tanggal))];
         }
 
-        Sales::create($data);
+        foreach ($request->nama_produk as $index => $produk) {
+            if (empty($produk)) continue; // skip baris yang nama produknya kosong
 
-        return redirect()->back()->with('success', 'Data sales manual berhasil disimpan!');
+            Sales::create([
+                'tanggal' => $tanggal,
+                'nama_customer' => $customer,
+                'ps' => $ps,
+                'bulan' => $bulan,
+                'nama_produk' => $produk,
+                'qty' => $request->qty[$index] ?? null,
+                'satuan' => $request->satuan[$index] ?? null,
+                'hna' => $request->hna[$index] ?? null,
+                'diskon' => $request->diskon[$index] ?? null,
+                'harga_nett' => $request->harga_nett[$index] ?? null,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Data sales manual berhasil disimpan!')->with('active_tab', 'input');
     }
 
     // import data dari excel
@@ -225,13 +261,13 @@ class SalesController extends Controller
             $count = number_format($import->importedCount, 0, ',', '.');
             
             if ($import->importedCount > 0) {
-                return redirect()->back()->with('success', "Sukses! $count baris data telah diimpor, me-refresh data untuk periode: $months.");
+                return redirect()->back()->with('success', "Sukses! $count baris data telah diimpor, me-refresh data untuk periode: $months.")->with('active_tab', 'import');
             } else {
-                return redirect()->back()->with('success', 'File berhasil diproses namun tidak ada baris data valid yang diimpor.');
+                return redirect()->back()->with('success', 'File berhasil diproses namun tidak ada baris data valid yang diimpor.')->with('active_tab', 'import');
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Upload Excel Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            return redirect()->back()->with('error', 'Gagal mengimpor data! Pastikan format tanggal dan angka di Excel sudah benar. (Info sistem: ' . $e->getMessage() . ')');
+            return redirect()->back()->with('error', 'Gagal mengimpor data! Pastikan format tanggal dan angka di Excel sudah benar. (Info sistem: ' . $e->getMessage() . ')')->with('active_tab', 'import');
         }
     }
 
@@ -1278,4 +1314,3 @@ class SalesController extends Controller
         }
     }
 }
-
