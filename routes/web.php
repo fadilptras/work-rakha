@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\AdminPengajuanDanaController;
 use App\Http\Controllers\Admin\AdminLemburController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AgendaController;
+use App\Http\Controllers\SalesController;
 
 use App\Http\Controllers\Admin\AdminAgendaController;
 use App\Http\Controllers\CrmController;
@@ -30,9 +31,10 @@ use App\Http\Controllers\PengajuanBarangController;
 use App\Http\Controllers\Admin\AdminPengajuanBarangController;
 use App\Http\Controllers\Admin\AdminHolidayController;
 use App\Http\Controllers\KpiController;
-use App\Http\Controllers\Admin\AdminBarangController;
+use App\Http\Controllers\Admin\AdminKpiController;
+use App\Http\Controllers\Admin\AdminKpiIndicatorController;
 use App\Http\Controllers\Admin\SupplierController;
-use App\Http\Controllers\SalesController;
+use App\Http\Controllers\Admin\AdminBarangController;
 
 // Awalan
 Route::get('/', fn() => redirect()->route('login'));
@@ -64,18 +66,13 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
         return view("users.dashboard.dashboard_{$viewSuffix}", ['title' => 'Dashboard']);
     })->name('dashboard');
 
-    // KPI
-    // KPI Routes
-    Route::get('/kpi', [App\Http\Controllers\KpiController::class, 'index'])->name('kpi.index');
-    Route::get('/kpi/evaluate/{id}', [App\Http\Controllers\KpiController::class, 'evaluate'])->name('kpi.evaluate');
-    Route::post('/kpi/evaluate/{id}', [App\Http\Controllers\KpiController::class, 'storeEvaluate'])->name('kpi.storeEvaluate');
-    Route::post('/kpi/approve/{id}', [App\Http\Controllers\KpiController::class, 'approve'])->name('kpi.approve');
-    Route::get('/kpi/export-pdf/{id}', [App\Http\Controllers\KpiController::class, 'exportPdf'])->name('kpi.exportPdf');
-
     // Absensi
     Route::get('/absen', [AbsenController::class, 'absen'])->name('absen');
     Route::post('/absen', [AbsenController::class, 'store'])->name('absen.store');
     Route::patch('/absen/keluar/{absensi}', [AbsenController::class, 'updateKeluar'])->name('absen.keluar');
+    
+    // KPI
+    Route::get('/kpi', [KpiController::class, 'index'])->name('kpi.index');
 
     // Lembur
     Route::post('/absen/lembur', [AbsenController::class, 'storeLembur'])->name('absen.lembur.store');
@@ -154,27 +151,21 @@ Route::controller(CrmController::class)->group(function () {
 });
 
 Route::controller(SalesController::class)->prefix('sales')->name('sales.')->group(function () {
-    Route::get('/', 'index')->name('index');
+    Route::get('/', 'index')->name('index'); 
+    Route::get('/analytics', 'analytics')->name('analytics');
+    Route::get('/monthly', 'monthly')->name('monthly');
+    Route::get('/manage', 'manage')->name('manage');
     Route::post('/manual', 'storeManual')->name('store_manual');
     Route::post('/import', 'importExcel')->name('import_excel');
     Route::get('/template', 'downloadTemplate')->name('download_template');
-
-    // Halaman Monitoring
-    Route::get('/monitoring', 'monitoring')->name('monitoring');
-    Route::get('/monitoring/data', 'monitoringData')->name('monitoring.data');
-    
-    // Halaman Target
-    Route::get('/target', 'target')->name('target');
-    Route::post('/target', 'storeTarget')->name('target.store');
-
-    // Halaman Visualisasi Analytics (Power BI style)
-    Route::get('/visualisasi', 'visualisasi')->name('visualisasi');
-    Route::get('/visualisasi/data', 'visualisasiData')->name('visualisasi.data');
-
-    // Halaman Riwayat & Kelola Data
-    Route::get('/history', 'history')->name('history');
+    Route::get('/export', 'export')->name('export');
+    Route::delete('/bulk-destroy', 'bulkDestroy')->name('bulk_destroy');
     Route::put('/{sale}', 'update')->name('update');
     Route::delete('/{sale}', 'destroy')->name('destroy');
+    Route::post('/target', 'storeTarget')->name('target.store');
+    Route::get('/monitoring/data', 'monitoringData')->name('monitoring.data');
+    Route::get('/monthly-detail', 'monthlyDetailData')->name('monthly.detail');
+    Route::get('/visualisasi/data', 'visualisasiData')->name('visualisasi.data');
 });
 
     Route::resource('aktivitas', AktivitasController::class)
@@ -213,14 +204,12 @@ Route::controller(SalesController::class)->prefix('sales')->name('sales.')->grou
             
             // Tambahan untuk Admin (Approver 4) di sisi user
             Route::post('/{pengajuanBarang}/update-monitoring', 'updateMonitoring')->name('updateMonitoring');
+            Route::post('/{pengajuanBarang}/konfirmasi-proses', 'konfirmasiProses')->name('konfirmasiProses');
+            Route::post('/{pengajuanBarang}/migrasi-termin-lama', 'migrasiTerminLama')->name('migrasiTerminLama');
         });
-        
-
 });
 
 Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('barangs', AdminBarangController::class);
-    Route::resource('suppliers', SupplierController::class);
     
     Route::get('/', fn() => redirect()->route('admin.employees.index'));
 
@@ -315,24 +304,26 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
         Route::delete('/{agenda}', [AdminAgendaController::class, 'destroy'])->name('destroy');
     });
 
-    // KPI Admin (Evaluasi)
-    Route::prefix('kpi')->name('kpi.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\AdminKpiController::class, 'index'])->name('index');
-        Route::get('/evaluate/{id}', [App\Http\Controllers\Admin\AdminKpiController::class, 'evaluate'])->name('evaluate');
-        Route::post('/evaluate/{id}', [App\Http\Controllers\Admin\AdminKpiController::class, 'storeEvaluate'])->name('storeEvaluate');
-        Route::post('/approve/{id}', [App\Http\Controllers\Admin\AdminKpiController::class, 'approve'])->name('approve');
-        
-        // KPI Indicators
-        Route::resource('indicators', App\Http\Controllers\Admin\AdminKpiIndicatorController::class)->names('indicators');
-    });
-
-
     Route::prefix('aktivitas')->name('aktivitas.')->group(function () {
         Route::get('/', [AdminAktivitasController::class, 'index'])->name('index');
         
         // Tambahkan ini:
         Route::get('/download-pdf', [AdminAktivitasController::class, 'downloadPdf'])->name('downloadPdf');
         Route::get('/download-excel', [AdminAktivitasController::class, 'downloadExcel'])->name('downloadExcel');
+    });
+
+    Route::prefix('kpi')->name('kpi.')->group(function () {
+        Route::get('/', [AdminKpiController::class, 'index'])->name('index');
+        Route::get('/{id}/evaluate', [AdminKpiController::class, 'evaluate'])->name('evaluate');
+        Route::post('/{id}/evaluate', [AdminKpiController::class, 'storeEvaluate'])->name('storeEvaluate');
+        Route::post('/{id}/approve', [AdminKpiController::class, 'approve'])->name('approve');
+        
+        Route::prefix('indicators')->name('indicators.')->group(function () {
+            Route::get('/', [AdminKpiIndicatorController::class, 'index'])->name('index');
+            Route::post('/', [AdminKpiIndicatorController::class, 'store'])->name('store');
+            Route::put('/{indicator}', [AdminKpiIndicatorController::class, 'update'])->name('update');
+            Route::delete('/{indicator}', [AdminKpiIndicatorController::class, 'destroy'])->name('destroy');
+        });
     });
 
     Route::controller(AdminCrmController::class)->prefix('crm')->name('crm.')->group(function () {
@@ -374,9 +365,13 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
         Route::get('/{pengajuanBarang}/download', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'downloadPDF'])->name('downloadPdf');
         Route::put('/{pengajuanBarang}/status', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'updateStatus'])->name('updateStatus');
         Route::post('/{pengajuanBarang}/update-monitoring', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'updateMonitoring'])->name('updateMonitoring');
+        Route::post('/{pengajuanBarang}/konfirmasi-proses', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'konfirmasiProses'])->name('konfirmasiProses');
+        Route::post('/{pengajuanBarang}/migrasi-termin-lama', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'migrasiTerminLama'])->name('migrasiTerminLama');
     });
     
     Route::resource('holidays', AdminHolidayController::class);
+    Route::resource('suppliers', SupplierController::class);
+    Route::resource('barangs', AdminBarangController::class);
 
     // [SECURITY] Route sinkronisasi Fonnte — hanya admin yang bisa akses
     Route::get('/fonnte-sync-group', function () {
