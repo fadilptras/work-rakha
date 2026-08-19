@@ -20,7 +20,7 @@ class PengajuanBarangController extends Controller
         $title = 'Pengajuan Barang';
         $totalPengajuan = Auth::user()->pengajuanBarangs()->count();
 
-        // Skema Ringan: Ambil murni daftar supplier dari database (tabel suppliers)
+        // ambil daftar supplier
         $supplierList = Cache::remember('supplier_list_dropdown', 300, function () {
             if (Schema::hasTable('suppliers')) {
                 $dbSuppliers = \App\Models\Supplier::orderBy('nama_supplier')->pluck('nama_supplier')->toArray();
@@ -31,7 +31,7 @@ class PengajuanBarangController extends Controller
             return [];
         });
 
-        // Skema Ringan: Ambil murni daftar barang dari database (tabel barangs)
+        // ambil daftar barang
         $barangList = Cache::remember('barang_list_dropdown', 300, function () {
             if (Schema::hasTable('barangs')) {
                 $dbBarangs = \App\Models\Barang::orderBy('nama_barang')->pluck('nama_barang')->toArray();
@@ -63,27 +63,27 @@ class PengajuanBarangController extends Controller
         ]);
     }
 
-    /**
-     * Menampilkan seluruh pengajuan barang untuk keperluan pemantauan khusus oleh manajemen.
-     * Hanya dapat diakses oleh divisi/jabatan tertentu sesuai kebijakan perusahaan.
-     */
+    // tampilkan semua pengajuan barang untuk pemantauan (akses approver/admin)
     public function monitoringAll(Request $request)
     {
         $user = Auth::user();
         
-        // 1. Validasi Otorisasi: Cek apakah user berhak mengakses fitur monitoring
-        $isTopManagement = ($user->divisi === 'Top Management');
-        $isKadivMO = ($user->is_kepala_divisi == 1 && $user->divisi === 'Marketing dan Operasional');
-        $isKadivFG = ($user->is_kepala_divisi == 1 && $user->divisi === 'Finance dan Gudang');
+        // cek hak akses (hanya approver & admin)
+        $isApprover = \App\Models\User::query()
+            ->where('approver_barang_1_id', $user->id)
+            ->orWhere('approver_barang_2_id', $user->id)
+            ->orWhere('approver_barang_3_id', $user->id)
+            ->orWhere('approver_barang_4_id', $user->id)
+            ->exists();
 
-        if (!($isTopManagement || $isKadivMO || $isKadivFG || $user->role === 'admin')) {
+        if (!($isApprover || $user->role === 'admin')) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
-        // 2. Inisialisasi Query: Ambil seluruh data pengajuan urut dari yang terbaru
+        // query semua pengajuan
         $query = PengajuanBarang::with('user')->latest();
         
-        // 3. Filter berdasarkan Status (jika ada)
+        // filter status
         if ($request->filled('status') && $request->status != 'semua') {
             if ($request->status == 'diproses') {
                 $query->whereIn('status', ['diajukan', 'diproses']);
@@ -92,7 +92,7 @@ class PengajuanBarangController extends Controller
             }
         }
         
-        // 4. Pencarian berdasarkan kata kunci (Judul, Nomor Surat, atau Nama Pemohon)
+        // pencarian
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -104,7 +104,7 @@ class PengajuanBarangController extends Controller
             });
         }
 
-        // 5. Paginate hasil query dan pertahankan parameter filter/pencarian di URL
+        // paginate dan return
         $pengajuanBarangs = $query->paginate(15)->appends($request->query());
 
         return view('users.pengajuan-barang.pengajuan-barang-monitoring', [
@@ -113,19 +113,17 @@ class PengajuanBarangController extends Controller
         ]);
     }
 
-    /**
-     * Menyimpan pengajuan barang baru dengan dukungan hingga 4 Approver Dinamis.
-     */
+    // proses simpan pengajuan barang baru
     public function store(Request $request)
     {
         $user = Auth::user();
 
-        // Jika divisi tidak dikirim dari form, ambil dari profil user
+        // set divisi jika kosong
         if (!$request->filled('divisi')) {
             $request->merge(['divisi' => $user->divisi ?: 'Umum']);
         }
 
-        // 1. Validasi input dari form
+        // validasi input
         $request->validate([
             'judul_pengajuan' => 'required|string|max:255',
             'divisi' => 'required|string|max:255',
@@ -139,7 +137,7 @@ class PengajuanBarangController extends Controller
             'file_pendukung.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:10240',
         ]);
 
-        // Auto-save supplier baru ke tabel suppliers database jika belum ada
+        // simpan supplier baru otomatis
         if ($request->has('rincian_supplier') && is_array($request->rincian_supplier)) {
             $hasNew = false;
             foreach ($request->rincian_supplier as $sup) {
@@ -156,7 +154,7 @@ class PengajuanBarangController extends Controller
             }
         }
 
-        // Auto-save barang baru ke tabel barangs database jika belum ada
+        // simpan barang baru otomatis
         if ($request->has('rincian_deskripsi') && is_array($request->rincian_deskripsi)) {
             $hasNewBarang = false;
             foreach ($request->rincian_deskripsi as $brg) {
@@ -175,24 +173,24 @@ class PengajuanBarangController extends Controller
 
         $user = Auth::user();
 
-        // Validasi keselamatan: Karyawan wajib minimal punya 1 approver barang
+        // wajib punya minimal 1 approver
         if (!$user->approver_barang_1_id && !$user->approver_barang_2_id && !$user->approver_barang_3_id && !$user->approver_barang_4_id) {
             return redirect()->back()->with('error', 'Anda belum memiliki Approver Barang yang diatur oleh Admin. Silakan hubungi Admin/HRD.');
         }
 
-        // 2. Ambil ID approver dari data user
+        // ambil ID approver
         $app1 = $user->approver_barang_1_id;
         $app2 = $user->approver_barang_2_id;
         $app3 = $user->approver_barang_3_id;
         $app4 = $user->approver_barang_4_id;
 
-        // 3. Identifikasi status awal: jika ID kosong, langsung tandai 'skipped'
+        // inisialisasi status awal
         $st1 = $app1 ? 'menunggu' : 'skipped';
         $st2 = $app2 ? 'menunggu' : 'skipped';
         $st3 = $app3 ? 'menunggu' : 'skipped';
         $st4 = $app4 ? 'menunggu' : 'skipped';
 
-        // 4. Buat data pengajuan barang
+        // buat data pengajuan
         $pengajuan = PengajuanBarang::create([
             'user_id' => $user->id,
             'judul_pengajuan' => $request->judul_pengajuan,
@@ -235,7 +233,7 @@ class PengajuanBarangController extends Controller
     /**
      * Update Status Barang - ALGORITMA DINAMIS (Anti-Stuck untuk 1, 2, 3, atau 4 Approver)
      */
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(Request $request, string $id)
     {
         $request->validate([
             'status' => 'required|in:disetujui,ditolak',
@@ -256,7 +254,7 @@ class PengajuanBarangController extends Controller
         } elseif ($user->id == $pengajuan->approver_barang_3_id && $pengajuan->status_appr_3 == 'menunggu') {
             if (in_array('menunggu', [$pengajuan->status_appr_1, $pengajuan->status_appr_2])) return redirect()->back()->with('error', 'Menunggu persetujuan dari Approver sebelumnya.');
             $currentStage = 3;
-        } elseif ($user->id == $pengajuan->approver_barang_4_id && $pengajuan->status_appr_4 == 'menunggu') {
+        } elseif (($user->id == $pengajuan->approver_barang_4_id || $user->role === 'admin') && $pengajuan->status_appr_4 == 'menunggu') {
             if (in_array('menunggu', [$pengajuan->status_appr_1, $pengajuan->status_appr_2, $pengajuan->status_appr_3])) return redirect()->back()->with('error', 'Menunggu persetujuan dari Approver sebelumnya.');
             $currentStage = 4;
         } else {
@@ -304,6 +302,11 @@ class PengajuanBarangController extends Controller
                 $pengajuan->update(['status' => 'disetujui']);
                 $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_final'));
                 
+                // Kirim notif ke seluruh approver bahwa pengajuan ini berhasil disetujui
+                foreach ([$pengajuan->approver1, $pengajuan->approver2, $pengajuan->approver3, $pengajuan->approver4] as $appr) {
+                    if ($appr) $appr->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_semua'));
+                }
+
                 // Beri notif ke admin (approver 4) jika ada
                 if ($pengajuan->approver4 && $pengajuan->status_appr_4 == 'menunggu') {
                     $pengajuan->approver4->notify(new PengajuanBarangNotification($pengajuan, 'baru'));
@@ -312,6 +315,10 @@ class PengajuanBarangController extends Controller
                 // Jika stage 4 (Admin) menyetujui dari form ini, tapi biasanya admin update via updateMonitoring
                 // Kita biarkan logika ini berjaga-jaga jika Admin menyetujui langsung
                 $pengajuan->update(['status' => 'disetujui']);
+                
+                foreach ([$pengajuan->approver1, $pengajuan->approver2, $pengajuan->approver3, $pengajuan->approver4] as $appr) {
+                    if ($appr) $appr->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_semua'));
+                }
             }
         }
 
@@ -398,13 +405,14 @@ class PengajuanBarangController extends Controller
     /**
      * Memperbarui status monitoring & log pengiriman/proses barang oleh Approver 4 dari User side.
      */
-    public function updateMonitoring(Request $request, $id)
+    public function updateMonitoring(Request $request, string $id)
     {
         $request->validate([
-            'status_monitoring' => 'required|string|max:255',
+            'status_monitoring' => $request->filled('tandai_selesai') ? 'nullable|string|max:255' : 'required|string|max:255',
             'catatan_monitoring' => 'nullable|string|max:1000',
             'tandai_selesai' => 'nullable|boolean',
             'lampiran_monitoring' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
+            'termin_id' => 'required|integer',
         ]);
 
         $pengajuan = PengajuanBarang::findOrFail($id);
@@ -416,6 +424,9 @@ class PengajuanBarangController extends Controller
         }
 
         $statusMonitoring = $request->status_monitoring;
+        if ($request->filled('tandai_selesai') && empty($statusMonitoring)) {
+            $statusMonitoring = 'Selesai / Barang Diterima';
+        }
         $catatan = $request->catatan_monitoring;
         $nowFormatted = Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
 
@@ -430,17 +441,44 @@ class PengajuanBarangController extends Controller
             $updateData['lampiran'] = $existingLampiran;
         }
 
-        $riwayat = $pengajuan->riwayat_monitoring ?? [];
-        $riwayat[] = [
+        $riwayatEntry = [
             'status' => $statusMonitoring,
             'catatan' => $catatan ?: '-',
             'waktu' => $nowFormatted,
             'oleh' => $user->name,
-            'lampiran' => $lampiranPath, // tetap disimpan di riwayat juga untuk history
+            'lampiran' => $lampiranPath, 
         ];
+
+        // Update riwayat GLOBAL (tetap dilakukan sebagai backup)
+        $riwayat = $pengajuan->riwayat_monitoring ?? [];
+        $riwayat[] = $riwayatEntry;
 
         $updateData['status_monitoring'] = $statusMonitoring;
         $updateData['riwayat_monitoring'] = $riwayat;
+
+        // Update riwayat SPECIFIC TERMIN (ini yang ditampilkan di view UI baru)
+        $terminId = $request->termin_id;
+        $dataTermin = $pengajuan->data_termin ?? [];
+        $terminFound = false;
+        
+        foreach ($dataTermin as &$termin) {
+            if (isset($termin['id_termin']) && $termin['id_termin'] == $terminId) {
+                $termin['status_monitoring'] = $statusMonitoring;
+                if (!isset($termin['riwayat']) || !is_array($termin['riwayat'])) {
+                    $termin['riwayat'] = [];
+                }
+                // Prepend so the newest is first? No, append so it's ordered chronologically. 
+                // Or maybe the view expects it reversed? The view says: `@forelse($termin['riwayat'] ?? [] as $idx => $log)`
+                // Usually we append or prepend. Let's prepend it (array_unshift) so newest is on top. 
+                array_unshift($termin['riwayat'], $riwayatEntry);
+                $terminFound = true;
+                break;
+            }
+        }
+        
+        if ($terminFound) {
+            $updateData['data_termin'] = $dataTermin;
+        }
 
         // Jika tombol "Tandai Selesai" diklik atau status monitoring diset Selesai
         if ($request->filled('tandai_selesai') || in_array(strtolower($statusMonitoring), ['selesai', 'barang diterima', 'selesai / barang diterima'])) {
@@ -452,6 +490,162 @@ class PengajuanBarangController extends Controller
 
         $pengajuan->update($updateData);
 
+        // --- BLOK NOTIFIKASI ---
+        if (isset($updateData['status']) && $updateData['status'] === 'selesai') {
+            // Notifikasi Selesai Pengajuan
+            $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'selesai_pengajuan'));
+            foreach ([$pengajuan->approver1, $pengajuan->approver2, $pengajuan->approver3, $pengajuan->approver4] as $appr) {
+                if ($appr) $appr->notify(new PengajuanBarangNotification($pengajuan, 'selesai_pengajuan'));
+            }
+        } else {
+            // Notifikasi Update Pelacakan
+            $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'update_pelacakan', [
+                'status' => $statusMonitoring,
+                'catatan' => $catatan ?: '-'
+            ]));
+        }
+        // ------------------------
+
         return redirect()->back()->with('success', 'Status monitoring barang berhasil diperbarui!');
+    }
+
+    /**
+     * Konfirmasi pemrosesan barang secara parsial (pengiriman bertahap) dengan Termin.
+     */
+    public function konfirmasiProses(Request $request, string $id)
+    {
+        $request->validate([
+            'jumlah_diproses' => 'required|array',
+            'jumlah_diproses.*' => 'nullable|numeric|min:0',
+        ]);
+
+        $pengajuan = PengajuanBarang::findOrFail($id);
+        $user = Auth::user();
+        
+        // Ensure only approver 4 (or admin) can update this
+        if ($user->id != $pengajuan->approver_barang_4_id && $user->role !== 'admin') {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $rincianBarang = $pengajuan->rincian_barang ?? [];
+        $jumlahDiprosesData = $request->jumlah_diproses;
+        $dataTermin = $pengajuan->data_termin ?? [];
+
+        $hasChanges = false;
+        $newTerminRincian = [];
+        
+        foreach ($rincianBarang as $index => &$item) {
+            $inputJumlah = floatval($jumlahDiprosesData[$index] ?? 0);
+            
+            if ($inputJumlah > 0) {
+                if (!isset($item['jumlah_diproses'])) $item['jumlah_diproses'] = 0;
+                
+                $sisa = ($item['jumlah'] ?? 0) - $item['jumlah_diproses'];
+                $diprosesSekarang = min($inputJumlah, $sisa); 
+                
+                if ($diprosesSekarang > 0) {
+                    $item['jumlah_diproses'] += $diprosesSekarang;
+                    
+                    $newTerminRincian[] = [
+                        'index_barang' => $index,
+                        'nama_barang' => $item['nama_barang'] ?? $item['deskripsi'] ?? 'Unknown',
+                        'jumlah' => $diprosesSekarang,
+                        'satuan' => $item['satuan'] ?? ''
+                    ];
+                    $hasChanges = true;
+                }
+            }
+        }
+
+        if ($hasChanges && count($newTerminRincian) > 0) {
+            $terminId = count($dataTermin) + 1;
+            $nowFormatted = Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
+            
+            $dataTermin[] = [
+                'id_termin' => $terminId,
+                'tanggal_dibuat' => $nowFormatted,
+                'status_monitoring' => 'Diproses/Dipesan',
+                'rincian' => $newTerminRincian,
+                'riwayat' => [
+                    [
+                        'status' => 'Termin Dibuat',
+                        'catatan' => 'Barang mulai diproses untuk termin ini.',
+                        'waktu' => $nowFormatted,
+                        'oleh' => Auth::user()->name,
+                        'lampiran' => null
+                    ]
+                ]
+            ];
+
+            // Juga update riwayat global untuk memberitahu user ada termin baru
+            $riwayatGlobal = $pengajuan->riwayat_monitoring ?? [];
+            $riwayatGlobal[] = [
+                'status' => 'Pengiriman Termin ' . $terminId,
+                'catatan' => 'Admin telah membuat Termin ' . $terminId . ' untuk sebagian barang.',
+                'waktu' => $nowFormatted,
+                'oleh' => Auth::user()->name,
+                'lampiran' => null,
+            ];
+
+            $pengajuan->update([
+                'rincian_barang' => $rincianBarang,
+                'data_termin' => $dataTermin,
+                'riwayat_monitoring' => $riwayatGlobal,
+            ]);
+
+            return redirect()->back()->with('success', 'Termin ' . $terminId . ' berhasil dibuat.');
+        }
+
+        return redirect()->back()->with('info', 'Tidak ada data jumlah yang ditambahkan.');
+    }
+
+    /**
+     * Migrasi data lama ke Termin 1 otomatis
+     */
+    public function migrasiTerminLama(Request $request, string $id)
+    {
+        $pengajuan = PengajuanBarang::findOrFail($id);
+        
+        if (!empty($pengajuan->data_termin)) {
+            return redirect()->back()->with('error', 'Pengajuan ini sudah memiliki termin.');
+        }
+        
+        $rincian = $pengajuan->rincian_barang ?? [];
+        $rincianTermin = [];
+        
+        // Tandai semua barang sebagai sudah diproses penuh
+        foreach ($rincian as &$item) {
+            $item['jumlah_diproses'] = $item['jumlah'] ?? 0;
+            
+            $rincianTermin[] = [
+                'nama_barang' => $item['nama_barang'] ?? $item['deskripsi'] ?? '-',
+                'jumlah' => $item['jumlah_diproses'],
+                'satuan' => $item['satuan'] ?? ''
+            ];
+        }
+        
+        $nowFormatted = \Carbon\Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
+        
+        $terminBaru = [
+            'id_termin' => 1,
+            'tanggal_dibuat' => $nowFormatted,
+            'status_monitoring' => $pengajuan->status_monitoring ?? 'Proses Purchasing',
+            'rincian' => $rincianTermin,
+            'riwayat' => [
+                [
+                    'status' => 'Migrasi Sistem',
+                    'catatan' => 'Sistem secara otomatis merangkum semua data lama ke dalam Termin 1.',
+                    'waktu' => $nowFormatted,
+                    'oleh' => 'Sistem',
+                    'lampiran' => null
+                ]
+            ]
+        ];
+        
+        $pengajuan->rincian_barang = $rincian;
+        $pengajuan->data_termin = [$terminBaru];
+        $pengajuan->save();
+        
+        return redirect()->back()->with('success', 'Data lama berhasil dimigrasikan ke Termin 1. Silakan lanjutkan pelacakan termin.');
     }
 }

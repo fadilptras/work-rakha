@@ -3,10 +3,12 @@
     $isMobile = $agent->isMobile();
 
     $user = Auth::user();
-    $isTopManagement = ($user->divisi === 'Top Management');
-    $isKadivMO = ($user->is_kepala_divisi == 1 && $user->divisi === 'Marketing dan Operasional');
-    $isKadivFG = ($user->is_kepala_divisi == 1 && $user->divisi === 'Finance dan Gudang');
-    $canMonitor = $isTopManagement || $isKadivMO || $isKadivFG || $user->role === 'admin';
+    $isApprover = \App\Models\User::where('approver_barang_1_id', $user->id)
+        ->orWhere('approver_barang_2_id', $user->id)
+        ->orWhere('approver_barang_3_id', $user->id)
+        ->orWhere('approver_barang_4_id', $user->id)
+        ->exists();
+    $canMonitor = $isApprover || $user->role === 'admin';
 @endphp
 <x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>

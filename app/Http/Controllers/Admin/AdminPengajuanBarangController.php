@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PengajuanBarang;
 use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Notifications\PengajuanBarangNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Request;
 
 class AdminPengajuanBarangController extends Controller
 {
@@ -181,6 +183,11 @@ class AdminPengajuanBarangController extends Controller
         } else {
             // Approver 1-3 selesai -> Ubah status utama jadi disetujui (siap diproses oleh Admin/Approver 4)
             $pengajuan->update(['status' => 'disetujui']);
+            
+            // Kirim notif ke seluruh approver bahwa pengajuan ini berhasil disetujui
+            foreach ([$pengajuan->approver1, $pengajuan->approver2, $pengajuan->approver3, $pengajuan->approver4] as $appr) {
+                if ($appr) $appr->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_semua'));
+            }
         }
 
         return redirect()->back()->with('success', 'Persetujuan berhasil disimpan!');
@@ -235,16 +242,20 @@ class AdminPengajuanBarangController extends Controller
     public function updateMonitoring(Request $request, $id)
     {
         $request->validate([
-            'status_monitoring' => 'required|string|max:255',
+            'status_monitoring' => $request->filled('tandai_selesai') ? 'nullable|string|max:255' : 'required|string|max:255',
             'catatan_monitoring' => 'nullable|string|max:1000',
             'tandai_selesai' => 'nullable|boolean',
             'lampiran_monitoring' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
+            'termin_id' => 'required|integer',
         ]);
 
         $pengajuan = PengajuanBarang::findOrFail($id);
         $user = Auth::user();
 
         $statusMonitoring = $request->status_monitoring;
+        if ($request->filled('tandai_selesai') && empty($statusMonitoring)) {
+            $statusMonitoring = 'Selesai / Barang Diterima';
+        }
         $catatan = $request->catatan_monitoring;
         $nowFormatted = Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
 
@@ -257,8 +268,7 @@ class AdminPengajuanBarangController extends Controller
             $updateData['lampiran'] = $existingLampiran;
         }
 
-        $riwayat = $pengajuan->riwayat_monitoring ?? [];
-        $riwayat[] = [
+        $riwayatEntry = [
             'status' => $statusMonitoring,
             'catatan' => $catatan ?: '-',
             'waktu' => $nowFormatted,
@@ -266,8 +276,32 @@ class AdminPengajuanBarangController extends Controller
             'lampiran' => $lampiranPath,
         ];
 
+        $riwayat = $pengajuan->riwayat_monitoring ?? [];
+        $riwayat[] = $riwayatEntry;
+
         $updateData['status_monitoring'] = $statusMonitoring;
         $updateData['riwayat_monitoring'] = $riwayat;
+
+        // Update riwayat SPECIFIC TERMIN (ini yang ditampilkan di view UI baru)
+        $terminId = $request->termin_id;
+        $dataTermin = $pengajuan->data_termin ?? [];
+        $terminFound = false;
+        
+        foreach ($dataTermin as &$termin) {
+            if (isset($termin['id_termin']) && $termin['id_termin'] == $terminId) {
+                $termin['status_monitoring'] = $statusMonitoring;
+                if (!isset($termin['riwayat']) || !is_array($termin['riwayat'])) {
+                    $termin['riwayat'] = [];
+                }
+                array_unshift($termin['riwayat'], $riwayatEntry);
+                $terminFound = true;
+                break;
+            }
+        }
+        
+        if ($terminFound) {
+            $updateData['data_termin'] = $dataTermin;
+        }
 
         // Jika tombol "Tandai Selesai" diklik atau status monitoring diset Selesai
         if ($request->filled('tandai_selesai') || in_array(strtolower($statusMonitoring), ['selesai', 'barang diterima', 'selesai / barang diterima'])) {
@@ -279,6 +313,156 @@ class AdminPengajuanBarangController extends Controller
 
         $pengajuan->update($updateData);
 
+        // --- BLOK NOTIFIKASI ---
+        if (isset($updateData['status']) && $updateData['status'] === 'selesai') {
+            // Notifikasi Selesai Pengajuan
+            $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'selesai_pengajuan'));
+            foreach ([$pengajuan->approver1, $pengajuan->approver2, $pengajuan->approver3, $pengajuan->approver4] as $appr) {
+                if ($appr) $appr->notify(new PengajuanBarangNotification($pengajuan, 'selesai_pengajuan'));
+            }
+        } else {
+            // Notifikasi Update Pelacakan
+            $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'update_pelacakan', [
+                'status' => $statusMonitoring,
+                'catatan' => $catatan ?: '-'
+            ]));
+        }
+        // ------------------------
+
         return redirect()->back()->with('success', 'Status monitoring barang berhasil diperbarui!');
+    }
+
+    /**
+     * Konfirmasi pemrosesan barang secara parsial (pengiriman bertahap) dengan Termin.
+     */
+    public function konfirmasiProses(Request $request, $id)
+    {
+        $request->validate([
+            'jumlah_diproses' => 'required|array',
+            'jumlah_diproses.*' => 'nullable|numeric|min:0',
+        ]);
+
+        $pengajuan = PengajuanBarang::findOrFail($id);
+        $rincianBarang = $pengajuan->rincian_barang ?? [];
+        $jumlahDiprosesData = $request->jumlah_diproses;
+        $dataTermin = $pengajuan->data_termin ?? [];
+
+        $hasChanges = false;
+        
+        $newTerminRincian = [];
+        
+        foreach ($rincianBarang as $index => &$item) {
+            $inputJumlah = floatval($jumlahDiprosesData[$index] ?? 0);
+            
+            if ($inputJumlah > 0) {
+                if (!isset($item['jumlah_diproses'])) $item['jumlah_diproses'] = 0;
+                
+                $sisa = ($item['jumlah'] ?? 0) - $item['jumlah_diproses'];
+                $diprosesSekarang = min($inputJumlah, $sisa); 
+                
+                if ($diprosesSekarang > 0) {
+                    $item['jumlah_diproses'] += $diprosesSekarang;
+                    
+                    $newTerminRincian[] = [
+                        'index_barang' => $index,
+                        'nama_barang' => $item['nama_barang'] ?? $item['deskripsi'] ?? 'Unknown',
+                        'jumlah' => $diprosesSekarang,
+                        'satuan' => $item['satuan'] ?? ''
+                    ];
+                    $hasChanges = true;
+                }
+            }
+        }
+
+        if ($hasChanges && count($newTerminRincian) > 0) {
+            $terminId = count($dataTermin) + 1;
+            $nowFormatted = Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
+            
+            $dataTermin[] = [
+                'id_termin' => $terminId,
+                'tanggal_dibuat' => $nowFormatted,
+                'status_monitoring' => 'Diproses/Dipesan',
+                'rincian' => $newTerminRincian,
+                'riwayat' => [
+                    [
+                        'status' => 'Termin Dibuat',
+                        'catatan' => 'Barang mulai diproses untuk termin ini.',
+                        'waktu' => $nowFormatted,
+                        'oleh' => Auth::user()->name,
+                        'lampiran' => null
+                    ]
+                ]
+            ];
+
+            // Juga update riwayat global untuk memberitahu user ada termin baru
+            $riwayatGlobal = $pengajuan->riwayat_monitoring ?? [];
+            $riwayatGlobal[] = [
+                'status' => 'Pengiriman Termin ' . $terminId,
+                'catatan' => 'Admin telah membuat Termin ' . $terminId . ' untuk sebagian barang.',
+                'waktu' => $nowFormatted,
+                'oleh' => Auth::user()->name,
+                'lampiran' => null,
+            ];
+
+            $pengajuan->update([
+                'rincian_barang' => $rincianBarang,
+                'data_termin' => $dataTermin,
+                'riwayat_monitoring' => $riwayatGlobal,
+            ]);
+
+            return redirect()->back()->with('success', 'Termin ' . $terminId . ' berhasil dibuat.');
+        }
+
+        return redirect()->back()->with('info', 'Tidak ada data jumlah yang ditambahkan.');
+    }
+
+    /**
+     * Migrasi data lama ke Termin 1 otomatis
+     */
+    public function migrasiTerminLama(Request $request, $id)
+    {
+        $pengajuan = PengajuanBarang::findOrFail($id);
+        
+        if (!empty($pengajuan->data_termin)) {
+            return redirect()->back()->with('error', 'Pengajuan ini sudah memiliki termin.');
+        }
+        
+        $rincian = $pengajuan->rincian_barang ?? [];
+        $rincianTermin = [];
+        
+        // Tandai semua barang sebagai sudah diproses penuh
+        foreach ($rincian as &$item) {
+            $item['jumlah_diproses'] = $item['jumlah'] ?? 0;
+            
+            $rincianTermin[] = [
+                'nama_barang' => $item['nama_barang'] ?? $item['deskripsi'] ?? '-',
+                'jumlah' => $item['jumlah_diproses'],
+                'satuan' => $item['satuan'] ?? ''
+            ];
+        }
+        
+        $nowFormatted = \Carbon\Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
+        
+        $terminBaru = [
+            'id_termin' => 1,
+            'tanggal_dibuat' => $nowFormatted,
+            'status_monitoring' => $pengajuan->status_monitoring ?? 'Proses Purchasing',
+            'rincian' => $rincianTermin,
+            'riwayat' => [
+                [
+                    'status' => 'Migrasi Sistem',
+                    'catatan' => 'Sistem secara otomatis merangkum semua data lama ke dalam Termin 1.',
+                    'waktu' => $nowFormatted,
+                    'oleh' => 'Sistem',
+                    'lampiran' => null
+                ]
+            ]
+        ];
+        
+        $pengajuan->rincian_barang = $rincian;
+        $pengajuan->data_termin = [$terminBaru];
+        $pengajuan->save();
+        
+        return redirect()->back()->with('success', 'Data lama berhasil dimigrasikan ke Termin 1. Silakan lanjutkan pelacakan termin.');
     }
 }
