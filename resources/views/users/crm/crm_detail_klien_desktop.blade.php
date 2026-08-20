@@ -295,32 +295,59 @@
             <div class="p-6 md:p-8">
                 <form action="{{ route($routePrefix . 'interaction.store') }}" method="POST">
                     @csrf
-                    <input type="hidden" name="client_id" value="{{ $client->id }}">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Tanggal Transaksi <span class="text-red-500">*</span></label>
-                            <input type="date" name="tanggal_interaksi" class="w-full border-2 border-blue-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5" required>
+                    <div class="mb-4 grid grid-cols-1 lg:grid-cols-12 gap-3">
+                        <div class="lg:col-span-4">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Rumah Sakit (Data Command Center) <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <select id="client_id_in" class="w-full border border-blue-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 pl-3 pr-8 py-1.5 text-sm appearance-none bg-white" required>
+                                    @if($salesCustomers->isEmpty())
+                                        <option value="" disabled selected>Belum ada data (Cek PIC Sales)</option>
+                                    @else
+                                        <option value="" disabled selected>Pilih Rumah Sakit...</option>
+                                        @foreach($salesCustomers as $c)
+                                            <option value="{{ $c }}">{{ $c }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-600">
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Nama Produk <span class="text-red-500">*</span></label>
-                            <input type="text" name="nama_produk" list="produk-list" class="w-full border-2 border-blue-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5" placeholder="Contoh: Kassa" required>
-                            <datalist id="produk-list">
-                                @foreach($productNames as $prod)
-                                    <option value="{{ $prod }}"></option>
-                                @endforeach
-                            </datalist>
+                        <div class="lg:col-span-5">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Pilih Bulan <span class="text-red-500">*</span></label>
+                            <div class="flex gap-2">
+                                <input type="month" id="tanggal_interaksi_in" class="w-full border border-blue-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-1.5 text-sm" required>
+                                <button type="button" onclick="fetchSalesData()" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-bold px-3 py-1.5 text-sm rounded-md shadow-sm transition whitespace-nowrap flex-shrink-0" title="Ambil data dari Command Center">
+                                    <i class="fas fa-cloud-download-alt mr-1"></i> Tarik
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-1">Bisa tarik semua data sales untuk bulan & tahun yang dipilih.</p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Nilai Sales (Rp) <span class="text-red-500">*</span></label>
-                            <div class="relative rounded-md shadow-sm"><div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span class="text-gray-500 sm:text-sm">Rp</span></div><input type="text" name="nilai_sales" onkeyup="formatRupiah(this)" class="w-full border-2 border-blue-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 pl-10 px-4 py-2.5 font-mono text-base" placeholder="0" required></div>
+                        <div class="lg:col-span-3">
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Catatan (Opsional)</label>
+                            <input type="text" name="catatan" class="w-full border border-blue-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-1.5 text-sm" placeholder="Catatan transaksi...">
                         </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-gray-600 mb-1">Catatan Tambahan</label>
-                            <input type="text" name="catatan" class="w-full border-2 border-blue-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5" placeholder="Catatan opsional...">
+                    </div>
+
+                    <div class="mb-2 flex justify-between items-end border-b pb-2">
+                        <h4 class="font-bold text-gray-700 flex items-center"><i class="fas fa-box-open mr-2 text-blue-500"></i> Antrean Data Sales <span id="queue_count_desktop" class="ml-2 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0</span></h4>
+                    </div>
+
+                    <div id="product_rows_container_desktop" class="space-y-3 mb-6 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
+                        <div id="empty_queue_msg_desktop" class="text-center py-6 text-gray-400 italic text-sm">
+                            Belum ada data ditarik. Silakan pilih tanggal dan klik "Tarik & Tambah".
                         </div>
-                        <div class="flex items-end">
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition transform active:scale-95"><i class="fas fa-save mr-2"></i> Simpan Transaksi</button>
-                        </div>
+                    </div>
+
+                    <datalist id="produk-list">
+                        @foreach($productNames as $prod)
+                            <option value="{{ $prod }}"></option>
+                        @endforeach
+                    </datalist>
+
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition transform active:scale-95 text-sm md:text-base flex justify-center items-center gap-2"><i class="fas fa-save"></i> Simpan Data Sales</button>
                     </div>
                 </form>
             </div>
@@ -332,10 +359,10 @@
                 <h3 class="font-bold text-white text-lg flex items-center"><span class="w-8 h-8 bg-white text-red-600 rounded-lg flex items-center justify-center mr-3 text-sm shadow"><i class="fas fa-hand-holding-usd"></i></span> Pengeluaran</h3>
             </div>
             <div class="p-5 md:p-6">
-                <form action="{{ route($routePrefix . 'interaction.support') }}" method="POST" onsubmit="return checkBankDataSupport(event)">
+                <form action="{{ route($routePrefix . 'interaction.support') }}" method="POST">
                     @csrf
                     <input type="hidden" name="client_id" value="{{ $client->id }}">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-5">
                         <!-- Baris 1: Tanggal & Nominal -->
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Tanggal <span class="text-red-500">*</span></label>
@@ -351,14 +378,28 @@
                             </div>
                         </div>
 
-                        <!-- Baris 2: Keperluan & Button -->
+                        <!-- Baris 2: Keperluan & Bank -->
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Keperluan Support <span class="text-red-500">*</span></label>
                             <input type="text" name="keperluan" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Contoh: Transport" required>
                         </div>
-                        <div class="flex items-end">
-                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform active:scale-95 text-sm flex items-center justify-center gap-2 h-[40px]"><i class="fas fa-paper-plane"></i> Ajukan Dana</button>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Nama Bank <span class="text-red-500">*</span></label>
+                            <input type="text" name="nama_bank" value="{{ $client->bank }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Contoh: BCA, Mandiri" required>
                         </div>
+
+                        <!-- Baris 3: Rekening -->
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">No. Rekening <span class="text-red-500">*</span></label>
+                            <input type="text" name="no_rekening" value="{{ $client->no_rekening }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm font-mono font-bold" placeholder="0987654321" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Nama di Rekening <span class="text-red-500">*</span></label>
+                            <input type="text" name="nama_rek" value="{{ $client->nama_di_rekening }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Atas Nama..." required>
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform active:scale-95 text-sm md:text-base flex items-center justify-center gap-2"><i class="fas fa-paper-plane"></i> Ajukan Dana</button>
                     </div>
                 </form>
             </div>
@@ -537,7 +578,9 @@
                             <th class="px-4 py-4 text-center w-16">Komisi</th>
                             <th class="px-4 py-4 text-right text-blue-800">Value (Net)</th>
                             <th class="px-4 py-4 text-right text-red-600">Usage (Out)</th>
+                            @if($hasFullAccess)
                             <th class="px-4 py-4 text-center">Aksi</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -545,23 +588,26 @@
                             @if($item->jenis_transaksi == 'ENTERTAIN') @continue @endif
                             @php
                                 $isOut = $item->jenis_transaksi == 'OUT';
-                                $rate = 0; if(preg_match('/\[Rate:([\d\.]+)\]/', $item->catatan, $m)) { $rate = $m[1]; }
-                                $displayNote = trim(preg_replace('/\[Rate:[\d\.]+\]/', '', $item->catatan));
-                                $valueNet = (!$isOut) ? ($item->nilai_kontribusi * ($rate/100)) : 0;
+                                $rate = 0; if(preg_match('/\[Rate:([\d\.]+)%?\]/', $item->catatan, $m)) { $rate = $m[1]; }
+                                $displayNote = trim(preg_replace('/\[Rate:[\d\.]+%?\]\s*/', '', $item->catatan));
+                                $nominal = $item->nilai_sales > 0 ? $item->nilai_sales : $item->nilai_kontribusi;
+                                $valueNet = (!$isOut) ? ($nominal * ((float)$rate/100)) : 0;
                             @endphp
                         <tr class="{{ $isOut ? 'bg-red-50/50' : 'hover:bg-blue-50/50' }} transition">
                             <td class="px-4 py-3 whitespace-nowrap font-bold text-gray-700">{{ \Carbon\Carbon::parse($item->tanggal_interaksi)->format('d/m/Y') }}</td>
                             <td class="px-4 py-3"><div class="font-bold {{ $isOut ? 'text-red-800' : 'text-blue-900' }}">{{ $item->nama_produk }}</div><div class="text-xs text-gray-500 italic">{{ $displayNote }}</div></td>
-                            <td class="px-4 py-3 text-right font-mono text-gray-600">{{ (!$isOut) ? number_format($item->nilai_kontribusi, 0, ',', '.') : '-' }}</td>
-                            <td class="px-4 py-3 text-center">@if(!$isOut && $rate > 0) <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-xs font-bold shadow-sm border border-gray-300">{{ $rate }}%</span> @else <span class="text-gray-300">-</span> @endif</td>
+                            <td class="px-4 py-3 text-right font-mono text-gray-600">{{ (!$isOut) ? number_format($nominal, 0, ',', '.') : '-' }}</td>
+                            <td class="px-4 py-3 text-center">@if(!$isOut && $rate > 0) <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-xs font-bold shadow-sm border border-gray-300">{{ (float)$rate }}%</span> @else <span class="text-gray-300">-</span> @endif</td>
                             <td class="px-4 py-3 text-right font-mono font-bold text-blue-700">{{ (!$isOut) ? number_format($valueNet, 0, ',', '.') : '-' }}</td>
                             <td class="px-4 py-3 text-right font-mono font-bold text-red-600">{{ $isOut ? number_format($item->nilai_kontribusi, 0, ',', '.') : '-' }}</td>
+                            @if($hasFullAccess)
                             <td class="px-4 py-3 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <button type="button" onclick="openEditTransactionModal({id: '{{ $item->id }}', jenis: '{{ $item->jenis_transaksi }}', tanggal: '{{ $item->tanggal_interaksi }}', produk: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $item->nama_produk)) }}', nominal: '{{ ($item->jenis_transaksi == 'IN') ? $item->nilai_sales : $item->nilai_kontribusi }}', rate: '{{ $rate }}', catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $displayNote)) }}'})" class="text-blue-400 hover:text-blue-600 transition" title="Edit Data"><i class="fas fa-edit"></i></button>
                                     <form action="{{ route($routePrefix . 'interaction.destroy', $item->id) }}" method="POST" onsubmit="confirmSubmit(event, 'Hapus transaksi ini?');" class="inline">@csrf @method('DELETE')<button class="text-gray-300 hover:text-red-600 transition" title="Hapus Data"><i class="fas fa-trash-alt"></i></button></form>
                                 </div>
                             </td>
+                            @endif
                         </tr>
                         @empty
                         <tr><td colspan="7" class="text-center py-8 text-gray-400">Belum ada data.</td></tr>
@@ -875,6 +921,96 @@
         else if (urlParams.has('history_year') || urlParams.get('tab') === 'history') switchTab('history');
         else if (urlParams.has('activity_year') || urlParams.get('tab') === 'activity') switchTab('activity');
         else document.addEventListener("DOMContentLoaded", () => switchTab(localStorage.getItem('activeTab') || 'sales'));
+
+        function fetchSalesData() {
+            const dateInput = document.getElementById('tanggal_interaksi_in').value;
+            const salesCustomer = document.getElementById('client_id_in').value;
+            
+            if (!salesCustomer) {
+                alert('Silakan pilih Rumah Sakit terlebih dahulu.');
+                return;
+            }
+            if (!dateInput) {
+                alert('Silakan pilih Bulan Transaksi terlebih dahulu.');
+                return;
+            }
+            
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            btn.disabled = true;
+
+            fetch(`/crm/client/{{ $client->id }}/fetch-sales?date=${dateInput}&sales_customer=${encodeURIComponent(salesCustomer)}`)
+                .then(res => res.json())
+                .then(resData => {
+                    if (resData.success && resData.data.length > 0) {
+                        const emptyMsg = document.getElementById('empty_queue_msg_desktop');
+                        if (emptyMsg) emptyMsg.remove();
+                        
+                        let countAdded = 0;
+                        resData.data.forEach((item) => {
+                            addProductRow('desktop', item.nama_produk, item.nilai_sales, (item.tanggal || dateInput), item.client_id, item.client_name);
+                            countAdded++;
+                        });
+                        
+                        let badge = document.getElementById('queue_count_desktop');
+                        badge.innerText = parseInt(badge.innerText) + countAdded;
+                    } else {
+                        alert(resData.message || 'Gagal menarik data sales.');
+                    }
+                })
+                .catch(err => {
+                    alert('Terjadi kesalahan koneksi.');
+                    console.error(err);
+                })
+                .finally(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                });
+        }
+
+        function addProductRow(view, produk = '', nominal = '', date = '', clientId = '', clientName = '') {
+            const containerId = view === 'mobile' ? 'product_rows_container_mobile' : 'product_rows_container_desktop';
+            const container = document.getElementById(containerId);
+            const row = document.createElement('div');
+            
+            let valNominal = nominal ? parseInt(nominal, 10).toLocaleString('id-ID') : '';
+
+            row.className = 'product-row flex items-center gap-3 bg-blue-50/50 p-3 rounded-lg border border-blue-100 hover:shadow-sm transition-all';
+            row.innerHTML = `
+                <input type="hidden" name="client_id[]" value="${clientId}">
+                <div class="flex-1 max-w-[120px]">
+                    <label class="block text-[10px] font-bold text-gray-700 mb-1">Tanggal</label>
+                    <input type="date" name="tanggal_interaksi[]" class="w-full border border-gray-200 bg-gray-50 rounded-md shadow-sm px-2 py-1.5 text-[11px] text-gray-500 font-semibold" value="${date}" readonly>
+                </div>
+                <div class="flex-1 max-w-[150px]">
+                    <label class="block text-[10px] font-bold text-gray-700 mb-1">Rumah Sakit</label>
+                    <input type="text" class="w-full border border-gray-200 bg-gray-50 rounded-md shadow-sm px-2 py-1.5 text-[11px] text-gray-500 font-semibold" value="${clientName}" readonly>
+                </div>
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-[10px] font-bold text-gray-700 mb-1">Nama Produk <span class="text-red-500">*</span></label>
+                    <input type="text" name="nama_produk[]" class="w-full border border-gray-200 bg-gray-50 rounded-md shadow-sm px-3 py-1.5 text-sm text-gray-600" value="${produk}" readonly>
+                </div>
+                <div class="flex-1 max-w-[160px]">
+                    <label class="block text-[10px] font-bold text-gray-700 mb-1">Nilai Sales (Rp) <span class="text-red-500">*</span></label>
+                    <div class="relative rounded-md shadow-sm">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span class="text-gray-500 text-xs font-bold">Rp</span></div>
+                        <input type="text" name="nilai_sales[]" class="w-full border border-gray-200 bg-gray-50 rounded-md shadow-sm pl-9 pr-3 py-1.5 font-mono text-sm font-bold text-gray-600" value="${valNominal}" readonly>
+                    </div>
+                </div>
+                <div>
+                    <button type="button" onclick="removeProductRow(this)" class="text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md transition" title="Hapus Baris"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeProductRow(btn) {
+            btn.closest('.product-row').remove();
+            let badge = document.getElementById('queue_count_desktop');
+            let current = parseInt(badge.innerText);
+            if (current > 0) badge.innerText = current - 1;
+        }
     </script>
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }

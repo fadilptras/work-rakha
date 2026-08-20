@@ -143,6 +143,7 @@ Route::controller(CrmController::class)->group(function () {
     Route::delete('/crm/interaction/{interaction}', 'destroyInteraction')->name('crm.interaction.destroy');
     Route::get('/crm/matrix/export', 'exportMatrix')->name('crm.matrix.export');
     Route::get('/crm/{client}/export', 'exportClientRecap')->name('crm.client.export');
+    Route::get('/crm/client/{client}/fetch-sales', 'fetchSalesData')->name('crm.client.fetch_sales');
     Route::get('/crm/client/{client}/edit', [CrmController::class, 'edit'])->name('crm.client.edit');
     Route::put('/crm/client/{client}', [CrmController::class, 'update'])->name('crm.client.update');
     Route::post('/crm/interaction/entertain', 'storeEntertain')->name('crm.interaction.entertain');

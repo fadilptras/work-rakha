@@ -187,8 +187,8 @@ class CrmController extends Controller
         $hasAccess = $this->hasFullAccess();
         if ($client->user_id !== Auth::id() && !$hasAccess) abort(403, 'Akses Ditolak.');
 
-        // 2. Tentukan Hak Edit (HANYA user dengan Full Access yang bisa edit data & interaksi)
-        $canEdit = $hasAccess;
+        // 2. Tentukan Hak Edit (PIC Klien atau user dengan Full Access bisa edit data)
+        $canEdit = ($client->user_id === Auth::id()) || $hasAccess;
 
         // 3. Data Rekap
         $year = $request->input('year', date('Y'));
@@ -219,6 +219,13 @@ class CrmController extends Controller
 
         $productNames = Interaction::query()->where('jenis_transaksi', 'IN')->whereNotNull('nama_produk')->distinct()->pluck('nama_produk');
 
+        // 5. Data pelanggan dari Command Center untuk dropdown (kecuali ps = 'Office')
+        $salesCustomers = \App\Models\Sales::select('nama_customer')
+            ->where('ps', '!=', 'Office')
+            ->distinct()
+            ->orderBy('nama_customer')
+            ->pluck('nama_customer');
+
         return view("users.crm.crm_detail_klien_{$viewSuffix}", [
             'title' => 'Detail Sales: ' . $client->nama_user,
             'client' => $client,
@@ -232,15 +239,19 @@ class CrmController extends Controller
             'currentBalance' => $currentBalance,
             'historyYear' => $historyYear,
             'activityYear' => $activityYear,
-            'canEdit' => $canEdit, // <--- Kirim variabel ini ke View
-            'productNames' => $productNames
+            'canEdit' => $canEdit, // <--- Hak edit profil
+            'hasFullAccess' => $hasAccess, // <--- Hak edit transaksi
+            'productNames' => $productNames,
+            'salesCustomers' => $salesCustomers
         ]);
     }
 
     public function edit(Client $client)
     {
-        // Hanya yang memiliki akses penuh yang bisa masuk form edit Klien
-        if (!$this->hasFullAccess()) abort(403, 'Akses Ditolak: Hanya Admin/Kepala Divisi yang dapat mengedit data Klien.');
+        // PIC atau yang memiliki akses penuh bisa masuk form edit Klien
+        if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) {
+            abort(403, 'Akses Ditolak: Anda tidak memiliki hak untuk mengedit data Klien ini.');
+        }
         $agent = new \Jenssegers\Agent\Agent();
         $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
         return view("users.crm.crm_detail_klien_{$viewSuffix}", ['title' => 'Edit Data Klien', 'client' => $client]);
@@ -248,8 +259,10 @@ class CrmController extends Controller
 
     public function update(Request $request, Client $client)
     {
-        // Hanya yang memiliki akses penuh yang bisa menyimpan perubahan Klien
-        if (!$this->hasFullAccess()) abort(403, 'Akses Ditolak: Hanya Admin/Kepala Divisi yang dapat mengubah data Klien.');
+        // PIC atau yang memiliki akses penuh bisa menyimpan perubahan Klien
+        if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) {
+            abort(403, 'Akses Ditolak: Anda tidak memiliki hak untuk mengubah data Klien ini.');
+        }
         $request->merge([
             'komisi' => $request->filled('komisi') ? str_replace(',', '.', $request->komisi) : null
         ]);
@@ -367,36 +380,85 @@ class CrmController extends Controller
 
     public function storeInteraction(Request $request)
     {
-        $client = Client::findOrFail($request->client_id);
-        if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
+        $clientIds = is_array($request->client_id) ? $request->client_id : [$request->client_id];
+        $clients = \App\Models\Client::whereIn('id', $clientIds)->get();
+        foreach ($clients as $c) {
+            if ($c->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403, 'Akses Ditolak');
+        }
 
-        // TAMBAHAN: Bersihkan input nilai sales
-        $cleanNominal = str_replace('.', '', $request->nilai_sales);
+        $nilaiSales = $request->nilai_sales;
+        if (is_array($nilaiSales)) {
+            $nilaiSales = array_map(function($val) {
+                return preg_replace('/[^0-9]/', '', $val);
+            }, $nilaiSales);
+        } else {
+            $nilaiSales = preg_replace('/[^0-9]/', '', $nilaiSales);
+        }
 
         $request->merge([
-            'nilai_sales' => $cleanNominal
+            'nilai_sales' => $nilaiSales
         ]);
 
-        $request->validate([
-            'client_id' => 'required|exists:clients,id', 
-            'nama_produk' => 'required|string|max:255',
-            'nilai_sales' => 'required|numeric|min:0', 
-            'tanggal_interaksi' => 'required|date', 
-            'catatan' => 'nullable|string',
-        ]);
+        // Cek apakah input array atau string tunggal
+        $isArray = is_array($request->nama_produk);
 
-        $komisiClient = $client->komisi ?? 0;
-        Interaction::create([
-            'user_id' => Auth::id(), 
-            'client_id' => $request->client_id, 
-            'jenis_transaksi' => 'IN', 
-            'nama_produk' => $request->nama_produk, 
-            'tanggal_interaksi' => $request->tanggal_interaksi,
-            'nilai_sales' => $request->nilai_sales, 
-            'nilai_kontribusi' => $request->nilai_sales,
-            'komisi' => $komisiClient, 
-            'catatan' => "[Rate:" . $komisiClient . "] " . $request->catatan,
-        ]);
+        if ($isArray) {
+            $request->validate([
+                'client_id' => 'required|array', 
+                'client_id.*' => 'required|exists:clients,id',
+                'nama_produk' => 'required|array',
+                'nama_produk.*' => 'required|string|max:255',
+                'nilai_sales' => 'required|array',
+                'nilai_sales.*' => 'required|numeric|min:0', 
+                'tanggal_interaksi' => 'required|array', 
+                'tanggal_interaksi.*' => 'required|date',
+                'catatan' => 'nullable|string',
+            ]);
+        } else {
+            $request->validate([
+                'client_id' => 'required|exists:clients,id', 
+                'nama_produk' => 'required|string|max:255',
+                'nilai_sales' => 'required|numeric|min:0', 
+                'tanggal_interaksi' => 'required|date', 
+                'catatan' => 'nullable|string',
+            ]);
+        }
+
+        if ($isArray) {
+            foreach ($request->nama_produk as $index => $produk) {
+                $rowClient = \App\Models\Client::find($request->client_id[$index]);
+                $rowKomisi = $rowClient ? (float) $rowClient->komisi : 0;
+                $nilaiSales = (float) $request->nilai_sales[$index];
+                
+                Interaction::create([
+                    'user_id' => Auth::id(), 
+                    'client_id' => $request->client_id[$index], 
+                    'jenis_transaksi' => 'IN', 
+                    'nama_produk' => $produk, 
+                    'tanggal_interaksi' => $request->tanggal_interaksi[$index],
+                    'nilai_sales' => $nilaiSales, 
+                    'nilai_kontribusi' => $nilaiSales,
+                    'komisi' => $rowKomisi, 
+                    'catatan' => "[Rate:" . $rowKomisi . "%] " . $request->catatan,
+                ]);
+            }
+        } else {
+            $client = \App\Models\Client::find($request->client_id);
+            $komisiClient = $client ? (float) $client->komisi : 0;
+            $nilaiSales = (float) $request->nilai_sales;
+
+            Interaction::create([
+                'user_id' => Auth::id(), 
+                'client_id' => $request->client_id, 
+                'jenis_transaksi' => 'IN', 
+                'nama_produk' => $request->nama_produk, 
+                'tanggal_interaksi' => $request->tanggal_interaksi,
+                'nilai_sales' => $nilaiSales, 
+                'nilai_kontribusi' => $nilaiSales,
+                'komisi' => $komisiClient, 
+                'catatan' => "[Rate:" . $komisiClient . "%] " . $request->catatan,
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Transaksi sales berhasil ditambahkan!');
     }
@@ -406,10 +468,12 @@ class CrmController extends Controller
         $client = Client::findOrFail($request->client_id);
         if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
         
-        // Pengecekan rekening bank klien
-        if (empty($client->bank) || empty($client->no_rekening) || empty($client->nama_di_rekening)) {
-            return redirect()->back()->with('error', 'Gagal: Data rekening Klien belum lengkap. Silakan lengkapi via tombol Edit Detail terlebih dahulu.');
-        }
+        // Validasi rekening dari form
+        $request->validate([
+            'nama_bank' => 'required|string',
+            'no_rekening' => 'required|string',
+            'nama_rek' => 'required|string',
+        ]);
 
         $user = Auth::user();
         
@@ -474,9 +538,9 @@ class CrmController extends Controller
             'user_id' => $user->id,
             'judul_pengajuan' => $judulPengajuan,
             'divisi' => $user->divisi ?: 'Umum',
-            'nama_bank' => $client->bank,
-            'no_rekening' => $client->no_rekening,
-            'nama_rek' => $client->nama_di_rekening,
+            'nama_bank' => $request->nama_bank,
+            'no_rekening' => $request->no_rekening,
+            'nama_rek' => $request->nama_rek,
             'total_dana' => $request->nominal,
             'rincian_dana' => $rincian,
             'lampiran' => $lampiranArray, // Lampiran otomatis dari sistem (Rekap Sales)
@@ -538,6 +602,104 @@ class CrmController extends Controller
         return redirect()->back()->with('success', 'Aktivitas berhasil dicatat.');
     }
 
+    public function fetchSalesData(Client $client, Request $request)
+    {
+        // 1. Cek Akses Halaman
+        if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) {
+            return response()->json(['success' => false, 'message' => 'Akses Ditolak.']);
+        }
+
+        $month = $request->input('date'); // Sekarang menerima YYYY-MM
+        $salesCustomer = $request->input('sales_customer');
+        if (!$month || !$salesCustomer) {
+            return response()->json(['success' => false, 'message' => 'Bulan atau Rumah Sakit tidak valid.']);
+        }
+
+        // Cari data di Sales Command Center langsung menggunakan nama dari dropdown TANPA filter PIC (kecuali ps = 'Office')
+        $sales = \App\Models\Sales::where('tanggal', 'LIKE', $month . '%')
+                                  ->where('nama_customer', $salesCustomer)
+                                  ->where('ps', '!=', 'Office')
+                                  ->get();
+
+        if ($sales->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Data sales tidak ditemukan untuk bulan tersebut.']);
+        }
+
+        // --- Proses Reverse Mapping: Mencari ID CRM Client berdasarkan nama Command Center ---
+        $mappedClientId = $this->findClientByFuzzyName($salesCustomer);
+        if (!$mappedClientId) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Gagal mencocokkan Rumah Sakit ini ke data CRM. Pastikan klien ini sudah terdaftar di CRM Anda dengan nama yang mirip.'
+            ]);
+        }
+        $mappedClient = \App\Models\Client::find($mappedClientId);
+
+        // Ambil data sales yang sesuai
+        $result = $sales->map(function ($sale) use ($mappedClientId, $mappedClient) {
+            return [
+                'nama_produk' => $sale->nama_produk,
+                'nilai_sales' => $sale->harga_nett,
+                'tanggal' => $sale->tanggal,
+                'client_id' => $mappedClientId,
+                'client_name' => $mappedClient->nama_perusahaan
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $result
+        ]);
+    }
+
+    private function findClientByFuzzyName($salesCustomer)
+    {
+        $cleanName = str_ireplace(
+            ['RS.', 'RS ', 'PT.', 'PT ', 'CV.', 'CV ', 'Klinik ', 'Apotek ', 'Hospital ', 'UD.', 'UD '], 
+            ' ', 
+            $salesCustomer
+        );
+
+        $words = array_filter(explode(' ', $cleanName), function($word) {
+            return strlen(trim($word)) > 2; 
+        });
+
+        $query = \App\Models\Client::query();
+
+        if (empty($words)) {
+            $client = $query->where('nama_perusahaan', 'LIKE', '%' . trim($salesCustomer) . '%')->first();
+            return $client ? $client->id : null;
+        }
+
+        // 1. Strict match
+        $strictQuery = clone $query;
+        $strictQuery->where(function($q) use ($words) {
+            foreach ($words as $word) {
+                $q->where('nama_perusahaan', 'LIKE', '%' . trim($word) . '%');
+            }
+        });
+        
+        $client = $strictQuery->first();
+        if ($client) return $client->id;
+
+        // 2. Loose match
+        $looseQuery = clone $query;
+        $looseQuery->where(function($q) use ($words) {
+            foreach ($words as $word) {
+                $q->orWhere('nama_perusahaan', 'LIKE', '%' . trim($word) . '%');
+            }
+        });
+
+        $client = $looseQuery->first();
+        if ($client) return $client->id;
+
+        // 3. Substring fallback
+        $fallbackQuery = clone $query;
+        $client = $fallbackQuery->where('nama_perusahaan', 'LIKE', '%' . trim($salesCustomer) . '%')->first();
+        
+        return $client ? $client->id : null;
+    }
+
     public function destroyClient(Client $client)
     {
         // Hanya yang memiliki akses penuh yang bisa menghapus Klien
@@ -577,7 +739,7 @@ class CrmController extends Controller
                 $income = 0;
                 foreach($monthlyData->where('jenis_transaksi', 'IN') as $sale) {
                     $r = $sale->komisi ?? 0;
-                    if(!$r && preg_match('/\[Rate:([\d\.]+)\]/', $sale->catatan, $matches)) $r = (float)$matches[1];
+                    if(!$r && preg_match('/\[Rate:([\d\.]+)%?\]/', $sale->catatan, $matches)) $r = (float)$matches[1];
                     $nom = $sale->nilai_sales > 0 ? $sale->nilai_sales : $sale->nilai_kontribusi;
                     $income += $nom * ($r/100);
                 }
@@ -647,7 +809,7 @@ class CrmController extends Controller
                 $startingBalance -= $item->nilai_kontribusi;
             } elseif ($item->jenis_transaksi == 'IN') {
                  $rate = $item->komisi ?? 0;
-                 if (!$rate && preg_match('/\[Rate:([\d\.]+)\]/', $item->catatan, $matches)) $rate = floatval($matches[1]);
+                 if (!$rate && preg_match('/\[Rate:([\d\.]+)%?\]/', $item->catatan, $matches)) $rate = floatval($matches[1]);
                  $nominal = $item->nilai_sales > 0 ? $item->nilai_sales : $item->nilai_kontribusi;
                  $startingBalance += $nominal * ($rate / 100);
             }
@@ -665,7 +827,7 @@ class CrmController extends Controller
             $netRevenue = 0; $komisiList = [];
             foreach($monthlyData->where('jenis_transaksi', 'IN') as $sale) {
                 $rate = $sale->komisi ?? 0;
-                if (!$rate && preg_match('/\[Rate:([\d\.]+)\]/', $sale->catatan, $matches)) $rate = floatval($matches[1]);
+                if (!$rate && preg_match('/\[Rate:([\d\.]+)%?\]/', $sale->catatan, $matches)) $rate = floatval($matches[1]);
                 $netRevenue += ($sale->nilai_sales > 0 ? $sale->nilai_sales : $sale->nilai_kontribusi) * ($rate / 100);
                 if($rate > 0) $komisiList[] = (float)$rate . '%';
             }
