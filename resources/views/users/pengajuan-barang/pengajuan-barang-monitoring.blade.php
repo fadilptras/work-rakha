@@ -82,32 +82,44 @@
 
             {{-- RIWAYAT CARD --}}
             <div class="glass-card space-y-6 mb-10">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4 mb-5">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-list-ul"></i></div>
-                        <div>
-                            <h3 class="text-lg font-black text-slate-800">Daftar Permintaan Barang</h3>
-                            @if(!$isMobile)
-                            <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Gunakan filter di sebelah kanan untuk menyaring status pengajuan.</p>
-                            @endif
+                <div class="flex flex-col gap-4 border-b border-slate-200 pb-4 mb-5">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-list-ul"></i></div>
+                            <div>
+                                <h3 class="text-lg font-black text-slate-800">Daftar Permintaan Barang</h3>
+                                @if(!$isMobile)
+                                <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 0;">Gunakan filter di bawah untuk menyaring pengajuan.</p>
+                                @endif
+                            </div>
                         </div>
+
+                        {{-- Export Form --}}
+                        <form action="{{ route('pengajuan_barang.export_excel') }}" method="GET" class="m-0 flex items-center gap-2">
+                            <input type="month" name="bulan" class="modern-select" style="padding: 7px 12px; font-size: 12px; height: 36px;" value="{{ request('bulan', date('Y-m')) }}" required title="Pilih Bulan Export">
+                            <button type="submit" class="inline-flex items-center gap-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-sm" style="height: 36px;" title="Export Rekap PO Excel">
+                                <i class="fas fa-file-excel"></i> Export Excel
+                            </button>
+                        </form>
                     </div>
 
                     {{-- Filter & Search --}}
-                    <form action="{{ route('pengajuan_barang.monitoring_all') }}" method="GET" class="flex flex-col md:flex-row items-center justify-between md:justify-end gap-2.5 w-full md:w-auto m-0">
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, judul, nomor..." class="modern-select" style="max-width: 200px;">
-                        <div class="flex items-center gap-2">
-                            <select name="status" class="modern-select" onchange="this.form.submit()">
-                                <option value="semua" {{ request('status') == 'semua' || !request('status') ? 'selected' : '' }}>Semua Status</option>
-                                <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Appr 1</option>
-                                <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
-                                <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
-                                <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
-                                <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
-                            </select>
-                            <button type="submit" class="hidden">Cari</button>
-                        </div>
-                    </form>
+                    <div class="flex justify-end mt-1">
+                        <form action="{{ route('pengajuan_barang.monitoring_all') }}" method="GET" class="flex flex-col md:flex-row items-center gap-2.5 w-full md:w-auto m-0">
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, judul, nomor..." class="modern-select" style="width: 100%; md:max-width: 220px;">
+                            <div class="flex items-center gap-2 w-full md:w-auto">
+                                <select name="status" class="modern-select w-full md:w-auto" onchange="this.form.submit()">
+                                    <option value="semua" {{ request('status') == 'semua' || !request('status') ? 'selected' : '' }}>Semua Status</option>
+                                    <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Appr 1</option>
+                                    <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
+                                    <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
+                                    <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+                                    <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
+                                </select>
+                                <button type="submit" class="hidden">Cari</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 {{-- Tabel Desktop --}}
