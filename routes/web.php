@@ -190,6 +190,9 @@ Route::controller(SalesController::class)->prefix('sales')->name('sales.')->grou
             
             // Halaman Monitoring (Khusus Manajemen)
             Route::get('/monitoring-all', 'monitoringAll')->name('monitoring_all');
+            
+            // Export Excel Rekap PO
+            Route::get('/export-excel', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'exportRekapExcel'])->name('export_excel');
 
             // Halaman Detail
             Route::get('/{pengajuanBarang}', 'show')->name('show');
@@ -358,6 +361,7 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
     Route::prefix('pengajuan-barang')->name('pengajuan_barang.')->group(function() {
         Route::get('/', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'index'])->name('index');
         Route::get('/rekap-pdf', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'downloadRekapPDF'])->name('downloadRekapPdf');
+        Route::get('/export-excel', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'exportRekapExcel'])->name('export_excel');
         Route::get('/set-approvers', [AdminPengajuanBarangController::class, 'setApprovers'])->name('set_approvers'); // Sesuaikan method
         Route::post('/set-approvers', [AdminPengajuanBarangController::class, 'saveApprovers'])->name('set_approvers.save');
         Route::get('/{pengajuanBarang}', [App\Http\Controllers\Admin\AdminPengajuanBarangController::class, 'show'])->name('show');

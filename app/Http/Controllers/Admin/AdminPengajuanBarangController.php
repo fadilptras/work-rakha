@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
+use App\Exports\RekapPurchaseOrderExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminPengajuanBarangController extends Controller
 {
@@ -184,9 +186,14 @@ class AdminPengajuanBarangController extends Controller
             // Approver 1-3 selesai -> Ubah status utama jadi disetujui (siap diproses oleh Admin/Approver 4)
             $pengajuan->update(['status' => 'disetujui']);
             
-            // Kirim notif ke seluruh approver bahwa pengajuan ini berhasil disetujui
-            foreach ([$pengajuan->approver1, $pengajuan->approver2, $pengajuan->approver3, $pengajuan->approver4] as $appr) {
+            // Kirim notif ke seluruh approver (1-3) bahwa pengajuan ini berhasil disetujui
+            foreach ([$pengajuan->approver1, $pengajuan->approver2, $pengajuan->approver3] as $appr) {
                 if ($appr) $appr->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_semua'));
+            }
+
+            // Beri notif ke admin (approver 4) jika ada
+            if ($pengajuan->approver4 && $pengajuan->status_appr_4 == 'menunggu') {
+                $pengajuan->approver4->notify(new PengajuanBarangNotification($pengajuan, 'baru'));
             }
         }
 
@@ -464,5 +471,15 @@ class AdminPengajuanBarangController extends Controller
         $pengajuan->save();
         
         return redirect()->back()->with('success', 'Data lama berhasil dimigrasikan ke Termin 1. Silakan lanjutkan pelacakan termin.');
+    }
+
+    /**
+     * Download Rekap PO format Excel (Format Identik)
+     */
+    public function exportRekapExcel(Request $request)
+    {
+        $bulan = $request->input('bulan'); // Format: YYYY-MM
+        $fileName = 'REKAPITULASI PURCHASE ORDER_' . ($bulan ? str_replace('-', '', $bulan) : Carbon::now()->format('Ymd')) . '.xlsx';
+        return Excel::download(new RekapPurchaseOrderExport($bulan), $fileName);
     }
 }

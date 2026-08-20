@@ -108,6 +108,10 @@
                             <i class="fas fa-file-pdf"></i>
                             <span>Cetak Rekap</span>
                         </button>
+                        <button type="submit" formaction="{{ route('admin.pengajuan_barang.export_excel') }}" formmethod="GET" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2" title="Export Rekap PO Excel">
+                            <i class="fas fa-file-excel"></i>
+                            <span>Export Excel</span>
+                        </button>
                     </div>
                 </div>
             </form>

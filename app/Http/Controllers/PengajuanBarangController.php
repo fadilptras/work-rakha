@@ -302,8 +302,8 @@ class PengajuanBarangController extends Controller
                 $pengajuan->update(['status' => 'disetujui']);
                 $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_final'));
                 
-                // Kirim notif ke seluruh approver bahwa pengajuan ini berhasil disetujui
-                foreach ([$pengajuan->approver1, $pengajuan->approver2, $pengajuan->approver3, $pengajuan->approver4] as $appr) {
+                // Kirim notif ke seluruh approver (1-3) bahwa pengajuan ini berhasil disetujui
+                foreach ([$pengajuan->approver1, $pengajuan->approver2, $pengajuan->approver3] as $appr) {
                     if ($appr) $appr->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_semua'));
                 }
 

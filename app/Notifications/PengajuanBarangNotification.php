@@ -36,7 +36,10 @@ class PengajuanBarangNotification extends Notification implements ShouldQueue
         $divisi = $this->pengajuanBarang->divisi ?? '-';
         $tanggal = $this->pengajuanBarang->created_at ? $this->pengajuanBarang->created_at->locale('id')->isoFormat('D MMMM YYYY') : '-';
         
-        $link = $notifiable->role === 'admin' 
+        // Jika user adalah admin tapi bertindak sebagai Approver 4, arahkan ke sisi user
+        $isApprover4 = $notifiable->id === $this->pengajuanBarang->approver_barang_4_id;
+        
+        $link = ($notifiable->role === 'admin' && !$isApprover4)
             ? route('admin.pengajuan_barang.show', $this->pengajuanBarang->id) 
             : route('pengajuan_barang.show', $this->pengajuanBarang->id);
 
@@ -141,7 +144,7 @@ class PengajuanBarangNotification extends Notification implements ShouldQueue
             'id' => $this->pengajuanBarang->id,
             'title' => $title,
             'message' => $message,
-            'url' => $notifiable->role === 'admin' 
+            'url' => ($notifiable->role === 'admin' && $notifiable->id !== $this->pengajuanBarang->approver_barang_4_id)
                 ? route('admin.pengajuan_barang.show', $this->pengajuanBarang->id) 
                 : route('pengajuan_barang.show', $this->pengajuanBarang->id),
             'icon' => $icon,
