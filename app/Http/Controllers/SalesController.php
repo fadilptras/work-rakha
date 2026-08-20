@@ -23,9 +23,9 @@ class SalesController extends Controller
         $isTopManagement = \Illuminate\Support\Str::contains($jabatan, 'direktur') || $divisi === 'top management';
         $isKepalaDivisiMO = (($user->is_kepala_divisi == 1) || \Illuminate\Support\Str::contains($jabatan, 'kepala')) && in_array($divisi, ['marketing dan operasional']);
         $isAdminMarketing = \Illuminate\Support\Str::contains($jabatan, 'admin support');
-        // $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
+        $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
 
-        return $isTopManagement || $isKepalaDivisiMO || $isAdminMarketing;
+        return $isTopManagement || $isKepalaDivisiMO || $isAdminMarketing || $isTest;
     }
 
     // akses div marketing & operasional

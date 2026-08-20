@@ -198,7 +198,13 @@
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
                         <h2 class="text-base font-black text-white"><i class="fas fa-users-viewfinder text-indigo-400 mr-2"></i> PS Achievement Rate & Growth Trend ({{ $tahun }})</h2>
                     </div>
-                    <div class="relative h-[350px] w-full"><canvas id="chartPsOverview"></canvas></div>
+                    <div class="relative h-[350px] w-full">
+                        <div id="psRankBox" style="top: -35px; right: 0;" class="absolute bg-slate-800/80 p-2.5 rounded-lg border border-slate-700/60 text-[10px] sm:text-xs text-slate-300 z-20 shadow-lg pointer-events-none hidden backdrop-blur-sm min-w-[140px]">
+                            <div class="font-bold text-white mb-1 border-b border-slate-600/50 pb-1">Rank Kontribusi</div>
+                            <div id="psRankList" class="flex flex-col gap-1 mt-1"></div>
+                        </div>
+                        <canvas id="chartPsOverview"></canvas>
+                    </div>
                 </div>
 
                 {{-- Chart Grid --}}
@@ -874,18 +880,18 @@
                         labels: listBulan,
                         datasets: [
                             { 
-                                label: 'Target', data: targetData1, backgroundColor: 'rgba(100,116,139,0.4)', borderRadius: 4, 
+                                label: 'Target', data: targetData1, backgroundColor: 'rgba(100,116,139,0.4)', borderRadius: 4, order: 2,
                                 datalabels: { display: false } 
                             },
                             { 
-                                label: 'Sales', data: salesData1, backgroundColor: '#38bdf8', borderRadius: 4, 
+                                label: 'Sales', data: salesData1, backgroundColor: '#38bdf8', borderRadius: 4, order: 2,
                                 datalabels: { 
                                     display: true, align: 'top', anchor: 'end', offset: 4, color: '#e2e8f0', font: { size: 10 },
                                     formatter: (v) => v > 0 ? new Intl.NumberFormat('id-ID').format(v) : ''
                                 }
                             },
                             { 
-                                label: 'Achv %', data: salesData1, type: 'line', borderColor: '#9ca3af', borderWidth: 2, pointBackgroundColor: '#ef4444', pointBorderColor: '#fff', pointRadius: 4, fill: false,
+                                label: 'Achv %', data: salesData1, type: 'line', borderColor: '#9ca3af', borderWidth: 2, pointBackgroundColor: '#ef4444', pointBorderColor: '#fff', pointRadius: 4, fill: false, order: 1,
                                 datalabels: { 
                                     display: true, align: 'bottom', anchor: 'center', offset: 6, color: '#ef4444', font: { weight: 'bold', size: 11 },
                                     backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
@@ -893,18 +899,21 @@
                                 }
                             },
                             { 
-                                label: 'Growth %', data: salesData1, type: 'line', borderColor: 'transparent', pointBackgroundColor: 'transparent', pointBorderColor: 'transparent', fill: false,
+                                label: 'Growth %', data: growthData1, yAxisID: 'y1', type: 'line', borderColor: '#c084fc', borderWidth: 2, pointBackgroundColor: '#c084fc', pointBorderColor: '#fff', pointRadius: 4, fill: false, order: 1,
                                 datalabels: { 
                                     display: true, align: 'bottom', anchor: 'center', offset: 22, color: '#c084fc', font: { weight: 'bold', size: 11 },
                                     backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
-                                    formatter: (v, ctx) => { let g = growthData1[ctx.dataIndex]; return (g > 0 ? '+' : '') + g + '%'; }
+                                    formatter: (v) => (v > 0 ? '+' : '') + v + '%'
                                 }
                             }
                         ]
                     },
                     options: { 
                         responsive: true, maintainAspectRatio: false, 
-                        scales: { y: { type: 'linear', position: 'left', beginAtZero: true } },
+                        scales: { 
+                            y: { type: 'linear', position: 'left', beginAtZero: true },
+                            y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } }
+                        },
                         layout: { padding: { top: 30 } },
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
@@ -946,6 +955,25 @@
                     const achvData2 = activeLabels.map(ps => psCumulative[ps].cum_ach_rate);
                     const growthData2 = activeLabels.map(ps => psCumulative[ps].cum_growth_rate);
 
+                    const rankBox = document.getElementById('psRankBox');
+                    const rankList = document.getElementById('psRankList');
+                    if (rankBox && rankList && activeLabels.length > 0) {
+                        let rankData = activeLabels.map((ps, idx) => ({ name: ps, sales: salesData2[idx] }));
+                        rankData.sort((a, b) => b.sales - a.sales);
+                        let totalSalesAll = rankData.reduce((sum, item) => sum + item.sales, 0);
+                        let html = '';
+                        rankData.forEach((item, idx) => {
+                            let pct = totalSalesAll > 0 ? ((item.sales / totalSalesAll) * 100).toFixed(1) : 0;
+                            let color = idx === 0 ? 'text-amber-400' : (idx === 1 ? 'text-slate-300' : (idx === 2 ? 'text-amber-600' : 'text-emerald-400'));
+                            html += `<div class="flex justify-between gap-3 items-center">
+                                <span class="font-medium">${idx + 1}. ${item.name}</span>
+                                <span class="${color} font-bold">${pct}%</span>
+                            </div>`;
+                        });
+                        rankList.innerHTML = html;
+                        rankBox.classList.remove('hidden');
+                    }
+
                     if (chartPsOverview) chartPsOverview.destroy();
 
                     chartPsOverview = new Chart(ctx, {
@@ -953,16 +981,25 @@
                         data: {
                             labels: activeLabels,
                             datasets: [
-                                { label: 'Target', data: targetData2, backgroundColor: 'rgba(100,116,139,0.4)', borderRadius: 4, datalabels: { display: false } },
+                                { label: 'Target', data: targetData2, backgroundColor: 'rgba(100,116,139,0.4)', borderRadius: 4, order: 2, datalabels: { display: false } },
                                 { 
-                                    label: 'Sales', data: salesData2, backgroundColor: '#34d399', borderRadius: 4, 
+                                    label: 'Sales', data: salesData2, backgroundColor: '#34d399', borderRadius: 4, order: 2,
                                     datalabels: { 
                                         display: true, align: 'top', anchor: 'end', offset: 4, color: '#e2e8f0', font: { size: 10 },
-                                        formatter: (v) => v > 0 ? new Intl.NumberFormat('id-ID').format(v) : ''
+                                        textAlign: 'center',
+                                        formatter: (v) => {
+                                            if (v > 0) {
+                                                let formatted = new Intl.NumberFormat('id-ID').format(v);
+                                                let total = salesData2.reduce((a, b) => a + b, 0);
+                                                let pct = total > 0 ? ((v / total) * 100).toFixed(1) + '%' : '0%';
+                                                return [formatted, '(' + pct + ' Kontribusi)'];
+                                            }
+                                            return '';
+                                        }
                                     } 
                                 },
                                 { 
-                                    label: 'Achv %', data: salesData2, type: 'line', borderColor: '#9ca3af', borderWidth: 2, pointBackgroundColor: '#ef4444', pointBorderColor: '#fff', pointRadius: 4, fill: false,
+                                    label: 'Achv %', data: salesData2, type: 'line', borderColor: '#9ca3af', borderWidth: 2, pointBackgroundColor: '#ef4444', pointBorderColor: '#fff', pointRadius: 4, fill: false, order: 1,
                                     datalabels: { 
                                         display: true, align: 'bottom', anchor: 'center', offset: 6, color: '#ef4444', font: { weight: 'bold', size: 11 },
                                         backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
@@ -970,18 +1007,21 @@
                                     }
                                 },
                                 { 
-                                    label: 'Growth %', data: salesData2, type: 'line', borderColor: 'transparent', pointBackgroundColor: 'transparent', pointBorderColor: 'transparent', fill: false,
+                                    label: 'Growth %', data: growthData2, yAxisID: 'y1', type: 'line', borderColor: '#c084fc', borderWidth: 2, pointBackgroundColor: '#c084fc', pointBorderColor: '#fff', pointRadius: 4, fill: false, order: 1,
                                     datalabels: { 
                                         display: true, align: 'bottom', anchor: 'center', offset: 22, color: '#c084fc', font: { weight: 'bold', size: 11 },
                                         backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
-                                        formatter: (v, ctx) => { let g = growthData2[ctx.dataIndex]; return (g > 0 ? '+' : '') + g + '%'; }
+                                        formatter: (v) => (v > 0 ? '+' : '') + v + '%'
                                     }
                                 }
                             ]
                         },
                         options: { 
                             responsive: true, maintainAspectRatio: false, 
-                            scales: { y: { type: 'linear', position: 'left', beginAtZero: true } },
+                            scales: { 
+                                y: { type: 'linear', position: 'left', beginAtZero: true },
+                                y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } }
+                            },
                             layout: { padding: { top: 30 } },
                             interaction: { mode: 'index', intersect: false },
                             plugins: {
@@ -995,6 +1035,11 @@
                                             } else if (context.dataset.label === 'Growth %') {
                                                 let g = growthData2[context.dataIndex];
                                                 label += (g > 0 ? '+' : '') + g + '%';
+                                            } else if (context.dataset.label === 'Sales') {
+                                                label += new Intl.NumberFormat('id-ID').format(context.raw);
+                                                let totalSales = salesData2.reduce((a, b) => a + b, 0);
+                                                let pct = totalSales > 0 ? ((context.raw / totalSales) * 100).toFixed(1) : 0;
+                                                label += ` (${pct}% Kontribusi)`;
                                             } else {
                                                 label += new Intl.NumberFormat('id-ID').format(context.raw);
                                             }
