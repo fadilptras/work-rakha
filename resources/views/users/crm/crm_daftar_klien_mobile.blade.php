@@ -1,4 +1,4 @@
-﻿<x-layout-users :title="'Sistem Informasi Sales (CRM)'">
+<x-layout-users :title="'Sistem Informasi Sales (CRM)'">
 
     @push('styles')
     <style>
@@ -327,7 +327,17 @@
                                 </div>
                                 <div class="flex-grow">
                                     <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Alamat Perusahaan</label>
-                                    <textarea name="alamat_perusahaan" rows="5" class="w-full border-2 border-orange-100 rounded text-sm focus:ring-orange-500 px-3 py-2 resize-none" placeholder="Lokasi kantor..."></textarea>
+                                    <textarea name="alamat_perusahaan" rows="2" class="w-full border-2 border-orange-100 rounded text-sm focus:ring-orange-500 px-3 py-2 resize-none" placeholder="Lokasi kantor..."></textarea>
+                                </div>
+                                <div class="mt-2 pt-2 border-t border-orange-100">
+                                    <label class="block text-[11px] font-bold text-orange-700 mb-1 uppercase">Data Apoteker</label>
+                                    <div class="space-y-2">
+                                        <input type="text" name="nama_apoteker" class="w-full border-2 border-orange-100 rounded text-xs focus:ring-orange-500 px-3 py-1.5" placeholder="Nama Apoteker">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input type="text" name="nomor_sipa" class="w-full border-2 border-orange-100 rounded text-xs focus:ring-orange-500 px-3 py-1.5" placeholder="Nomor SIPA">
+                                            <input type="text" name="no_telpon_apoteker" class="w-full border-2 border-orange-100 rounded text-xs focus:ring-orange-500 px-3 py-1.5" placeholder="Telp Apoteker">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -350,6 +360,14 @@
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Atas Nama (A/N)</label>
                                     <input type="text" name="nama_di_rekening" class="w-full border-2 border-emerald-100 rounded text-sm focus:ring-emerald-500 px-3 py-2" placeholder="Pemilik Rekening">
+                                </div>
+
+                                <div>
+                                    <label class="block text-[11px] font-bold text-emerald-700 mb-1 uppercase">Komisi / Rate (%)</label>
+                                    <div class="relative">
+                                        <input type="number" step="0.01" name="komisi" class="w-full border-2 border-emerald-100 bg-emerald-50/30 rounded text-sm font-bold text-emerald-800 focus:ring-emerald-500 px-3 py-1.5" placeholder="Misal: 2.5">
+                                        <span class="absolute right-3 top-2 text-emerald-600 font-bold text-xs">%</span>
+                                    </div>
                                 </div>
                                 
                                 <div class="mt-auto pt-3 border-t border-emerald-50">

@@ -11,9 +11,23 @@ use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ClientAnnualExport;
 use App\Exports\MatrixAnnualExport;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
+use App\Models\PengajuanDana;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\PengajuanDanaNotification;
 
 class CrmController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (!$this->hasAnyCrmAccess()) {
+                abort(403, 'Anda tidak memiliki hak akses ke modul Sistem Informasi Sales (CRM).');
+            }
+            return $next($request);
+        });
+    }
     // Helper Hak Akses
     private function hasFullAccess()
     {
@@ -27,21 +41,22 @@ class CrmController extends Controller
         $jabatanClean = strtolower(trim($user->jabatan ?? ''));
         $divisiClean  = strtolower(trim($user->divisi ?? ''));
     
-        // 2. Cek EMAIL (Super Whitelist)
+        // 1. Cek Hak Akses Berdasarkan Email Tertentu
         $allowedEmails = [
             'tmaujana@gmail.com',
-            'Agungkuntohimawan81@gmail.com'
+            'Agungkuntohimawan81@gmail.com',
+            'test@gmail.com'
         ];
         if (in_array($emailClean, $allowedEmails)) {
             return true;
         }
 
-        // Cek Role Admin
-        if (strtolower(trim($user->role ?? '')) === 'admin') {
+        // 2. Cek Hak Akses Berdasarkan Role 'Admin'
+        if ($user->role === 'admin') {
             return true;
         }
 
-        // 3. CEK JABATAN / POSISI (Gunakan huruf kecil semua karena akan dicocokkan dengan strtolower)
+        // 3. Cek Hak Akses Berdasarkan Jabatan/Posisi (pastikan menggunakan huruf kecil)
         $allowedJabatan = [
             'direktur', 
             'kepala operasional',
@@ -50,7 +65,7 @@ class CrmController extends Controller
             return true;
         }
     
-        // 4. CEK DIVISI + STATUS KEPALA DIVISI (Gunakan huruf kecil semua)
+        // 4. Cek Hak Akses Berdasarkan Divisi & Status Kepala Divisi
         $allowedDivisi = [
             'marketing', 
             'operasional', 
@@ -60,8 +75,27 @@ class CrmController extends Controller
             return true;
         }
     
-        // 5. Kalau semua syarat di atas tidak terpenuhi, tolak akses penuh
+        // 5. Jika tidak ada syarat yang terpenuhi, akses penuh ditolak
         return false;
+    }
+
+    // Cek Akses Dasar (Apakah boleh buka CRM sama sekali)
+    private function hasAnyCrmAccess()
+    {
+        if ($this->hasFullAccess()) return true;
+
+        $user = Auth::user();
+        if (!$user) return false;
+
+        $divisi = strtolower(trim($user->divisi ?? ''));
+        
+        $allowedDivisi = [
+            'marketing', 
+            'operasional', 
+            'marketing dan operasional'
+        ];
+        
+        return in_array($divisi, $allowedDivisi);
     }
 
     public function index()
@@ -108,6 +142,10 @@ class CrmController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'komisi' => $request->filled('komisi') ? str_replace(',', '.', $request->komisi) : null
+        ]);
+
         $validator = Validator::make($request->all(), [
             'nama_user'         => 'required|string|max:255',
             'email'             => 'nullable|email|max:255',
@@ -116,6 +154,13 @@ class CrmController extends Controller
             'alamat_user'       => 'nullable|string', 
             'jabatan'           => 'nullable|string|max:100', 
             'hobby_client'      => 'nullable|string|max:255', 
+            
+            // Apoteker Info
+            'nama_apoteker'     => 'nullable|string|max:255',
+            'nomor_sipa'        => 'nullable|string|max:255',
+            'no_telpon_apoteker'=> 'nullable|string|max:50',
+            'komisi'            => 'nullable|numeric|min:0|max:100',
+
             'nama_perusahaan'   => 'required|string|max:255',
             'tanggal_berdiri'   => 'nullable|date',
             'area'              => 'nullable|string|max:100',
@@ -142,8 +187,8 @@ class CrmController extends Controller
         $hasAccess = $this->hasFullAccess();
         if ($client->user_id !== Auth::id() && !$hasAccess) abort(403, 'Akses Ditolak.');
 
-        // 2. Tentukan Hak Edit 
-        $canEdit = ($client->user_id === Auth::id()) || $hasAccess;
+        // 2. Tentukan Hak Edit (HANYA user dengan Full Access yang bisa edit data & interaksi)
+        $canEdit = $hasAccess;
 
         // 3. Data Rekap
         $year = $request->input('year', date('Y'));
@@ -172,6 +217,8 @@ class CrmController extends Controller
         $agent = new \Jenssegers\Agent\Agent();
         $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
 
+        $productNames = Interaction::query()->where('jenis_transaksi', 'IN')->whereNotNull('nama_produk')->distinct()->pluck('nama_produk');
+
         return view("users.crm.crm_detail_klien_{$viewSuffix}", [
             'title' => 'Detail Sales: ' . $client->nama_user,
             'client' => $client,
@@ -185,13 +232,15 @@ class CrmController extends Controller
             'currentBalance' => $currentBalance,
             'historyYear' => $historyYear,
             'activityYear' => $activityYear,
-            'canEdit' => $canEdit // <--- Kirim variabel ini ke View
+            'canEdit' => $canEdit, // <--- Kirim variabel ini ke View
+            'productNames' => $productNames
         ]);
     }
 
     public function edit(Client $client)
     {
-        if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
+        // Hanya yang memiliki akses penuh yang bisa masuk form edit Klien
+        if (!$this->hasFullAccess()) abort(403, 'Akses Ditolak: Hanya Admin/Kepala Divisi yang dapat mengedit data Klien.');
         $agent = new \Jenssegers\Agent\Agent();
         $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
         return view("users.crm.crm_detail_klien_{$viewSuffix}", ['title' => 'Edit Data Klien', 'client' => $client]);
@@ -199,7 +248,12 @@ class CrmController extends Controller
 
     public function update(Request $request, Client $client)
     {
-        if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
+        // Hanya yang memiliki akses penuh yang bisa menyimpan perubahan Klien
+        if (!$this->hasFullAccess()) abort(403, 'Akses Ditolak: Hanya Admin/Kepala Divisi yang dapat mengubah data Klien.');
+        $request->merge([
+            'komisi' => $request->filled('komisi') ? str_replace(',', '.', $request->komisi) : null
+        ]);
+
         $validated = $request->validate([
             'nama_user'         => 'required|string|max:255',
             'email'             => 'nullable|email',
@@ -208,6 +262,13 @@ class CrmController extends Controller
             'alamat_user'       => 'nullable|string',
             'jabatan'           => 'nullable|string|max:100', 
             'hobby_client'      => 'nullable|string|max:255', 
+
+            // Apoteker Info
+            'nama_apoteker'     => 'nullable|string|max:255',
+            'nomor_sipa'        => 'nullable|string|max:255',
+            'no_telpon_apoteker'=> 'nullable|string|max:50',
+            'komisi'            => 'nullable|numeric|min:0|max:100',
+
             'nama_perusahaan'   => 'required|string|max:255',
             'tanggal_berdiri'   => 'nullable|date',
             'area'              => 'nullable|string',
@@ -223,8 +284,8 @@ class CrmController extends Controller
 
     public function updateInteraction(Request $request, Interaction $interaction)
     {
-        // Cek Hak Akses
-        if ($interaction->client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
+        // Cek Hak Akses: Hanya user dengan akses penuh yang bisa mengedit transaksi/interaksi
+        if (!$this->hasFullAccess()) abort(403, 'Akses Ditolak: Hanya Admin/Kepala Divisi yang dapat mengubah data transaksi.');
 
         // Ambil input nominal (bisa dari field 'nilai_sales' atau 'nominal')
         $inputNominal = $request->input('nilai_sales') ?? $request->input('nominal');
@@ -234,33 +295,28 @@ class CrmController extends Controller
         // --- LOGIKA UNTUK TIPE: SALES (IN) ---
         if ($interaction->jenis_transaksi == 'IN') {
             
-            // 1. BERSIHKAN KOMISI (Ubah Koma jadi Titik)
-            // Contoh: Input "2,5" menjadi "2.5" agar terbaca sebagai desimal
-            $cleanKomisi = str_replace(',', '.', $request->input('komisi'));
-
             // Masukkan data bersih kembali ke request agar lolos validasi
             $request->merge([
-                'nilai_sales' => $cleanNominal,
-                'komisi'      => $cleanKomisi 
+                'nilai_sales' => $cleanNominal
             ]);
 
             // Validasi
             $request->validate([
                 'nama_produk'       => 'required|string|max:255',
                 'nilai_sales'       => 'required|numeric|min:0',
-                'komisi'            => 'required|numeric|min:0|max:100', // Sekarang 2.5 dianggap valid numeric
                 'tanggal_interaksi' => 'required|date',
                 'catatan'           => 'nullable|string',
             ]);
 
             // Update Data ke Database
+            $komisiClient = $interaction->client->komisi ?? 0;
             $interaction->update([
                 'nama_produk'       => $request->nama_produk,
                 'tanggal_interaksi' => $request->tanggal_interaksi,
                 'nilai_sales'       => $request->nilai_sales,
                 'nilai_kontribusi'  => $request->nilai_sales,
-                'komisi'            => $request->komisi, // Data desimal masuk ke sini
-                'catatan'           => "[Rate:" . $request->komisi . "] " . $request->catatan,
+                'komisi'            => $komisiClient, // Ambil dari profil klien
+                'catatan'           => "[Rate:" . $komisiClient . "] " . $request->catatan,
             ]);
 
         // --- LOGIKA UNTUK TIPE: PENGELUARAN (OUT) ---
@@ -314,24 +370,22 @@ class CrmController extends Controller
         $client = Client::findOrFail($request->client_id);
         if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
 
-        // TAMBAHAN: Bersihkan input nilai sales DAN komisi
+        // TAMBAHAN: Bersihkan input nilai sales
         $cleanNominal = str_replace('.', '', $request->nilai_sales);
-        $cleanKomisi  = str_replace(',', '.', $request->komisi);
 
         $request->merge([
-            'nilai_sales' => $cleanNominal,
-            'komisi'      => $cleanKomisi
+            'nilai_sales' => $cleanNominal
         ]);
 
         $request->validate([
             'client_id' => 'required|exists:clients,id', 
             'nama_produk' => 'required|string|max:255',
             'nilai_sales' => 'required|numeric|min:0', 
-            'komisi' => 'required|numeric|min:0|max:100', 
             'tanggal_interaksi' => 'required|date', 
             'catatan' => 'nullable|string',
         ]);
 
+        $komisiClient = $client->komisi ?? 0;
         Interaction::create([
             'user_id' => Auth::id(), 
             'client_id' => $request->client_id, 
@@ -340,8 +394,8 @@ class CrmController extends Controller
             'tanggal_interaksi' => $request->tanggal_interaksi,
             'nilai_sales' => $request->nilai_sales, 
             'nilai_kontribusi' => $request->nilai_sales,
-            'komisi' => $request->komisi, 
-            'catatan' => "[Rate:" . $request->komisi . "] " . $request->catatan,
+            'komisi' => $komisiClient, 
+            'catatan' => "[Rate:" . $komisiClient . "] " . $request->catatan,
         ]);
 
         return redirect()->back()->with('success', 'Transaksi sales berhasil ditambahkan!');
@@ -351,18 +405,118 @@ class CrmController extends Controller
     {
         $client = Client::findOrFail($request->client_id);
         if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
+        
+        // Pengecekan rekening bank klien
+        if (empty($client->bank) || empty($client->no_rekening) || empty($client->nama_di_rekening)) {
+            return redirect()->back()->with('error', 'Gagal: Data rekening Klien belum lengkap. Silakan lengkapi via tombol Edit Detail terlebih dahulu.');
+        }
+
+        $user = Auth::user();
+        
+        // Ambil ID approver dari profil user
+        $app1 = $user->approver_dana_1_id;
+        $app2 = $user->approver_dana_2_id;
+        $app3 = $user->approver_dana_3_id;
+        $app4 = $user->approver_dana_4_id;
+
+        if (!$app1 && !$app2 && !$app3 && !$app4) {
+            return redirect()->back()->with('error', 'Gagal: Anda belum memiliki pengaturan Approver Dana. Harap hubungi Admin/HRD.');
+        }
+
         $request->merge(['nominal' => str_replace('.', '', $request->nominal)]);
         $request->validate([
             'client_id' => 'required|exists:clients,id', 'keperluan' => 'required|string|max:255',
             'nominal' => 'required|numeric|min:0', 'tanggal_interaksi' => 'required|date',
             'catatan' => 'nullable|string',
         ]);
+        
+        // 1. Simpan Interaction (CRM)
         Interaction::create([
             'user_id'=> Auth::id(), 'client_id' => $request->client_id, 'jenis_transaksi' => 'OUT', 
             'nama_produk' => 'USAGE : ' . $request->keperluan, 'tanggal_interaksi' => $request->tanggal_interaksi,
             'nilai_sales' => 0, 'nilai_kontribusi' => $request->nominal, 'catatan' => $request->catatan,
         ]);
-        return redirect()->back()->with('success', 'Dana support berhasil dicatat!');
+
+        // 2. Simpan Pengajuan Dana
+        $st1 = $app1 ? 'menunggu' : 'skipped';
+        $st2 = $app2 ? 'menunggu' : 'skipped';
+        $st3 = $app3 ? 'menunggu' : 'skipped';
+        $st4 = $app4 ? 'menunggu' : 'skipped';
+
+        $judulPengajuan = 'Support Klien: ' . $client->nama_perusahaan;
+
+        $rincian = [
+            [
+                'deskripsi' => $request->keperluan,
+                'jumlah' => $request->nominal
+            ]
+        ];
+
+        // 3. Generate File PDF Rekap Sales sebagai Lampiran
+        $year = date('Y');
+        $calc = $this->calculateRecapData($client, $year);
+        $safeClientName = str_replace(['/', '\\', ' '], '_', $client->nama_perusahaan);
+        $fileName = 'Rekap_Sales_' . $safeClientName . '_' . date('Ymd_His') . '.pdf';
+        $filePath = 'lampiran_dana/' . $fileName;
+        
+        $pdf = Pdf::loadView('exports.client_recap_pdf', [
+            'client' => $client,
+            'recap' => $calc['recap'],
+            'year' => $year,
+            'totals' => $calc['totals']
+        ]);
+        
+        Storage::disk('public')->put($filePath, $pdf->output());
+
+        $lampiranArray = [$filePath];
+
+        $pengajuanDana = PengajuanDana::create([
+            'user_id' => $user->id,
+            'judul_pengajuan' => $judulPengajuan,
+            'divisi' => $user->divisi ?: 'Umum',
+            'nama_bank' => $client->bank,
+            'no_rekening' => $client->no_rekening,
+            'nama_rek' => $client->nama_di_rekening,
+            'total_dana' => $request->nominal,
+            'rincian_dana' => $rincian,
+            'lampiran' => $lampiranArray, // Lampiran otomatis dari sistem (Rekap Sales)
+            
+            'status' => 'diajukan',
+            
+            'approver_dana_1_id' => $app1, 'approver_1_status' => $st1,
+            'approver_dana_2_id' => $app2, 'approver_2_status' => $st2,
+            'approver_dana_3_id' => $app3, 'approver_3_status' => $st3,
+            'approver_dana_4_id' => $app4, 'approver_4_status' => $st4,
+        ]);
+
+        // 4. Kirim Notifikasi ke Approver Pertama
+        $firstApprover = null;
+        $firstStage = null;
+        if ($pengajuanDana->approverDana1 && $st1 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana1;
+            $firstStage = 1;
+        } elseif ($pengajuanDana->approverDana2 && $st2 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana2;
+            $firstStage = 2;
+        } elseif ($pengajuanDana->approverDana3 && $st3 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana3;
+            $firstStage = 3;
+        } elseif ($pengajuanDana->approverDana4 && $st4 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana4;
+            $firstStage = 4;
+        }
+        
+        if ($firstStage == 3) {
+            $pengajuanDana->update(['status' => 'proses_pembayaran']);
+        } elseif ($firstStage == 4) {
+            $pengajuanDana->update(['status' => 'disetujui']);
+        }
+
+        if ($firstApprover) {
+            Notification::send($firstApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
+        }
+
+        return redirect()->back()->with('success', 'Dana support berhasil dicatat dan Pengajuan Dana otomatis dibuat!');
     }
 
     public function storeEntertain(Request $request)
@@ -386,15 +540,17 @@ class CrmController extends Controller
 
     public function destroyClient(Client $client)
     {
-        if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) return redirect()->back()->with('error', 'Akses ditolak.');
-        $client->delete(); 
+        // Hanya yang memiliki akses penuh yang bisa menghapus Klien
+        if (!$this->hasFullAccess()) return redirect()->back()->with('error', 'Akses Ditolak: Hanya Admin/Kepala Divisi yang dapat menghapus Klien.');
+        Client::destroy($client->id); 
         return redirect()->route('crm.index')->with('success', 'Data klien berhasil dihapus.');
     }
 
     public function destroyInteraction(Interaction $interaction)
     {
-        if ($interaction->client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
-        $interaction->delete();
+        // Hanya yang memiliki akses penuh yang bisa menghapus transaksi/interaksi
+        if (!$this->hasFullAccess()) abort(403, 'Akses Ditolak: Hanya Admin/Kepala Divisi yang dapat menghapus transaksi.');
+        Interaction::destroy($interaction->id);
         return redirect()->back()->with('success', 'Data transaksi berhasil dihapus.');
     }
 
@@ -479,7 +635,7 @@ class CrmController extends Controller
         ), $fileName);
     }
 
-    private function calculateRecapData(Client $client, $year)
+    private function calculateRecapData(Client $client, int $year)
     {
         $creationYear = $client->created_at->format('Y');
         $startingLabel = ($year > $creationYear) ? "Saldo Tahun " . ($year - 1) : "Saldo Awal";
@@ -511,7 +667,7 @@ class CrmController extends Controller
                 $rate = $sale->komisi ?? 0;
                 if (!$rate && preg_match('/\[Rate:([\d\.]+)\]/', $sale->catatan, $matches)) $rate = floatval($matches[1]);
                 $netRevenue += ($sale->nilai_sales > 0 ? $sale->nilai_sales : $sale->nilai_kontribusi) * ($rate / 100);
-                if($rate > 0) $komisiList[] = $rate.'%';
+                if($rate > 0) $komisiList[] = (float)$rate . '%';
             }
             $currentSaldo += ($netRevenue - $usageOut);
             $komisiText = empty($komisiList) ? (empty($komisiList) && $grossSales > 0 ? 'Var' : '-') : implode(', ', array_unique($komisiList));
@@ -527,7 +683,7 @@ class CrmController extends Controller
         ];
     }
 
-    private function calculateRealTimeBalance($client)
+    private function calculateRealTimeBalance(Client $client)
     {
         $balance = $client->saldo_awal ?? 0;
         foreach($client->interactions as $item) {

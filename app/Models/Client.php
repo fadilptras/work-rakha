@@ -23,6 +23,12 @@ class Client extends Model
         'jabatan',
         'hobby_client',
         
+        // Informasi Apoteker / Komisi
+        'nama_apoteker',
+        'nomor_sipa',
+        'no_telpon_apoteker',
+        'komisi',
+        
         // Informasi Perusahaan
         'nama_perusahaan',
         'tanggal_berdiri',
