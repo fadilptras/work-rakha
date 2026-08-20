@@ -880,28 +880,28 @@
                         labels: listBulan,
                         datasets: [
                             { 
-                                label: 'Target', data: targetData1, backgroundColor: 'rgba(100,116,139,0.4)', borderRadius: 4, order: 2,
+                                label: 'Target', data: targetData1, backgroundColor: '#fbbf24', borderRadius: 4, order: 2,
                                 datalabels: { display: false } 
                             },
                             { 
-                                label: 'Sales', data: salesData1, backgroundColor: '#38bdf8', borderRadius: 4, order: 2,
+                                label: 'Sales', data: salesData1, backgroundColor: '#3b82f6', borderRadius: 4, order: 2,
                                 datalabels: { 
                                     display: true, align: 'top', anchor: 'end', offset: 4, color: '#e2e8f0', font: { size: 10 },
                                     formatter: (v) => v > 0 ? new Intl.NumberFormat('id-ID').format(v) : ''
                                 }
                             },
                             { 
-                                label: 'Achv %', data: salesData1, type: 'line', borderColor: '#9ca3af', borderWidth: 2, pointBackgroundColor: '#ef4444', pointBorderColor: '#fff', pointRadius: 4, fill: false, order: 1,
+                                label: 'Achv %', data: salesData1, type: 'line', borderColor: '#f43f5e', borderWidth: 3, pointBackgroundColor: '#f43f5e', pointBorderColor: '#fff', pointRadius: 5, fill: false, order: 1,
                                 datalabels: { 
-                                    display: true, align: 'bottom', anchor: 'center', offset: 6, color: '#ef4444', font: { weight: 'bold', size: 11 },
+                                    display: true, align: 'bottom', anchor: 'center', offset: 6, color: '#f43f5e', font: { weight: 'bold', size: 11 },
                                     backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
                                     formatter: (v, ctx) => achvData1[ctx.dataIndex] + '%'
                                 }
                             },
                             { 
-                                label: 'Growth %', data: growthData1, yAxisID: 'y1', type: 'line', borderColor: '#c084fc', borderWidth: 2, pointBackgroundColor: '#c084fc', pointBorderColor: '#fff', pointRadius: 4, fill: false, order: 1,
+                                label: 'Growth %', data: growthData1, yAxisID: 'y1', type: 'line', borderColor: '#a855f7', borderWidth: 3, pointBackgroundColor: '#a855f7', pointBorderColor: '#fff', pointRadius: 5, fill: false, order: 1,
                                 datalabels: { 
-                                    display: true, align: 'bottom', anchor: 'center', offset: 22, color: '#c084fc', font: { weight: 'bold', size: 11 },
+                                    display: true, align: 'bottom', anchor: 'center', offset: 22, color: '#a855f7', font: { weight: 'bold', size: 11 },
                                     backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
                                     formatter: (v) => (v > 0 ? '+' : '') + v + '%'
                                 }
@@ -981,9 +981,9 @@
                         data: {
                             labels: activeLabels,
                             datasets: [
-                                { label: 'Target', data: targetData2, backgroundColor: 'rgba(100,116,139,0.4)', borderRadius: 4, order: 2, datalabels: { display: false } },
+                                { label: 'Target', data: targetData2, backgroundColor: '#fbbf24', borderRadius: 4, order: 2, datalabels: { display: false } },
                                 { 
-                                    label: 'Sales', data: salesData2, backgroundColor: '#34d399', borderRadius: 4, order: 2,
+                                    label: 'Sales', data: salesData2, backgroundColor: '#10b981', borderRadius: 4, order: 2,
                                     datalabels: { 
                                         display: true, align: 'top', anchor: 'end', offset: 4, color: '#e2e8f0', font: { size: 10 },
                                         textAlign: 'center',
@@ -999,17 +999,17 @@
                                     } 
                                 },
                                 { 
-                                    label: 'Achv %', data: salesData2, type: 'line', borderColor: '#9ca3af', borderWidth: 2, pointBackgroundColor: '#ef4444', pointBorderColor: '#fff', pointRadius: 4, fill: false, order: 1,
+                                    label: 'Achv %', data: salesData2, type: 'line', borderColor: '#f43f5e', borderWidth: 3, pointBackgroundColor: '#f43f5e', pointBorderColor: '#fff', pointRadius: 5, fill: false, order: 1,
                                     datalabels: { 
-                                        display: true, align: 'bottom', anchor: 'center', offset: 6, color: '#ef4444', font: { weight: 'bold', size: 11 },
+                                        display: true, align: 'bottom', anchor: 'center', offset: 6, color: '#f43f5e', font: { weight: 'bold', size: 11 },
                                         backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
                                         formatter: (v, ctx) => achvData2[ctx.dataIndex] + '%'
                                     }
                                 },
                                 { 
-                                    label: 'Growth %', data: growthData2, yAxisID: 'y1', type: 'line', borderColor: '#c084fc', borderWidth: 2, pointBackgroundColor: '#c084fc', pointBorderColor: '#fff', pointRadius: 4, fill: false, order: 1,
+                                    label: 'Growth %', data: growthData2, yAxisID: 'y1', type: 'line', borderColor: '#a855f7', borderWidth: 3, pointBackgroundColor: '#a855f7', pointBorderColor: '#fff', pointRadius: 5, fill: false, order: 1,
                                     datalabels: { 
-                                        display: true, align: 'bottom', anchor: 'center', offset: 22, color: '#c084fc', font: { weight: 'bold', size: 11 },
+                                        display: true, align: 'bottom', anchor: 'center', offset: 22, color: '#a855f7', font: { weight: 'bold', size: 11 },
                                         backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
                                         formatter: (v) => (v > 0 ? '+' : '') + v + '%'
                                     }
