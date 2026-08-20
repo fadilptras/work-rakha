@@ -41,6 +41,63 @@ class PengajuanDanaController extends Controller
         ]);
     }
 
+    public function monitoringAll(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Cek hak akses (hanya approver & admin yang bisa akses monitoring)
+        $isApprover = \App\Models\User::query()
+            ->where('approver_dana_1_id', $user->id)
+            ->orWhere('approver_dana_2_id', $user->id)
+            ->orWhere('approver_dana_3_id', $user->id)
+            ->orWhere('approver_dana_4_id', $user->id)
+            ->exists();
+
+        if (!($isApprover || $user->role === 'admin')) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
+
+        // Query pengajuan dana
+        $query = PengajuanDana::with('user')->latest();
+        
+        if ($user->role !== 'admin') {
+            $query->where(function($q) use ($user) {
+                $q->where('approver_dana_1_id', $user->id)
+                  ->orWhere('approver_dana_2_id', $user->id)
+                  ->orWhere('approver_dana_3_id', $user->id)
+                  ->orWhere('approver_dana_4_id', $user->id);
+            });
+        }
+        
+        // Filter status
+        if ($request->filled('status') && $request->status != 'semua') {
+            if ($request->status == 'diproses') {
+                $query->whereIn('status', ['diajukan', 'diproses', 'proses_pembayaran', 'disetujui']);
+            } else {
+                $query->where('status', $request->status);
+            }
+        }
+        
+        // Pencarian
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('judul_pengajuan', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Paginate dan return
+        $pengajuanDanas = $query->paginate(15)->appends($request->query());
+
+        return view('users.pengajuan-dana.pengajuan-dana-monitoring', [
+            'title' => 'Monitoring Seluruh Pengajuan Dana',
+            'pengajuanDanas' => $pengajuanDanas,
+        ]);
+    }
+
     public function show(PengajuanDana $pengajuanDana)
     {
         $userId = Auth::id();

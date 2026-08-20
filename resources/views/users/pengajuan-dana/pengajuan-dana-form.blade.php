@@ -1,6 +1,15 @@
 @php
     $agent = new \Jenssegers\Agent\Agent();
     $isMobile = $agent->isMobile();
+    
+    $user = \Illuminate\Support\Facades\Auth::user();
+    $isApprover = \App\Models\User::query()
+        ->where('approver_dana_1_id', $user->id)
+        ->orWhere('approver_dana_2_id', $user->id)
+        ->orWhere('approver_dana_3_id', $user->id)
+        ->orWhere('approver_dana_4_id', $user->id)
+        ->exists();
+    $canMonitor = $isApprover || $user->role === 'admin';
 @endphp
 <x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
@@ -229,18 +238,18 @@
             </a>
 
             {{-- CARD ATAS PENJELAS HALAMAN --}}
-            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
+            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
                 <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
                 <div class="absolute right-20 -bottom-10 w-24 h-24 bg-white/10 rounded-full blur-lg pointer-events-none"></div>
                 
-                <div class="relative z-10 flex items-center gap-3 md:gap-5">
-                    <div class="h-10 w-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                        <i class="fas fa-hand-holding-usd text-lg md:text-2xl text-white"></i>
+                <div class="relative z-10 flex items-center gap-3 md:gap-4">
+                    <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
+                        <i class="fas fa-hand-holding-usd text-lg md:text-xl text-white"></i>
                     </div>
-                    <div>
-                        <h1 class="text-base md:text-2xl font-black tracking-tight text-white uppercase">Form Pengajuan Dana</h1>
+                    <div class="flex-1">
+                        <h1 class="text-base md:text-xl font-black tracking-tight text-white uppercase">Form Pengajuan Dana</h1>
                         @if(!$isMobile)
-                        <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
+                        <p class="text-blue-100 text-xs md:text-sm mt-0.5 font-medium leading-relaxed w-full">
                             Ajukan permohonan dana operasional atau pengeluaran kantor, tambahkan rincian item, lampirkan dokumen bukti, dan pantau status persetujuan.
                         </p>
                         @endif
@@ -252,8 +261,13 @@
             <div class="space-y-4 md:space-y-6 pb-10">
 
                 @if($isMobile)
-                <div class="flex justify-end mb-4">
-                    <a href="{{ route('pengajuan_dana.history') }}" class="text-sm text-blue-600 font-bold hover:underline flex items-center gap-2 bg-blue-50 px-5 py-2.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
+                <div class="flex flex-col gap-2 mb-4">
+                    @if($canMonitor)
+                    <a href="{{ route('pengajuan_dana.monitoring_all') }}" class="text-sm text-emerald-700 font-bold hover:underline flex items-center justify-center gap-2 bg-emerald-50 px-5 py-2.5 rounded-full border border-emerald-200 transition-all hover:bg-emerald-100 shadow-sm w-full">
+                        <i class="fas fa-desktop"></i> Monitoring Seluruh Pengajuan
+                    </a>
+                    @endif
+                    <a href="{{ route('pengajuan_dana.history') }}" class="text-sm text-blue-600 font-bold hover:underline flex items-center justify-center gap-2 bg-blue-50 px-5 py-2.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-full">
                         <i class="fas fa-history"></i> Lihat Riwayat Pengajuan
                     </a>
                 </div>
@@ -275,7 +289,12 @@
                                 </div>
                             </div>
                             @if(!$isMobile)
-                            <div class="w-full flex justify-end sm:w-auto">
+                            <div class="w-full flex justify-end gap-2 sm:w-auto">
+                                @if($canMonitor)
+                                <a href="{{ route('pengajuan_dana.monitoring_all') }}" class="text-xs text-emerald-700 font-bold hover:underline flex items-center gap-1.5 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-200 transition-all hover:bg-emerald-100 shadow-sm w-fit">
+                                    <i class="fas fa-desktop"></i> Monitoring Seluruh Pengajuan
+                                </a>
+                                @endif
                                 <a href="{{ route('pengajuan_dana.history') }}" class="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
                                     <i class="fas fa-history"></i> Lihat Riwayat Pengajuan
                                 </a>

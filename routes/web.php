@@ -110,12 +110,12 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     Route::get('/pengajuan-dana/history', [PengajuanDanaController::class, 'history'])->name('pengajuan_dana.history');
     Route::get('/pengajuan-dana', [PengajuanDanaController::class, 'index'])->name('pengajuan_dana.index');
     Route::post('/pengajuan-dana', [PengajuanDanaController::class, 'store'])->name('pengajuan_dana.store');
+    Route::get('/pengajuan-dana/monitoring', [PengajuanDanaController::class, 'monitoringAll'])->name('pengajuan_dana.monitoring_all');
     Route::get('/pengajuan-dana/{pengajuanDana}', [PengajuanDanaController::class, 'show'])->name('pengajuan_dana.show');
     Route::post('/pengajuan-dana/{pengajuanDana}/approve', [PengajuanDanaController::class, 'approve'])->name('pengajuan_dana.approve');
     Route::post('/pengajuan-dana/{pengajuanDana}/reject', [PengajuanDanaController::class, 'reject'])->name('pengajuan_dana.reject');
     Route::post('/pengajuan-dana/{pengajuanDana}/proses-pembayaran', [PengajuanDanaController::class, 'prosesPembayaran'])
         ->name('pengajuan_dana.proses_pembayaran');
-
     Route::get('/pengajuan-dana/{pengajuanDana}/download', [PengajuanDanaController::class, 'downloadPDF'])->name('pengajuan_dana.download');
     Route::post('/pengajuan-dana/{pengajuanDana}/cancel', [PengajuanDanaController::class, 'cancel'])->name('pengajuan_dana.cancel');
 
