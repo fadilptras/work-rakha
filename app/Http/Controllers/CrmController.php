@@ -430,12 +430,8 @@ class CrmController extends Controller
             'catatan' => 'nullable|string',
         ]);
         
-        // 1. Simpan Interaction (CRM)
-        Interaction::create([
-            'user_id'=> Auth::id(), 'client_id' => $request->client_id, 'jenis_transaksi' => 'OUT', 
-            'nama_produk' => 'USAGE : ' . $request->keperluan, 'tanggal_interaksi' => $request->tanggal_interaksi,
-            'nilai_sales' => 0, 'nilai_kontribusi' => $request->nominal, 'catatan' => $request->catatan,
-        ]);
+        // 1. (Dihapus) Tidak lagi menyimpan Interaction (CRM) langsung di sini.
+        // Akan disimpan saat Pengajuan Dana mencapai status 'selesai'.
 
         // 2. Simpan Pengajuan Dana
         $st1 = $app1 ? 'menunggu' : 'skipped';
@@ -445,10 +441,14 @@ class CrmController extends Controller
 
         $judulPengajuan = 'Support Klien: ' . $client->nama_perusahaan;
 
+        // Titipkan data CRM di rincian_dana
         $rincian = [
             [
                 'deskripsi' => $request->keperluan,
-                'jumlah' => $request->nominal
+                'jumlah' => $request->nominal,
+                'client_id' => $request->client_id, // Disisipkan untuk pencatatan riwayat nanti
+                'tanggal_interaksi' => $request->tanggal_interaksi,
+                'catatan_crm' => $request->catatan,
             ]
         ];
 
