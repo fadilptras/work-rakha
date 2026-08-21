@@ -220,9 +220,12 @@
                     {{-- Wadah Grafik --}}
                     <div class="mb-6 p-4 border border-slate-200 rounded-xl bg-slate-50">
                         <div class="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center mb-4">
-                            <h4 class="font-bold text-slate-700">Grafik Penjualan PDU</h4>
-                            <div class="relative inline-block">
-                                <select id="filterPduPs" class="appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-2 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="drawPduView()">
+                            <div class="w-full sm:w-auto mb-3 sm:mb-0">
+                                <h4 class="font-bold text-slate-800 text-lg">Grafik Penjualan PDU</h4>
+                                <p class="text-sm text-slate-500 font-medium mt-1">Grand Total Sales: <span class="font-black text-blue-600 text-base ml-1" id="grandTotalPdu">Rp 0</span></p>
+                            </div>
+                            <div class="relative inline-block w-full sm:w-auto">
+                                <select id="filterPduPs" class="w-full sm:w-auto appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-2 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="drawPduView()">
                                     <option value="all">All</option>
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-blue-700">
@@ -257,9 +260,12 @@
                     {{-- Chart Container --}}
                     <div class="mb-6 p-4 border border-slate-200 rounded-xl bg-slate-50">
                         <div class="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center mb-4">
-                            <h4 class="font-bold text-slate-700">Grafik Penjualan per Outlet</h4>
-                            <div class="relative inline-block">
-                                <select id="filterOutletPs" class="appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-2 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="drawOutletChart()">
+                            <div class="w-full sm:w-auto mb-3 sm:mb-0">
+                                <h4 class="font-bold text-slate-800 text-lg">Grafik Penjualan per Outlet</h4>
+                                <p class="text-sm text-slate-500 font-medium mt-1">Grand Total Sales: <span class="font-black text-blue-600 text-base ml-1" id="grandTotalOutlet">Rp 0</span></p>
+                            </div>
+                            <div class="relative inline-block w-full sm:w-auto">
+                                <select id="filterOutletPs" class="w-full sm:w-auto appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-2 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="drawOutletChart()">
                                     <option value="all">All</option>
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-blue-700">
@@ -289,9 +295,12 @@
                 {{-- Tampilan 3: Data per Produk --}}
                 <div id="m-view-product" class="month-view hidden">
                     <div class="mb-4 p-4 border border-slate-200 rounded-xl bg-slate-50 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-                        <h4 class="font-bold text-slate-700">Tabel Penjualan per Produk</h4>
-                        <div class="relative inline-block">
-                            <select id="filterProductPs" class="appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-2 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="drawProductTable()">
+                        <div class="w-full sm:w-auto mb-3 sm:mb-0">
+                            <h4 class="font-bold text-slate-800 text-lg">Tabel Penjualan per Produk</h4>
+                            <p class="text-sm text-slate-500 font-medium mt-1">Grand Total Sales: <span class="font-black text-blue-600 text-base ml-1" id="grandTotalProduct">Rp 0</span></p>
+                        </div>
+                        <div class="relative inline-block w-full sm:w-auto">
+                            <select id="filterProductPs" class="w-full sm:w-auto appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-2 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="drawProductTable()">
                                 <option value="all">All</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-blue-700">
@@ -468,6 +477,9 @@
                 `;
             }
             document.getElementById('m-tbody-outlet').innerHTML = htmlOutlet || '<tr><td colspan="2" class="text-center p-6 text-slate-500 font-medium">Tidak ada data</td></tr>';
+
+            let gtOutletEl = document.getElementById('grandTotalOutlet');
+            if (gtOutletEl) gtOutletEl.innerText = fRp(totalNettOutlet);
 
             // Sesuaikan tinggi grafik Outlet secara otomatis berdasarkan jumlah datanya
             const container = document.getElementById('outletChartContainer');
@@ -656,6 +668,9 @@
                 `;
             }
             document.getElementById('m-tbody-product').innerHTML = htmlProd || '<tr><td colspan="3" class="text-center p-6 text-slate-500 font-medium">Tidak ada data</td></tr>';
+            
+            let gtProductEl = document.getElementById('grandTotalProduct');
+            if (gtProductEl) gtProductEl.innerText = fRp(totalNettProd);
         }
         
         function drawPduView() {
@@ -797,10 +812,15 @@
                 `;
             }
             document.getElementById('m-tbody-pdu').innerHTML = htmlPdu || '<tr><td colspan="3" class="text-center p-6 text-slate-500 font-medium">Tidak ada data</td></tr>';
+            
+            let gtPduEl = document.getElementById('grandTotalPdu');
+            if (gtPduEl) gtPduEl.innerText = fRp(totalNettPdu);
 
             // 2. Tampilkan Grafik PDU
             if (pduChartInstance) pduChartInstance.destroy();
             
+            let chartLabels = [];
+            let targetData = [];
             let filteredPdu = data.pdu.filter(p => {
                 if (psFilter === 'all') return true;
                 if (psFilter === 'Sales Team') return p.nama.toLowerCase() !== 'office';

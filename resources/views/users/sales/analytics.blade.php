@@ -152,6 +152,11 @@
                                 <option value="" {{ $psTerpilih == '' ? 'selected' : '' }}>All</option>
                                 <option value="Sales Team" {{ $psTerpilih == 'Sales Team' ? 'selected' : '' }}>Sales Team</option>
                                 <option value="Office" {{ $psTerpilih == 'Office' ? 'selected' : '' }}>Office</option>
+                                @foreach($listPs as $p)
+                                    @if(strtolower($p) != 'office')
+                                        <option value="{{ $p }}" {{ $psTerpilih == $p ? 'selected' : '' }}>{{ $p }}</option>
+                                    @endif
+                                @endforeach
                             </select>
                         </div>
                         <div class="flex gap-2">

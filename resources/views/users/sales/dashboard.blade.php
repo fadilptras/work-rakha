@@ -106,6 +106,17 @@
             box-shadow: 0 10px 20px rgba(168, 85, 247, 0.2);
         }
 
+        .card-orange .icon-box {
+            background: #fff7ed;
+            color: #f97316;
+            border: 1px solid #ffedd5;
+        }
+        .card-orange:hover .icon-box {
+            background: #f97316;
+            color: white;
+            box-shadow: 0 10px 20px rgba(249, 115, 22, 0.2);
+        }
+
         /* Animated Title */
         .title-reveal {
             animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -137,9 +148,9 @@
                 </p>
             </div>
 
-            {{-- Tiga Kartu Utama --}}
+            {{-- Kartu Utama --}}
             @if(isset($hasAnyAccess) && $hasAnyAccess)
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 relative z-10">
                 
                 @if(isset($hasFullAccess) && $hasFullAccess)
                 {{-- Kartu 1: Kelola Data --}}
@@ -209,6 +220,29 @@
                     {{-- Dekorasi latar belakang kartu --}}
                     <div class="absolute -bottom-6 -right-6 text-purple-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
                         <i class="fas fa-calendar-alt"></i>
+                    </div>
+                </a>
+
+                {{-- Kartu 4: Monitoring Stock --}}
+                <a href="{{ route('sales.stock') }}" class="module-card card-orange group title-reveal stagger-1" style="animation-delay: 0.4s;">
+                    <div>
+                        <div class="icon-box">
+                            <i class="fas fa-boxes-stacked"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800 mb-3 tracking-tight group-hover:text-orange-600 transition-colors">Stock Monitoring</h2>
+                        <p class="text-slate-500 text-base leading-relaxed font-medium">
+                            Pantau ketersediaan barang. Akses data inventori, status aman, atau menipis secara terstruktur.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-8 flex items-center gap-2 text-sm font-bold text-orange-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                        <span>Buka Monitoring</span>
+                        <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                    </div>
+
+                    {{-- Dekorasi latar belakang kartu --}}
+                    <div class="absolute -bottom-6 -right-6 text-orange-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
+                        <i class="fas fa-box-open"></i>
                     </div>
                 </a>
 
