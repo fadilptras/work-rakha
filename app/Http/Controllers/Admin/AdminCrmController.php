@@ -182,7 +182,7 @@ class AdminCrmController extends Controller
     {
         $request->merge(['nilai_sales' => str_replace('.', '', $request->nilai_sales), 'komisi' => str_replace(',', '.', $request->komisi)]);
         $request->validate(['client_id' => 'required|exists:clients,id', 'nama_produk' => 'required|string|max:255', 'nilai_sales' => 'required|numeric|min:0', 'komisi' => 'required|numeric|min:0|max:100', 'tanggal_interaksi' => 'required|date', 'catatan' => 'nullable|string']);
-        Interaction::create(['user_id' => Auth::id(), 'client_id' => $request->client_id, 'jenis_transaksi' => 'IN', 'nama_produk' => $request->nama_produk, 'tanggal_interaksi' => $request->tanggal_interaksi, 'nilai_sales' => $request->nilai_sales, 'nilai_kontribusi' => $request->nilai_sales, 'komisi' => $request->komisi, 'catatan' => "[Rate:" . $request->komisi . "] " . $request->catatan]);
+        Interaction::create(['user_id' => Auth::id(), 'client_id' => $request->client_id, 'jenis_transaksi' => 'IN', 'nama_produk' => $request->nama_produk, 'tanggal_interaksi' => $request->tanggal_interaksi, 'nilai_sales' => $request->nilai_sales, 'nilai_kontribusi' => $request->nilai_sales, 'komisi' => $request->komisi, 'catatan' => "[Rate:" . $request->komisi . "%] " . $request->catatan]);
         return redirect()->back()->with('success', 'Transaksi sales berhasil ditambahkan!');
     }
 
@@ -221,7 +221,7 @@ class AdminCrmController extends Controller
         if ($interaction->jenis_transaksi == 'IN') {
             $request->merge(['nilai_sales' => $cleanNominal, 'komisi' => str_replace(',', '.', $request->input('komisi'))]);
             $request->validate(['nama_produk' => 'required|string|max:255', 'nilai_sales' => 'required|numeric|min:0', 'komisi' => 'required|numeric|min:0|max:100', 'tanggal_interaksi' => 'required|date', 'catatan' => 'nullable|string']);
-            $interaction->update(['nama_produk' => $request->nama_produk, 'tanggal_interaksi' => $request->tanggal_interaksi, 'nilai_sales' => $request->nilai_sales, 'nilai_kontribusi' => $request->nilai_sales, 'komisi' => $request->komisi, 'catatan' => "[Rate:" . $request->komisi . "] " . $request->catatan]);
+            $interaction->update(['nama_produk' => $request->nama_produk, 'tanggal_interaksi' => $request->tanggal_interaksi, 'nilai_sales' => $request->nilai_sales, 'nilai_kontribusi' => $request->nilai_sales, 'komisi' => $request->komisi, 'catatan' => "[Rate:" . $request->komisi . "%] " . $request->catatan]);
         } elseif ($interaction->jenis_transaksi == 'OUT') {
             $request->merge(['nominal' => $cleanNominal]);
             $request->validate(['keperluan' => 'required|string|max:255', 'nominal' => 'required|numeric|min:0', 'tanggal_interaksi' => 'required|date', 'catatan' => 'nullable|string']);
@@ -244,7 +244,7 @@ class AdminCrmController extends Controller
             if ($item->jenis_transaksi == 'OUT') $startingBalance -= $item->nilai_kontribusi;
             elseif ($item->jenis_transaksi == 'IN') {
                  $rate = $item->komisi ?? 0;
-                 if (!$rate && preg_match('/\[Rate:([\d\.]+)\]/', $item->catatan, $m)) $rate = floatval($m[1]);
+                 if (!$rate && preg_match('/\[Rate:([\d\.]+)%?\]/', $item->catatan, $m)) $rate = floatval($m[1]);
                  $nominal = $item->nilai_sales > 0 ? $item->nilai_sales : $item->nilai_kontribusi;
                  $startingBalance += $nominal * ($rate / 100);
             }
@@ -258,7 +258,7 @@ class AdminCrmController extends Controller
             $netRevenue = 0; $komisiList = [];
             foreach($monthlyData->where('jenis_transaksi', 'IN') as $sale) {
                 $rate = $sale->komisi ?? 0;
-                if (!$rate && preg_match('/\[Rate:([\d\.]+)\]/', $sale->catatan, $m)) $rate = floatval($m[1]);
+                if (!$rate && preg_match('/\[Rate:([\d\.]+)%?\]/', $sale->catatan, $m)) $rate = floatval($m[1]);
                 $netRevenue += ($sale->nilai_sales > 0 ? $sale->nilai_sales : $sale->nilai_kontribusi) * ($rate / 100);
                 if($rate > 0) $komisiList[] = $rate.'%';
             }
@@ -280,7 +280,7 @@ class AdminCrmController extends Controller
                 $balance -= $item->nilai_kontribusi;
             } elseif ($item->jenis_transaksi == 'IN') {
                 $rate = $item->komisi ?? 0;
-                if (!$rate && preg_match('/\[Rate:([\d\.]+)\]/', $item->catatan, $matches)) {
+                if (!$rate && preg_match('/\[Rate:([\d\.]+)%?\]/', $item->catatan, $matches)) {
                     $rate = floatval($matches[1]);
                 }
                 $nominal = $item->nilai_sales > 0 ? $item->nilai_sales : $item->nilai_kontribusi;
