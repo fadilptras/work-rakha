@@ -98,8 +98,9 @@ class CrmController extends Controller
         return in_array($divisi, $allowedDivisi);
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $year = $request->input('year', 'all');
         $query = Client::with('interactions')->orderBy('nama_user', 'asc');
         
         if (!$this->hasFullAccess()) {
@@ -110,23 +111,42 @@ class CrmController extends Controller
         
         // Inisialisasi variabel
         $totalAllBalance = 0;
-        $totalGrossSales = 0; // Tambahkan variabel baru ini
+        $totalUsage = 0;
 
         foreach($clients as $client) {
             // 1. Hitung Saldo (Net)
-            $balance = $this->calculateRealTimeBalance($client);
+            if ($year !== 'all') {
+                $balance = $client->saldo_awal ?? 0;
+                $yearInteractions = $client->interactions->filter(function($item) use ($year) {
+                    return \Carbon\Carbon::parse($item->tanggal_interaksi)->format('Y') <= $year;
+                });
+                foreach($yearInteractions as $item) {
+                    if ($item->jenis_transaksi == 'OUT') {
+                        $balance -= $item->nilai_kontribusi;
+                    } elseif ($item->jenis_transaksi == 'IN') {
+                        $rate = $item->komisi ?? 0;
+                        if (!$rate && preg_match('/\[Rate:([\d\.]+)%?\]/', $item->catatan, $matches)) $rate = floatval($matches[1]);
+                        $balance += ($item->nilai_sales > 0 ? $item->nilai_sales : $item->nilai_kontribusi) * ($rate / 100);
+                    }
+                }
+            } else {
+                $balance = $this->calculateRealTimeBalance($client);
+            }
             $client->current_balance = $balance;
             $totalAllBalance += $balance;
 
-            // 2. Hitung Total Sales (Gross) - Hanya transaksi 'IN'
-            $clientSales = $client->interactions
-                ->where('jenis_transaksi', 'IN')
-                ->sum(function($item) {
-                    // Handle logika sales lama vs baru (jika nilai_sales 0, pakai nilai_kontribusi)
-                    return $item->nilai_sales > 0 ? $item->nilai_sales : $item->nilai_kontribusi;
+            // 2. Hitung Total Usage
+            $usageQuery = $client->interactions->where('jenis_transaksi', 'OUT');
+            
+            if ($year !== 'all') {
+                $usageQuery = $usageQuery->filter(function($item) use ($year) {
+                    return \Carbon\Carbon::parse($item->tanggal_interaksi)->format('Y') == $year;
                 });
+            }
+
+            $clientUsage = $usageQuery->sum('nilai_kontribusi');
                 
-            $totalGrossSales += $clientSales;
+            $totalUsage += $clientUsage;
         }
 
         $agent = new \Jenssegers\Agent\Agent();
@@ -136,7 +156,8 @@ class CrmController extends Controller
             'title' => 'Sistem Informasi Sales (CRM)', 
             'clients' => $clients,
             'totalAllBalance' => $totalAllBalance,
-            'totalGrossSales' => $totalGrossSales 
+            'totalUsage' => $totalUsage,
+            'selectedYear' => $year
         ]);
     }
 
@@ -329,7 +350,7 @@ class CrmController extends Controller
                 'nilai_sales'       => $request->nilai_sales,
                 'nilai_kontribusi'  => $request->nilai_sales,
                 'komisi'            => $komisiClient, // Ambil dari profil klien
-                'catatan'           => "[Rate:" . $komisiClient . "] " . $request->catatan,
+                'catatan'           => "[Rate:" . $komisiClient . "%] " . $request->catatan,
             ]);
 
         // --- LOGIKA UNTUK TIPE: PENGELUARAN (OUT) ---
@@ -625,24 +646,14 @@ class CrmController extends Controller
             return response()->json(['success' => false, 'message' => 'Data sales tidak ditemukan untuk bulan tersebut.']);
         }
 
-        // --- Proses Reverse Mapping: Mencari ID CRM Client berdasarkan nama Command Center ---
-        $mappedClientId = $this->findClientByFuzzyName($salesCustomer);
-        if (!$mappedClientId) {
-            return response()->json([
-                'success' => false, 
-                'message' => 'Gagal mencocokkan Rumah Sakit ini ke data CRM. Pastikan klien ini sudah terdaftar di CRM Anda dengan nama yang mirip.'
-            ]);
-        }
-        $mappedClient = \App\Models\Client::find($mappedClientId);
-
-        // Ambil data sales yang sesuai
-        $result = $sales->map(function ($sale) use ($mappedClientId, $mappedClient) {
+        // Ambil data sales yang sesuai dan mapping langsung ke Client yang sedang dibuka
+        $result = $sales->map(function ($sale) use ($client) {
             return [
                 'nama_produk' => $sale->nama_produk,
                 'nilai_sales' => $sale->harga_nett,
                 'tanggal' => $sale->tanggal,
-                'client_id' => $mappedClientId,
-                'client_name' => $mappedClient->nama_perusahaan
+                'client_id' => $client->id,
+                'client_name' => $sale->nama_customer // Menampilkan nama asli dari tabel Sales Command Center
             ];
         });
 
@@ -652,53 +663,7 @@ class CrmController extends Controller
         ]);
     }
 
-    private function findClientByFuzzyName($salesCustomer)
-    {
-        $cleanName = str_ireplace(
-            ['RS.', 'RS ', 'PT.', 'PT ', 'CV.', 'CV ', 'Klinik ', 'Apotek ', 'Hospital ', 'UD.', 'UD '], 
-            ' ', 
-            $salesCustomer
-        );
 
-        $words = array_filter(explode(' ', $cleanName), function($word) {
-            return strlen(trim($word)) > 2; 
-        });
-
-        $query = \App\Models\Client::query();
-
-        if (empty($words)) {
-            $client = $query->where('nama_perusahaan', 'LIKE', '%' . trim($salesCustomer) . '%')->first();
-            return $client ? $client->id : null;
-        }
-
-        // 1. Strict match
-        $strictQuery = clone $query;
-        $strictQuery->where(function($q) use ($words) {
-            foreach ($words as $word) {
-                $q->where('nama_perusahaan', 'LIKE', '%' . trim($word) . '%');
-            }
-        });
-        
-        $client = $strictQuery->first();
-        if ($client) return $client->id;
-
-        // 2. Loose match
-        $looseQuery = clone $query;
-        $looseQuery->where(function($q) use ($words) {
-            foreach ($words as $word) {
-                $q->orWhere('nama_perusahaan', 'LIKE', '%' . trim($word) . '%');
-            }
-        });
-
-        $client = $looseQuery->first();
-        if ($client) return $client->id;
-
-        // 3. Substring fallback
-        $fallbackQuery = clone $query;
-        $client = $fallbackQuery->where('nama_perusahaan', 'LIKE', '%' . trim($salesCustomer) . '%')->first();
-        
-        return $client ? $client->id : null;
-    }
 
     public function destroyClient(Client $client)
     {
@@ -853,7 +818,7 @@ class CrmController extends Controller
                 $balance -= $item->nilai_kontribusi;
             } elseif ($item->jenis_transaksi == 'IN') {
                 $rate = $item->komisi ?? 0;
-                if (!$rate && preg_match('/\[Rate:([\d\.]+)\]/', $item->catatan, $matches)) $rate = floatval($matches[1]);
+                if (!$rate && preg_match('/\[Rate:([\d\.]+)%?\]/', $item->catatan, $matches)) $rate = floatval($matches[1]);
                 $balance += ($item->nilai_sales > 0 ? $item->nilai_sales : $item->nilai_kontribusi) * ($rate / 100);
             }
         }

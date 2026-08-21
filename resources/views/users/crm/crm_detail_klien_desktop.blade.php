@@ -115,10 +115,10 @@
                         
                         <div class="flex items-center gap-4 bg-white/10 backdrop-blur-md rounded-xl px-4 py-2 border border-white/20 shadow-sm flex-1 sm:flex-initial justify-between sm:justify-start">
                             <div class="flex flex-col">
-                                <span class="text-blue-200 text-[8px] font-bold uppercase tracking-wider mb-0.5">Total Sales (Gross)</span>
+                                <span class="text-blue-200 text-[8px] font-bold uppercase tracking-wider mb-0.5">Total Realisasi</span>
                                 <div class="flex items-start">
                                     <span class="text-[9px] text-blue-100 mr-1 mt-0.5">Rp</span>
-                                    <span class="text-base md:text-lg font-bold text-white leading-none">{{ number_format($client->interactions->where('jenis_transaksi', 'IN')->sum('nilai_kontribusi'), 0, ',', '.') }}</span>
+                                    <span class="text-base md:text-lg font-bold text-white leading-none">{{ number_format($client->interactions->where('jenis_transaksi', 'OUT')->sum('nilai_kontribusi'), 0, ',', '.') }}</span>
                                 </div>
                             </div>
                             <div class="w-px h-8 bg-white/20 mx-1"></div>
@@ -944,8 +944,8 @@
                 .then(res => res.json())
                 .then(resData => {
                     if (resData.success && resData.data.length > 0) {
-                        const emptyMsg = document.getElementById('empty_queue_msg_desktop');
-                        if (emptyMsg) emptyMsg.remove();
+                        const container = document.getElementById('product_rows_container_desktop');
+                        container.innerHTML = ''; // Hapus antrean sebelumnya
                         
                         let countAdded = 0;
                         resData.data.forEach((item) => {
@@ -953,8 +953,7 @@
                             countAdded++;
                         });
                         
-                        let badge = document.getElementById('queue_count_desktop');
-                        badge.innerText = parseInt(badge.innerText) + countAdded;
+                        document.getElementById('queue_count_desktop').innerText = countAdded;
                     } else {
                         alert(resData.message || 'Gagal menarik data sales.');
                     }

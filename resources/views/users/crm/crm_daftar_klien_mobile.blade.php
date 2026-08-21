@@ -66,13 +66,28 @@
                         </div>
 
                         {{-- Action Buttons (Tanpa Animasi Naik) --}}
-                        <div class="flex flex-wrap gap-3">
-                            <a href="{{ route('crm.matrix') }}" class="bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-colors flex items-center">
-                                <i class="fas fa-table mr-2"></i> Matrix Laporan
-                            </a>
-                            <button onclick="toggleModal('createClientModal')" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-900/20 transition-colors flex items-center border border-orange-400">
-                                <i class="fas fa-plus mr-2"></i> Tambah Klien
-                            </button>
+                        <div class="flex flex-wrap md:flex-nowrap justify-start md:justify-end gap-3 items-center w-full md:w-auto mt-2 md:mt-0">
+                            <form action="{{ route('crm.index') }}" method="GET" class="m-0 w-full sm:w-auto">
+                                <div class="relative w-full sm:w-auto">
+                                    <select name="year" onchange="this.form.submit()" class="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white font-bold border border-white/30 rounded-xl pl-4 pr-10 py-3 shadow-lg outline-none cursor-pointer transition-colors appearance-none focus:ring-2 focus:ring-white/50">
+                                        <option value="all" class="text-gray-900" {{ isset($selectedYear) && $selectedYear == 'all' ? 'selected' : '' }}>Semua Tahun</option>
+                                        @for($y = date('Y'); $y >= 2020; $y--)
+                                            <option value="{{ $y }}" class="text-gray-900" {{ isset($selectedYear) && $selectedYear == $y ? 'selected' : '' }}>Tahun {{ $y }}</option>
+                                        @endfor
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white">
+                                        <i class="fas fa-chevron-down text-xs"></i>
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="flex gap-3 w-full sm:w-auto">
+                                <a href="{{ route('crm.matrix') }}" class="flex-1 sm:flex-none justify-center bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-colors flex items-center">
+                                    <i class="fas fa-table mr-2"></i> Matrix
+                                </a>
+                                <button onclick="toggleModal('createClientModal')" class="flex-1 sm:flex-none justify-center bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-900/20 transition-colors flex items-center border border-orange-400">
+                                    <i class="fas fa-plus mr-2"></i> Tambah
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -95,9 +110,9 @@
                                 <i class="fas fa-map-marked-alt"></i>
                             </div>
                             <div>
-                                <p class="text-blue-200 text-xs font-bold uppercase tracking-wider">Total Nilai Sales</p>
+                                <p class="text-blue-200 text-xs font-bold uppercase tracking-wider">Total Realisasi</p>
                                 <p class="text-emerald-300 text-2xl font-mono font-bold">
-                                    Rp {{ number_format($totalGrossSales, 0, ',', '.') }}
+                                    Rp {{ number_format($totalUsage, 0, ',', '.') }}
                                 </p>
                             </div>
                         </div>
