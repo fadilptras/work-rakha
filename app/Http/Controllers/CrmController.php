@@ -489,119 +489,28 @@ class CrmController extends Controller
         $client = Client::findOrFail($request->client_id);
         if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
         
-        // Validasi rekening dari form
-        $request->validate([
-            'nama_bank' => 'required|string',
-            'no_rekening' => 'required|string',
-            'nama_rek' => 'required|string',
-        ]);
-
-        $user = Auth::user();
-        
-        // Ambil ID approver dari profil user
-        $app1 = $user->approver_dana_1_id;
-        $app2 = $user->approver_dana_2_id;
-        $app3 = $user->approver_dana_3_id;
-        $app4 = $user->approver_dana_4_id;
-
-        if (!$app1 && !$app2 && !$app3 && !$app4) {
-            return redirect()->back()->with('error', 'Gagal: Anda belum memiliki pengaturan Approver Dana. Harap hubungi Admin/HRD.');
-        }
-
         $request->merge(['nominal' => str_replace('.', '', $request->nominal)]);
+        
         $request->validate([
-            'client_id' => 'required|exists:clients,id', 'keperluan' => 'required|string|max:255',
-            'nominal' => 'required|numeric|min:0', 'tanggal_interaksi' => 'required|date',
+            'client_id' => 'required|exists:clients,id',
+            'keperluan' => 'required|string|max:255',
+            'nominal' => 'required|numeric|min:0',
+            'tanggal_interaksi' => 'required|date',
             'catatan' => 'nullable|string',
         ]);
-        
-        // 1. (Dihapus) Tidak lagi menyimpan Interaction (CRM) langsung di sini.
-        // Akan disimpan saat Pengajuan Dana mencapai status 'selesai'.
 
-        // 2. Simpan Pengajuan Dana
-        $st1 = $app1 ? 'menunggu' : 'skipped';
-        $st2 = $app2 ? 'menunggu' : 'skipped';
-        $st3 = $app3 ? 'menunggu' : 'skipped';
-        $st4 = $app4 ? 'menunggu' : 'skipped';
-
-        $judulPengajuan = 'Support Klien: ' . $client->nama_perusahaan;
-
-        // Titipkan data CRM di rincian_dana
-        $rincian = [
-            [
-                'deskripsi' => $request->keperluan,
-                'jumlah' => $request->nominal,
-                'client_id' => $request->client_id, // Disisipkan untuk pencatatan riwayat nanti
-                'tanggal_interaksi' => $request->tanggal_interaksi,
-                'catatan_crm' => $request->catatan,
-            ]
-        ];
-
-        // 3. Generate File PDF Rekap Sales sebagai Lampiran
-        $year = date('Y');
-        $calc = $this->calculateRecapData($client, $year);
-        $safeClientName = str_replace(['/', '\\', ' '], '_', $client->nama_perusahaan);
-        $fileName = 'Rekap_Sales_' . $safeClientName . '_' . date('Ymd_His') . '.pdf';
-        $filePath = 'lampiran_dana/' . $fileName;
-        
-        $pdf = Pdf::loadView('exports.client_recap_pdf', [
-            'client' => $client,
-            'recap' => $calc['recap'],
-            'year' => $year,
-            'totals' => $calc['totals']
-        ]);
-        
-        Storage::disk('public')->put($filePath, $pdf->output());
-
-        $lampiranArray = [$filePath];
-
-        $pengajuanDana = PengajuanDana::create([
-            'user_id' => $user->id,
-            'judul_pengajuan' => $judulPengajuan,
-            'divisi' => $user->divisi ?: 'Umum',
-            'nama_bank' => $request->nama_bank,
-            'no_rekening' => $request->no_rekening,
-            'nama_rek' => $request->nama_rek,
-            'total_dana' => $request->nominal,
-            'rincian_dana' => $rincian,
-            'lampiran' => $lampiranArray, // Lampiran otomatis dari sistem (Rekap Sales)
-            
-            'status' => 'diajukan',
-            
-            'approver_dana_1_id' => $app1, 'approver_1_status' => $st1,
-            'approver_dana_2_id' => $app2, 'approver_2_status' => $st2,
-            'approver_dana_3_id' => $app3, 'approver_3_status' => $st3,
-            'approver_dana_4_id' => $app4, 'approver_4_status' => $st4,
+        Interaction::create([
+            'user_id' => Auth::id(),
+            'client_id' => $request->client_id,
+            'jenis_transaksi' => 'OUT',
+            'nama_produk' => 'USAGE : ' . $request->keperluan,
+            'tanggal_interaksi' => $request->tanggal_interaksi,
+            'nilai_sales' => 0,
+            'nilai_kontribusi' => $request->nominal,
+            'catatan' => $request->catatan,
         ]);
 
-        // 4. Kirim Notifikasi ke Approver Pertama
-        $firstApprover = null;
-        $firstStage = null;
-        if ($pengajuanDana->approverDana1 && $st1 === 'menunggu') {
-            $firstApprover = $pengajuanDana->approverDana1;
-            $firstStage = 1;
-        } elseif ($pengajuanDana->approverDana2 && $st2 === 'menunggu') {
-            $firstApprover = $pengajuanDana->approverDana2;
-            $firstStage = 2;
-        } elseif ($pengajuanDana->approverDana3 && $st3 === 'menunggu') {
-            $firstApprover = $pengajuanDana->approverDana3;
-            $firstStage = 3;
-        } elseif ($pengajuanDana->approverDana4 && $st4 === 'menunggu') {
-            $firstApprover = $pengajuanDana->approverDana4;
-            $firstStage = 4;
-        }
-        
-        if ($firstStage == 3) {
-            $pengajuanDana->update(['status' => 'proses_pembayaran']);
-        } elseif ($firstStage == 4) {
-            $pengajuanDana->update(['status' => 'disetujui']);
-        }
-
-        if ($firstApprover) {
-            Notification::send($firstApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
-        }
-
-        return redirect()->back()->with('success', 'Dana support berhasil dicatat dan Pengajuan Dana otomatis dibuat!');
+        return redirect()->back()->with('success', 'Dana support / usage berhasil dicatat langsung ke history!');
     }
 
     public function storeEntertain(Request $request)

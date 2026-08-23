@@ -155,6 +155,7 @@ Route::controller(SalesController::class)->prefix('sales')->name('sales.')->grou
     Route::get('/', 'index')->name('index'); 
     Route::get('/analytics', 'analytics')->name('analytics');
     Route::get('/monthly', 'monthly')->name('monthly');
+    Route::get('/stock', 'stock')->name('stock');
     Route::get('/manage', 'manage')->name('manage');
     Route::post('/manual', 'storeManual')->name('store_manual');
     Route::post('/import', 'importExcel')->name('import_excel');

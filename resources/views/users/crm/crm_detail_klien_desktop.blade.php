@@ -378,28 +378,18 @@
                             </div>
                         </div>
 
-                        <!-- Baris 2: Keperluan & Bank -->
+                        <!-- Baris 2: Keperluan -->
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Keperluan Support <span class="text-red-500">*</span></label>
                             <input type="text" name="keperluan" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Contoh: Transport" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Nama Bank <span class="text-red-500">*</span></label>
-                            <input type="text" name="nama_bank" value="{{ $client->bank }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Contoh: BCA, Mandiri" required>
-                        </div>
-
-                        <!-- Baris 3: Rekening -->
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">No. Rekening <span class="text-red-500">*</span></label>
-                            <input type="text" name="no_rekening" value="{{ $client->no_rekening }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm font-mono font-bold" placeholder="0987654321" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Nama di Rekening <span class="text-red-500">*</span></label>
-                            <input type="text" name="nama_rek" value="{{ $client->nama_di_rekening }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Atas Nama..." required>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Catatan Tambahan</label>
+                            <input type="text" name="catatan" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Opsional">
                         </div>
                     </div>
                     <div class="flex">
-                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform active:scale-95 text-sm md:text-base flex items-center justify-center gap-2"><i class="fas fa-paper-plane"></i> Ajukan Dana</button>
+                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform active:scale-95 text-sm md:text-base flex items-center justify-center gap-2"><i class="fas fa-save"></i> Simpan Pengeluaran</button>
                     </div>
                 </form>
             </div>

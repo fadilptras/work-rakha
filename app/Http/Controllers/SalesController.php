@@ -42,8 +42,18 @@ class SalesController extends Controller
 
     // urutan bulan standar untuk sorting dan label
     protected array $urutanBulan = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember'
     ];
 
     public function index(Request $request)
@@ -58,7 +68,6 @@ class SalesController extends Controller
             'hasAnyAccess' => $this->hasAnySalesAccess()
         ]);
     }
-
     public function analytics(Request $request)
     {
         if (!$this->hasFullSalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Analitik Penjualan.');
@@ -71,7 +80,7 @@ class SalesController extends Controller
         $bulanAda = Sales::whereNotNull('bulan')->distinct()->pluck('bulan')->toArray();
         $bulanAda = array_map(fn($b) => ucfirst(strtolower($b)), $bulanAda);
         $listBulan = array_values(array_intersect($this->urutanBulan, $bulanAda));
-        
+
         $currentMonthIndex = date('n');
         $validMonths = array_slice($this->urutanBulan, 0, $currentMonthIndex);
         $listBulan = array_values(array_intersect($listBulan, $validMonths));
@@ -84,12 +93,12 @@ class SalesController extends Controller
         // data target sales
         $tahun = $request->input('tahun', date('Y'));
         $tahunLalu = (int)$tahun - 1;
-        
+
         $targets = SalesTarget::where('tahun', $tahun)->get();
         $salesCurrent = Sales::whereYear('tanggal', $tahun)
             ->select('bulan', 'ps', DB::raw('SUM(harga_nett) as total_sales'))
             ->groupBy('bulan', 'ps')->get();
-            
+
         $salesCurrent->transform(function ($item) {
             $item->bulan = ucfirst(strtolower($item->bulan));
             return $item;
@@ -98,7 +107,7 @@ class SalesController extends Controller
         $salesLastYearRaw = Sales::whereYear('tanggal', $tahunLalu)
             ->select('bulan', DB::raw('SUM(harga_nett) as total_sales'))
             ->groupBy('bulan')->get();
-            
+
         $salesLastYear = [];
         foreach ($salesLastYearRaw as $row) {
             $b = ucfirst(strtolower($row->bulan));
@@ -116,7 +125,7 @@ class SalesController extends Controller
             $targetAll = $targets->where('bulan', $bulan)->sum('target_amount');
             $salesAll = $salesCurrent->where('bulan', $bulan)->sum('total_sales');
             $salesPrev = $salesLastYear[$bulan] ?? 0;
-            
+
             $achievementRate = $targetAll > 0 ? round(($salesAll / $targetAll) * 100, 2) : 0;
             $growthRate = $salesPrev > 0 ? round((($salesAll - $salesPrev) / $salesPrev) * 100, 2) : 0;
 
@@ -132,7 +141,7 @@ class SalesController extends Controller
             foreach ($listPs as $ps) {
                 $targetPs = $targets->where('bulan', $bulan)->where('ps', $ps)->sum('target_amount');
                 $salesPs = $salesCurrent->where('bulan', $bulan)->where('ps', $ps)->sum('total_sales');
-                
+
                 $ratePs = $targetPs > 0 ? round(($salesPs / $targetPs) * 100, 2) : 0;
                 $monthlyPerPs[$bulan][$ps] = [
                     'rate' => $ratePs,
@@ -170,10 +179,44 @@ class SalesController extends Controller
             DB::raw('SUM(CASE WHEN bulan = "Desember" THEN harga_nett ELSE 0 END) as des')
         )->whereNotNull('tanggal')->groupBy(DB::raw('YEAR(tanggal)'))->orderBy(DB::raw('YEAR(tanggal)'), 'desc')->get();
 
+        $psMapping = [
+            'Arief' => 'Arief Natanael Haryanto',
+            'Eko' => 'Eko Sigit Nugroho',
+            'Hendra' => 'R Hendra Dipraja',
+            'Karsono' => 'Karsono Nu Haeman',
+            'Surachman' => 'Surachman'
+        ];
+        
+        $psAvatars = [];
+        $users = \App\Models\User::whereIn('name', array_values($psMapping))->get(['name', 'profile_picture']);
+        
+        foreach ($psMapping as $shortName => $fullName) {
+            $user = $users->firstWhere('name', $fullName);
+            if ($user && $user->profile_picture) {
+                $psAvatars[$shortName] = asset('storage/' . $user->profile_picture);
+            } else {
+                $psAvatars[$shortName] = 'https://ui-avatars.com/api/?name='.urlencode($shortName).'&background=0ea5e9&color=fff&rounded=true&bold=true';
+            }
+        }
+        $psAvatars['Office'] = 'https://ui-avatars.com/api/?name=Office&background=64748b&color=fff&rounded=true&bold=true';
+
         return view('users.sales.analytics', array_merge(compact(
-            'listPs', 'listCustomer', 'listProduk', 'listBulan', 'listTahun',
-            'tahun', 'tahunLalu', 'monthlyAll', 'monthlyPerPs', 'allPsAchievement', 'urutanBulan',
-            'bulanTerpilih', 'psTerpilih', 'targets', 'historySales'
+            'listPs',
+            'listCustomer',
+            'listProduk',
+            'listBulan',
+            'listTahun',
+            'tahun',
+            'tahunLalu',
+            'monthlyAll',
+            'monthlyPerPs',
+            'allPsAchievement',
+            'urutanBulan',
+            'bulanTerpilih',
+            'psTerpilih',
+            'targets',
+            'historySales',
+            'psAvatars'
         ), $analyticsData))->with('title', 'Sales Analytics & Target');
     }
 
@@ -188,12 +231,18 @@ class SalesController extends Controller
             ->orderBy('tahun', 'desc')
             ->pluck('tahun')
             ->toArray();
-            
+
         if (!in_array(date('Y'), $listTahun)) {
             array_unshift($listTahun, date('Y'));
         }
 
         return view('users.sales.monthly', compact('tahun', 'hasFullAccess', 'listTahun'));
+    }
+
+    public function stock(Request $request)
+    {
+        if (!$this->hasAnySalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Monitoring Stock.');
+        return view('users.sales.stock')->with('title', 'Monitoring Stock Barang');
     }
 
     // simpan data dari form manual
@@ -223,7 +272,7 @@ class SalesController extends Controller
         $bulan = null;
 
         if ($tanggal) {
-            $bulan = ['01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei','06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember'][date('m', strtotime($tanggal))];
+            $bulan = ['01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April', '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus', '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'][date('m', strtotime($tanggal))];
         }
 
         foreach ($request->nama_produk as $index => $produk) {
@@ -256,10 +305,10 @@ class SalesController extends Controller
         try {
             $import = new SalesImport();
             Excel::import($import, $request->file('file'));
-            
+
             $months = implode(', ', $import->refreshedMonths);
             $count = number_format($import->importedCount, 0, ',', '.');
-            
+
             if ($import->importedCount > 0) {
                 return redirect()->back()->with('success', "Sukses! $count baris data telah diimpor, me-refresh data untuk periode: $months.")->with('active_tab', 'import');
             } else {
@@ -280,42 +329,50 @@ class SalesController extends Controller
 
         $callback = function () {
             $file = fopen('php://output', 'w');
-            
+
             // Baris 1: Header Kolom Asli (Wajib ada)
             fputcsv($file, [
-                'tanggal', 'nama_customer', 'nama_produk', 'qty', 'satuan', 'hna', 'diskon', 'harga_nett', 'ps'
+                'tanggal',
+                'nama_customer',
+                'nama_produk',
+                'qty',
+                'satuan',
+                'hna',
+                'diskon',
+                'harga_nett',
+                'ps'
             ]);
-            
+
             // Baris 2: Petunjuk Format (Akan otomatis di-skip oleh sistem import karena tanggal tidak valid)
             fputcsv($file, [
-                'FORMAT WAJIB: Bln/Tgl/Tahun', 
-                'Wajib Diisi', 
-                'Wajib Diisi', 
-                'Angka', 
-                'Teks', 
-                'Format Bebas (Cth: Rp 529.500)', 
-                'Format Bebas (Cth: 12.69%)', 
-                'Format Bebas (Cth: Rp 32.361.500)', 
+                'FORMAT WAJIB: Bln/Tgl/Tahun',
+                'Wajib Diisi',
+                'Wajib Diisi',
+                'Angka',
+                'Teks',
+                'Format Bebas (Cth: Rp 529.500)',
+                'Format Bebas (Cth: 12.69%)',
+                'Format Bebas (Cth: Rp 32.361.500)',
                 'Teks (Cth: Arief)'
             ]);
-            
+
             // Baris 3: Contoh Data Benar (Bisa langsung Anda timpa/hapus)
             fputcsv($file, [
-                '8/18/2026', 
-                'RSUD SAYANG', 
-                'RAKHA Kasa Katun Premium', 
-                '70', 
-                'Polybag', 
-                'Rp 529.500', 
-                '12.69%', 
-                'Rp 32.361.500', 
+                '8/18/2026',
+                'RSUD SAYANG',
+                'RAKHA Kasa Katun Premium',
+                '70',
+                'Polybag',
+                'Rp 529.500',
+                '12.69%',
+                'Rp 32.361.500',
                 'Arief'
             ]);
-            
+
             fclose($file);
         };
 
-        return response()->streamDownload($callback, 'Template_Import_Sales_'.date('Ymd').'.csv', $headers);
+        return response()->streamDownload($callback, 'Template_Import_Sales_' . date('Ymd') . '.csv', $headers);
     }
 
     // export data ke csv
@@ -327,10 +384,10 @@ class SalesController extends Controller
         // pencarian (search)
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nama_customer', 'like', "%{$search}%")
-                  ->orWhere('nama_produk', 'like', "%{$search}%")
-                  ->orWhere('ps', 'like', "%{$search}%");
+                    ->orWhere('nama_produk', 'like', "%{$search}%")
+                    ->orWhere('ps', 'like', "%{$search}%");
             });
         }
 
@@ -384,15 +441,23 @@ class SalesController extends Controller
         $callback = function () use ($sales) {
             $file = fopen('php://output', 'w');
             fputcsv($file, [
-                'tanggal', 'nama_customer', 'nama_produk', 'qty', 'satuan', 'hna', 'diskon', 'harga_nett', 'ps'
+                'tanggal',
+                'nama_customer',
+                'nama_produk',
+                'qty',
+                'satuan',
+                'hna',
+                'diskon',
+                'harga_nett',
+                'ps'
             ]);
-            
+
             foreach ($sales as $item) {
                 $diskon_val = $item->diskon;
                 if (is_numeric($diskon_val) && $diskon_val > 0 && $diskon_val <= 1) {
                     $diskon_val = $diskon_val * 100;
                 }
-                
+
                 fputcsv($file, [
                     $item->tanggal ? date('Y-m-d', strtotime($item->tanggal)) : '',
                     $item->nama_customer ?? '',
@@ -408,7 +473,7 @@ class SalesController extends Controller
             fclose($file);
         };
 
-        return response()->streamDownload($callback, 'Export_Data_Sales_'.date('YmdHis').'.csv', $headers);
+        return response()->streamDownload($callback, 'Export_Data_Sales_' . date('YmdHis') . '.csv', $headers);
     }
 
     // ajax endpoint untuk data agregat dashboard
@@ -456,7 +521,7 @@ class SalesController extends Controller
             ->select('bulan', DB::raw('SUM(harga_nett) as total'))
             ->groupBy('bulan')
             ->pluck('total', 'bulan');
-            
+
         $trendRaw = [];
         foreach ($trendRawDb as $k => $v) {
             $trendRaw[ucfirst(strtolower($k))] = $v;
@@ -476,7 +541,7 @@ class SalesController extends Controller
         if ($tahun) {
             $targetQuery->where('tahun', $tahun);
         }
-        
+
         if (!empty($psFilter)) {
             if (in_array('Sales Team', $psFilter) && in_array('Office', $psFilter)) {
                 // ALL, do nothing
@@ -486,12 +551,12 @@ class SalesController extends Controller
                 $targetQuery->where('ps', 'Office');
             }
         }
-        
+
         // Sum targets per month since they are stored per PS
         $targetRawDb = $targetQuery->select('bulan', DB::raw('SUM(target_amount) as total_target'))
             ->groupBy('bulan')
             ->pluck('total_target', 'bulan');
-        
+
         $targetRaw = [];
         foreach ($targetRawDb as $k => $v) {
             $targetRaw[ucfirst(strtolower($k))] = $v;
@@ -536,19 +601,19 @@ class SalesController extends Controller
             if ($subGroupField) {
                 $selects[] = $subGroupField;
             }
-            
+
             $queryObj = $query->select($selects)
                 ->whereNotNull($nameField)
                 ->where($nameField, '!=', '');
-                
+
             if ($subGroupField) {
                 $queryObj->groupBy($nameField, $subGroupField, 'bulan');
             } else {
                 $queryObj->groupBy($nameField, 'bulan');
             }
-            
+
             $raw = $queryObj->get();
-                
+
             $result = [];
             foreach ($raw as $row) {
                 $name = $row->{$nameField};
@@ -572,7 +637,7 @@ class SalesController extends Controller
                     $result[$name]['bulanan'][$bulan]['nett'] += (float)$row->total_nett;
                     $result[$name]['bulanan'][$bulan]['qty'] += (int)$row->total_qty;
                 }
-                
+
                 if ($subGroupField) {
                     $subName = $row->{$subGroupField};
                     if ($subName) {
@@ -720,10 +785,10 @@ class SalesController extends Controller
         // pencarian (search)
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nama_customer', 'like', "%{$search}%")
-                  ->orWhere('nama_produk', 'like', "%{$search}%")
-                  ->orWhere('ps', 'like', "%{$search}%");
+                    ->orWhere('nama_produk', 'like', "%{$search}%")
+                    ->orWhere('ps', 'like', "%{$search}%");
             });
         }
 
@@ -774,7 +839,7 @@ class SalesController extends Controller
         $bulanAda = Sales::whereNotNull('bulan')->distinct()->pluck('bulan')->toArray();
         $bulanAda = array_map(fn($b) => ucfirst(strtolower($b)), $bulanAda);
         $listBulan = array_values(array_intersect($this->urutanBulan, $bulanAda));
-        
+
         $tahunAda = Sales::whereNotNull('tanggal')
             ->selectRaw('DISTINCT YEAR(tanggal) as tahun')
             ->orderBy('tahun', 'desc')
@@ -813,7 +878,7 @@ class SalesController extends Controller
 
         $data = $request->except('bulan');
         if ($request->filled('tanggal')) {
-            $data['bulan'] = ['01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei','06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember'][date('m', strtotime($request->tanggal))];
+            $data['bulan'] = ['01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April', '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus', '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'][date('m', strtotime($request->tanggal))];
         }
 
         $sale->update($data);
@@ -850,7 +915,7 @@ class SalesController extends Controller
                 $bulanAngka = array_search($bulan, $this->urutanBulan) + 1;
                 // clean up amount from non-numeric characters if necessary, but we format via JS and store raw hidden
                 $targetAmount = $amount !== null && $amount !== '' ? (float)$amount : 0;
-                
+
                 $existing = SalesTarget::where([
                     'tahun' => $targetTahun,
                     'bulan' => $bulan,
@@ -917,10 +982,10 @@ class SalesController extends Controller
         }
 
         $query = Sales::whereYear('tanggal', $tahun)->where('bulan', $bulan);
-        
+
         // filter ps office untuk user dengan akses parsial
         if (!$this->hasFullSalesAccess()) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->whereRaw("LOWER(ps) != 'office'")->orWhereNull('ps');
             });
         }
@@ -950,10 +1015,10 @@ class SalesController extends Controller
 
             $pdu[$ps]['tanggal'][$tgl]['customer'][$cust]['total_qty'] += $row->total_qty;
             $pdu[$ps]['tanggal'][$tgl]['customer'][$cust]['total_nett'] += $row->total_nett;
-            
+
             $pdu[$ps]['tanggal'][$tgl]['total_qty'] += $row->total_qty;
             $pdu[$ps]['tanggal'][$tgl]['total_nett'] += $row->total_nett;
-            
+
             $pdu[$ps]['total_qty'] += $row->total_qty;
             $pdu[$ps]['total_nett'] += $row->total_nett;
         }
@@ -965,7 +1030,7 @@ class SalesController extends Controller
 
         $bulanIndex = array_search($bulan, $this->urutanBulan);
         if ($bulanIndex === false) $bulanIndex = 0;
-        
+
         $tahunPrevMonth = $tahun;
         if ($bulanIndex == 0) { // Januari
             $bulanPrev = 'Desember';
@@ -976,7 +1041,7 @@ class SalesController extends Controller
 
         $salesPrevMonthQuery = Sales::whereYear('tanggal', $tahunPrevMonth)->where('bulan', $bulanPrev);
         if (!$this->hasFullSalesAccess()) {
-            $salesPrevMonthQuery->where(function($q) {
+            $salesPrevMonthQuery->where(function ($q) {
                 $q->whereRaw("LOWER(ps) != 'office'")->orWhereNull('ps');
             });
         }
@@ -990,9 +1055,9 @@ class SalesController extends Controller
             }
             $targetObj = $targetData->get($psData['nama']);
             $psData['target_amount'] = $targetObj ? (float)$targetObj->target_amount : 0;
-            
+
             $sPrevValActual = isset($salesPrevMonth[$psData['nama']]) ? (float)$salesPrevMonth[$psData['nama']]->total_sales : 0;
-            
+
             $sVal = $psData['total_nett'];
             $growthRate = $sPrevValActual > 0 ? round((($sVal - $sPrevValActual) / $sPrevValActual) * 100, 1) : 0;
             if ($sPrevValActual == 0 && $sVal > 0) $growthRate = 100;
@@ -1091,7 +1156,7 @@ class SalesController extends Controller
             ->select('bulan', 'ps', 'nama_produk', DB::raw('SUM(harga_nett) as total_sales'), DB::raw('SUM(qty) as total_qty'))
             ->groupBy('bulan', 'ps', 'nama_produk')
             ->get();
-            
+
         $salesCurrent->transform(function ($item) {
             $item->bulan = ucfirst(strtolower($item->bulan));
             return $item;
@@ -1104,7 +1169,7 @@ class SalesController extends Controller
             ->select('bulan', 'ps', DB::raw('SUM(harga_nett) as total_sales'))
             ->groupBy('bulan', 'ps')
             ->get();
-            
+
         $salesLastYear->transform(function ($item) {
             $item->bulan = ucfirst(strtolower($item->bulan));
             return $item;
@@ -1119,7 +1184,7 @@ class SalesController extends Controller
         foreach ($this->urutanBulan as $b) {
             $tVal = $targets->where('bulan', $b)->sum('target_amount');
             $sVal = $salesCurrent->where('bulan', $b)->sum('total_sales');
-            
+
             $sPrevValActual = $salesLastYear->where('bulan', $b)->sum('total_sales');
             $sPrevVal = $sPrevValActual;
 
@@ -1148,7 +1213,7 @@ class SalesController extends Controller
         foreach ($listPs as $ps) {
             $tPs = $targets->where('ps', $ps)->sum('target_amount');
             $sPs = $salesCurrent->where('ps', $ps)->sum('total_sales');
-            
+
             $achPs = $tPs > 0 ? round(($sPs / $tPs) * 100, 1) : 0;
 
             $psPerformance[$ps] = [
@@ -1170,7 +1235,7 @@ class SalesController extends Controller
                 $bulanPrevIndex = array_search($b, $this->urutanBulan);
                 $bulanPrevName = $bulanPrevIndex > 0 ? $this->urutanBulan[$bulanPrevIndex - 1] : null;
                 $sPrevTotal = $bulanPrevName ? $salesCurrent->where('bulan', $bulanPrevName)->where('ps', $ps)->sum('total_sales') : 0;
-                
+
                 $achPsM = $tPsM > 0 ? round(($sPsM / $tPsM) * 100, 1) : 0;
                 $yoyGrowthM = $sPrevTotal > 0 ? round((($sPsM - $sPrevTotal) / $sPrevTotal) * 100, 1) : 0;
 
@@ -1191,7 +1256,7 @@ class SalesController extends Controller
         foreach ($listPs as $ps) {
             $cumTarget = $targets->whereIn('bulan', $bulanAkumulasi)->where('ps', $ps)->sum('target_amount');
             $cumSales = $salesCurrent->whereIn('bulan', $bulanAkumulasi)->where('ps', $ps)->sum('total_sales');
-            
+
             $cumSalesLastYearActual = $salesLastYear->whereIn('bulan', $bulanAkumulasi)->where('ps', $ps)->sum('total_sales');
             $cumSalesLastYear = $cumSalesLastYearActual;
 
@@ -1268,8 +1333,8 @@ class SalesController extends Controller
             ->orderBy('total_nett', 'desc')
             ->limit(10)
             ->get();
-        
-        $topCustomers = $customerSalesRaw->map(function($c) {
+
+        $topCustomers = $customerSalesRaw->map(function ($c) {
             return [
                 'nama_customer' => $c->nama_customer,
                 'total_nett' => (float) $c->total_nett

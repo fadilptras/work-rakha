@@ -199,16 +199,22 @@
                 </div>
 
                 {{-- Chart 2: PS Achievement Rate & Growth Trend --}}
-                <div class="glass-panel mt-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-                        <h2 class="text-base font-black text-white"><i class="fas fa-users-viewfinder text-indigo-400 mr-2"></i> PS Achievement Rate & Growth Trend ({{ $tahun }})</h2>
-                    </div>
-                    <div class="relative h-[350px] w-full">
-                        <div id="psRankBox" style="top: -35px; right: 0;" class="absolute bg-slate-800/80 p-2.5 rounded-lg border border-slate-700/60 text-[10px] sm:text-xs text-slate-300 z-20 shadow-lg pointer-events-none hidden backdrop-blur-sm min-w-[140px]">
-                            <div class="font-bold text-white mb-1 border-b border-slate-600/50 pb-1">Rank Kontribusi</div>
-                            <div id="psRankList" class="flex flex-col gap-1 mt-1"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6">
+                    <div class="glass-panel lg:col-span-3">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+                            <h2 class="text-base font-black text-white"><i class="fas fa-users-viewfinder text-indigo-400 mr-2"></i> PS Achievement Rate & Growth Trend ({{ $tahun }})</h2>
                         </div>
-                        <canvas id="chartPsOverview"></canvas>
+                        <div class="relative h-[350px] w-full">
+                            <canvas id="chartPsOverview"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-panel lg:col-span-1 flex flex-col h-full">
+                        <h2 class="text-sm font-black text-white mb-4 pb-2 border-b border-slate-700/50 flex items-center gap-2">
+                            <i class="fas fa-trophy text-amber-400"></i> Rank Kontribusi
+                        </h2>
+                        <div id="psRankList" class="flex flex-col gap-2 pr-1 flex-grow">
+                            {{-- Populated by JS --}}
+                        </div>
                     </div>
                 </div>
 
@@ -891,23 +897,45 @@
                             { 
                                 label: 'Sales', data: salesData1, backgroundColor: '#3b82f6', borderRadius: 4, order: 2,
                                 datalabels: { 
-                                    display: true, align: 'top', anchor: 'end', offset: 4, color: '#e2e8f0', font: { size: 10 },
+                                    display: true, 
+                                    align: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        let max = Math.max(...salesData1, ...targetData1, 1);
+                                        return (v < max * 0.25) ? 'top' : 'center';
+                                    },
+                                    anchor: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        let max = Math.max(...salesData1, ...targetData1, 1);
+                                        return (v < max * 0.25) ? 'end' : 'center';
+                                    },
+                                    offset: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        let max = Math.max(...salesData1, ...targetData1, 1);
+                                        return (v < max * 0.25) ? 8 : 0;
+                                    },
+                                    color: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        let max = Math.max(...salesData1, ...targetData1, 1);
+                                        return (v < max * 0.25) ? '#e2e8f0' : '#ffffff';
+                                    },
+                                    clamp: true, font: { size: 10 },
+                                    rotation: -90,
                                     formatter: (v) => v > 0 ? new Intl.NumberFormat('id-ID').format(v) : ''
                                 }
                             },
                             { 
                                 label: 'Achv %', data: salesData1, type: 'line', borderColor: '#f43f5e', borderWidth: 3, pointBackgroundColor: '#f43f5e', pointBorderColor: '#fff', pointRadius: 5, fill: false, order: 1,
                                 datalabels: { 
-                                    display: true, align: 'bottom', anchor: 'center', offset: 6, color: '#f43f5e', font: { weight: 'bold', size: 11 },
-                                    backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
+                                    display: true, align: 'top', anchor: 'center', offset: 12, clamp: true, color: '#ffffff', font: { weight: 'bold', size: 10 },
+                                    backgroundColor: 'rgba(15, 23, 42, 0.95)', borderColor: '#f43f5e', borderWidth: 1, borderRadius: 4, padding: { top: 3, bottom: 3, left: 5, right: 5 },
                                     formatter: (v, ctx) => achvData1[ctx.dataIndex] + '%'
                                 }
                             },
                             { 
                                 label: 'Growth %', data: growthData1, yAxisID: 'y1', type: 'line', borderColor: '#a855f7', borderWidth: 3, pointBackgroundColor: '#a855f7', pointBorderColor: '#fff', pointRadius: 5, fill: false, order: 1,
                                 datalabels: { 
-                                    display: true, align: 'bottom', anchor: 'center', offset: 22, color: '#a855f7', font: { weight: 'bold', size: 11 },
-                                    backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
+                                    display: true, align: 'bottom', anchor: 'center', offset: 12, clamp: true, color: '#ffffff', font: { weight: 'bold', size: 10 },
+                                    backgroundColor: 'rgba(15, 23, 42, 0.95)', borderColor: '#a855f7', borderWidth: 1, borderRadius: 4, padding: { top: 3, bottom: 3, left: 5, right: 5 },
                                     formatter: (v) => (v > 0 ? '+' : '') + v + '%'
                                 }
                             }
@@ -917,9 +945,9 @@
                         responsive: true, maintainAspectRatio: false, 
                         scales: { 
                             y: { type: 'linear', position: 'left', beginAtZero: true },
-                            y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } }
+                            y1: { type: 'linear', position: 'right', beginAtZero: false, min: -25, grid: { drawOnChartArea: false } }
                         },
-                        layout: { padding: { top: 30 } },
+                        layout: { padding: { top: 60 } },
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             tooltip: {
@@ -960,23 +988,32 @@
                     const achvData2 = activeLabels.map(ps => psCumulative[ps].cum_ach_rate);
                     const growthData2 = activeLabels.map(ps => psCumulative[ps].cum_growth_rate);
 
-                    const rankBox = document.getElementById('psRankBox');
                     const rankList = document.getElementById('psRankList');
-                    if (rankBox && rankList && activeLabels.length > 0) {
+                    if (rankList && activeLabels.length > 0) {
                         let rankData = activeLabels.map((ps, idx) => ({ name: ps, sales: salesData2[idx] }));
                         rankData.sort((a, b) => b.sales - a.sales);
                         let totalSalesAll = rankData.reduce((sum, item) => sum + item.sales, 0);
-                        let html = '';
-                        rankData.forEach((item, idx) => {
+                        
+                        let rankHtml = '';
+                        const psAvatars = @json($psAvatars ?? []);
+
+                        rankData.forEach((item, index) => {
                             let pct = totalSalesAll > 0 ? ((item.sales / totalSalesAll) * 100).toFixed(1) : 0;
-                            let color = idx === 0 ? 'text-amber-400' : (idx === 1 ? 'text-slate-300' : (idx === 2 ? 'text-amber-600' : 'text-emerald-400'));
-                            html += `<div class="flex justify-between gap-3 items-center">
-                                <span class="font-medium">${idx + 1}. ${item.name}</span>
-                                <span class="${color} font-bold">${pct}%</span>
-                            </div>`;
+                            let color = index === 0 ? 'text-amber-400' : (index === 1 ? 'text-slate-300' : (index === 2 ? 'text-amber-600' : 'text-emerald-400'));
+                            
+                            let avatarUrl = psAvatars[item.name] || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=0ea5e9&color=fff&rounded=true&bold=true`;
+
+                            rankHtml += `
+                                <div class="flex justify-between items-center bg-slate-800/30 p-2.5 rounded-xl border border-slate-700/50 hover:bg-slate-700/30 transition">
+                                    <div class="flex items-center gap-3 overflow-hidden">
+                                        <div class="font-black text-slate-500 w-4 text-right text-xs">${index + 1}.</div>
+                                        <img src="${avatarUrl}" alt="${item.name}" class="w-8 h-8 rounded-full border border-slate-600 shadow-sm">
+                                        <span class="truncate font-bold text-slate-200 text-sm">${item.name}</span>
+                                    </div>
+                                    <span class="font-black text-sm sm:text-base ${color} ml-2">${pct}%</span>
+                                </div>`;
                         });
-                        rankList.innerHTML = html;
-                        rankBox.classList.remove('hidden');
+                        rankList.innerHTML = rankHtml;
                     }
 
                     if (chartPsOverview) chartPsOverview.destroy();
@@ -994,10 +1031,7 @@
                                         textAlign: 'center',
                                         formatter: (v) => {
                                             if (v > 0) {
-                                                let formatted = new Intl.NumberFormat('id-ID').format(v);
-                                                let total = salesData2.reduce((a, b) => a + b, 0);
-                                                let pct = total > 0 ? ((v / total) * 100).toFixed(1) + '%' : '0%';
-                                                return [formatted, '(' + pct + ' Kontribusi)'];
+                                                return new Intl.NumberFormat('id-ID').format(v);
                                             }
                                             return '';
                                         }
@@ -1006,16 +1040,16 @@
                                 { 
                                     label: 'Achv %', data: salesData2, type: 'line', borderColor: '#f43f5e', borderWidth: 3, pointBackgroundColor: '#f43f5e', pointBorderColor: '#fff', pointRadius: 5, fill: false, order: 1,
                                     datalabels: { 
-                                        display: true, align: 'bottom', anchor: 'center', offset: 6, color: '#f43f5e', font: { weight: 'bold', size: 11 },
-                                        backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
+                                        display: true, align: 'top', anchor: 'center', offset: 12, clamp: true, color: '#ffffff', font: { weight: 'bold', size: 10 },
+                                        backgroundColor: 'rgba(15, 23, 42, 0.95)', borderColor: '#f43f5e', borderWidth: 1, borderRadius: 4, padding: { top: 3, bottom: 3, left: 5, right: 5 },
                                         formatter: (v, ctx) => achvData2[ctx.dataIndex] + '%'
                                     }
                                 },
                                 { 
                                     label: 'Growth %', data: growthData2, yAxisID: 'y1', type: 'line', borderColor: '#a855f7', borderWidth: 3, pointBackgroundColor: '#a855f7', pointBorderColor: '#fff', pointRadius: 5, fill: false, order: 1,
                                     datalabels: { 
-                                        display: true, align: 'bottom', anchor: 'center', offset: 22, color: '#a855f7', font: { weight: 'bold', size: 11 },
-                                        backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: 4,
+                                        display: true, align: 'bottom', anchor: 'center', offset: 12, clamp: true, color: '#ffffff', font: { weight: 'bold', size: 10 },
+                                        backgroundColor: 'rgba(15, 23, 42, 0.95)', borderColor: '#a855f7', borderWidth: 1, borderRadius: 4, padding: { top: 3, bottom: 3, left: 5, right: 5 },
                                         formatter: (v) => (v > 0 ? '+' : '') + v + '%'
                                     }
                                 }
@@ -1025,7 +1059,7 @@
                             responsive: true, maintainAspectRatio: false, 
                             scales: { 
                                 y: { type: 'linear', position: 'left', beginAtZero: true },
-                                y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } }
+                                y1: { type: 'linear', position: 'right', beginAtZero: false, min: -25, grid: { drawOnChartArea: false } }
                             },
                             layout: { padding: { top: 30 } },
                             interaction: { mode: 'index', intersect: false },

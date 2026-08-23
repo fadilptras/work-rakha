@@ -24,7 +24,7 @@ class AdminPengajuanBarangController extends Controller
     public function index(Request $request)
     {
         $query = PengajuanBarang::with('user')->latest();
-        $activeTab = $request->input('tab', 'pending'); 
+        $activeTab = $request->input('tab', 'pending');
 
         switch ($activeTab) {
             case 'pending':
@@ -51,7 +51,7 @@ class AdminPengajuanBarangController extends Controller
         $karyawanList = Cache::rememberForever('karyawan_list_dropdown', function () {
             return User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
         });
-        
+
         $divisiList = User::select('divisi')->whereNotNull('divisi')->distinct()->get();
         $pengajuanBarangs = $query->paginate(10);
 
@@ -65,7 +65,7 @@ class AdminPengajuanBarangController extends Controller
     public function setApprovers()
     {
         $employees = User::where('role', 'user')->orderBy('name')->get();
-        
+
         $approvers = Cache::rememberForever('approvers_list_dropdown', function () {
             return User::where('name', '!=', 'Admin Rakha')->orderBy('name')->get(['id', 'name']);
         });
@@ -76,8 +76,8 @@ class AdminPengajuanBarangController extends Controller
 
         return view('admin.pengajuan-barang.set-approvers', [
             'employees' => $employees,
-            'approvers' => $approvers, 
-            'admins' => $admins, 
+            'approvers' => $approvers,
+            'admins' => $admins,
             'title' => 'Set Approver Pengajuan Barang'
         ]);
     }
@@ -185,7 +185,7 @@ class AdminPengajuanBarangController extends Controller
         } else {
             // Approver 1-3 selesai -> Ubah status utama jadi disetujui (siap diproses oleh Admin/Approver 4)
             $pengajuan->update(['status' => 'disetujui']);
-            
+
             // Kirim notif ke seluruh approver (1-3) bahwa pengajuan ini berhasil disetujui
             foreach ([$pengajuan->approver1, $pengajuan->approver2, $pengajuan->approver3] as $appr) {
                 if ($appr) $appr->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_semua'));
@@ -269,7 +269,7 @@ class AdminPengajuanBarangController extends Controller
         $lampiranPath = null;
         if ($request->hasFile('lampiran_monitoring')) {
             $lampiranPath = $request->file('lampiran_monitoring')->store('lampiran_barang', 'public');
-            
+
             $existingLampiran = is_array($pengajuan->lampiran) ? $pengajuan->lampiran : json_decode($pengajuan->lampiran, true) ?? [];
             $existingLampiran[] = $lampiranPath;
             $updateData['lampiran'] = $existingLampiran;
@@ -293,7 +293,7 @@ class AdminPengajuanBarangController extends Controller
         $terminId = $request->termin_id;
         $dataTermin = $pengajuan->data_termin ?? [];
         $terminFound = false;
-        
+
         foreach ($dataTermin as &$termin) {
             if (isset($termin['id_termin']) && $termin['id_termin'] == $terminId) {
                 $termin['status_monitoring'] = $statusMonitoring;
@@ -305,7 +305,7 @@ class AdminPengajuanBarangController extends Controller
                 break;
             }
         }
-        
+
         if ($terminFound) {
             $updateData['data_termin'] = $dataTermin;
         }
@@ -355,21 +355,21 @@ class AdminPengajuanBarangController extends Controller
         $dataTermin = $pengajuan->data_termin ?? [];
 
         $hasChanges = false;
-        
+
         $newTerminRincian = [];
-        
+
         foreach ($rincianBarang as $index => &$item) {
             $inputJumlah = floatval($jumlahDiprosesData[$index] ?? 0);
-            
+
             if ($inputJumlah > 0) {
                 if (!isset($item['jumlah_diproses'])) $item['jumlah_diproses'] = 0;
-                
+
                 $sisa = ($item['jumlah'] ?? 0) - $item['jumlah_diproses'];
-                $diprosesSekarang = min($inputJumlah, $sisa); 
-                
+                $diprosesSekarang = min($inputJumlah, $sisa);
+
                 if ($diprosesSekarang > 0) {
                     $item['jumlah_diproses'] += $diprosesSekarang;
-                    
+
                     $newTerminRincian[] = [
                         'index_barang' => $index,
                         'nama_barang' => $item['nama_barang'] ?? $item['deskripsi'] ?? 'Unknown',
@@ -384,7 +384,7 @@ class AdminPengajuanBarangController extends Controller
         if ($hasChanges && count($newTerminRincian) > 0) {
             $terminId = count($dataTermin) + 1;
             $nowFormatted = Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
-            
+
             $dataTermin[] = [
                 'id_termin' => $terminId,
                 'tanggal_dibuat' => $nowFormatted,
@@ -429,27 +429,27 @@ class AdminPengajuanBarangController extends Controller
     public function migrasiTerminLama(Request $request, $id)
     {
         $pengajuan = PengajuanBarang::findOrFail($id);
-        
+
         if (!empty($pengajuan->data_termin)) {
             return redirect()->back()->with('error', 'Pengajuan ini sudah memiliki termin.');
         }
-        
+
         $rincian = $pengajuan->rincian_barang ?? [];
         $rincianTermin = [];
-        
+
         // Tandai semua barang sebagai sudah diproses penuh
         foreach ($rincian as &$item) {
             $item['jumlah_diproses'] = $item['jumlah'] ?? 0;
-            
+
             $rincianTermin[] = [
                 'nama_barang' => $item['nama_barang'] ?? $item['deskripsi'] ?? '-',
                 'jumlah' => $item['jumlah_diproses'],
                 'satuan' => $item['satuan'] ?? ''
             ];
         }
-        
+
         $nowFormatted = \Carbon\Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
-        
+
         $terminBaru = [
             'id_termin' => 1,
             'tanggal_dibuat' => $nowFormatted,
@@ -465,11 +465,11 @@ class AdminPengajuanBarangController extends Controller
                 ]
             ]
         ];
-        
+
         $pengajuan->rincian_barang = $rincian;
         $pengajuan->data_termin = [$terminBaru];
         $pengajuan->save();
-        
+
         return redirect()->back()->with('success', 'Data lama berhasil dimigrasikan ke Termin 1. Silakan lanjutkan pelacakan termin.');
     }
 

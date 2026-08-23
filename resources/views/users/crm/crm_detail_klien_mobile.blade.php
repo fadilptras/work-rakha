@@ -349,7 +349,7 @@
                 <h3 class="font-bold text-white text-lg flex items-center"><span class="w-8 h-8 bg-white text-red-600 rounded-lg flex items-center justify-center mr-3 text-sm shadow"><i class="fas fa-hand-holding-usd"></i></span> Pengeluaran</h3>
             </div>
             <div class="p-5 md:p-6">
-                <form action="{{ route($routePrefix . 'interaction.support') }}" method="POST" onsubmit="return checkBankDataSupport(event)">
+                <form action="{{ route($routePrefix . 'interaction.support') }}" method="POST">
                     @csrf
                     <input type="hidden" name="client_id" value="{{ $client->id }}">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
@@ -374,7 +374,7 @@
                             <input type="text" name="keperluan" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Contoh: Transport" required>
                         </div>
                         <div class="flex items-end">
-                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform active:scale-95 text-sm flex items-center justify-center gap-2 h-[40px]"><i class="fas fa-paper-plane"></i> Ajukan Dana</button>
+                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform active:scale-95 text-sm flex items-center justify-center gap-2 h-[40px]"><i class="fas fa-save"></i> Simpan Pengeluaran</button>
                         </div>
                     </div>
                 </form>
