@@ -280,13 +280,15 @@ class PengajuanBarangController extends Controller
             "tanggal_approved_{$currentStage}" => Carbon::now(),
         ]);
 
-        // 4. Periksa apakah setelah tahap ini masih ada Approver berikutnya yang berstatus 'menunggu' (hanya sampai Approver 3)
+        // 4. Periksa apakah setelah tahap ini masih ada Approver berikutnya yang berstatus 'menunggu' (Mendukung hingga Approver 4)
         $nextApprover = null;
         if ($currentStage < 4) {
             if ($pengajuan->status_appr_2 == 'menunggu') {
                 $nextApprover = $pengajuan->approver2;
             } elseif ($pengajuan->status_appr_3 == 'menunggu') {
                 $nextApprover = $pengajuan->approver3;
+            } elseif ($pengajuan->status_appr_4 == 'menunggu') {
+                $nextApprover = $pengajuan->approver4;
             }
         }
 
@@ -298,18 +300,13 @@ class PengajuanBarangController extends Controller
             $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_parsial'));
         } else {
             if ($currentStage < 4) {
-                // SEMUA APPROVER (1-3) SUDAH SETUJU -> Ubah status utama menjadi disetujui untuk diproses Admin
+                // SEMUA APPROVER SUDAH SETUJU (Tidak ada Approver 4 yang menunggu) -> Ubah status utama menjadi disetujui untuk diproses Admin
                 $pengajuan->update(['status' => 'disetujui']);
                 $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_final'));
                 
                 // Kirim notif ke seluruh approver (1-3) bahwa pengajuan ini berhasil disetujui
                 foreach ([$pengajuan->approver1, $pengajuan->approver2, $pengajuan->approver3] as $appr) {
                     if ($appr) $appr->notify(new PengajuanBarangNotification($pengajuan, 'disetujui_semua'));
-                }
-
-                // Beri notif ke admin (approver 4) jika ada
-                if ($pengajuan->approver4 && $pengajuan->status_appr_4 == 'menunggu') {
-                    $pengajuan->approver4->notify(new PengajuanBarangNotification($pengajuan, 'baru'));
                 }
             } else {
                 // Jika stage 4 (Admin) menyetujui dari form ini, tapi biasanya admin update via updateMonitoring

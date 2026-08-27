@@ -13,5 +13,8 @@ class Barang extends Model
         'kode_barang',
         'nama_barang',
         'satuan',
+        'stok',
+        'stok_po',
+        'is_active',
     ];
 }

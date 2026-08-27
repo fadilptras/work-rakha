@@ -88,11 +88,12 @@
         
         /* Monitoring Table */
         table.data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        table.data-table th { background: rgba(15, 23, 42, 0.8); color: #9ca3af; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid rgba(255,255,255,0.1); padding: 14px 16px; font-weight: 800; position: sticky; top: 0; z-index: 20; letter-spacing: 0.05em; white-space: nowrap; }
+        table.data-table th { background: #0f172a; color: #9ca3af; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid rgba(255,255,255,0.1); padding: 14px 16px; font-weight: 800; position: sticky; top: 0; z-index: 20; letter-spacing: 0.05em; white-space: nowrap; }
         table.data-table td { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 16px; color: #e2e8f0; font-size: 0.85rem; white-space: nowrap; }
         table.data-table tr:last-child td { border-bottom: none; }
         table.data-table tr:hover td { background: rgba(59, 130, 246, 0.1); }
-        .sticky-col { position: sticky; left: 0; background: rgba(30, 41, 59, 0.95); z-index: 10; border-right: 2px solid rgba(255,255,255,0.05); font-weight: 700; color: #60a5fa !important; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
+        .sticky-col { position: sticky; left: 0; background: #1e293b !important; z-index: 10; border-right: 2px solid rgba(255,255,255,0.05); font-weight: 700; color: #60a5fa !important; box-shadow: 2px 0 5px rgba(0,0,0,0.1); min-width: 280px; max-width: 320px; white-space: normal !important; word-break: break-word; }
+        table.data-table th.sticky-col { z-index: 30 !important; background: #0f172a !important; }
     </style>
     @endpush
 
@@ -136,6 +137,15 @@
 
             <!-- Tab 1 - Visualisasi -->
             <div id="tab-pbi" class="main-tab-content {{ $activeTab == 'tab-pbi' ? 'active' : '' }} space-y-6">
+                @php
+                    $chartBulan = $listBulan;
+                    if (!empty($triwulanTerpilih)) {
+                        if ($triwulanTerpilih == '1') $chartBulan = ['Januari', 'Februari', 'Maret'];
+                        elseif ($triwulanTerpilih == '2') $chartBulan = ['April', 'Mei', 'Juni'];
+                        elseif ($triwulanTerpilih == '3') $chartBulan = ['Juli', 'Agustus', 'September'];
+                        elseif ($triwulanTerpilih == '4') $chartBulan = ['Oktober', 'November', 'Desember'];
+                    }
+                @endphp
                 <div class="glass-panel border-t-2 border-t-sky-500">
                     <form id="filterFormPbi" method="GET" action="{{ route('sales.analytics') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                         <div>
@@ -144,6 +154,16 @@
                                 @foreach($listTahun as $t)
                                     <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
                                 @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="pbi-label">Triwulan</label>
+                            <select name="triwulan" id="filterTriwulan" class="pbi-slicer" onchange="this.form.submit()">
+                                <option value="" {{ (isset($triwulanTerpilih) && $triwulanTerpilih == '') ? 'selected' : '' }}>All</option>
+                                <option value="1" {{ (isset($triwulanTerpilih) && $triwulanTerpilih == '1') ? 'selected' : '' }}>Triwulan 1</option>
+                                <option value="2" {{ (isset($triwulanTerpilih) && $triwulanTerpilih == '2') ? 'selected' : '' }}>Triwulan 2</option>
+                                <option value="3" {{ (isset($triwulanTerpilih) && $triwulanTerpilih == '3') ? 'selected' : '' }}>Triwulan 3</option>
+                                <option value="4" {{ (isset($triwulanTerpilih) && $triwulanTerpilih == '4') ? 'selected' : '' }}>Triwulan 4</option>
                             </select>
                         </div>
                         <div>
@@ -266,7 +286,7 @@
                             <thead>
                                 <tr>
                                     <th class="text-left">Metric / Bulan</th>
-                                    @foreach($listBulan as $b)
+                                    @foreach($chartBulan as $b)
                                         <th>{{ $b }}</th>
                                     @endforeach
                                 </tr>
@@ -274,19 +294,19 @@
                             <tbody>
                                 <tr>
                                     <td class="row-header">Target Sales (IDR)</td>
-                                    @foreach($listBulan as $b)
+                                    @foreach($chartBulan as $b)
                                         <td>{{ number_format($monthlyOverview[$b]['target'] ?? 0, 0, ',', '.') }}</td>
                                     @endforeach
                                 </tr>
                                 <tr>
                                     <td class="row-header">Actual Sales (IDR)</td>
-                                    @foreach($listBulan as $b)
+                                    @foreach($chartBulan as $b)
                                         <td>{{ number_format($monthlyOverview[$b]['sales'] ?? 0, 0, ',', '.') }}</td>
                                     @endforeach
                                 </tr>
                                 <tr class="bg-sky-950/20">
                                     <td class="row-header">Achievement Rate (%)</td>
-                                    @foreach($listBulan as $b)
+                                    @foreach($chartBulan as $b)
                                         @php $rate = $monthlyOverview[$b]['achievement_rate'] ?? 0; @endphp
                                         <td class="{{ $rate >= 100 ? 'val-good' : ($rate >= 80 ? 'text-sky-400 font-bold' : ($rate > 0 ? 'val-neutral' : 'text-slate-500')) }}">
                                             {{ $rate }}%
@@ -295,7 +315,7 @@
                                 </tr>
                                 <tr>
                                     <td class="row-header">Growth Rate vs Last Year (%)</td>
-                                    @foreach($listBulan as $b)
+                                    @foreach($chartBulan as $b)
                                         @php $growth = $monthlyOverview[$b]['growth_rate'] ?? 0; @endphp
                                         <td class="{{ $growth > 0 ? 'val-good' : ($growth < 0 ? 'val-bad' : 'text-slate-500') }}">
                                             {{ $growth > 0 ? '+'.$growth : $growth }}%
@@ -871,7 +891,7 @@
             }
 
             @if(isset($monthlyOverview))
-                const listBulan = @json($listBulan);
+                const listBulan = @json($chartBulan);
                 const listPs = @json($listPs);
                 const monthlyOverview = @json($monthlyOverview);
                 const psPerformance = @json($psPerformance);
@@ -1233,7 +1253,7 @@
                         }
 
                         function buildTableSubGroup(bodyId, headId, rows, groupLabel, subLabel) {
-                            let th = `<tr><th class="text-left sticky-col">${groupLabel}</th><th class="text-left">${subLabel}</th><th class="text-right text-emerald-400">Total Nett</th>`;
+                            let th = `<tr><th class="text-left sticky-col">${groupLabel} / ${subLabel}</th><th class="text-right text-emerald-400">Total Nett</th>`;
                             listBulan.forEach(b => th += `<th class="text-right">${b.substring(0,3)}</th>`);
                             th += `</tr>`;
                             document.getElementById(headId).innerHTML = th;
@@ -1241,7 +1261,7 @@
                             let html = '';
                             rows.forEach(r => {
                                 // baris header grup
-                                html += `<tr class="bg-slate-800/80"><td class="sticky-col font-bold text-white border-b border-slate-700">${r.nama||'-'}</td><td class="border-b border-slate-700"></td><td class="text-right text-emerald-300 font-bold border-b border-slate-700">${formatRupiah(r.total_nett)}</td>`;
+                                html += `<tr class="bg-slate-800/80"><td class="sticky-col font-bold text-white border-b border-slate-700">${r.nama||'-'}</td><td class="text-right text-emerald-300 font-bold border-b border-slate-700">${formatRupiah(r.total_nett)}</td>`;
                                 listBulan.forEach(b => {
                                     html += `<td class="text-right border-b border-slate-700 font-bold">${formatRupiah(r.bulanan[b]?.nett||0)}</td>`;
                                 });
@@ -1250,7 +1270,7 @@
                                 // baris sub grup
                                 if (r.sub && r.sub.length > 0) {
                                     r.sub.forEach(s => {
-                                        html += `<tr><td class="sticky-col"></td><td class="text-slate-400 pl-4 border-l-2 border-slate-600">${s.nama||'-'}</td><td class="text-right text-emerald-400/70">${formatRupiah(s.total_nett)}</td>`;
+                                        html += `<tr><td class="sticky-col pl-6 border-l-2 border-slate-600"><span class="text-slate-400 font-medium">${s.nama||'-'}</span></td><td class="text-right text-emerald-400/70">${formatRupiah(s.total_nett)}</td>`;
                                         listBulan.forEach(b => {
                                             html += `<td class="text-right text-slate-400">${formatRupiah(s.bulanan[b]?.nett||0)}</td>`;
                                         });

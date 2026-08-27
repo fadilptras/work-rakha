@@ -283,6 +283,7 @@
                             <thead class="table-header sticky top-0 z-10 shadow-sm bg-slate-50/80 backdrop-blur-sm">
                                 <tr>
                                     <th class="px-4 py-3 rounded-tl-xl text-xs md:text-sm uppercase tracking-wider">Sales & Outlet</th>
+                                    <th class="px-4 py-3 text-right text-xs md:text-sm uppercase tracking-wider border-l border-slate-200">Sum of Qty</th>
                                     <th class="px-4 py-3 text-right rounded-tr-xl text-xs md:text-sm uppercase tracking-wider border-l border-slate-200">Sum of Harga Nett</th>
                                 </tr>
                             </thead>
@@ -405,13 +406,16 @@
             let colorIndex = 0;
 
             let htmlOutlet = '';
+            let totalQtyOutlet = 0;
             let totalNettOutlet = 0;
             const fRp = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n||0));
+            const fNum = (n) => new Intl.NumberFormat('id-ID').format(n||0);
 
             if (psFilter === 'all' || psFilter === 'Sales Team') {
                 let aggCust = {};
                 data.outlet.forEach(ps => {
                     if (psFilter === 'Sales Team' && ps.nama.toLowerCase() === 'office') return;
+                    totalQtyOutlet += ps.total_qty;
                     totalNettOutlet += ps.total_nett;
                     if (!psColorMap[ps.nama]) {
                         psColorMap[ps.nama] = colorPalette[colorIndex % colorPalette.length];
@@ -422,18 +426,39 @@
                         outletSales.push(c.nett);
                         outletBgColors.push(psColorMap[ps.nama]);
                         
-                        if (!aggCust[c.nama]) aggCust[c.nama] = 0;
-                        aggCust[c.nama] += c.nett;
+                        if (!aggCust[c.nama]) {
+                            aggCust[c.nama] = { nama: c.nama, nett: 0, qty: 0, produk: {} };
+                        }
+                        aggCust[c.nama].nett += c.nett;
+                        aggCust[c.nama].qty += c.total_qty;
+
+                        c.produk.forEach(p => {
+                            if (!aggCust[c.nama].produk[p.nama]) {
+                                aggCust[c.nama].produk[p.nama] = { nama: p.nama, qty: 0, nett: 0 };
+                            }
+                            aggCust[c.nama].produk[p.nama].qty += p.qty;
+                            aggCust[c.nama].produk[p.nama].nett += p.nett;
+                        });
                     });
                 });
                 
-                Object.entries(aggCust).sort((a,b)=>b[1]-a[1]).forEach(([cName, cNett]) => {
+                Object.values(aggCust).sort((a,b)=>b.nett-a.nett).forEach(c => {
                     htmlOutlet += `
                         <tr class="row-level-1 hover:bg-slate-50 transition-colors">
-                            <td class="px-4 py-3"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span class="font-bold text-slate-700">${cName}</span></div></td>
-                            <td class="px-4 py-3 text-right text-emerald-600 border-l border-slate-200">${fRp(cNett)}</td>
+                            <td class="px-4 py-3"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4 text-center"></i><span class="font-bold text-slate-700">${c.nama}</span></div></td>
+                            <td class="px-4 py-3 text-right border-l border-slate-200">${fNum(c.qty)}</td>
+                            <td class="px-4 py-3 text-right text-emerald-600 border-l border-slate-200">${fRp(c.nett)}</td>
                         </tr>
                     `;
+                    Object.values(c.produk).sort((a,b)=>b.nett-a.nett).forEach(p => {
+                        htmlOutlet += `
+                            <tr class="row-level-2 hover:bg-slate-50 transition-colors">
+                                <td class="py-2 pr-4 pl-8 md:pl-10 break-words whitespace-normal leading-tight"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${p.nama}</span></div></td>
+                                <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(p.qty)}</td>
+                                <td class="px-4 py-2 text-right border-l border-slate-200">${fRp(p.nett)}</td>
+                            </tr>
+                        `;
+                    });
                 });
             } else {
                 data.outlet.forEach(ps => {
@@ -443,6 +468,7 @@
                     }
 
                     if (psFilter === ps.nama) {
+                        totalQtyOutlet += ps.total_qty;
                         totalNettOutlet += ps.total_nett;
                         ps.customer.forEach(c => {
                             outletLabels.push(`[${ps.nama}] ${c.nama}`);
@@ -453,16 +479,27 @@
                         htmlOutlet += `
                             <tr class="row-level-1 hover:bg-slate-50 transition-colors">
                                 <td class="px-4 py-3"><div class="flex items-start"><i class="fas fa-users mr-2 mt-1 text-blue-500 w-4 text-center"></i><span class="font-bold text-slate-700">${ps.nama}</span></div></td>
+                                <td class="px-4 py-3 text-right border-l border-slate-200">${fNum(ps.total_qty)}</td>
                                 <td class="px-4 py-3 text-right text-emerald-600 border-l border-slate-200">${fRp(ps.total_nett)}</td>
                             </tr>
                         `;
                         ps.customer.forEach(c => {
                             htmlOutlet += `
                                 <tr class="row-level-2 hover:bg-slate-50 transition-colors">
-                                    <td class="py-2 pr-4 pl-6 md:pl-10"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${c.nama}</span></div></td>
-                                    <td class="px-4 py-2 text-right border-l border-slate-200">${fRp(c.nett)}</td>
+                                    <td class="py-2 pr-4 pl-6 md:pl-10"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4 text-center"></i><span class="font-bold text-slate-700">${c.nama}</span></div></td>
+                                    <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(c.total_qty)}</td>
+                                    <td class="px-4 py-2 text-right text-emerald-600 border-l border-slate-200">${fRp(c.nett)}</td>
                                 </tr>
                             `;
+                            c.produk.forEach(p => {
+                                htmlOutlet += `
+                                    <tr class="row-level-3 hover:bg-slate-50 transition-colors">
+                                        <td class="py-2 pr-4 pl-8 md:pl-12 break-words whitespace-normal leading-tight"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${p.nama}</span></div></td>
+                                        <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(p.qty)}</td>
+                                        <td class="px-4 py-2 text-right border-l border-slate-200">${fRp(p.nett)}</td>
+                                    </tr>
+                                `;
+                            });
                         });
                     }
                 });
@@ -472,11 +509,12 @@
                 htmlOutlet += `
                     <tr class="bg-blue-50 font-bold border-t-2 border-blue-200">
                         <td class="px-4 py-3">GRAND TOTAL</td>
+                        <td class="px-4 py-3 text-right border-l border-slate-200">${fNum(totalQtyOutlet)}</td>
                         <td class="px-4 py-3 text-right text-emerald-700 border-l border-slate-200">${fRp(totalNettOutlet)}</td>
                     </tr>
                 `;
             }
-            document.getElementById('m-tbody-outlet').innerHTML = htmlOutlet || '<tr><td colspan="2" class="text-center p-6 text-slate-500 font-medium">Tidak ada data</td></tr>';
+            document.getElementById('m-tbody-outlet').innerHTML = htmlOutlet || '<tr><td colspan="3" class="text-center p-6 text-slate-500 font-medium">Tidak ada data</td></tr>';
 
             let gtOutletEl = document.getElementById('grandTotalOutlet');
             if (gtOutletEl) gtOutletEl.innerText = fRp(totalNettOutlet);

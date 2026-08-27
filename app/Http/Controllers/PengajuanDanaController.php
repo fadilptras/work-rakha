@@ -284,12 +284,24 @@ class PengajuanDanaController extends Controller
 
             $pengajuanDana->update(['status' => $status]);
             Notification::send($nextApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
-            Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'disetujui_parsial'));
+            Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'disetujui_parsial', $user->name));
         } else {
             $pengajuanDana->update(['status' => 'selesai']);
             
             $notificationType = $currentStage == 3 ? 'bukti_transfer' : 'disetujui_final';
             Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, $notificationType));
+
+            // Kirim notifikasi selesai ke seluruh approver
+            $approverIds = array_filter([
+                $pengajuanDana->approver_dana_1_id,
+                $pengajuanDana->approver_dana_2_id,
+                $pengajuanDana->approver_dana_3_id,
+                $pengajuanDana->approver_dana_4_id,
+            ]);
+            if (!empty($approverIds)) {
+                $approvers = User::whereIn('id', $approverIds)->get();
+                Notification::send($approvers, new PengajuanDanaNotification($pengajuanDana, 'selesai_approver'));
+            }
             
             // Pencatatan otomatis ke Riwayat CRM jika berasal dari halaman Klien
             $rincian = $pengajuanDana->rincian_dana;

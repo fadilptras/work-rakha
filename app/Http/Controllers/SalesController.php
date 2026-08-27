@@ -28,7 +28,7 @@ class SalesController extends Controller
         return $isTopManagement || $isKepalaDivisiMO || $isAdminMarketing || $isTest;
     }
 
-    // akses div marketing & operasional
+    // akses div marketing & operasional & admin gudang
     private function hasAnySalesAccess()
     {
         if ($this->hasFullSalesAccess()) return true;
@@ -37,7 +37,11 @@ class SalesController extends Controller
         if (!$user) return false;
 
         $divisi = strtolower($user->divisi ?? '');
-        return in_array($divisi, ['marketing dan operasional']);
+        $jabatan = strtolower($user->jabatan ?? '');
+
+        $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
+
+        return in_array($divisi, ['marketing dan operasional']) || $isAdminGudang;
     }
 
     // urutan bulan standar untuk sorting dan label
@@ -160,7 +164,8 @@ class SalesController extends Controller
         // data visualisasi power bi
         $bulanTerpilih = $request->input('bulan', '');
         $psTerpilih = $request->input('ps', '');
-        $analyticsData = $this->getVisualisasiDataPayload($tahun, $bulanTerpilih, $psTerpilih, $listPs);
+        $triwulanTerpilih = $request->input('triwulan', '');
+        $analyticsData = $this->getVisualisasiDataPayload($tahun, $bulanTerpilih, $psTerpilih, $listPs, $triwulanTerpilih);
 
         $urutanBulan = $this->urutanBulan;
         $historySales = Sales::select(
@@ -182,7 +187,7 @@ class SalesController extends Controller
         $psMapping = [
             'Arief' => 'Arief Natanael Haryanto',
             'Eko' => 'Eko Sigit Nugroho',
-            'Hendra' => 'R Hendra Dipraja',
+            'Hendra' => 'Rusiman Hendra Dipraja',
             'Karsono' => 'Karsono Nu Haeman',
             'Surachman' => 'Surachman'
         ];
@@ -214,6 +219,7 @@ class SalesController extends Controller
             'urutanBulan',
             'bulanTerpilih',
             'psTerpilih',
+            'triwulanTerpilih',
             'targets',
             'historySales',
             'psAvatars'
@@ -1064,21 +1070,40 @@ class SalesController extends Controller
             $psData['growth_rate'] = $growthRate;
         }
 
-        // group 2: by outlet (ps -> customer)
-        $outletRaw = (clone $query)->select('ps', 'nama_customer', DB::raw('SUM(harga_nett) as total_nett'))
-            ->groupBy('ps', 'nama_customer')
-            ->orderBy('ps')->orderBy('total_nett', 'desc')
+        // group 2: by outlet (ps -> customer -> produk)
+        $outletRaw = (clone $query)->select('ps', 'nama_customer', 'nama_produk', DB::raw('SUM(qty) as total_qty'), DB::raw('SUM(harga_nett) as total_nett'))
+            ->groupBy('ps', 'nama_customer', 'nama_produk')
+            ->orderBy('ps')->orderBy('nama_customer')->orderBy('total_nett', 'desc')
             ->get();
         $outlet = [];
         foreach ($outletRaw as $row) {
             $ps = $row->ps ?: 'Lainnya';
             $cust = $row->nama_customer ?: 'Unknown';
-            if (!isset($outlet[$ps])) $outlet[$ps] = ['nama' => $ps, 'total_nett' => 0, 'customer' => []];
-            $outlet[$ps]['customer'][] = [
-                'nama' => $cust,
+            $prod = $row->nama_produk ?: 'Unknown';
+
+            if (!isset($outlet[$ps])) {
+                $outlet[$ps] = ['nama' => $ps, 'total_qty' => 0, 'total_nett' => 0, 'customer' => []];
+            }
+            if (!isset($outlet[$ps]['customer'][$cust])) {
+                $outlet[$ps]['customer'][$cust] = ['nama' => $cust, 'total_qty' => 0, 'nett' => 0, 'produk' => []];
+            }
+
+            $outlet[$ps]['customer'][$cust]['produk'][] = [
+                'nama' => $prod,
+                'qty' => (int)$row->total_qty,
                 'nett' => (float)$row->total_nett
             ];
+
+            $outlet[$ps]['customer'][$cust]['total_qty'] += $row->total_qty;
+            $outlet[$ps]['customer'][$cust]['nett'] += $row->total_nett;
+
+            $outlet[$ps]['total_qty'] += $row->total_qty;
             $outlet[$ps]['total_nett'] += $row->total_nett;
+        }
+
+        foreach ($outlet as &$psData) {
+            $psData['customer'] = array_values($psData['customer']);
+            usort($psData['customer'], fn($a, $b) => $b['nett'] <=> $a['nett']);
         }
 
         // group 3: by product (ps -> produk)
@@ -1112,6 +1137,7 @@ class SalesController extends Controller
         $tahun = $request->input('tahun', date('Y'));
         $bulanTerpilih = $request->input('bulan', '');
         $psTerpilih = $request->input('ps', '');
+        $triwulanTerpilih = $request->input('triwulan', '');
 
         $listPs = Sales::whereNotNull('ps')
             ->where('ps', '!=', '')
@@ -1120,7 +1146,7 @@ class SalesController extends Controller
             ->pluck('ps')
             ->toArray();
 
-        $analytics = $this->getVisualisasiDataPayload($tahun, $bulanTerpilih, $psTerpilih, $listPs);
+        $analytics = $this->getVisualisasiDataPayload($tahun, $bulanTerpilih, $psTerpilih, $listPs, $triwulanTerpilih);
 
         return response()->json($analytics);
     }
@@ -1137,13 +1163,30 @@ class SalesController extends Controller
         return $query;
     }
 
-    private function getVisualisasiDataPayload($tahun, ?string $bulanTerpilih, ?string $psTerpilih, array $listPs)
+    private function applyTriwulanFilter($query, ?string $triwulanTerpilih)
+    {
+        if ($triwulanTerpilih) {
+            $bulanFilter = [];
+            if ($triwulanTerpilih == '1') $bulanFilter = ['Januari', 'Februari', 'Maret'];
+            elseif ($triwulanTerpilih == '2') $bulanFilter = ['April', 'Mei', 'Juni'];
+            elseif ($triwulanTerpilih == '3') $bulanFilter = ['Juli', 'Agustus', 'September'];
+            elseif ($triwulanTerpilih == '4') $bulanFilter = ['Oktober', 'November', 'Desember'];
+
+            if (!empty($bulanFilter)) {
+                $query->whereIn('bulan', $bulanFilter);
+            }
+        }
+        return $query;
+    }
+
+    private function getVisualisasiDataPayload($tahun, ?string $bulanTerpilih, ?string $psTerpilih, array $listPs, ?string $triwulanTerpilih = null)
     {
         $tahunLalu = (int)$tahun - 1;
 
         // 1. Ambil target tahun ini
         $targetsQuery = SalesTarget::where('tahun', $tahun);
         $this->applyPsFilter($targetsQuery, $psTerpilih);
+        $this->applyTriwulanFilter($targetsQuery, $triwulanTerpilih);
         $targets = $targetsQuery->get();
 
         // Target tahun lalu
@@ -1152,6 +1195,7 @@ class SalesController extends Controller
         // 2. Sales tahun ini
         $salesCurrentQuery = Sales::whereYear('tanggal', $tahun);
         $this->applyPsFilter($salesCurrentQuery, $psTerpilih);
+        $this->applyTriwulanFilter($salesCurrentQuery, $triwulanTerpilih);
         $salesCurrent = $salesCurrentQuery
             ->select('bulan', 'ps', 'nama_produk', DB::raw('SUM(harga_nett) as total_sales'), DB::raw('SUM(qty) as total_qty'))
             ->groupBy('bulan', 'ps', 'nama_produk')
@@ -1165,6 +1209,7 @@ class SalesController extends Controller
         // 3. Sales tahun lalu
         $salesLastYearQuery = Sales::whereYear('tanggal', $tahunLalu);
         $this->applyPsFilter($salesLastYearQuery, $psTerpilih);
+        $this->applyTriwulanFilter($salesLastYearQuery, $triwulanTerpilih);
         $salesLastYear = $salesLastYearQuery
             ->select('bulan', 'ps', DB::raw('SUM(harga_nett) as total_sales'))
             ->groupBy('bulan', 'ps')
@@ -1176,12 +1221,31 @@ class SalesController extends Controller
         });
 
         // A. Monthly Achievement Rate & YoY Growth
+        $urutanBulanVisualisasi = $this->urutanBulan;
+        if ($triwulanTerpilih) {
+            if ($triwulanTerpilih == '1') $urutanBulanVisualisasi = ['Januari', 'Februari', 'Maret'];
+            elseif ($triwulanTerpilih == '2') $urutanBulanVisualisasi = ['April', 'Mei', 'Juni'];
+            elseif ($triwulanTerpilih == '3') $urutanBulanVisualisasi = ['Juli', 'Agustus', 'September'];
+            elseif ($triwulanTerpilih == '4') $urutanBulanVisualisasi = ['Oktober', 'November', 'Desember'];
+        }
+
         $monthlyOverview = [];
         $totalTargetYear = 0;
         $totalSalesYear = 0;
         $totalSalesLastYear = 0;
 
         foreach ($this->urutanBulan as $b) {
+            if (!in_array($b, $urutanBulanVisualisasi)) {
+                $monthlyOverview[$b] = [
+                    'target'           => 0.0,
+                    'sales'            => 0.0,
+                    'achievement_rate' => 0,
+                    'sales_last_year'  => 0.0,
+                    'growth_rate'      => 0,
+                ];
+                continue;
+            }
+
             $tVal = $targets->where('bulan', $b)->sum('target_amount');
             $sVal = $salesCurrent->where('bulan', $b)->sum('total_sales');
 

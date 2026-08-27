@@ -14,11 +14,13 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
 
     public PengajuanDana $pengajuanDana;
     public string $tipe;
+    public ?string $approverName;
 
-    public function __construct(PengajuanDana $pengajuanDana, string $tipe = 'baru')
+    public function __construct(PengajuanDana $pengajuanDana, string $tipe = 'baru', ?string $approverName = null)
     {
         $this->pengajuanDana = $pengajuanDana;
         $this->tipe = $tipe;
+        $this->approverName = $approverName;
     }
 
     public function via(object $notifiable): array
@@ -37,11 +39,18 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
 
         switch ($this->tipe) {
             case 'disetujui_parsial':
-                return []; // In-app notification only
+                $header = "Update Status Pengajuan Dana! 🔄";
+                $approver = $this->approverName ?? 'Approver';
+                $pesan = "Pengajuan dana *'{$judul}'* senilai {$nominal} Anda telah disetujui oleh *{$approver}* dan sedang diteruskan ke approver berikutnya.";
+                break;
             case 'disetujui_final':
             case 'bukti_transfer':
                 $header = "Pengajuan Dana Selesai! ✅";
                 $pesan = "Kabar baik! Pengajuan dana *'{$judul}'* senilai {$nominal} Anda telah disetujui sepenuhnya dan selesai diproses.";
+                break;
+            case 'selesai_approver':
+                $header = "Pengajuan Dana Selesai! ✅";
+                $pesan = "Pengajuan dana *'{$judul}'* senilai {$nominal} oleh *{$pemohon}* telah disetujui sepenuhnya dan selesai diproses.";
                 break;
             case 'ditolak':
                 $header = "Pengajuan Dana Ditolak! ❌";
@@ -73,7 +82,8 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
         switch ($this->tipe) {
             case 'disetujui_parsial':
                 $title = 'Pengajuan Dana Diproses';
-                $message = "Pengajuan '$judulPengajuan' Anda telah disetujui dan diteruskan ke approver berikutnya.";
+                $approver = $this->approverName ?? 'Approver';
+                $message = "Pengajuan '$judulPengajuan' Anda telah disetujui oleh $approver dan diteruskan ke approver berikutnya.";
                 $icon = 'fas fa-check-double';
                 $color = 'text-green-500';
                 break;
@@ -81,6 +91,12 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
             case 'bukti_transfer':
                 $title = 'Pengajuan Dana Disetujui';
                 $message = "Kabar baik! Pengajuan dana '$judulPengajuan' Anda telah disetujui sepenuhnya.";
+                $icon = 'fas fa-check-circle';
+                $color = 'text-green-600';
+                break;
+            case 'selesai_approver':
+                $title = 'Pengajuan Dana Selesai';
+                $message = "Pengajuan dana '$judulPengajuan' oleh $pemohon telah selesai diproses.";
                 $icon = 'fas fa-check-circle';
                 $color = 'text-green-600';
                 break;

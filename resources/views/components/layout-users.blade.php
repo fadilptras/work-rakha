@@ -79,7 +79,7 @@
         </header>
 
         {{-- Main Content --}}
-        <main class="flex-1 relative z-0">
+        <main class="flex-1 relative">
             {{ $slot }}
         </main>
     </div>

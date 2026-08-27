@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\AdminLemburController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\SalesController;
+use App\Http\Controllers\StockController;
 
 use App\Http\Controllers\Admin\AdminAgendaController;
 use App\Http\Controllers\CrmController;
@@ -155,12 +156,15 @@ Route::controller(SalesController::class)->prefix('sales')->name('sales.')->grou
     Route::get('/', 'index')->name('index'); 
     Route::get('/analytics', 'analytics')->name('analytics');
     Route::get('/monthly', 'monthly')->name('monthly');
-    Route::get('/stock', 'stock')->name('stock');
+    Route::get('/stock', [StockController::class, 'index'])->name('stock');
+    Route::post('/stock/update-bulk', [StockController::class, 'updateBulk'])->name('stock.update_bulk');
+    Route::post('/stock/import', [StockController::class, 'importExcel'])->name('stock.import');
+    Route::get('/stock/export', [StockController::class, 'exportExcel'])->name('stock.export');
+    Route::get('/stock/template', [StockController::class, 'downloadTemplate'])->name('stock.template');
+    Route::post('/stock/undo/{log}', [StockController::class, 'undo'])->name('stock.undo');
+    Route::get('/stock/log/{log}/details', [StockController::class, 'logDetails'])->name('stock.log_details');
+    Route::get('/stock/data', [StockController::class, 'stockHistoryData'])->name('stock.history_data');
     Route::get('/manage', 'manage')->name('manage');
-    Route::post('/manual', 'storeManual')->name('store_manual');
-    Route::post('/import', 'importExcel')->name('import_excel');
-    Route::get('/template', 'downloadTemplate')->name('download_template');
-    Route::get('/export', 'export')->name('export');
     Route::delete('/bulk-destroy', 'bulkDestroy')->name('bulk_destroy');
     Route::put('/{sale}', 'update')->name('update');
     Route::delete('/{sale}', 'destroy')->name('destroy');
