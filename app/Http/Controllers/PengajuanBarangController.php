@@ -154,22 +154,6 @@ class PengajuanBarangController extends Controller
             }
         }
 
-        // simpan barang baru otomatis
-        if ($request->has('rincian_deskripsi') && is_array($request->rincian_deskripsi)) {
-            $hasNewBarang = false;
-            foreach ($request->rincian_deskripsi as $brg) {
-                $brgName = trim($brg ?? '');
-                if (!empty($brgName) && !in_array(strtolower($brgName), ['-', 'lainnya'])) {
-                    if (Schema::hasTable('barangs')) {
-                        \App\Models\Barang::firstOrCreate(['nama_barang' => $brgName]);
-                        $hasNewBarang = true;
-                    }
-                }
-            }
-            if ($hasNewBarang) {
-                Cache::forget('barang_list_dropdown');
-            }
-        }
 
         $user = Auth::user();
 
