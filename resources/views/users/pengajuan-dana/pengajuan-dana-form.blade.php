@@ -302,25 +302,10 @@
                             @endif
                         </div>
 
+                        <input type="hidden" name="nama_pemohon" value="{{ Auth::user()->name }}">
+                        <input type="hidden" name="divisi" value="{{ Auth::user()->divisi ?? 'Umum' }}">
+
                         <div class="grid grid-cols-2 gap-3 md:gap-5">
-                            <div>
-                                <label class="modern-label">Nama Pemohon</label>
-                                <input type="text" class="modern-input-readonly" value="{{ Auth::user()->name }}" readonly>
-                                <input type="hidden" name="nama_pemohon" value="{{ Auth::user()->name }}">
-                            </div>
-                            <div>
-                                <label class="modern-label">Divisi</label>
-                                <input type="text" class="modern-input-readonly" value="{{ Auth::user()->divisi }}" readonly>
-                                <input type="hidden" name="divisi" value="{{ Auth::user()->divisi }}">
-                            </div>
-                            <div>
-                                <label class="modern-label">Jabatan Pemohon</label>
-                                <input type="text" class="modern-input-readonly" value="{{ Auth::user()->jabatan ?? '-' }}" readonly>
-                            </div>
-                            <div>
-                                <label class="modern-label">Email Pemohon</label>
-                                <input type="text" class="modern-input-readonly" value="{{ Auth::user()->email }}" readonly>
-                            </div>
                             <div class="col-span-2">
                                 <label class="modern-label" for="judul-pengajuan">Judul Pengajuan <span class="text-red-500">*</span></label>
                                 <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Contoh: Pembelian Perlengkapan Kantor & ATK" value="{{ old('judul_pengajuan') }}" required>
