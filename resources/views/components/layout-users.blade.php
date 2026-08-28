@@ -42,8 +42,13 @@
                     <li><a href="{{ route('dashboard') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Dashboard"><i class="fas fa-th-large text-xl"></i></a></li>
                     <li><a href="{{ route('pengajuan_dana.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Pengajuan Dana"><i class="fas fa-coins text-xl"></i></a></li>
                     <li><a href="{{ route('pengajuan_barang.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Pengajuan Barang"><i class="fas fa-box-open text-xl"></i></a></li>
+                    @if(Auth::check() && (in_array(strtolower(Auth::user()->divisi ?? ''), ['marketing dan operasional', 'top management']) || \Illuminate\Support\Str::contains(strtolower(Auth::user()->jabatan ?? ''), 'direktur')))
                     <li><a href="{{ route('crm.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="CRM"><i class="fas fa-users text-xl"></i></a></li>
                     <li><a href="{{ route('sales.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Sales Command Center"><i class="fa-solid fa-chart-simple text-xl"></i></a></li>
+                    @endif
+                    @if(Auth::check() && (in_array(strtolower(Auth::user()->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang']) || \Illuminate\Support\Str::contains(strtolower(Auth::user()->jabatan ?? ''), 'gudang')))
+                    <li><a href="{{ route('sales.stock') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Monitoring Stok Barang"><i class="fas fa-boxes text-xl"></i></a></li>
+                    @endif
                     <li><a href="{{ route('kpi.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="KPI"><i class="fas fa-chart-line text-xl"></i></a></li>
                 </ul>
             </nav>
