@@ -171,34 +171,19 @@
                         {{-- Filter Customer --}}
                         <div class="lg:col-span-4 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Customer</label>
-                            <select name="nama_customer" class="modern-input" onchange="this.form.submit()">
-                                <option value="">Semua Customer</option>
-                                @foreach($listCustomer as $customer)
-                                    <option value="{{ $customer }}" {{ request('nama_customer') == $customer ? 'selected' : '' }}>{{ $customer }}</option>
-                                @endforeach
-                            </select>
+                            <input list="customer-list-options" type="text" name="nama_customer" value="{{ request('nama_customer') }}" placeholder="Semua Customer" class="modern-input" autocomplete="off" onchange="this.form.submit()">
                         </div>
 
                         {{-- Filter Produk --}}
                         <div class="lg:col-span-4 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Produk</label>
-                            <select name="nama_produk" class="modern-input" onchange="this.form.submit()">
-                                <option value="">Semua Produk</option>
-                                @foreach($listProduk as $produk)
-                                    <option value="{{ $produk }}" {{ request('nama_produk') == $produk ? 'selected' : '' }}>{{ $produk }}</option>
-                                @endforeach
-                            </select>
+                            <input list="produk-list-options" type="text" name="nama_produk" value="{{ request('nama_produk') }}" placeholder="Semua Produk" class="modern-input" autocomplete="off" onchange="this.form.submit()">
                         </div>
 
                         {{-- Filter PS --}}
                         <div class="lg:col-span-2 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">PS</label>
-                            <select name="ps" class="modern-input !px-2" onchange="this.form.submit()">
-                                <option value="">Semua</option>
-                                @foreach($listPs as $ps)
-                                    <option value="{{ $ps }}" {{ request('ps') == $ps ? 'selected' : '' }}>{{ $ps }}</option>
-                                @endforeach
-                            </select>
+                            <input list="ps-list-options" type="text" name="ps" value="{{ request('ps') }}" placeholder="Semua PS" class="modern-input !px-2" autocomplete="off" onchange="this.form.submit()">
                         </div>
                         
                         {{-- Filter Tanggal --}}
@@ -345,10 +330,10 @@
                     <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg mr-3"><i class="fas fa-keyboard"></i></div>
                     Input Data Manual
                 </h3>
-                <form action="{{ route('sales.store_manual') }}" method="POST" onsubmit="confirmSubmit(event, 'Simpan data sales ini?')">
+                <form action="{{ route('sales.store_manual') }}" method="POST" id="manual-sales-form" onsubmit="confirmSubmit(event, 'Simpan data sales ini?')">
                     @csrf
                     <div class="grid grid-cols-1 gap-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label class="modern-label">Tanggal <span class="text-red-500">*</span></label>
                                 <input type="date" name="tanggal" required class="modern-input">
@@ -357,17 +342,14 @@
                                 <label class="modern-label">Nama PS</label>
                                 <input list="ps-list-options" type="text" name="ps" placeholder="Daffa" class="modern-input" autocomplete="off">
                             </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="md:col-span-3">
+                            <div>
                                 <label class="modern-label">Nama Customer <span class="text-red-500">*</span></label>
                                 <input list="customer-list-options" type="text" name="nama_customer" required placeholder="Nama Customer (Contoh: RSUD Sayang)" class="modern-input bg-white shadow-sm" autocomplete="off">
                             </div>
                         </div>
 
                         <div>
-                            <div class="flex justify-between items-center mb-4 mt-6 border-t border-slate-200 pt-6">
+                            <div class="flex justify-between items-center mb-4 mt-1 border-t border-slate-200 pt-4">
                                 <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide flex items-center">
                                     <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-box-open"></i></div>
                                     Rincian Produk
@@ -405,27 +387,7 @@
                     </div>
                 </form>
 
-                {{-- Datalist Options dari Database --}}
-                <datalist id="ps-list-options">
-                    @foreach($listPs as $ps_item)
-                        <option value="{{ $ps_item }}"></option>
-                    @endforeach
-                </datalist>
-                <datalist id="customer-list-options">
-                    @foreach($listCustomer as $cus)
-                        <option value="{{ $cus }}"></option>
-                    @endforeach
-                </datalist>
-                <datalist id="produk-list-options">
-                    @foreach($listProduk as $prod)
-                        <option value="{{ $prod }}"></option>
-                    @endforeach
-                </datalist>
-                <datalist id="satuan-list-options">
-                    @foreach($listSatuan as $sat)
-                        <option value="{{ $sat }}"></option>
-                    @endforeach
-                </datalist>
+
             </div>
         </div>
 
@@ -547,17 +509,44 @@
         </div>
     </div>
 
+    {{-- Datalist Options dari Database --}}
+    <datalist id="ps-list-options">
+        @foreach($listPs as $ps_item)
+            <option value="{{ $ps_item }}"></option>
+        @endforeach
+    </datalist>
+    <datalist id="customer-list-options">
+        @foreach($listCustomer as $cus)
+            <option value="{{ $cus }}"></option>
+        @endforeach
+    </datalist>
+    <datalist id="produk-list-options">
+        @foreach($listProduk as $prod)
+            <option value="{{ $prod }}"></option>
+        @endforeach
+    </datalist>
+    <datalist id="satuan-list-options">
+        @foreach($listSatuan as $sat)
+            <option value="{{ $sat }}"></option>
+        @endforeach
+    </datalist>
+
     @push('scripts')
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function manageData() {
             return {
-                activeTab: "{{ session('active_tab', request()->hasAny(['search', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'table' : 'table') }}",
+                activeTab: localStorage.getItem('sales_active_tab') || "{{ session('active_tab', request()->hasAny(['search', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'table' : 'table') }}",
                 showEditModal: false,
                 editUrl: '',
                 formData: { id: '', tanggal: '', bulan: '', nama_customer: '', ps: '', nama_produk: '', qty: 0, satuan: '', hna: 0, diskon: 0, harga_nett: 0 },
                 
+                init() {
+                    this.$watch('activeTab', value => {
+                        localStorage.setItem('sales_active_tab', value);
+                    });
+                },
                 openEditModal(item) {
                     this.formData = { ...item };
                     if(this.formData.tanggal) this.formData.tanggal = this.formData.tanggal.split('T')[0];
@@ -640,12 +629,14 @@
             });
         }
 
-        // Vanilla JS Logic untuk Form Input Multi Produk (Mengadaptasi sistem Pengajuan Barang)
+// Vanilla JS Logic untuk Form Input Multi Produk (Mengadaptasi sistem Pengajuan Barang)
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('rincian-produk-container');
             const addBtn = document.getElementById('tambah-produk-btn');
             const grandTotalEl = document.getElementById('grand-total-text');
+            const form = document.getElementById('manual-sales-form');
             let productCounter = 0;
+            let isRestoring = false;
 
             function formatRupiah(num) {
                 return new Intl.NumberFormat('id-ID').format(Math.round(num));
@@ -657,18 +648,96 @@
                     total += parseFloat(input.value) || 0;
                 });
                 if(grandTotalEl) grandTotalEl.textContent = 'Rp ' + formatRupiah(total);
+                
+                saveFormToLocalStorage();
             }
 
-            function addProductRow() {
+            function saveFormToLocalStorage() {
+                if (!form || isRestoring) return;
+                const products = [];
+                container.querySelectorAll('.p-3').forEach(row => {
+                    const namaInput = row.querySelector('input[name="nama_produk[]"]');
+                    const qtyInput = row.querySelector('.input-qty');
+                    const satuanInput = row.querySelector('input[name="satuan[]"]');
+                    const hnaRawInput = row.querySelector('.input-hna-raw');
+                    const diskonInput = row.querySelector('.input-diskon');
+                    
+                    if (namaInput) {
+                        products.push({
+                            nama_produk: namaInput.value,
+                            qty: qtyInput ? qtyInput.value : '',
+                            satuan: satuanInput ? satuanInput.value : '',
+                            hna: hnaRawInput ? hnaRawInput.value : 0,
+                            diskon: diskonInput ? diskonInput.value : ''
+                        });
+                    }
+                });
+                
+                const formData = {
+                    tanggal: form.querySelector('input[name="tanggal"]').value,
+                    ps: form.querySelector('input[name="ps"]').value,
+                    nama_customer: form.querySelector('input[name="nama_customer"]').value,
+                    products: products
+                };
+                
+                localStorage.setItem('manual_sales_draft', JSON.stringify(formData));
+            }
+
+            function restoreFormFromLocalStorage() {
+                if (!form) return;
+                const saved = localStorage.getItem('manual_sales_draft');
+                if (!saved) {
+                    addProductRow(); // Initialize with one empty row if no draft exists
+                    return;
+                }
+                
+                try {
+                    isRestoring = true;
+                    const formData = JSON.parse(saved);
+                    form.querySelector('input[name="tanggal"]').value = formData.tanggal || '';
+                    form.querySelector('input[name="ps"]').value = formData.ps || '';
+                    form.querySelector('input[name="nama_customer"]').value = formData.nama_customer || '';
+                    
+                    container.innerHTML = ''; // Clear container
+                    
+                    if (formData.products && formData.products.length > 0) {
+                        // Restore each row in reverse because prepend inserts them at the top
+                        for (let i = formData.products.length - 1; i >= 0; i--) {
+                            addProductRow(formData.products[i]);
+                        }
+                    } else {
+                        addProductRow();
+                    }
+                } catch (e) {
+                    console.error('Error restoring draft:', e);
+                    addProductRow();
+                } finally {
+                    isRestoring = false;
+                    // Trigger manual save once after restoration is fully complete to sync totals
+                    calculateGrandTotal();
+                }
+            }
+
+            function addProductRow(initialData = null) {
                 productCounter++;
                 const rowId = 'product-row-' + Date.now() + Math.random().toString(36).substr(2, 9);
                 const row = document.createElement('div');
-                row.className = 'p-3 bg-white border border-slate-200 rounded-xl relative shadow-sm hover:border-blue-300 transition-colors animate-[fadeIn_0.3s_ease-in-out]';
+                row.className = 'p-3 bg-blue-50/30 border border-blue-200/60 rounded-xl relative shadow-sm hover:border-blue-300 transition-colors animate-[fadeIn_0.3s_ease-in-out]';
                 row.id = rowId;
                 
                 row.innerHTML = `
                     <div class="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
-                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md product-number-badge">Produk #${productCounter}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-blue-600 bg-blue-100/70 px-2 py-1 rounded-md product-number-badge">Produk #${productCounter}</span>
+                            <div class="flex items-center gap-1.5 bg-white border border-slate-200/60 px-2 py-0.5 rounded-md text-[10px] shadow-sm">
+                                <span class="font-bold text-slate-400 uppercase tracking-wider">Subtotal:</span>
+                                <span class="text-indigo-600 font-black subtotal-text">Rp 0</span>
+                                <input type="hidden" name="harga_nett[]" value="0" class="input-harga-nett">
+                            </div>
+                        </div>
+                        <button type="button" class="btn-remove-product text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition-colors flex items-center shadow-sm border border-red-100" title="Hapus produk ini">
+                            <i class="fas fa-trash-alt mr-1"></i> Hapus
+                        </button>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
@@ -700,20 +769,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mt-3 flex justify-between items-center border-t border-slate-100 pt-3">
-                        <button type="button" class="btn-remove-product text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors flex items-center shadow-sm border border-red-100" title="Hapus baris ini">
-                            <i class="fas fa-trash-alt mr-1.5"></i> Hapus Produk
-                        </button>
-                        
-                        <div class="flex items-center">
-                            <span class="text-[10px] font-bold text-slate-400 mr-2 uppercase tracking-wider">Subtotal Nett:</span>
-                            <span class="text-indigo-600 font-black text-lg subtotal-text">Rp 0</span>
-                            <input type="hidden" name="harga_nett[]" value="0" class="input-harga-nett">
-                        </div>
-                    </div>
                 `;
                 
-                container.appendChild(row);
+                container.prepend(row);
                 
                 // Add event listeners for calculation
                 const qtyInput = row.querySelector('.input-qty');
@@ -737,11 +795,10 @@
                 }
                 
                 hnaDisplay.addEventListener('input', function() {
-                    // Hanya izinkan angka
                     let val = this.value.replace(/[^0-9]/g, '');
                     if (val !== "") {
                         this.value = formatRupiah(val);
-                        hnaRaw.value = val; // Simpan nilai asli tanpa titik
+                        hnaRaw.value = val;
                     } else {
                         this.value = "";
                         hnaRaw.value = 0;
@@ -751,6 +808,10 @@
                 
                 qtyInput.addEventListener('input', calculateRow);
                 diskonInput.addEventListener('input', calculateRow);
+
+                // Add list autocomplete event listener to also save draft on select
+                row.querySelector('input[name="nama_produk[]"]').addEventListener('input', saveFormToLocalStorage);
+                row.querySelector('input[name="satuan[]"]').addEventListener('input', saveFormToLocalStorage);
                 
                 // Add event listener for delete
                 const removeBtn = row.querySelector('.btn-remove-product');
@@ -760,6 +821,17 @@
                     calculateGrandTotal();
                     checkRemoveButtons();
                 });
+
+                // Fill initial data if provided
+                if (initialData) {
+                    row.querySelector('input[name="nama_produk[]"]').value = initialData.nama_produk || '';
+                    row.querySelector('.input-qty').value = initialData.qty || '';
+                    row.querySelector('input[name="satuan[]"]').value = initialData.satuan || '';
+                    row.querySelector('.input-hna-raw').value = initialData.hna || 0;
+                    row.querySelector('.input-hna-display').value = initialData.hna ? formatRupiah(initialData.hna) : '';
+                    row.querySelector('.input-diskon').value = initialData.diskon || '';
+                    calculateRow();
+                }
                 
                 checkRemoveButtons();
             }
@@ -782,9 +854,24 @@
             }
             
             if(addBtn && container) {
-                addBtn.addEventListener('click', addProductRow);
-                // Initialize first row
-                addProductRow();
+                addBtn.addEventListener('click', () => addProductRow());
+                restoreFormFromLocalStorage();
+            }
+
+            if (form) {
+                form.addEventListener('input', function(e) {
+                    if (e.target.name === 'tanggal' || e.target.name === 'ps' || e.target.name === 'nama_customer') {
+                        saveFormToLocalStorage();
+                    }
+                });
+                form.addEventListener('change', function(e) {
+                    if (e.target.name === 'tanggal' || e.target.name === 'ps' || e.target.name === 'nama_customer') {
+                        saveFormToLocalStorage();
+                    }
+                });
+                form.addEventListener('submit', function() {
+                    localStorage.removeItem('manual_sales_draft');
+                });
             }
         });
 
@@ -797,14 +884,15 @@
 
             function updateBulkDeleteButton() {
                 const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
-                if (checkedCount > 0) {
-                    btnBulkDelete.classList.remove('hidden');
-                    selectedCount.textContent = checkedCount;
-                } else {
-                    btnBulkDelete.classList.add('hidden');
+                if (btnBulkDelete && selectedCount) {
+                    if (checkedCount > 0) {
+                        btnBulkDelete.classList.remove('hidden');
+                        selectedCount.textContent = checkedCount;
+                    } else {
+                        btnBulkDelete.classList.add('hidden');
+                    }
                 }
                 
-                // Update checkAll state
                 if (checkAll && rowCheckboxes.length > 0) {
                     checkAll.checked = checkedCount === rowCheckboxes.length;
                 }

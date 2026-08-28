@@ -37,11 +37,8 @@ class SalesController extends Controller
         if (!$user) return false;
 
         $divisi = strtolower($user->divisi ?? '');
-        $jabatan = strtolower($user->jabatan ?? '');
 
-        $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
-
-        return in_array($divisi, ['marketing dan operasional']) || $isAdminGudang;
+        return in_array($divisi, ['marketing dan operasional']);
     }
 
     // urutan bulan standar untuk sorting dan label
@@ -72,6 +69,250 @@ class SalesController extends Controller
             'hasAnyAccess' => $this->hasAnySalesAccess()
         ]);
     }
+
+    public function incentive(Request $request)
+    {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403, 'Anda tidak memiliki hak akses ke halaman Skema Insentif.');
+        }
+
+        $tahun = $request->input('tahun', date('Y'));
+        $currentMonthIndo = $this->urutanBulan[date('n') - 1];
+        $bulan = $request->input('bulan', $currentMonthIndo);
+
+        // list tahun
+        $listTahun = Sales::whereNotNull('tanggal')
+            ->selectRaw('DISTINCT YEAR(tanggal) as tahun')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun')
+            ->toArray();
+        if (!in_array(date('Y'), $listTahun)) {
+            array_unshift($listTahun, date('Y'));
+        }
+
+        $listBulan = $this->urutanBulan;
+
+        // list PS dinamis dari database
+        $listPsQuery = Sales::whereNotNull('ps')
+            ->where('ps', '!=', '')
+            ->whereRaw('LOWER(ps) != ?', ['all']);
+
+        if (!$this->hasFullSalesAccess()) {
+            $listPsQuery->whereRaw("LOWER(ps) != 'office'");
+        }
+
+        $listPs = $listPsQuery->distinct()
+            ->orderBy('ps', 'asc')
+            ->pluck('ps')
+            ->toArray();
+
+        // target bulanan (case-insensitive)
+        $targets = SalesTarget::where('tahun', $tahun)
+            ->whereRaw('LOWER(bulan) = ?', [strtolower($bulan)])
+            ->get();
+
+        // sales bulanan (case-insensitive)
+        $sales = Sales::whereYear('tanggal', $tahun)
+            ->whereRaw('LOWER(bulan) = ?', [strtolower($bulan)])
+            ->select('ps', DB::raw('SUM(harga_nett) as total_sales'))
+            ->groupBy('ps')
+            ->get();
+
+        $psTerpilih = $request->input('ps', '');
+
+        $payouts = collect($listPs)->map(function ($ps) use ($targets, $sales) {
+            // Cocokkan nama PS secara case-insensitive & trimmed
+            $targetAmount = $targets->filter(fn($t) => strcasecmp(trim($t->ps), trim($ps)) === 0)->sum('target_amount');
+            $actualSales = $sales->filter(fn($s) => strcasecmp(trim($s->ps), trim($ps)) === 0)->sum('total_sales');
+            
+            $achievementRate = $targetAmount > 0 ? round(($actualSales / $targetAmount) * 100, 2) : 0;
+
+            // Skema Insentif Perbulan:
+            // >= 200% = 3.0%
+            // >= 150% = 2.0%
+            // >= 130% = 1.5%
+            // >= 100% = 1.0%
+            // >= 95% = 0.5%
+            if ($achievementRate >= 200) {
+                $incentiveRate = 3.0;
+            } elseif ($achievementRate >= 150) {
+                $incentiveRate = 2.0;
+            } elseif ($achievementRate >= 130) {
+                $incentiveRate = 1.5;
+            } elseif ($achievementRate >= 100) {
+                $incentiveRate = 1.0;
+            } elseif ($achievementRate >= 95) {
+                $incentiveRate = 0.5;
+            } else {
+                $incentiveRate = 0;
+            }
+
+            $incentiveAmount = $actualSales * ($incentiveRate / 100);
+
+            return [
+                'ps' => $ps,
+                'target' => $targetAmount,
+                'sales' => $actualSales,
+                'achievement_rate' => $achievementRate,
+                'incentive_rate' => $incentiveRate,
+                'incentive_amount' => $incentiveAmount,
+            ];
+        })->filter(fn($p) => $p['target'] > 0 || $p['sales'] > 0)->sortByDesc('achievement_rate')->values();
+
+        if (!empty($psTerpilih)) {
+            $payouts = $payouts->filter(fn($p) => strcasecmp(trim($p['ps']), trim($psTerpilih)) === 0)->values();
+        }
+
+        // ======================= PERTRIWULAN (QUARTERLY) =======================
+        $triwulan = $request->input('triwulan', 'Triwulan I');
+        
+        $monthsInQuarter = [];
+        if ($triwulan == 'Triwulan I') {
+            $monthsInQuarter = ['Januari', 'Februari', 'Maret'];
+        } elseif ($triwulan == 'Triwulan II') {
+            $monthsInQuarter = ['April', 'Mei', 'Juni'];
+        } elseif ($triwulan == 'Triwulan III') {
+            $monthsInQuarter = ['Juli', 'Agustus', 'September'];
+        } elseif ($triwulan == 'Triwulan IV') {
+            $monthsInQuarter = ['Oktober', 'November', 'Desember'];
+        }
+
+        // target triwulan (case-insensitive)
+        $targetsTriwulan = SalesTarget::where('tahun', $tahun)
+            ->whereIn(DB::raw('LOWER(bulan)'), array_map('strtolower', $monthsInQuarter))
+            ->get();
+
+        // sales triwulan (case-insensitive)
+        $salesTriwulan = Sales::whereYear('tanggal', $tahun)
+            ->whereIn(DB::raw('LOWER(bulan)'), array_map('strtolower', $monthsInQuarter))
+            ->select('ps', DB::raw('SUM(harga_nett) as total_sales'))
+            ->groupBy('ps')
+            ->get();
+
+        $payoutsTriwulan = collect($listPs)->map(function ($ps) use ($targetsTriwulan, $salesTriwulan) {
+            $targetAmount = $targetsTriwulan->filter(fn($t) => strcasecmp(trim($t->ps), trim($ps)) === 0)->sum('target_amount');
+            $actualSales = $salesTriwulan->filter(fn($s) => strcasecmp(trim($s->ps), trim($ps)) === 0)->sum('total_sales');
+            
+            $achievementRate = $targetAmount > 0 ? round(($actualSales / $targetAmount) * 100, 2) : 0;
+
+            // Insentif Triwulan:
+            // >= 200% = 6.000.000
+            // >= 150% = 4.500.000
+            // >= 130% = 3.000.000
+            // >= 100% = 1.500.000
+            // >= 95%  = 1.000.000
+            if ($achievementRate >= 200) {
+                $incentiveAmount = 6000000;
+            } elseif ($achievementRate >= 150) {
+                $incentiveAmount = 4500000;
+            } elseif ($achievementRate >= 130) {
+                $incentiveAmount = 3000000;
+            } elseif ($achievementRate >= 100) {
+                $incentiveAmount = 1500000;
+            } elseif ($achievementRate >= 95) {
+                $incentiveAmount = 1000000;
+            } else {
+                $incentiveAmount = 0;
+            }
+
+            return [
+                'ps' => $ps,
+                'target' => $targetAmount,
+                'sales' => $actualSales,
+                'achievement_rate' => $achievementRate,
+                'incentive_amount' => $incentiveAmount,
+            ];
+        })->filter(fn($p) => $p['target'] > 0 || $p['sales'] > 0)->sortByDesc('achievement_rate')->values();
+
+        if (!empty($psTerpilih)) {
+            $payoutsTriwulan = $payoutsTriwulan->filter(fn($p) => strcasecmp(trim($p['ps']), trim($psTerpilih)) === 0)->values();
+        }
+
+        // ======================= BONUS OUTLET BARU =======================
+        $startDate = \Carbon\Carbon::createFromFormat('Y-m-d', "$tahun-" . (array_search($bulan, $this->urutanBulan) + 1) . "-01")->startOfMonth();
+        $endDate = (clone $startDate)->endOfMonth();
+
+        // 1. Dapatkan seluruh transaksi di bulan & tahun berjalan
+        $currentMonthSales = Sales::whereBetween('tanggal', [$startDate->toDateString(), $endDate->toDateString()])
+            ->whereNotNull('nama_customer')
+            ->where('nama_customer', '!=', '')
+            ->get();
+
+        $uniqueCustomersInMonth = $currentMonthSales->pluck('nama_customer')->unique();
+
+        // 2. Temukan customer yang sudah pernah melakukan transaksi sebelum bulan berjalan
+        $oldCustomers = Sales::where('tanggal', '<', $startDate->toDateString())
+            ->whereIn('nama_customer', $uniqueCustomersInMonth)
+            ->pluck('nama_customer')
+            ->unique()
+            ->toArray();
+
+        // 3. Customer baru adalah customer bulan berjalan yang tidak tercatat di transaksi lampau
+        $newCustomers = $uniqueCustomersInMonth->diff($oldCustomers)->toArray();
+
+        // 4. Kelompokkan customer baru berdasarkan PS
+        $newOutletsByPs = [];
+        foreach ($currentMonthSales as $sale) {
+            if (in_array($sale->nama_customer, $newCustomers)) {
+                $ps = trim($sale->ps);
+                if (empty($ps) || strcasecmp($ps, 'all') === 0) continue;
+                if (!$this->hasFullSalesAccess() && strcasecmp($ps, 'office') === 0) continue;
+                
+                if (!isset($newOutletsByPs[$ps])) {
+                    $newOutletsByPs[$ps] = [];
+                }
+                if (!in_array($sale->nama_customer, $newOutletsByPs[$ps])) {
+                    $newOutletsByPs[$ps][] = $sale->nama_customer;
+                }
+            }
+        }
+
+        $payoutsOutlet = collect($listPs)->map(function ($ps) use ($newOutletsByPs) {
+            $outlets = $newOutletsByPs[$ps] ?? [];
+            $count = count($outlets);
+            
+            $incentiveAmount = 0;
+            if ($count >= 21) {
+                $incentiveAmount = 1000000;
+            } elseif ($count >= 16) {
+                $incentiveAmount = 800000;
+            } elseif ($count >= 11) {
+                $incentiveAmount = 500000;
+            } elseif ($count >= 6) {
+                $incentiveAmount = 300000;
+            } elseif ($count >= 1) {
+                $incentiveAmount = 150000;
+            }
+
+            return [
+                'ps' => $ps,
+                'new_outlets_count' => $count,
+                'new_outlets_list' => $outlets,
+                'incentive_amount' => $incentiveAmount,
+            ];
+        })->filter(fn($p) => $p['new_outlets_count'] > 0)->sortByDesc('new_outlets_count')->values();
+
+        if (!empty($psTerpilih)) {
+            $payoutsOutlet = $payoutsOutlet->filter(fn($p) => strcasecmp(trim($p['ps']), trim($psTerpilih)) === 0)->values();
+        }
+
+        return view('users.sales.incentive')->with([
+            'title' => 'Skema Insentif Sales',
+            'hasFullAccess' => $this->hasFullSalesAccess(),
+            'hasAnyAccess' => $this->hasAnySalesAccess(),
+            'tahun' => $tahun,
+            'bulan' => $bulan,
+            'triwulan' => $triwulan,
+            'listTahun' => $listTahun,
+            'listBulan' => $listBulan,
+            'listPs' => $listPs,
+            'psTerpilih' => $psTerpilih,
+            'payouts' => $payouts,
+            'payoutsTriwulan' => $payoutsTriwulan,
+            'payoutsOutlet' => $payoutsOutlet,
+        ]);
+    }
+
     public function analytics(Request $request)
     {
         if (!$this->hasFullSalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Analitik Penjualan.');
@@ -248,7 +489,7 @@ class SalesController extends Controller
     public function stock(Request $request)
     {
         if (!$this->hasAnySalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Monitoring Stock.');
-        return view('users.sales.stock')->with('title', 'Monitoring Stock Barang');
+        return view('users.stock.stock')->with('title', 'Monitoring Stock Barang');
     }
 
     // simpan data dari form manual
@@ -852,7 +1093,7 @@ class SalesController extends Controller
             ->pluck('tahun');
 
         $listCustomer = Sales::whereNotNull('nama_customer')->where('nama_customer', '!=', '')->distinct()->orderBy('nama_customer', 'asc')->pluck('nama_customer');
-        $listProduk = Sales::whereNotNull('nama_produk')->where('nama_produk', '!=', '')->distinct()->orderBy('nama_produk', 'asc')->pluck('nama_produk');
+        $listProduk = \App\Models\Barang::whereNotNull('nama_barang')->where('nama_barang', '!=', '')->distinct()->orderBy('nama_barang', 'asc')->pluck('nama_barang');
         $listPs = Sales::whereNotNull('ps')->where('ps', '!=', '')->distinct()->orderBy('ps', 'asc')->pluck('ps');
         $listSatuan = Sales::whereNotNull('satuan')->where('satuan', '!=', '')->distinct()->orderBy('satuan', 'asc')->pluck('satuan');
 

@@ -19,36 +19,52 @@
                 radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.4) 0px, transparent 50%),
                 radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
-            background-attachment: fixed;
         }
 
         .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.92);
             border: 1px solid rgba(255, 255, 255, 1);
             border-radius: 24px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
             padding: 28px;
+            transform: translate3d(0, 0, 0);
         }
 
         .module-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.92);
             border: 1px solid rgba(255, 255, 255, 1);
             border-radius: 24px;
             padding: 40px;
             position: relative;
             overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 320px;
+            min-height: 380px;
+            height: 380px;
             text-decoration: none;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
             z-index: 1;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+        }
+
+        /* Enable backdrop blur only on larger screens for best performance */
+        @media (min-width: 1024px) {
+            .glass-card, .module-card {
+                background: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+            }
+        }
+
+        @media (max-width: 767px) {
+            .module-card {
+                height: auto;
+                min-height: 320px;
+                padding: 28px;
+            }
         }
 
         .module-card:hover {
@@ -117,6 +133,20 @@
             box-shadow: 0 10px 20px rgba(249, 115, 22, 0.2);
         }
 
+        .card-brown .icon-box {
+            background: #fbf0ea;
+            color: #7c2d12;
+            border: 1px solid #f3d9ca;
+        }
+        .card-brown:hover .icon-box {
+            background: #7c2d12;
+            color: white;
+            box-shadow: 0 10px 20px rgba(124, 45, 18, 0.2);
+        }
+        .card-brown:hover h2 {
+            color: #7c2d12 !important;
+        }
+
         /* Animated Title */
         .title-reveal {
             animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -150,7 +180,7 @@
 
             {{-- Kartu Utama --}}
             @if(isset($hasAnyAccess) && $hasAnyAccess)
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
                 
                 @if(isset($hasFullAccess) && $hasFullAccess)
                 {{-- Kartu 1: Kelola Data --}}
@@ -243,6 +273,29 @@
                     {{-- Dekorasi latar belakang kartu --}}
                     <div class="absolute -bottom-6 -right-6 text-orange-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
                         <i class="fas fa-box-open"></i>
+                    </div>
+                </a>
+
+                {{-- Kartu 5: Skema Insentif --}}
+                <a href="{{ route('sales.incentive') }}" class="module-card card-brown group title-reveal stagger-2" style="animation-delay: 0.5s;">
+                    <div>
+                        <div class="icon-box">
+                            <i class="fas fa-hand-holding-dollar"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800 mb-3 tracking-tight transition-colors">Incentive Scheme</h2>
+                        <p class="text-slate-500 text-base leading-relaxed font-medium">
+                            Skema dan kalkulasi insentif sales. Lihat pencapaian target, persentase insentif, simulasi perhitungan pembayaran.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-8 flex items-center gap-2 text-sm font-bold opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300" style="color: #7c2d12;">
+                        <span>Buka Skema Insentif</span>
+                        <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                    </div>
+
+                    {{-- Dekorasi latar belakang kartu --}}
+                    <div class="absolute -bottom-6 -right-6 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]" style="color: #f3d9ca; opacity: 0.6;">
+                        <i class="fas fa-coins"></i>
                     </div>
                 </a>
 
