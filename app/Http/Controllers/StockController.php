@@ -508,9 +508,9 @@ class StockController extends Controller
 
         $jabatan = strtolower($user->jabatan ?? '');
 
-        $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
+        // $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
         $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
 
-        return $isTest || $isAdminGudang;
+        return $isAdminGudang;
     }
 }

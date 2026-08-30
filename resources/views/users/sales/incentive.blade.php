@@ -131,7 +131,120 @@
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 h-full mesh-bg relative overflow-hidden text-slate-800 p-4 sm:p-6 lg:p-6" x-data="{ activeTab: '{{ request('tab', 'perbulan') }}', showInfoModal: false, showInfoModalTriwulan: false, showInfoModalOutlet: false }">
+    <div class="flex flex-col flex-1 h-full mesh-bg relative overflow-hidden text-slate-800 p-4 sm:p-6 lg:p-6" x-data="{
+        activeTab: @if($hasFullAccess) '{{ request('tab') }}' || localStorage.getItem('active_incentive_tab') || 'perbulan' @else 'perbulan' @endif,
+        showInfoModal: false,
+        showInfoModalTriwulan: false,
+        showInfoModalOutlet: false,
+        showFormModalBulan: false,
+        showFormModalTriwulan: false,
+        formTahun: '{{ $tahun }}',
+        formBulan: '{{ $bulan }}',
+        formTriwulan: '{{ $triwulan }}',
+        formBasisBulan: '{{ $activeBasis }}',
+        formBasisTriwulan: '{{ $activeBasisTriwulan }}',
+        settingsBulanNominal: {{ json_encode($settingsBulanNominal->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }},
+        settingsTriwulanNominal: {{ json_encode($settingsTriwulanNominal->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }},
+        settingsBulanPercent: {{ json_encode($settingsBulanPercent->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }},
+        settingsTriwulanPercent: {{ json_encode($settingsTriwulanPercent->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }},
+        
+        // History List states
+        historySearchTahun: '',
+        historyFilterType: '',
+        historyFilterBasis: '',
+        copySourceBulan: '',
+        copySourceTriwulan: '',
+        showHistoryDetailModal: false,
+        historyDetailTitle: '',
+        historyDetailSub: '',
+        historyDetailTiers: [],
+        historyDetailType: '',
+        historyList: [
+            @foreach($settingsHistory as $key => $tiers)
+                @php
+                    [$hTahun, $hBulan, $hType, $hBasis] = explode('|', $key);
+                @endphp
+                {
+                    tahun: '{{ $hTahun }}',
+                    bulan: '{{ $hBulan }}',
+                    type: '{{ $hType }}',
+                    basis: '{{ $hBasis }}',
+                    tierCount: {{ count($tiers) }},
+                    tiers: {{ json_encode($tiers->map(fn($t) => ['min_achievement' => (float)$t->min_achievement, 'incentive_value' => (float)$t->incentive_value, 'basis' => $t->basis])) }}
+                },
+            @endforeach
+        ],
+        filteredHistoryList(type = '') {
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember', 'Triwulan I', 'Triwulan II', 'Triwulan III', 'Triwulan IV'];
+            return this.historyList
+                .filter(row => {
+                    if (type && row.type !== type) return false;
+                    if (this.historySearchTahun && !row.tahun.includes(this.historySearchTahun)) return false;
+                    if (this.historyFilterBasis && row.basis !== this.historyFilterBasis) return false;
+                    return true;
+                })
+                .sort((a, b) => {
+                    if (b.tahun !== a.tahun) return b.tahun - a.tahun;
+                    return months.indexOf(a.bulan) - months.indexOf(b.bulan);
+                });
+        },
+        formatRupiahShorthand(value) {
+            if (!value || isNaN(value)) return '';
+            const num = parseFloat(value);
+            if (num >= 1000000000) {
+                return 'Rp ' + (num / 1000000000).toLocaleString('id-ID', {maximumFractionDigits: 2}) + ' Miliar';
+            }
+            if (num >= 1000000) {
+                return 'Rp ' + (num / 1000000).toLocaleString('id-ID', {maximumFractionDigits: 2}) + ' Juta';
+            }
+            if (num >= 1000) {
+                return 'Rp ' + (num / 1000).toLocaleString('id-ID', {maximumFractionDigits: 2}) + ' Ribu';
+            }
+            return 'Rp ' + num.toLocaleString('id-ID');
+        },
+        getTierRangeLabel(tiers, idx, basis) {
+            const sorted = [...tiers].sort((a, b) => b.min_achievement - a.min_achievement);
+            const current = sorted[idx];
+            if (!current) return '';
+
+            const fmt = (num) => new Intl.NumberFormat('id-ID').format(num);
+
+            if (basis !== 'nominal') {
+                return `Pencapaian ≥ ${current.min_achievement}%`;
+            }
+
+            if (idx === 0) {
+                if (current.min_achievement % 1000000 === 1) {
+                    return `Actual Sales > Rp ${fmt(current.min_achievement - 1)}`;
+                }
+                return `Actual Sales ≥ Rp ${fmt(current.min_achievement)}`;
+            } else {
+                const nextHigher = sorted[idx - 1];
+                const maxVal = nextHigher.min_achievement % 1000000 === 1 
+                    ? nextHigher.min_achievement - 1 
+                    : (nextHigher.min_achievement % 1000000 === 0 
+                        ? nextHigher.min_achievement - 1000000 
+                        : nextHigher.min_achievement - 1);
+                return `Rp ${fmt(current.min_achievement)} - Rp ${fmt(maxVal)}`;
+            }
+        },
+        init() {
+            // Watch activeTab changes to persist state on refresh/reload
+            this.$watch('activeTab', value => {
+                localStorage.setItem('active_incentive_tab', value);
+                const url = new URL(window.location);
+                url.searchParams.set('tab', value);
+                window.history.replaceState({}, '', url);
+            });
+            
+            // Sync initial URL if not present
+            const url = new URL(window.location);
+            if (!url.searchParams.has('tab')) {
+                url.searchParams.set('tab', this.activeTab);
+                window.history.replaceState({}, '', url);
+            }
+        }
+    }">
         <div class="w-full max-w-6xl mx-auto flex flex-col gap-4">
             
             {{-- Navigation/Header --}}
@@ -166,6 +279,7 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             {{-- Tabs Navigation --}}
             <div class="flex flex-nowrap overflow-x-auto gap-2 pb-2 scrollbar-none whitespace-nowrap border-b border-slate-200">
@@ -181,6 +295,12 @@
                     <i class="fas fa-store"></i>
                     <span>Bonus Outlet Baru</span>
                 </button>
+                @if($hasFullAccess)
+                <button @click="activeTab = 'pengaturan'" :class="activeTab === 'pengaturan' ? 'active' : ''" class="tab-btn flex items-center gap-2">
+                    <i class="fas fa-cog"></i>
+                    <span>Pengaturan Aturan</span>
+                </button>
+                @endif
             </div>
 
             {{-- SECTION 1: PERBULAN (MONTHLY) --}}
@@ -230,11 +350,13 @@
                                         </div>
                                     </div>
                                 </div>
+                                @if($hasFullAccess)
                                 <div class="col-span-2 lg:col-span-auto flex flex-col gap-0.5 relative lg:w-36">
                                     <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">PS</label>
                                     <div class="relative w-full">
                                         <select name="ps" onchange="this.form.submit()" class="w-full appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                             <option value="">All</option>
+                                            <option value="Sales Team" {{ $psTerpilih == 'Sales Team' ? 'selected' : '' }}>Sales Team</option>
                                             @foreach($listPs as $p)
                                                 <option value="{{ $p }}" {{ $psTerpilih == $p ? 'selected' : '' }}>{{ $p }}</option>
                                             @endforeach
@@ -244,6 +366,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                @endif
                             </form>
                             
                             <!-- Info Button (Desktop only) -->
@@ -430,11 +553,13 @@
                                         </div>
                                     </div>
                                 </div>
+                                @if($hasFullAccess)
                                 <div class="col-span-2 lg:col-span-auto flex flex-col gap-0.5 relative lg:w-36">
                                     <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">PS</label>
                                     <div class="relative w-full">
                                         <select name="ps" onchange="this.form.submit()" class="w-full appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                             <option value="">All</option>
+                                            <option value="Sales Team" {{ $psTerpilih == 'Sales Team' ? 'selected' : '' }}>Sales Team</option>
                                             @foreach($listPs as $p)
                                                 <option value="{{ $p }}" {{ $psTerpilih == $p ? 'selected' : '' }}>{{ $p }}</option>
                                             @endforeach
@@ -444,6 +569,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                @endif
                             </form>
                             
                             <!-- Info Button (Desktop only) -->
@@ -625,11 +751,13 @@
                                         </div>
                                     </div>
                                 </div>
+                                @if($hasFullAccess)
                                 <div class="col-span-2 lg:col-span-auto flex flex-col gap-0.5 relative lg:w-36">
                                     <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">PS</label>
                                     <div class="relative w-full">
                                         <select name="ps" onchange="this.form.submit()" class="w-full appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                             <option value="">All</option>
+                                            <option value="Sales Team" {{ $psTerpilih == 'Sales Team' ? 'selected' : '' }}>Sales Team</option>
                                             @foreach($listPs as $p)
                                                 <option value="{{ $p }}" {{ $psTerpilih == $p ? 'selected' : '' }}>{{ $p }}</option>
                                             @endforeach
@@ -639,6 +767,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                @endif
                             </form>
                             
                             <!-- Info Button (Desktop only) -->
@@ -698,6 +827,672 @@
                     </div>
                     @endif
                 </div>
+            </div>
+
+            {{-- SECTION 4: PENGATURAN ATURAN (SETTINGS) --}}
+            @if($hasFullAccess)
+            <div x-show="activeTab === 'pengaturan'" class="flex flex-col gap-3" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                
+                @if(session('success'))
+                    <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-3">
+                        <i class="fas fa-circle-check text-xl"></i>
+                        <span class="text-sm font-semibold">{{ session('success') }}</span>
+                    </div>
+                @endif
+
+                @if($hasFullAccess)
+                <div class="flex flex-wrap items-center justify-end gap-3">
+                    <button type="button" @click="
+                        formTahun = '{{ $tahun }}';
+                        formBulan = '{{ $bulan }}';
+                        formBasisBulan = '{{ $activeBasis }}';
+                        showFormModalBulan = true;
+                    " class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]">
+                        <i class="fas fa-calendar-day"></i> Atur Aturan Bulanan
+                    </button>
+                    <button type="button" @click="
+                        formTahun = '{{ $tahun }}';
+                        formTriwulan = '{{ $triwulan }}';
+                        formBasisTriwulan = '{{ $activeBasisTriwulan }}';
+                        showFormModalTriwulan = true;
+                    " class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]">
+                        <i class="fas fa-calendar-minus"></i> Atur Aturan Triwulan
+                    </button>
+                </div>
+                @endif
+
+                {{-- Modal Form Aturan Bulanan --}}
+                <div x-show="showFormModalBulan" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
+                    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showFormModalBulan = false"></div>
+                    <div class="glass-card w-full max-w-2xl shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[92vh]" 
+                         x-transition:enter="transition ease-out duration-300 transform" 
+                         x-transition:enter-start="opacity-0 scale-95" 
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-200 transform"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95">
+                        
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3 shrink-0">
+                            <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-slate-800">
+                                <i class="fas fa-calendar-day text-blue-500"></i>
+                                <span>Atur Aturan Insentif Bulanan</span>
+                            </h3>
+                            <button type="button" @click="showFormModalBulan = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+                                <i class="fas fa-times text-lg"></i>
+                            </button>
+                        </div>
+
+                        <div class="overflow-y-auto flex-1 pr-1">
+                            <form class="flex flex-col gap-4 pb-2">
+                                {{-- Copy Rules Component --}}
+                                <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100 flex items-center justify-between gap-3 text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-copy text-blue-500"></i>
+                                        <span class="font-bold text-slate-700">Salin dari Periode Lain:</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <select x-model="copySourceBulan" class="border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1 cursor-pointer outline-none">
+                                            <option value="">-- Pilih Bulan --</option>
+                                            <template x-for="item in historyList.filter(h => h.type === 'bulan')" :key="item.bulan + '|' + item.tahun + '|' + item.basis">
+                                                <option :value="item.bulan + '|' + item.tahun + '|' + item.basis" x-text="item.bulan + ' ' + item.tahun + ' (' + (item.basis === 'nominal' ? 'Skema 1' : 'Skema 2') + ')'"></option>
+                                            </template>
+                                        </select>
+                                        <button type="button" @click="
+                                            if (copySourceBulan) {
+                                                const [cBul, cTah, cBas] = copySourceBulan.split('|');
+                                                const source = historyList.find(h => h.bulan === cBul && h.tahun === cTah && h.type === 'bulan' && h.basis === cBas);
+                                                if (source) {
+                                                    formBasisBulan = source.basis;
+                                                    if (source.basis === 'nominal') {
+                                                        settingsBulanNominal = JSON.parse(JSON.stringify(source.tiers));
+                                                    } else {
+                                                        settingsBulanPercent = JSON.parse(JSON.stringify(source.tiers));
+                                                    }
+                                                }
+                                            }
+                                        " class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-sm">
+                                            Salin
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tahun Target</label>
+                                        <select name="tahun" x-model="formTahun" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            @foreach($listTahun as $t)
+                                                <option value="{{ $t }}">{{ $t }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bulan Target</label>
+                                        <select name="bulan" x-model="formBulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            @foreach($listBulan as $b)
+                                                <option value="{{ $b }}">{{ $b }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Model Skema</label>
+                                        <select x-model="formBasisBulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="nominal">Skema 1 (Nominal Actual Sales Rp)</option>
+                                            <option value="percentage">Skema 2 (Persentase % vs Target)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col gap-3">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                                <th class="py-2 px-1 w-7/12" x-text="formBasisBulan === 'nominal' ? 'Min. Sales (Rp)' : 'Min. Achievement (%)'"></th>
+                                                <th class="py-2 px-1 w-4/12">Insentif (%)</th>
+                                                <th class="py-2 px-1 w-1/12 text-center">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template x-for="(tier, index) in (formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent)" :key="index">
+                                                <tr class="border-b border-slate-100/50">
+                                                    <td class="py-1.5 px-1">
+                                                        <div class="relative">
+                                                            <span x-show="formBasisBulan === 'nominal'" class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-[11px] font-bold">Rp</span>
+                                                            <input type="number" name="min_achievement[]" x-model="tier.min_achievement" required class="w-full border border-slate-200 bg-white rounded-lg py-1 text-xs font-semibold text-slate-800 focus:ring-blue-500 focus:border-blue-500 transition-colors" :class="formBasisBulan === 'nominal' ? 'pl-7 pr-3' : 'pl-3 pr-6'">
+                                                            <span x-show="formBasisBulan === 'percentage'" class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 text-[11px] font-bold">%</span>
+                                                        </div>
+                                                        <div x-show="formBasisBulan === 'nominal' && tier.min_achievement" class="text-[10px] text-blue-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.min_achievement)"></div>
+                                                    </td>
+                                                    <td class="py-1.5 px-1">
+                                                        <div class="relative">
+                                                            <input type="number" step="0.01" name="incentive_value[]" x-model="tier.incentive_value" required class="w-full border border-slate-200 bg-white rounded-lg pl-3 pr-6 py-1 text-xs font-semibold text-slate-800 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                                            <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 text-[11px] font-bold">%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="py-1.5 px-1 text-center">
+                                                        <button type="button" @click="(formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent).splice(index, 1)" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 inline-flex items-center justify-center transition-colors border border-rose-100">
+                                                            <i class="fas fa-trash-can text-[10px]"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                    <button type="button" @click="(formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-[10px] transition-colors shadow-sm">
+                                        <i class="fas fa-plus"></i> Tambah Tingkat
+                                    </button>
+                                </div>
+
+                                {{-- Action Buttons --}}
+                                <div class="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-slate-100">
+                                    <button type="button" @click="showFormModalBulan = false" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs transition-colors">
+                                        Batal
+                                    </button>
+                                    <button type="button" @click="
+                                        const currentBulanList = formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent;
+                                        
+                                        const payloadBulan = {
+                                            _token: '{{ csrf_token() }}',
+                                            tahun: formTahun,
+                                            bulan: formBulan,
+                                            type: 'bulan',
+                                            basis: formBasisBulan,
+                                            min_achievement: currentBulanList.map(t => t.min_achievement),
+                                            incentive_value: currentBulanList.map(t => t.incentive_value)
+                                        };
+                                        fetch('{{ route('sales.incentive.settings.save') }}', {
+                                            method: 'POST',
+                                            headers: { 
+                                                'Content-Type': 'application/json', 
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                            },
+                                            body: JSON.stringify(payloadBulan)
+                                        })
+                                        .then(res => {
+                                            if (res.ok) {
+                                                window.location.reload();
+                                            } else {
+                                                res.json().then(data => {
+                                                    alert(data.message || 'Gagal menyimpan aturan.');
+                                                }).catch(() => {
+                                                    alert('Terjadi kesalahan server saat menyimpan.');
+                                                });
+                                            }
+                                        })
+                                        .catch(err => {
+                                            console.error(err);
+                                            alert('Terjadi kesalahan koneksi.');
+                                        });
+                                    " class="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-colors">
+                                        <i class="fas fa-save"></i> Simpan & Aktifkan Bulanan
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Modal Form Aturan Triwulan --}}
+                <div x-show="showFormModalTriwulan" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
+                    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showFormModalTriwulan = false"></div>
+                    <div class="glass-card w-full max-w-2xl shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[92vh]" 
+                         x-transition:enter="transition ease-out duration-300 transform" 
+                         x-transition:enter-start="opacity-0 scale-95" 
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-200 transform"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95">
+                        
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3 shrink-0">
+                            <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-slate-800">
+                                <i class="fas fa-calendar-minus text-indigo-500"></i>
+                                <span>Atur Aturan Bonus Triwulan</span>
+                            </h3>
+                            <button type="button" @click="showFormModalTriwulan = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+                                <i class="fas fa-times text-lg"></i>
+                            </button>
+                        </div>
+
+                        <div class="overflow-y-auto flex-1 pr-1">
+                            <form class="flex flex-col gap-4 pb-2">
+                                {{-- Copy Rules Component --}}
+                                <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 flex items-center justify-between gap-3 text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-copy text-indigo-500"></i>
+                                        <span class="font-bold text-slate-700">Salin dari Periode Lain:</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <select x-model="copySourceTriwulan" class="border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1 cursor-pointer outline-none">
+                                            <option value="">-- Pilih Triwulan --</option>
+                                            <template x-for="item in historyList.filter(h => h.type === 'triwulan')" :key="item.bulan + '|' + item.tahun + '|' + item.basis">
+                                                <option :value="item.bulan + '|' + item.tahun + '|' + item.basis" x-text="item.bulan + ' ' + item.tahun + ' (' + (item.basis === 'nominal' ? 'Skema 1' : 'Skema 2') + ')'"></option>
+                                            </template>
+                                        </select>
+                                        <button type="button" @click="
+                                            if (copySourceTriwulan) {
+                                                const [cTri, cTah, cBas] = copySourceTriwulan.split('|');
+                                                const source = historyList.find(h => h.bulan === cTri && h.tahun === cTah && h.type === 'triwulan' && h.basis === cBas);
+                                                if (source) {
+                                                    formBasisTriwulan = source.basis;
+                                                    if (source.basis === 'nominal') {
+                                                        settingsTriwulanNominal = JSON.parse(JSON.stringify(source.tiers));
+                                                    } else {
+                                                        settingsTriwulanPercent = JSON.parse(JSON.stringify(source.tiers));
+                                                    }
+                                                }
+                                            }
+                                        " class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors shadow-sm">
+                                            Salin
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tahun Target</label>
+                                        <select name="tahun" x-model="formTahun" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            @foreach($listTahun as $t)
+                                                <option value="{{ $t }}">{{ $t }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Triwulan Target</label>
+                                        <select name="triwulan" x-model="formTriwulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            @foreach(['Triwulan I', 'Triwulan II', 'Triwulan III', 'Triwulan IV'] as $q)
+                                                <option value="{{ $q }}">{{ $q }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Model Skema</label>
+                                        <select x-model="formBasisTriwulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="nominal">Skema 1 (Nominal Actual Sales Rp)</option>
+                                            <option value="percentage">Skema 2 (Persentase % vs Target)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col gap-3">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                                <th class="py-2 px-1 w-6/12" x-text="formBasisTriwulan === 'nominal' ? 'Min. Sales (Rp)' : 'Min. Achievement (%)'"></th>
+                                                <th class="py-2 px-1 w-5/12">Nominal Bonus (Rp)</th>
+                                                <th class="py-2 px-1 w-1/12 text-center">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template x-for="(tier, index) in (formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent)" :key="index">
+                                                <tr class="border-b border-slate-100/50">
+                                                    <td class="py-1.5 px-1">
+                                                        <div class="relative">
+                                                            <span x-show="formBasisTriwulan === 'nominal'" class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-[11px] font-bold">Rp</span>
+                                                            <input type="number" name="min_achievement_triwulan[]" x-model="tier.min_achievement" required class="w-full border border-slate-200 bg-white rounded-lg py-1 text-xs font-semibold text-slate-800 focus:ring-blue-500 focus:border-blue-500 transition-colors" :class="formBasisTriwulan === 'nominal' ? 'pl-7 pr-3' : 'pl-3 pr-6'">
+                                                            <span x-show="formBasisTriwulan === 'percentage'" class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 text-[11px] font-bold">%</span>
+                                                        </div>
+                                                        <div x-show="formBasisTriwulan === 'nominal' && tier.min_achievement" class="text-[10px] text-blue-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.min_achievement)"></div>
+                                                    </td>
+                                                    <td class="py-1.5 px-1">
+                                                        <div class="relative">
+                                                            <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-[11px] font-bold">Rp</span>
+                                                            <input type="number" name="incentive_value_triwulan[]" x-model="tier.incentive_value" required class="w-full border border-slate-200 bg-white rounded-lg pl-7 pr-3 py-1 text-xs font-semibold text-slate-800 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                                        </div>
+                                                        <div x-show="tier.incentive_value" class="text-[10px] text-indigo-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.incentive_value)"></div>
+                                                    </td>
+                                                    <td class="py-1.5 px-1 text-center">
+                                                        <button type="button" @click="(formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent).splice(index, 1)" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 inline-flex items-center justify-center transition-colors border border-rose-100">
+                                                            <i class="fas fa-trash-can text-[10px]"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                    <button type="button" @click="(formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-[10px] transition-colors shadow-sm">
+                                        <i class="fas fa-plus"></i> Tambah Tingkat
+                                    </button>
+                                </div>
+
+                                {{-- Action Buttons --}}
+                                <div class="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-slate-100">
+                                    <button type="button" @click="showFormModalTriwulan = false" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs transition-colors">
+                                        Batal
+                                    </button>
+                                    <button type="button" @click="
+                                        const currentTriwulanList = formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent;
+                                        
+                                        const payloadTriwulan = {
+                                            _token: '{{ csrf_token() }}',
+                                            tahun: formTahun,
+                                            bulan: formTriwulan,
+                                            type: 'triwulan',
+                                            basis: formBasisTriwulan,
+                                            min_achievement: currentTriwulanList.map(t => t.min_achievement),
+                                            incentive_value: currentTriwulanList.map(t => t.incentive_value)
+                                        };
+                                        fetch('{{ route('sales.incentive.settings.save') }}', {
+                                            method: 'POST',
+                                            headers: { 
+                                                'Content-Type': 'application/json', 
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                            },
+                                            body: JSON.stringify(payloadTriwulan)
+                                        })
+                                        .then(res => {
+                                            if (res.ok) {
+                                                window.location.reload();
+                                            } else {
+                                                res.json().then(data => {
+                                                    alert(data.message || 'Gagal menyimpan aturan.');
+                                                }).catch(() => {
+                                                    alert('Terjadi kesalahan server saat menyimpan.');
+                                                });
+                                            }
+                                        })
+                                        .catch(err => {
+                                            console.error(err);
+                                            alert('Terjadi kesalahan koneksi.');
+                                        });
+                                    " class="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-colors">
+                                        <i class="fas fa-save"></i> Simpan & Aktifkan Triwulan
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Global Filters for History --}}
+                <div class="glass-card flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-800">Riwayat Aturan Insentif</h3>
+                        <p class="text-slate-500 text-xs mt-0.5">Daftar semua aturan insentif bulanan dan triwulan yang tersimpan dalam sistem</p>
+                    </div>
+                    
+                    {{-- Shared Filters --}}
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1">
+                            <i class="fas fa-search text-slate-400 text-[10px]"></i>
+                            <input type="text" x-model="historySearchTahun" placeholder="Cari Tahun..." class="bg-transparent text-xs font-semibold text-slate-700 outline-none w-20">
+                        </div>
+                        <select x-model="historyFilterBasis" class="border border-slate-200 bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 px-2 py-1 outline-none cursor-pointer">
+                            <option value="">Semua Model Skema</option>
+                            <option value="nominal">Skema 1 (Nominal Rp)</option>
+                            <option value="percentage">Skema 2 (Persentase %)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {{-- Card Riwayat Bulanan --}}
+                    <div class="glass-card flex flex-col gap-4">
+                        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                    <i class="fas fa-calendar-alt text-indigo-500"></i>
+                                    <span>Riwayat Aturan Bulanan</span>
+                                </h4>
+                            </div>
+                            <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('bulan').length + ' data'"></span>
+                        </div>
+
+                        <div class="overflow-x-auto w-full">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                        <th class="py-2.5 px-2">Tahun</th>
+                                        <th class="py-2.5 px-2">Bulan</th>
+                                        <th class="py-2.5 px-2">Model Skema</th>
+                                        <th class="py-2.5 px-2 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(row, index) in filteredHistoryList('bulan')" :key="index">
+                                        <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-slate-700 text-xs">
+                                            <td class="py-3 px-2 font-bold text-slate-800" x-text="row.tahun"></td>
+                                            <td class="py-3 px-2 font-semibold text-blue-600" x-text="row.bulan"></td>
+                                            <td class="py-3 px-2">
+                                                <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[9px]"
+                                                    :class="row.basis === 'nominal' ? 'bg-teal-50 text-teal-700' : 'bg-violet-50 text-violet-700'"
+                                                    x-text="row.basis === 'nominal' ? 'Skema 1: Nominal' : 'Skema 2: Persentase'">
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-2 text-center flex items-center justify-center gap-1">
+                                                <button type="button" @click="
+                                                    historyDetailTitle = row.bulan + ' ' + row.tahun;
+                                                    historyDetailSub = 'Insentif Bulanan - ' + (row.basis === 'nominal' ? 'Skema 1 (Nominal Actual Sales)' : 'Skema 2 (Persentase vs Target)');
+                                                    historyDetailTiers = row.tiers;
+                                                    historyDetailType = row.type;
+                                                    showHistoryDetailModal = true;
+                                                " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold text-[9px] transition-colors border border-slate-200">
+                                                    <i class="fas fa-eye text-[8px]"></i> Detail
+                                                </button>
+                                                @if($hasFullAccess)
+                                                    <button type="button" @click="
+                                                        formTahun = row.tahun;
+                                                        formBulan = row.bulan;
+                                                        formBasisBulan = row.basis;
+                                                        if (row.basis === 'nominal') {
+                                                            settingsBulanNominal = JSON.parse(JSON.stringify(row.tiers));
+                                                        } else {
+                                                            settingsBulanPercent = JSON.parse(JSON.stringify(row.tiers));
+                                                        }
+                                                        showFormModalBulan = true;
+                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-[9px] transition-colors border border-blue-100">
+                                                        <i class="fas fa-edit text-[8px]"></i> Edit
+                                                    </button>
+                                                    <button type="button" @click="
+                                                        if (confirm('Apakah Anda yakin ingin menghapus aturan insentif ini?')) {
+                                                            fetch('{{ route('sales.incentive.settings.delete') }}', {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'X-Requested-With': 'XMLHttpRequest',
+                                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                                                },
+                                                                body: JSON.stringify({
+                                                                    _token: '{{ csrf_token() }}',
+                                                                    tahun: row.tahun,
+                                                                    bulan: row.bulan,
+                                                                    type: row.type,
+                                                                    basis: row.basis
+                                                                })
+                                                            })
+                                                            .then(res => res.json())
+                                                            .then(data => {
+                                                                if (data.success) {
+                                                                    window.location.reload();
+                                                                } else {
+                                                                    alert(data.message || 'Gagal menghapus data.');
+                                                                }
+                                                            })
+                                                            .catch(err => {
+                                                                console.error(err);
+                                                                alert('Terjadi kesalahan koneksi atau token kedaluwarsa. Silakan refresh halaman.');
+                                                            });
+                                                        }
+                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[9px] transition-colors border border-rose-100">
+                                                        <i class="fas fa-trash-can text-[8px]"></i> Hapus
+                                                    </button>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="filteredHistoryList('bulan').length === 0">
+                                        <td colspan="4" class="py-8 text-center text-slate-400">
+                                            <i class="fas fa-folder-open text-2xl mb-1 text-slate-300"></i>
+                                            <p class="text-[11px] font-semibold">Tidak ada riwayat bulanan.</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- Card Riwayat Triwulan --}}
+                    <div class="glass-card flex flex-col gap-4">
+                        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                    <i class="fas fa-calendar-minus text-amber-500"></i>
+                                    <span>Riwayat Aturan Triwulan</span>
+                                </h4>
+                            </div>
+                            <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('triwulan').length + ' data'"></span>
+                        </div>
+
+                        <div class="overflow-x-auto w-full">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                        <th class="py-2.5 px-2">Tahun</th>
+                                        <th class="py-2.5 px-2">Triwulan</th>
+                                        <th class="py-2.5 px-2">Model Skema</th>
+                                        <th class="py-2.5 px-2 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(row, index) in filteredHistoryList('triwulan')" :key="index">
+                                        <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-slate-700 text-xs">
+                                            <td class="py-3 px-2 font-bold text-slate-800" x-text="row.tahun"></td>
+                                            <td class="py-3 px-2 font-semibold text-blue-600" x-text="row.bulan"></td>
+                                            <td class="py-3 px-2">
+                                                <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[9px]"
+                                                    :class="row.basis === 'nominal' ? 'bg-teal-50 text-teal-700' : 'bg-violet-50 text-violet-700'"
+                                                    x-text="row.basis === 'nominal' ? 'Skema 1: Nominal' : 'Skema 2: Persentase'">
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-2 text-center flex items-center justify-center gap-1">
+                                                <button type="button" @click="
+                                                    historyDetailTitle = row.bulan + ' ' + row.tahun;
+                                                    historyDetailSub = 'Bonus Triwulan - ' + (row.basis === 'nominal' ? 'Skema 1 (Nominal Actual Sales)' : 'Skema 2 (Persentase vs Target)');
+                                                    historyDetailTiers = row.tiers;
+                                                    historyDetailType = row.type;
+                                                    showHistoryDetailModal = true;
+                                                " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold text-[9px] transition-colors border border-slate-200">
+                                                    <i class="fas fa-eye text-[8px]"></i> Detail
+                                                </button>
+                                                @if($hasFullAccess)
+                                                    <button type="button" @click="
+                                                        formTahun = row.tahun;
+                                                        formTriwulan = row.bulan;
+                                                        formBasisTriwulan = row.basis;
+                                                        if (row.basis === 'nominal') {
+                                                            settingsTriwulanNominal = JSON.parse(JSON.stringify(row.tiers));
+                                                        } else {
+                                                            settingsTriwulanPercent = JSON.parse(JSON.stringify(row.tiers));
+                                                        }
+                                                        showFormModalTriwulan = true;
+                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-[9px] transition-colors border border-blue-100">
+                                                        <i class="fas fa-edit text-[8px]"></i> Edit
+                                                    </button>
+                                                    <button type="button" @click="
+                                                        if (confirm('Apakah Anda yakin ingin menghapus aturan insentif ini?')) {
+                                                            fetch('{{ route('sales.incentive.settings.delete') }}', {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'X-Requested-With': 'XMLHttpRequest',
+                                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                                                },
+                                                                body: JSON.stringify({
+                                                                    _token: '{{ csrf_token() }}',
+                                                                    tahun: row.tahun,
+                                                                    bulan: row.bulan,
+                                                                    type: row.type,
+                                                                    basis: row.basis
+                                                                })
+                                                            })
+                                                            .then(res => res.json())
+                                                            .then(data => {
+                                                                if (data.success) {
+                                                                    window.location.reload();
+                                                                } else {
+                                                                    alert(data.message || 'Gagal menghapus data.');
+                                                                }
+                                                            })
+                                                            .catch(err => {
+                                                                console.error(err);
+                                                                alert('Terjadi kesalahan koneksi atau token kedaluwarsa. Silakan refresh halaman.');
+                                                            });
+                                                        }
+                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[9px] transition-colors border border-rose-100">
+                                                        <i class="fas fa-trash-can text-[8px]"></i> Hapus
+                                                    </button>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="filteredHistoryList('triwulan').length === 0">
+                                        <td colspan="4" class="py-8 text-center text-slate-400">
+                                            <i class="fas fa-folder-open text-2xl mb-1 text-slate-300"></i>
+                                            <p class="text-[11px] font-semibold">Tidak ada riwayat triwulan.</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Modal History Detail --}}
+                <div x-show="showHistoryDetailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
+                    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showHistoryDetailModal = false"></div>
+                    <div class="glass-card w-full max-w-lg shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[80vh]" 
+                         x-transition:enter="transition ease-out duration-300 transform" 
+                         x-transition:enter-start="opacity-0 scale-95" 
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-200 transform"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95">
+                        
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3 shrink-0">
+                            <div>
+                                <h3 class="text-base sm:text-lg font-black text-slate-800" x-text="historyDetailTitle"></h3>
+                                <p class="text-slate-500 text-xs mt-0.5" x-text="historyDetailSub"></p>
+                            </div>
+                            <button type="button" @click="showHistoryDetailModal = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+                                <i class="fas fa-times text-lg"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto pr-1">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                        <th class="py-2 px-1">Minimal Target</th>
+                                        <th class="py-2 px-1 text-right">Nilai Insentif / Bonus</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(tier, idx) in historyDetailTiers" :key="idx">
+                                        <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-xs text-slate-700">
+                                            <td class="py-2.5 px-1 font-semibold" x-text="getTierRangeLabel(historyDetailTiers, idx, tier.basis)">
+                                            </td>
+                                            <td class="py-2.5 px-1 text-right font-black text-emerald-600">
+                                                <template x-if="historyDetailType === 'bulan'">
+                                                    <span>+<span x-text="tier.incentive_value"></span>%</span>
+                                                </template>
+                                                <template x-if="historyDetailType !== 'bulan'">
+                                                    <span>Rp <span x-text="new Intl.NumberFormat('id-ID').format(tier.incentive_value)"></span></span>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="flex justify-end mt-4 pt-3 border-t border-slate-100 shrink-0">
+                            <button type="button" @click="showHistoryDetailModal = false" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors">
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             {{-- Modal Aturan Skema Outlet Baru --}}

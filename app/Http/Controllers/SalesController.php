@@ -79,6 +79,7 @@ class SalesController extends Controller
         $tahun = $request->input('tahun', date('Y'));
         $currentMonthIndo = $this->urutanBulan[date('n') - 1];
         $bulan = $request->input('bulan', $currentMonthIndo);
+        $triwulan = $request->input('triwulan', 'Triwulan I');
 
         // list tahun
         $listTahun = Sales::whereNotNull('tanggal')
@@ -120,31 +121,50 @@ class SalesController extends Controller
 
         $psTerpilih = $request->input('ps', '');
 
-        $payouts = collect($listPs)->map(function ($ps) use ($targets, $sales) {
+        $settingsBulanNominal = $this->getIncentiveSettings($tahun, $bulan, 'bulan', 'nominal');
+        $settingsBulanPercent = $this->getIncentiveSettings($tahun, $bulan, 'bulan', 'percentage');
+        $settingsTriwulanNominal = $this->getIncentiveSettings($tahun, $triwulan, 'triwulan', 'nominal');
+        $settingsTriwulanPercent = $this->getIncentiveSettings($tahun, $triwulan, 'triwulan', 'percentage');
+
+        // Tentukan skema yang aktif (jika ada skema nominal tersimpan di DB, maka basis nominal aktif)
+        $existsNominal = \App\Models\SalesIncentiveSetting::where('tahun', $tahun)
+            ->where('bulan', $bulan)
+            ->where('type', 'bulan')
+            ->where('basis', 'nominal')
+            ->exists();
+        $activeBasis = $existsNominal ? 'nominal' : 'percentage';
+        $settingsBulan = $activeBasis === 'nominal' ? $settingsBulanNominal : $settingsBulanPercent;
+
+        $existsNominalTriwulan = \App\Models\SalesIncentiveSetting::where('tahun', $tahun)
+            ->where('bulan', $triwulan)
+            ->where('type', 'triwulan')
+            ->where('basis', 'nominal')
+            ->exists();
+        $activeBasisTriwulan = $existsNominalTriwulan ? 'nominal' : 'percentage';
+        $settingsTriwulan = $activeBasisTriwulan === 'nominal' ? $settingsTriwulanNominal : $settingsTriwulanPercent;
+
+        $payouts = collect($listPs)->map(function ($ps) use ($targets, $sales, $settingsBulan) {
             // Cocokkan nama PS secara case-insensitive & trimmed
             $targetAmount = $targets->filter(fn($t) => strcasecmp(trim($t->ps), trim($ps)) === 0)->sum('target_amount');
             $actualSales = $sales->filter(fn($s) => strcasecmp(trim($s->ps), trim($ps)) === 0)->sum('total_sales');
             
             $achievementRate = $targetAmount > 0 ? round(($actualSales / $targetAmount) * 100, 2) : 0;
 
-            // Skema Insentif Perbulan:
-            // >= 200% = 3.0%
-            // >= 150% = 2.0%
-            // >= 130% = 1.5%
-            // >= 100% = 1.0%
-            // >= 95% = 0.5%
-            if ($achievementRate >= 200) {
-                $incentiveRate = 3.0;
-            } elseif ($achievementRate >= 150) {
-                $incentiveRate = 2.0;
-            } elseif ($achievementRate >= 130) {
-                $incentiveRate = 1.5;
-            } elseif ($achievementRate >= 100) {
-                $incentiveRate = 1.0;
-            } elseif ($achievementRate >= 95) {
-                $incentiveRate = 0.5;
-            } else {
-                $incentiveRate = 0;
+            // Skema Insentif Perbulan dari database (Dinamis: Persentase / Nominal)
+            $incentiveRate = 0.0;
+            foreach ($settingsBulan as $set) {
+                $triggerVal = (float)$set->min_achievement;
+                if ($set->basis === 'nominal') {
+                    if ($actualSales >= $triggerVal) {
+                        $incentiveRate = (float)$set->incentive_value;
+                        break;
+                    }
+                } else {
+                    if ($achievementRate >= $triggerVal) {
+                        $incentiveRate = (float)$set->incentive_value;
+                        break;
+                    }
+                }
             }
 
             $incentiveAmount = $actualSales * ($incentiveRate / 100);
@@ -160,11 +180,14 @@ class SalesController extends Controller
         })->filter(fn($p) => $p['target'] > 0 || $p['sales'] > 0)->sortByDesc('achievement_rate')->values();
 
         if (!empty($psTerpilih)) {
-            $payouts = $payouts->filter(fn($p) => strcasecmp(trim($p['ps']), trim($psTerpilih)) === 0)->values();
+            if (strcasecmp($psTerpilih, 'Sales Team') === 0) {
+                $payouts = $payouts->filter(fn($p) => strcasecmp(trim($p['ps']), 'office') !== 0)->values();
+            } else {
+                $payouts = $payouts->filter(fn($p) => strcasecmp(trim($p['ps']), trim($psTerpilih)) === 0)->values();
+            }
         }
 
         // ======================= PERTRIWULAN (QUARTERLY) =======================
-        $triwulan = $request->input('triwulan', 'Triwulan I');
         
         $monthsInQuarter = [];
         if ($triwulan == 'Triwulan I') {
@@ -189,30 +212,27 @@ class SalesController extends Controller
             ->groupBy('ps')
             ->get();
 
-        $payoutsTriwulan = collect($listPs)->map(function ($ps) use ($targetsTriwulan, $salesTriwulan) {
+        $payoutsTriwulan = collect($listPs)->map(function ($ps) use ($targetsTriwulan, $salesTriwulan, $settingsTriwulan) {
             $targetAmount = $targetsTriwulan->filter(fn($t) => strcasecmp(trim($t->ps), trim($ps)) === 0)->sum('target_amount');
             $actualSales = $salesTriwulan->filter(fn($s) => strcasecmp(trim($s->ps), trim($ps)) === 0)->sum('total_sales');
             
             $achievementRate = $targetAmount > 0 ? round(($actualSales / $targetAmount) * 100, 2) : 0;
 
-            // Insentif Triwulan:
-            // >= 200% = 6.000.000
-            // >= 150% = 4.500.000
-            // >= 130% = 3.000.000
-            // >= 100% = 1.500.000
-            // >= 95%  = 1.000.000
-            if ($achievementRate >= 200) {
-                $incentiveAmount = 6000000;
-            } elseif ($achievementRate >= 150) {
-                $incentiveAmount = 4500000;
-            } elseif ($achievementRate >= 130) {
-                $incentiveAmount = 3000000;
-            } elseif ($achievementRate >= 100) {
-                $incentiveAmount = 1500000;
-            } elseif ($achievementRate >= 95) {
-                $incentiveAmount = 1000000;
-            } else {
-                $incentiveAmount = 0;
+            // Insentif Triwulan dari database (Dinamis: Persentase / Nominal)
+            $incentiveAmount = 0.0;
+            foreach ($settingsTriwulan as $set) {
+                $triggerVal = (float)$set->min_achievement;
+                if ($set->basis === 'nominal') {
+                    if ($actualSales >= $triggerVal) {
+                        $incentiveAmount = (float)$set->incentive_value;
+                        break;
+                    }
+                } else {
+                    if ($achievementRate >= $triggerVal) {
+                        $incentiveAmount = (float)$set->incentive_value;
+                        break;
+                    }
+                }
             }
 
             return [
@@ -225,7 +245,11 @@ class SalesController extends Controller
         })->filter(fn($p) => $p['target'] > 0 || $p['sales'] > 0)->sortByDesc('achievement_rate')->values();
 
         if (!empty($psTerpilih)) {
-            $payoutsTriwulan = $payoutsTriwulan->filter(fn($p) => strcasecmp(trim($p['ps']), trim($psTerpilih)) === 0)->values();
+            if (strcasecmp($psTerpilih, 'Sales Team') === 0) {
+                $payoutsTriwulan = $payoutsTriwulan->filter(fn($p) => strcasecmp(trim($p['ps']), 'office') !== 0)->values();
+            } else {
+                $payoutsTriwulan = $payoutsTriwulan->filter(fn($p) => strcasecmp(trim($p['ps']), trim($psTerpilih)) === 0)->values();
+            }
         }
 
         // ======================= BONUS OUTLET BARU =======================
@@ -293,8 +317,22 @@ class SalesController extends Controller
         })->filter(fn($p) => $p['new_outlets_count'] > 0)->sortByDesc('new_outlets_count')->values();
 
         if (!empty($psTerpilih)) {
-            $payoutsOutlet = $payoutsOutlet->filter(fn($p) => strcasecmp(trim($p['ps']), trim($psTerpilih)) === 0)->values();
+            if (strcasecmp($psTerpilih, 'Sales Team') === 0) {
+                $payoutsOutlet = $payoutsOutlet->filter(fn($p) => strcasecmp(trim($p['ps']), 'office') !== 0)->values();
+            } else {
+                $payoutsOutlet = $payoutsOutlet->filter(fn($p) => strcasecmp(trim($p['ps']), trim($psTerpilih)) === 0)->values();
+            }
         }
+
+        $settingsHistory = \App\Models\SalesIncentiveSetting::orderBy('tahun', 'desc')
+            ->orderBy('type', 'asc')
+            ->orderBy('bulan', 'asc')
+            ->orderBy('min_achievement', 'desc')
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->tahun . '|' . $item->bulan . '|' . $item->type . '|' . $item->basis;
+            });
+
 
         return view('users.sales.incentive')->with([
             'title' => 'Skema Insentif Sales',
@@ -310,6 +348,15 @@ class SalesController extends Controller
             'payouts' => $payouts,
             'payoutsTriwulan' => $payoutsTriwulan,
             'payoutsOutlet' => $payoutsOutlet,
+            'settingsBulan' => $settingsBulan,
+            'settingsTriwulan' => $settingsTriwulan,
+            'settingsBulanNominal' => $settingsBulanNominal,
+            'settingsBulanPercent' => $settingsBulanPercent,
+            'settingsTriwulanNominal' => $settingsTriwulanNominal,
+            'settingsTriwulanPercent' => $settingsTriwulanPercent,
+            'activeBasis' => $activeBasis,
+            'activeBasisTriwulan' => $activeBasisTriwulan,
+            'settingsHistory' => $settingsHistory,
         ]);
     }
 
@@ -1682,5 +1729,152 @@ class SalesController extends Controller
             \Illuminate\Support\Facades\Log::error('Bulk Delete Sales Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal menghapus data terpilih.');
         }
+    }
+
+    private function getIncentiveSettings($tahun, $bulanOrTriwulan, $type, $basis = 'percentage')
+    {
+        $settings = \App\Models\SalesIncentiveSetting::where('tahun', $tahun)
+            ->where('bulan', $bulanOrTriwulan)
+            ->where('type', $type)
+            ->where('basis', $basis)
+            ->orderBy('min_achievement', 'desc')
+            ->get();
+
+        if ($settings->isEmpty()) {
+            // Only seed if no settings exist at all for this period and type
+            $anyExists = \App\Models\SalesIncentiveSetting::where('tahun', $tahun)
+                ->where('bulan', $bulanOrTriwulan)
+                ->where('type', $type)
+                ->exists();
+
+            if (!$anyExists) {
+                // Seed defaults for this year and month
+                $defaults = [];
+                if ($basis === 'nominal') {
+                    if ($type === 'bulan') {
+                        $defaults = [
+                            ['min_achievement' => 500000000, 'incentive_value' => 5.0],
+                            ['min_achievement' => 401000000, 'incentive_value' => 4.0],
+                            ['min_achievement' => 251000000, 'incentive_value' => 3.0],
+                            ['min_achievement' => 151000000, 'incentive_value' => 2.0],
+                            ['min_achievement' => 100000000, 'incentive_value' => 1.0],
+                        ];
+                    } else {
+                        $defaults = [
+                            ['min_achievement' => 1500000000, 'incentive_value' => 15000000],
+                            ['min_achievement' => 1200000000, 'incentive_value' => 12500000],
+                            ['min_achievement' => 750000000, 'incentive_value' => 6000000],
+                            ['min_achievement' => 450000000, 'incentive_value' => 3000000],
+                            ['min_achievement' => 300000000, 'incentive_value' => 1500000],
+                        ];
+                    }
+                } else {
+                    if ($type === 'bulan') {
+                        $defaults = [
+                            ['min_achievement' => 200, 'incentive_value' => 3.0],
+                            ['min_achievement' => 150, 'incentive_value' => 2.0],
+                            ['min_achievement' => 130, 'incentive_value' => 1.5],
+                            ['min_achievement' => 100, 'incentive_value' => 1.0],
+                            ['min_achievement' => 95, 'incentive_value' => 0.5],
+                        ];
+                    } else {
+                        $defaults = [
+                            ['min_achievement' => 200, 'incentive_value' => 6000000],
+                            ['min_achievement' => 150, 'incentive_value' => 4500000],
+                            ['min_achievement' => 130, 'incentive_value' => 3000000],
+                            ['min_achievement' => 100, 'incentive_value' => 1500000],
+                            ['min_achievement' => 95, 'incentive_value' => 1000000],
+                        ];
+                    }
+                }
+
+                foreach ($defaults as $def) {
+                    \App\Models\SalesIncentiveSetting::create([
+                        'tahun' => $tahun,
+                        'bulan' => $bulanOrTriwulan,
+                        'type' => $type,
+                        'basis' => $basis,
+                        'min_achievement' => $def['min_achievement'],
+                        'incentive_value' => $def['incentive_value'],
+                    ]);
+                }
+
+                $settings = \App\Models\SalesIncentiveSetting::where('tahun', $tahun)
+                    ->where('bulan', $bulanOrTriwulan)
+                    ->where('type', $type)
+                    ->where('basis', $basis)
+                    ->orderBy('min_achievement', 'desc')
+                    ->get();
+            }
+        }
+
+        return $settings;
+    }
+
+    public function saveIncentiveSettings(Request $request)
+    {
+        if (!$this->hasFullSalesAccess()) {
+            abort(403, 'Anda tidak memiliki hak akses untuk mengubah Pengaturan Insentif.');
+        }
+
+        $request->validate([
+            'tahun' => 'required|integer',
+            'bulan' => 'required|string',
+            'type' => 'required|in:bulan,triwulan',
+            'basis' => 'required|in:percentage,nominal',
+            'min_achievement' => 'required|array',
+            'min_achievement.*' => 'required|numeric|min:0|max:9999999999',
+            'incentive_value' => 'required|array',
+            'incentive_value.*' => 'required|numeric|min:0|max:9999999999',
+        ]);
+
+        $tahun = $request->input('tahun');
+        $bulan = $request->input('bulan');
+        $type = $request->input('type');
+        $basis = $request->input('basis');
+        $mins = $request->input('min_achievement');
+        $vals = $request->input('incentive_value');
+
+        // Delete existing settings for this type, year and month/triwulan (to keep only one active scheme)
+        \App\Models\SalesIncentiveSetting::where('tahun', $tahun)
+            ->where('bulan', $bulan)
+            ->where('type', $type)
+            ->delete();
+
+        foreach ($mins as $index => $min) {
+            $val = $vals[$index] ?? 0;
+            \App\Models\SalesIncentiveSetting::create([
+                'tahun' => $tahun,
+                'bulan' => $bulan,
+                'type' => $type,
+                'basis' => $basis,
+                'min_achievement' => $min,
+                'incentive_value' => $val,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Pengaturan insentif berhasil disimpan.');
+    }
+
+    public function deleteIncentiveSettings(Request $request)
+    {
+        if (!$this->hasFullSalesAccess()) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak memiliki hak akses.'], 403);
+        }
+
+        $request->validate([
+            'tahun' => 'required|integer',
+            'bulan' => 'required|string',
+            'type' => 'required|in:bulan,triwulan',
+            'basis' => 'required|string',
+        ]);
+
+        \App\Models\SalesIncentiveSetting::where('tahun', $request->tahun)
+            ->where('bulan', $request->bulan)
+            ->where('type', $request->type)
+            ->where('basis', $request->basis)
+            ->delete();
+
+        return response()->json(['success' => true, 'message' => 'Aturan insentif berhasil dihapus.']);
     }
 }

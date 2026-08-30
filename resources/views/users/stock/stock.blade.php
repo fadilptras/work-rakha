@@ -120,7 +120,7 @@
             </div>
 
             <!-- Page Header Card -->
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-white shadow-lg flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <div class="rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-white shadow-lg flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl sm:rounded-2xl flex items-center justify-center text-base sm:text-xl shrink-0">
                     <i class="fas fa-boxes"></i>
                 </div>

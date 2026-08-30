@@ -169,11 +169,11 @@
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:px-12 lg:pb-8 flex-1 flex flex-col gap-6 justify-center mt-6 lg:mt-6">
 
             {{-- Bagian Header --}}
-            <div class="text-center w-full title-reveal glass-card shadow-sm" style="padding: 1.25rem 2rem;">
-                <h1 class="text-4xl md:text-5xl font-black tracking-tight text-slate-800 mb-2 leading-tight">
+            <div class="text-center w-full title-reveal glass-card shadow-sm" style="padding: 0.75rem 2rem;">
+                <h1 class="text-3xl md:text-4xl font-black tracking-tight text-slate-800 mb-1 leading-tight">
                     Sales <span class="text-blue-600">Command Center</span>
                 </h1>
-                <p class="text-slate-500 text-lg font-medium leading-relaxed max-w-4xl mx-auto">
+                <p class="text-slate-500 text-base md:text-lg font-medium leading-relaxed max-w-none mx-auto">
                     Akses terpusat untuk mengelola, menganalisis, dan memantau performa penjualan perusahaan secara komprehensif.
                 </p>
             </div>

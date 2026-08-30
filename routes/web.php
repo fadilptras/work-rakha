@@ -157,6 +157,8 @@ Route::controller(SalesController::class)->prefix('sales')->name('sales.')->grou
     Route::get('/analytics', 'analytics')->name('analytics');
     Route::get('/monthly', 'monthly')->name('monthly');
     Route::get('/incentive', 'incentive')->name('incentive');
+    Route::post('/incentive/settings', 'saveIncentiveSettings')->name('incentive.settings.save');
+    Route::post('/incentive/settings/delete', 'deleteIncentiveSettings')->name('incentive.settings.delete');
     Route::get('/stock', [StockController::class, 'index'])->name('stock');
     Route::get('/stock/history', [StockController::class, 'historyIndex'])->name('stock.history_index');
     Route::post('/stock/update-bulk', [StockController::class, 'updateBulk'])->name('stock.update_bulk');
