@@ -401,7 +401,7 @@
                             <span class="text-xs text-blue-700 font-extrabold uppercase tracking-wider">Total Estimasi Keseluruhan:</span>
                             <div class="text-right">
                                 <span class="text-blue-700 font-black text-2xl font-mono">Rp <span id="total-dana-display">0</span></span>
-                                <input type="hidden" id="jumlah-dana-total" name="jumlah_dana_total">
+                                <input type="hidden" id="jumlah-dana-total" name="jumlah_dana_total" value="{{ old('jumlah_dana_total') }}">
                             </div>
                         </div>
                     </div>
@@ -541,7 +541,9 @@
             
             rincianDanaBody.appendChild(newRow); 
             const amountInput = newRow.querySelector('.jumlah-input'); 
-            amountInput.addEventListener('input', () => { formatCurrency(amountInput); updateTotal(); }); 
+            ['input', 'change', 'keyup', 'blur'].forEach(evtName => {
+                amountInput.addEventListener(evtName, () => { formatCurrency(amountInput); updateTotal(); }); 
+            });
             newRow.querySelector('.delete-row-btn').addEventListener('click', () => { newRow.remove(); updateTotal(); });
         }
         
@@ -557,6 +559,7 @@
                 updateTotal();
             } else {
                 addRow(); 
+                updateTotal();
             }
             tambahBarisBtn.addEventListener('click', () => addRow()); 
         }
@@ -577,7 +580,7 @@
                         <i class="fas fa-paperclip"></i>
                     </div>
                     <div class="flex-grow min-w-0">
-                        <input type="file" name="file_pendukung[]" id="${uniqueId}" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer cursor-pointer font-semibold" />
+                        <input type="file" name="file_pendukung[]" id="${uniqueId}" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer cursor-pointer font-semibold" />
                     </div>
                     <button type="button" class="delete-lampiran-btn flex-shrink-0 text-slate-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl text-base transition-all">
                         <i class="fas fa-trash-alt text-sm"></i>
@@ -601,10 +604,30 @@
             const fileNameSpan = newFileWrapper.querySelector(`#file-name-${uniqueId}`);
             const statusTextSpan = newFileWrapper.querySelector(`#status-text-${uniqueId}`);
             
+            const allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'xls', 'xlsx'];
+
             fileInput.addEventListener('change', function() {
                 if (this.files && this.files[0]) {
                     const file = this.files[0];
-                    fileNameSpan.textContent = file.name;
+                    const fileName = file.name;
+                    const ext = fileName.split('.').pop().toLowerCase();
+
+                    if (!allowedExtensions.includes(ext)) {
+                        alert('Format berkas "' + fileName + '" tidak didukung. Harap upload berkas dengan format: JPG, JPEG, PNG, PDF, DOC, DOCX, XLS, atau XLSX.');
+                        this.value = '';
+                        progressWrapper.classList.add('hidden');
+                        return;
+                    }
+
+                    const maxBytesPerFile = 10 * 1024 * 1024; // 10MB
+                    if (file.size > maxBytesPerFile) {
+                        alert('Ukuran berkas "' + fileName + '" (' + (file.size / (1024 * 1024)).toFixed(2) + 'MB) melebihi batas maksimal 10MB per file. Berkas dibatalkan.');
+                        this.value = '';
+                        progressWrapper.classList.add('hidden');
+                        return;
+                    }
+
+                    fileNameSpan.textContent = fileName;
                     statusTextSpan.textContent = 'Ready';
                     statusTextSpan.classList.remove('text-blue-700');
                     statusTextSpan.classList.add('text-green-700');
@@ -628,25 +651,47 @@
         }
         
         mainForm.addEventListener('submit', function(e) {
+            updateTotal();
+            let invalidExt = false;
             let tooLarge = false;
+            const maxPerFile = 10 * 1024 * 1024; // 10MB per file
+            const allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'xls', 'xlsx'];
+
             document.querySelectorAll('input[type="file"][name="file_pendukung[]"]').forEach(input => {
                 if (input.files && input.files.length > 0) {
-                    const file = input.files[0];
-                    const maxBytes = 10 * 1024 * 1024; // 10MB
-                    if (file.size > maxBytes) {
-                        tooLarge = true;
+                    for (let i = 0; i < input.files.length; i++) {
+                        const file = input.files[i];
+                        const ext = file.name.split('.').pop().toLowerCase();
+                        if (!allowedExtensions.includes(ext)) {
+                            invalidExt = true;
+                        }
+                        if (file.size > maxPerFile) {
+                            tooLarge = true;
+                        }
                     }
                 }
             });
 
+            if (invalidExt) {
+                e.preventDefault();
+                alert('Terdapat berkas lampiran dengan format yang tidak didukung. Harap gunakan format: JPG, JPEG, PNG, PDF, DOC, DOCX, XLS, atau XLSX.');
+                return false;
+            }
+
             if (tooLarge) {
                 e.preventDefault();
-                alert('Ukuran salah satu file lampiran melebihi batas maksimal 10MB. Silakan pilih berkas yang lebih kecil agar formulir tidak perlu diisi ulang.');
+                alert('Ukuran salah satu berkas lampiran melebihi batas maksimal 10MB per file. Silakan pilih berkas yang lebih kecil.');
                 return false;
             }
 
             document.querySelectorAll('input[type="file"][name="file_pendukung[]"]').forEach(input => {
-                if (input.files && input.files.length > 0) {
+                if (!input.files || input.files.length === 0) {
+                    input.disabled = true;
+                }
+            });
+
+            document.querySelectorAll('input[type="file"][name="file_pendukung[]"]').forEach(input => {
+                if (!input.disabled && input.files && input.files.length > 0) {
                     const uniqueId = input.id;
                     const statusText = document.getElementById(`status-text-${uniqueId}`);
                     const progressBar = document.getElementById(`progress-bar-${uniqueId}`);

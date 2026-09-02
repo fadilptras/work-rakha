@@ -127,39 +127,78 @@ class PengajuanDanaController extends Controller
 
     public function store(Request $request)
     {
-        if ($request->has('jumlah_dana_total')) $request->merge(['jumlah_dana_total' => preg_replace('/[^0-9]/', '', $request->jumlah_dana_total)]);
-        if ($request->has('rincian_jumlah')) {
+        if ($request->has('rincian_jumlah') && is_array($request->rincian_jumlah)) {
             $cleanedRincian = [];
             foreach ($request->rincian_jumlah as $jumlah) {
-                $cleanedRincian[] = preg_replace('/[^0-9]/', '', $jumlah);
+                $cleanedRincian[] = preg_replace('/[^0-9]/', '', (string)$jumlah);
             }
             $request->merge(['rincian_jumlah' => $cleanedRincian]);
+        }
+
+        if ($request->has('jumlah_dana_total') && $request->jumlah_dana_total !== null) {
+            $cleanedTotal = preg_replace('/[^0-9]/', '', (string)$request->jumlah_dana_total);
+            $request->merge(['jumlah_dana_total' => $cleanedTotal]);
+        }
+
+        // Fallback: Hitung total otomatis dari rincian_jumlah jika jumlah_dana_total kosong atau 0
+        if ((!$request->filled('jumlah_dana_total') || (int)$request->jumlah_dana_total <= 0) && $request->has('rincian_jumlah')) {
+            $totalFromRincian = array_sum(array_map('intval', (array)$request->rincian_jumlah));
+            $request->merge(['jumlah_dana_total' => (string)$totalFromRincian]);
+        }
+
+        // Clean up file_pendukung: buang file input yang kosong (unselected) sebelum validasi
+        if ($request->hasFile('file_pendukung')) {
+            $filteredFiles = [];
+            foreach ((array)$request->file('file_pendukung') as $fileItem) {
+                if ($fileItem && $fileItem->isValid()) {
+                    $filteredFiles[] = $fileItem;
+                }
+            }
+            $request->files->set('file_pendukung', $filteredFiles);
         }
 
         $validatedData = $request->validate([
             'judul_pengajuan' => 'required|string|max:255',
             'divisi' => 'required|string|max:255',
-            'nama_bank' => 'required_if:nama_bank_lainnya,null|nullable|string|max:255',
+            'nama_bank' => 'required|string|max:255',
             'nama_bank_lainnya' => 'required_if:nama_bank,other|nullable|string|max:255',
             'no_rekening' => 'required|string|max:255',
             'nama_rek' => 'required|string|max:255',
             'jumlah_dana_total' => 'required|numeric|min:1',
+            'rincian_deskripsi' => 'required|array|min:1',
             'rincian_deskripsi.*' => 'required|string|max:1000',
-            'rincian_jumlah.*' => 'required|numeric|min:0',
+            'rincian_jumlah' => 'required|array|min:1',
+            'rincian_jumlah.*' => 'required|numeric|min:1',
+            'file_pendukung' => 'nullable|array',
             'file_pendukung.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:10240',
+        ], [
+            'judul_pengajuan.required' => 'Judul pengajuan wajib diisi.',
+            'nama_bank.required' => 'Nama bank wajib dipilih.',
+            'nama_bank_lainnya.required_if' => 'Nama bank lainnya wajib diisi jika memilih Lainnya.',
+            'no_rekening.required' => 'Nomor rekening wajib diisi.',
+            'nama_rek.required' => 'Atas nama rekening wajib diisi.',
+            'jumlah_dana_total.required' => 'Total estimasi dana wajib diisi.',
+            'jumlah_dana_total.min' => 'Total estimasi dana minimal Rp 1.',
+            'rincian_deskripsi.*.required' => 'Deskripsi rincian item wajib diisi.',
+            'rincian_jumlah.*.required' => 'Jumlah nominal item rincian wajib diisi.',
+            'rincian_jumlah.*.min' => 'Nominal rincian item minimal Rp 1.',
+            'file_pendukung.*.max' => 'Ukuran file lampiran maksimal 10MB.',
+            'file_pendukung.*.mimes' => 'Format file lampiran tidak didukung.',
         ]);
 
         $rincian = [];
         if (!empty($validatedData['rincian_deskripsi'])) {
             foreach ($validatedData['rincian_deskripsi'] as $key => $deskripsi) {
-                $rincian[] = ['deskripsi' => $deskripsi, 'jumlah' => $validatedData['rincian_jumlah'][$key]];
+                $rincian[] = ['deskripsi' => $deskripsi, 'jumlah' => $validatedData['rincian_jumlah'][$key] ?? 0];
             }
         }
 
         $pathFiles = [];
         if ($request->hasFile('file_pendukung')) {
             foreach ($request->file('file_pendukung') as $file) {
-                $pathFiles[] = $file->store('lampiran_dana', 'public');
+                if ($file && $file->isValid()) {
+                    $pathFiles[] = $file->store('lampiran_dana', 'public');
+                }
             }
         }
 
@@ -182,7 +221,7 @@ class PengajuanDanaController extends Controller
             'user_id' => $user->id,
             'judul_pengajuan' => $validatedData['judul_pengajuan'],
             'divisi' => $validatedData['divisi'],
-            'nama_bank' => $validatedData['nama_bank'] === 'other' ? $validatedData['nama_bank_lainnya'] : $validatedData['nama_bank'],
+            'nama_bank' => $validatedData['nama_bank'] === 'other' ? ($validatedData['nama_bank_lainnya'] ?? $request->input('nama_bank_lainnya')) : $validatedData['nama_bank'],
             'no_rekening' => $validatedData['no_rekening'],
             'nama_rek' => $validatedData['nama_rek'],
             'total_dana' => $validatedData['jumlah_dana_total'],
