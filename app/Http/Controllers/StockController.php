@@ -511,6 +511,8 @@ class StockController extends Controller
         // $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
         $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
 
-        return $isAdminGudang;
+        return $isAdminGudang
+        // || $isTest
+        ;
     }
 }
