@@ -293,6 +293,7 @@
                 <h3 class="font-bold text-white text-lg flex items-center"><span class="w-8 h-8 bg-white text-blue-600 rounded-lg flex items-center justify-center mr-3 text-sm shadow"><i class="fas fa-plus"></i></span> Input Sales</h3>
             </div>
             <div class="p-6 md:p-8">
+                @if($hasFullAccess)
                 <form action="{{ route($routePrefix . 'interaction.store') }}" method="POST">
                     @csrf
                     <div class="mb-4 grid grid-cols-1 lg:grid-cols-12 gap-3">
@@ -318,15 +319,15 @@
                             <label class="block text-xs font-bold text-gray-700 mb-1">Pilih Bulan <span class="text-red-500">*</span></label>
                             <div class="flex gap-2">
                                 <input type="month" id="tanggal_interaksi_in" class="w-full border border-blue-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-1.5 text-sm" required>
-                                <button type="button" onclick="fetchSalesData()" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-bold px-3 py-1.5 text-sm rounded-md shadow-sm transition whitespace-nowrap flex-shrink-0" title="Ambil data dari Command Center">
-                                    <i class="fas fa-cloud-download-alt mr-1"></i> Tarik
+                                <button type="button" onclick="fetchSalesData()" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-bold px-3 py-2 rounded-lg shadow-sm transition whitespace-nowrap" title="Ambil data dari Command Center">
+                                    <i class="fas fa-cloud-download-alt mr-1"></i> Tarik & Tambah
                                 </button>
                             </div>
-                            <p class="text-[10px] text-gray-500 mt-1">Bisa tarik semua data sales untuk bulan & tahun yang dipilih.</p>
+                            <p class="text-xs text-gray-500 mt-1">Anda bisa menarik data dari beberapa tanggal & RS berbeda.</p>
                         </div>
                         <div class="lg:col-span-3">
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Catatan (Opsional)</label>
-                            <input type="text" name="catatan" class="w-full border border-blue-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-1.5 text-sm" placeholder="Catatan transaksi...">
+                            <input type="text" name="catatan" class="w-full border border-blue-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-1.5 text-sm" placeholder="Catatan opsional...">
                         </div>
                     </div>
 
@@ -336,7 +337,7 @@
 
                     <div id="product_rows_container_desktop" class="space-y-3 mb-6 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
                         <div id="empty_queue_msg_desktop" class="text-center py-6 text-gray-400 italic text-sm">
-                            Belum ada data ditarik. Silakan pilih tanggal dan klik "Tarik & Tambah".
+                             Belum ada data ditarik. Silakan pilih tanggal dan klik "Tarik & Tambah".
                         </div>
                     </div>
 
@@ -350,26 +351,70 @@
                         <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition transform active:scale-95 text-sm md:text-base flex justify-center items-center gap-2"><i class="fas fa-save"></i> Simpan Data Sales</button>
                     </div>
                 </form>
+                @else
+                <div class="flex flex-col items-center justify-center py-10 px-4 text-center bg-gray-50/50 rounded-xl border-2 border-dashed border-gray-200">
+                    <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3 text-xl shadow-sm">
+                        <i class="fas fa-sync-alt animate-spin-slow"></i>
+                    </div>
+                    <h4 class="font-bold text-gray-800 text-base mb-1">Sinkronisasi Data Sales Otomatis</h4>
+                    <p class="text-xs text-gray-500 max-w-lg leading-relaxed">
+                        Sebagai PIC, Anda dapat memantau seluruh riwayat transaksi masuk pada halaman ini. Proses penginputan data baru berjalan secara otomatis dan disesuaikan langsung dengan data transaksi sales di Command Center secara <strong>realtime</strong>. Jika Anda memerlukan penyesuaian khusus atau rekonsiliasi data manual, silakan berkoordinasi dengan <strong>Admin / Kepala Divisi</strong>.
+                    </p>
+                </div>
+                @endif
             </div>
         </div>
 
         {{-- 2. INPUT SUPPORT --}}
         <div id="section-support" class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden relative hidden">
+            <style>
+                @media (min-width: 768px) {
+                    .custom-w-tanggal { width: 15% !important; }
+                    .custom-w-nominal { width: 15% !important; }
+                    .custom-w-keperluan { width: 50% !important; }
+                    .custom-w-lampiran { width: 20% !important; }
+                }
+            </style>
             <div class="bg-red-600 px-6 py-4 border-b border-red-100 flex justify-between items-center">
                 <h3 class="font-bold text-white text-lg flex items-center"><span class="w-8 h-8 bg-white text-red-600 rounded-lg flex items-center justify-center mr-3 text-sm shadow"><i class="fas fa-hand-holding-usd"></i></span> Pengeluaran</h3>
+                <button type="button" onclick="openUsageInfoModal()" class="text-white hover:text-red-100 transition text-xl flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10 outline-none" title="Informasi Alur Pengeluaran">
+                    <i class="fas fa-info-circle"></i>
+                </button>
+            </div>
+
+            <!-- Modal Alert Info Alur (Centered, Smooth, Bigger) -->
+            <div id="usage-info-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 ease-in-out">
+                <div id="usage-info-modal-card" class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 transform scale-90 transition-transform duration-300 ease-out">
+                    <div class="bg-red-600 px-6 py-4 flex items-center gap-3">
+                        <span class="w-10 h-10 bg-white/20 text-white rounded-lg flex items-center justify-center text-lg"><i class="fas fa-info-circle"></i></span>
+                        <h3 class="font-bold text-white text-lg">Info Alur Pengeluaran</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="font-bold text-red-600 mb-3 flex items-center gap-2 text-base">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Pengajuan Dana Otomatis</span>
+                        </div>
+                        <p class="leading-relaxed text-sm text-gray-600">
+                            Pengisian form pengeluaran (usage) ini akan secara <strong>otomatis terbuat sebagai Pengajuan Dana (Finance)</strong>. Dana akan diproses setelah disetujui oleh Kepala Divisi dan diselesaikan oleh bagian Finance.
+                        </p>
+                        <div class="mt-6 flex justify-end">
+                            <button type="button" onclick="closeUsageInfoModal()" class="px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs rounded-xl shadow-sm transition active:scale-95">Ok, Paham</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="p-5 md:p-6">
-                <form action="{{ route($routePrefix . 'interaction.support') }}" method="POST">
+                <form action="{{ route($routePrefix . 'interaction.support') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="client_id" value="{{ $client->id }}">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-5">
-                        <!-- Baris 1: Tanggal & Nominal -->
-                        <div>
+                    <div class="flex flex-col md:flex-row gap-4 mb-4">
+                        <!-- Baris 1: Detail Pengajuan (1 Baris Sleek) -->
+                        <div class="w-full custom-w-tanggal">
                             <label class="block text-xs font-bold text-gray-700 mb-1">Tanggal <span class="text-red-500">*</span></label>
                             <input type="date" name="tanggal_interaksi" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" required>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Nominal Keluar (Rp) <span class="text-red-500">*</span></label>
+                        <div class="w-full custom-w-nominal">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Nominal Keluar <span class="text-red-500">*</span></label>
                             <div class="relative rounded-md shadow-sm">
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                     <span class="text-gray-500 text-xs font-bold">Rp</span>
@@ -377,19 +422,53 @@
                                 <input type="text" name="nominal" onkeyup="formatRupiah(this)" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 pl-9 px-3 py-2 font-mono font-bold text-base text-red-700" placeholder="0" required>
                             </div>
                         </div>
-
-                        <!-- Baris 2: Keperluan -->
-                        <div>
+                        <div class="w-full custom-w-keperluan">
                             <label class="block text-xs font-bold text-gray-700 mb-1">Keperluan Support <span class="text-red-500">*</span></label>
                             <input type="text" name="keperluan" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Contoh: Transport" required>
                         </div>
+                        <div class="w-full custom-w-lampiran">
+                            <label class="block text-xs font-bold text-gray-700 mb-1 flex items-center gap-1.5">
+                                <i class="fas fa-paperclip text-red-500 text-xs"></i>
+                                <span>Lampiran Tambahan</span>
+                                <span class="text-gray-400 text-[10px] font-normal">(Opsional)</span>
+                            </label>
+                            <div class="relative flex items-center justify-between border-2 border-red-300 rounded-lg shadow-sm bg-white px-3 py-1.5 h-[38px]">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <i class="fas fa-cloud-upload-alt text-red-400 text-xs flex-shrink-0"></i>
+                                    <span id="file-name-support-desktop" class="text-xs font-semibold text-gray-500 truncate max-w-[80px] md:max-w-[120px]">Pilih berkas...</span>
+                                </div>
+                                <label class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold text-[10px] py-1 px-2.5 rounded cursor-pointer transition shadow-sm flex items-center gap-1 active:scale-95 flex-shrink-0">
+                                    <i class="fas fa-folder-open"></i> Cari
+                                    <input type="file" name="lampiran_tambahan" class="hidden" onchange="updateFileNameSupportDesktop(this)">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    @if($hasFullAccess)
+                    <div class="mb-4 flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                        <input type="checkbox" name="direct_usage" id="direct_usage_desktop" value="1" onchange="toggleDirectUsageDesktop(this)" class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                        <label for="direct_usage_desktop" class="text-xs font-bold text-gray-700 cursor-pointer">Catat Langsung ke CRM (Tanpa Pengajuan Dana ke Finance)</label>
+                    </div>
+                    @endif
+
+                    <div id="bank-info-container-desktop" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                        <!-- Baris 2: Informasi Bank Penerima (3 Kolom) -->
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Catatan Tambahan</label>
-                            <input type="text" name="catatan" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Opsional">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Nama Bank <span class="text-red-500">*</span></label>
+                            <input type="text" name="nama_bank" value="{{ $client->bank }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Contoh: BCA, Mandiri" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">No. Rekening <span class="text-red-500">*</span></label>
+                            <input type="text" name="no_rekening" value="{{ $client->no_rekening }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm font-mono font-bold" placeholder="0987654321" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Nama di Rekening <span class="text-red-500">*</span></label>
+                            <input type="text" name="nama_rek" value="{{ $client->nama_di_rekening }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Atas Nama..." required>
                         </div>
                     </div>
                     <div class="flex">
-                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform active:scale-95 text-sm md:text-base flex items-center justify-center gap-2"><i class="fas fa-save"></i> Simpan Pengeluaran</button>
+                        <button type="submit" id="submit-btn-support-desktop" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform active:scale-95 text-sm md:text-base flex items-center justify-center gap-2"><i class="fas fa-paper-plane"></i> Ajukan Dana</button>
                     </div>
                 </form>
             </div>
@@ -406,6 +485,31 @@
                         </span>
                         Input Aktivitas
                     </h3>
+                    <button type="button" onclick="openActivityInfoModal()" class="text-white hover:text-orange-100 transition text-xl flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10 outline-none" title="Informasi Alur Aktivitas">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Alert Info Aktivitas (Centered, Smooth, Bigger) -->
+                <div id="activity-info-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 ease-in-out">
+                    <div id="activity-info-modal-card" class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 transform scale-90 transition-transform duration-300 ease-out">
+                        <div class="bg-orange-500 px-6 py-4 flex items-center gap-3">
+                            <span class="w-10 h-10 bg-white/20 text-white rounded-lg flex items-center justify-center text-lg"><i class="fas fa-info-circle"></i></span>
+                            <h3 class="font-bold text-white text-lg">Info Alur Aktivitas</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="font-bold text-orange-600 mb-3 flex items-center gap-2 text-base">
+                                <i class="fas fa-glass-cheers"></i>
+                                <span>Pencatatan Aktivitas & Entertain</span>
+                            </div>
+                            <p class="leading-relaxed text-sm text-gray-600">
+                                Pengisian form aktivitas ini digunakan untuk <strong>mencatat kunjungan lapangan, makan siang, pertemuan, entertain klien, maupun kegiatan operasional lainnya</strong>. Pengeluaran biaya untuk aktivitas ini merupakan pencatatan mandiri dan tidak terhubung otomatis dengan alur pengajuan dana ke bagian keuangan/finance.
+                            </p>
+                            <div class="mt-6 flex justify-end">
+                                <button type="button" onclick="closeActivityInfoModal()" class="px-5 py-2.5 bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold text-xs rounded-xl shadow-sm transition active:scale-95">Ok, Paham</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="p-6 md:p-8">
                     <form action="{{ route($routePrefix . 'interaction.entertain') }}" method="POST">
@@ -469,7 +573,9 @@
                                 <th class="px-5 py-3">Aktivitas / Keterangan</th>
                                 <th class="px-5 py-3">Lokasi & Partisipan</th>
                                 <th class="px-5 py-3 text-right">Biaya</th>
+                                @if($hasFullAccess)
                                 <th class="px-5 py-3 text-center">Aksi</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -479,7 +585,20 @@
                                     {{ \Carbon\Carbon::parse($act->tanggal_interaksi)->format('d/m/Y') }}
                                 </td>
                                 <td class="px-5 py-3">
-                                    <div class="font-bold text-gray-800">{{ $act->nama_produk }}</div>
+                                    <button type="button" onclick="openViewTransactionModal({
+                                        id: '{{ $act->id }}',
+                                        jenis: 'ENTERTAIN',
+                                        tanggal: '{{ \Carbon\Carbon::parse($act->tanggal_interaksi)->translatedFormat('d F Y') }}',
+                                        produk: '{{ addslashes($act->nama_produk) }}',
+                                        nominal: '{{ number_format($act->nilai_kontribusi, 0, ',', '.') }}',
+                                        rate: '0',
+                                        valueNet: '0',
+                                        catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->catatan)) }}',
+                                        lokasi: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->lokasi ?? "")) }}',
+                                        peserta: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->peserta ?? "")) }}'
+                                    })" class="text-left font-bold text-gray-800 hover:text-orange-600 hover:underline focus:outline-none">
+                                        {{ $act->nama_produk }}
+                                    </button>
                                     <div class="text-xs text-gray-500">{{ $act->catatan }}</div>
                                 </td>
                                 <td class="px-5 py-3">
@@ -493,6 +612,7 @@
                                 <td class="px-5 py-3 text-right font-mono font-bold text-orange-600">
                                     {{ number_format($act->nilai_kontribusi, 0, ',', '.') }}
                                 </td>
+                                @if($hasFullAccess)
                                 <td class="px-5 py-3 text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         <button type="button" 
@@ -515,6 +635,7 @@
                                         </form>
                                     </div>
                                 </td>
+                                @endif
                             </tr>
                             @empty
                             <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 italic bg-gray-50/50">Belum ada data aktivitas</td></tr>
@@ -585,7 +706,21 @@
                             @endphp
                         <tr class="{{ $isOut ? 'bg-red-50/50' : 'hover:bg-blue-50/50' }} transition">
                             <td class="px-4 py-3 whitespace-nowrap font-bold text-gray-700">{{ \Carbon\Carbon::parse($item->tanggal_interaksi)->format('d/m/Y') }}</td>
-                            <td class="px-4 py-3"><div class="font-bold {{ $isOut ? 'text-red-800' : 'text-blue-900' }}">{{ $item->nama_produk }}</div><div class="text-xs text-gray-500 italic">{{ $displayNote }}</div></td>
+                            <td class="px-4 py-3">
+                                <button type="button" onclick="openViewTransactionModal({
+                                    id: '{{ $item->id }}',
+                                    jenis: '{{ $item->jenis_transaksi }}',
+                                    tanggal: '{{ \Carbon\Carbon::parse($item->tanggal_interaksi)->translatedFormat('d F Y') }}',
+                                    produk: '{{ addslashes($item->nama_produk) }}',
+                                    nominal: '{{ number_format(($item->jenis_transaksi == 'IN') ? $item->nilai_sales : $item->nilai_kontribusi, 0, ',', '.') }}',
+                                    rate: '{{ $rate }}',
+                                    valueNet: '{{ number_format($valueNet, 0, ',', '.') }}',
+                                    catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $displayNote)) }}'
+                                })" class="text-left font-bold {{ $isOut ? 'text-red-800 hover:text-red-950' : 'text-blue-900 hover:text-blue-950' }} hover:underline focus:outline-none">
+                                    {{ $item->nama_produk }}
+                                </button>
+                                <div class="text-xs text-gray-500 italic">{{ $displayNote }}</div>
+                            </td>
                             <td class="px-4 py-3 text-right font-mono text-gray-600">{{ (!$isOut) ? number_format($nominal, 0, ',', '.') : '-' }}</td>
                             <td class="px-4 py-3 text-center">@if(!$isOut && $rate > 0) <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-xs font-bold shadow-sm border border-gray-300">{{ (float)$rate }}%</span> @else <span class="text-gray-300">-</span> @endif</td>
                             <td class="px-4 py-3 text-right font-mono font-bold text-blue-700">{{ (!$isOut) ? number_format($valueNet, 0, ',', '.') : '-' }}</td>
@@ -643,8 +778,13 @@
                             <td class="px-4 py-3 text-right font-mono font-bold text-gray-900 border-l border-yellow-200 bg-yellow-100">{{ number_format($startingBalance, 0, ',', '.') }} </td>
                         </tr>
                         @foreach ($recap as $r)
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="px-4 py-3 font-bold text-gray-700">{{ $r['month_name'] }}</td>
+                        <tr class="hover:bg-gray-50 transition border-b border-gray-100">
+                            <td class="px-4 py-3">
+                                <button type="button" onclick="showMonthlyDetail('{{ $r['month_name'] }}', {{ $loop->iteration }}, {{ $year }})" class="font-bold text-blue-600 hover:text-blue-800 hover:underline text-left focus:outline-none flex items-center gap-1.5">
+                                    <i class="far fa-calendar-alt text-xs text-blue-400"></i>
+                                    <span>{{ $r['month_name'] }}</span>
+                                </button>
+                            </td>
                             <td class="px-4 py-3 text-right font-mono text-gray-600">{{ $r['gross_in'] > 0 ? number_format($r['gross_in'], 0, ',', '.') : '-' }}</td>
                             <td class="px-4 py-3 text-center font-mono text-xs text-gray-500">{{ $r['komisi_text'] }}</td>
                             <td class="px-4 py-3 text-right font-mono font-bold text-blue-800 bg-blue-50/30">{{ $r['net_value'] > 0 ? number_format($r['net_value'], 0, ',', '.') : '-' }}</td>
@@ -798,11 +938,101 @@
                 </form>
             </div>
         </div>
+
+        {{-- MODAL DETAIL TRANSAKSI (READ-ONLY) --}}
+        <div id="viewTransactionModal" class="hidden fixed inset-0 bg-gray-900/10 z-[9999] flex items-center justify-center p-4 backdrop-blur-md transition-opacity duration-300">
+            <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+                <div id="viewTransHeader" class="bg-blue-600 px-5 py-4 text-white flex justify-between items-center">
+                    <h3 class="font-bold text-lg flex items-center"><i class="fas fa-info-circle mr-3"></i> Detail Transaksi</h3>
+                    <button onclick="toggleModal('viewTransactionModal')" class="text-white hover:text-gray-200 transition text-2xl font-bold">&times;</button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tanggal</span>
+                            <span id="view_tanggal" class="text-sm font-semibold text-gray-800"></span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tipe Transaksi</span>
+                            <span id="view_jenis" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm"></span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <span id="view_label_produk" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Produk / Keperluan</span>
+                        <span id="view_produk" class="text-base font-bold text-gray-900 block mt-0.5"></span>
+                    </div>
+
+                    <div id="view_wrapper_entertain" class="hidden grid grid-cols-2 gap-4 bg-orange-50 border border-orange-100 rounded-lg p-3">
+                        <div>
+                            <span class="block text-[10px] font-bold text-orange-700 uppercase tracking-wider">Lokasi / Venue</span>
+                            <span id="view_lokasi" class="text-xs font-semibold text-gray-800"></span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-bold text-orange-700 uppercase tracking-wider">Partisipan / Klien</span>
+                            <span id="view_peserta" class="text-xs font-semibold text-gray-800"></span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 grid grid-cols-2 gap-4">
+                        <div>
+                            <span id="view_label_nominal" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nominal</span>
+                            <span id="view_nominal" class="text-lg font-mono font-bold text-gray-800"></span>
+                        </div>
+                        <div id="view_wrapper_commission" class="hidden">
+                            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Komisi (Rate)</span>
+                            <span id="view_rate" class="text-xs font-bold text-blue-700"></span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Catatan</span>
+                        <p id="view_catatan" class="text-sm text-gray-600 bg-gray-50 border border-gray-100 rounded-lg p-3 mt-1 whitespace-pre-line italic"></p>
+                    </div>
+
+                    <div class="pt-2 flex justify-end">
+                        <button type="button" onclick="toggleModal('viewTransactionModal')" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-200 active:scale-95 transition">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- MODAL DETAIL TRANSAKSI BULANAN --}}
+        <div id="monthlyDetailModal" class="hidden fixed inset-0 bg-gray-900/10 z-[9999] flex items-center justify-center p-4 backdrop-blur-md transition-opacity duration-300">
+            <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col max-h-[85vh]">
+                <div class="bg-gray-800 px-6 py-4 text-white flex justify-between items-center shrink-0">
+                    <h3 class="font-bold text-lg flex items-center"><i class="far fa-calendar-alt mr-3"></i> <span id="monthly_detail_title">Detail Transaksi Bulanan</span></h3>
+                    <button onclick="toggleModal('monthlyDetailModal')" class="text-white hover:text-gray-200 transition text-2xl font-bold">&times;</button>
+                </div>
+                <div class="p-6 overflow-y-auto flex-grow">
+                    <div class="overflow-x-auto w-full">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-100 text-gray-600 uppercase text-xs font-bold tracking-wider border-b border-gray-200">
+                                <tr>
+                                    <th class="px-4 py-3 w-28">Tanggal</th>
+                                    <th class="px-4 py-3 w-28">Tipe</th>
+                                    <th class="px-4 py-3">Keterangan / Produk</th>
+                                    <th class="px-4 py-3 text-right w-36">Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthly_detail_body" class="divide-y divide-gray-100">
+                                {{-- Diisi dinamis via JS --}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end shrink-0">
+                    <button type="button" onclick="toggleModal('monthlyDetailModal')" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-100 active:scale-95 transition">Tutup</button>
+                </div>
+            </div>
+        </div>
     @endpush
 
     {{-- Script untuk Modal --}}
     @push('scripts')
     <script>
+        const clientInteractions = @json($client->interactions);
+
         function toggleModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal.classList.contains('hidden')) {
@@ -810,6 +1040,156 @@
             } else {
                 modal.classList.add('hidden'); modal.classList.remove('flex'); document.body.style.overflow = 'auto'; 
             }
+        }
+
+        function showMonthlyDetail(monthName, monthNum, year) {
+            // Filter interactions for this month and year
+            const filtered = clientInteractions.filter(item => {
+                const date = new Date(item.tanggal_interaksi);
+                return date.getFullYear() === year && (date.getMonth() + 1) === monthNum;
+            });
+            
+            // Sort by date ascending
+            filtered.sort((a, b) => new Date(a.tanggal_interaksi) - new Date(b.tanggal_interaksi));
+            
+            document.getElementById('monthly_detail_title').innerText = `Detail Transaksi - ${monthName} ${year}`;
+            
+            const tbody = document.getElementById('monthly_detail_body');
+            tbody.innerHTML = '';
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-6 text-gray-400">Tidak ada transaksi pada bulan ini.</td></tr>';
+            } else {
+                filtered.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
+                    
+                    // Format Date
+                    const dateObj = new Date(item.tanggal_interaksi);
+                    const formattedDate = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    
+                    // Type Badge
+                    let typeBadge = '';
+                    let details = `<strong>${item.nama_produk}</strong>`;
+                    let nominal = 0;
+                    
+                    if (item.jenis_transaksi === 'IN') {
+                        typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">Sales (IN)</span>';
+                        nominal = item.nilai_sales > 0 ? item.nilai_sales : item.nilai_kontribusi;
+                        
+                        // Parse Rate if any
+                        let rate = 0;
+                        const match = item.catatan ? item.catatan.match(/\[Rate:([\d\.]+)%?\]/) : null;
+                        if (match) rate = parseFloat(match[1]);
+                        const note = item.catatan ? item.catatan.replace(/\[Rate:[\d\.]+%?\]\s*/, '') : '';
+                        if (rate > 0) {
+                            const valueNet = nominal * (rate / 100);
+                            details += `<div class="text-[10px] text-gray-500 italic mt-0.5">${note}</div>`;
+                            details += `<div class="text-[10px] text-blue-700 font-semibold mt-0.5">Rate: ${rate}% (Net: Rp ${valueNet.toLocaleString('id-ID')})</div>`;
+                        } else if (note) {
+                            details += `<div class="text-[10px] text-gray-500 italic mt-0.5">${note}</div>`;
+                        }
+                    } else if (item.jenis_transaksi === 'OUT') {
+                        typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">Support (OUT)</span>';
+                        nominal = item.nilai_kontribusi;
+                        if (item.catatan) {
+                            details += `<div class="text-[10px] text-gray-500 italic mt-0.5">${item.catatan}</div>`;
+                        }
+                    } else if (item.jenis_transaksi === 'ENTERTAIN') {
+                        typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800">Aktivitas</span>';
+                        nominal = item.nilai_kontribusi;
+                        if (item.lokasi || item.peserta) {
+                            details += `<div class="text-[10px] text-orange-700 mt-0.5"><i class="fas fa-map-marker-alt mr-1"></i>${item.lokasi || '-'} | <i class="fas fa-users mr-1"></i>${item.peserta || '-'}</div>`;
+                        }
+                        if (item.catatan) {
+                            details += `<div class="text-[10px] text-gray-500 italic mt-0.5">${item.catatan}</div>`;
+                        }
+                    }
+                    
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 font-semibold text-gray-700">${formattedDate}</td>
+                        <td class="px-4 py-3">${typeBadge}</td>
+                        <td class="px-4 py-3">${details}</td>
+                        <td class="px-4 py-3 text-right font-mono font-bold text-gray-800">Rp ${parseFloat(nominal).toLocaleString('id-ID')}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            
+            toggleModal('monthlyDetailModal');
+        }
+
+        function toggleDirectUsageDesktop(checkbox) {
+            const container = document.getElementById('bank-info-container-desktop');
+            const inputs = container.querySelectorAll('input');
+            const submitBtn = document.getElementById('submit-btn-support-desktop');
+            
+            if (checkbox.checked) {
+                container.classList.add('hidden');
+                inputs.forEach(input => {
+                    input.removeAttribute('required');
+                });
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Catat Dana';
+                submitBtn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform active:scale-95 text-sm md:text-base flex items-center justify-center gap-2";
+            } else {
+                container.classList.remove('hidden');
+                inputs.forEach(input => {
+                    input.setAttribute('required', 'required');
+                });
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Ajukan Dana';
+                submitBtn.className = "w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform active:scale-95 text-sm md:text-base flex items-center justify-center gap-2";
+            }
+        }
+
+        function openViewTransactionModal(data) {
+            document.getElementById('view_tanggal').innerText = data.tanggal;
+            document.getElementById('view_produk').innerText = data.produk;
+            document.getElementById('view_catatan').innerText = data.catatan || '-';
+            
+            const header = document.getElementById('viewTransHeader');
+            const jenisBadge = document.getElementById('view_jenis');
+            const wrapperEntertain = document.getElementById('view_wrapper_entertain');
+            const wrapperCommission = document.getElementById('view_wrapper_commission');
+            const labelNominal = document.getElementById('view_label_nominal');
+            const labelProduk = document.getElementById('view_label_produk');
+            
+            // Default hidden
+            wrapperEntertain.classList.add('hidden');
+            wrapperCommission.classList.add('hidden');
+            
+            if (data.jenis === 'IN') {
+                header.className = "bg-blue-600 px-5 py-4 text-white flex justify-between items-center";
+                jenisBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 shadow-sm";
+                jenisBadge.innerText = "Sales (IN)";
+                labelNominal.innerText = "Nilai Sales (Gross)";
+                labelProduk.innerText = "Nama Produk";
+                
+                // Show commission
+                wrapperCommission.classList.remove('hidden');
+                document.getElementById('view_rate').innerText = data.rate + '% (Net: Rp ' + data.valueNet + ')';
+                document.getElementById('view_nominal').innerText = 'Rp ' + data.nominal;
+            } else if (data.jenis === 'OUT') {
+                header.className = "bg-red-600 px-5 py-4 text-white flex justify-between items-center";
+                jenisBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 shadow-sm";
+                jenisBadge.innerText = "Support (OUT)";
+                labelNominal.innerText = "Nominal Support";
+                labelProduk.innerText = "Keperluan Support";
+                
+                document.getElementById('view_nominal').innerText = 'Rp ' + data.nominal;
+            } else if (data.jenis === 'ENTERTAIN') {
+                header.className = "bg-orange-500 px-5 py-4 text-white flex justify-between items-center";
+                jenisBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 shadow-sm";
+                jenisBadge.innerText = "Aktivitas (ENTERTAIN)";
+                labelNominal.innerText = "Biaya Aktivitas";
+                labelProduk.innerText = "Keterangan Aktivitas";
+                
+                wrapperEntertain.classList.remove('hidden');
+                document.getElementById('view_lokasi').innerText = data.lokasi || '-';
+                document.getElementById('view_peserta').innerText = data.peserta || '-';
+                document.getElementById('view_nominal').innerText = 'Rp ' + data.nominal;
+            }
+            
+            toggleModal('viewTransactionModal');
         }
 
         function openEditTransactionModal(data) {
@@ -874,8 +1254,12 @@
         window.onclick = function(event) {
             const modalClient = document.getElementById('editClientModal');
             const modalTrans = document.getElementById('editTransactionModal');
+            const modalUsageInfo = document.getElementById('usage-info-modal');
+            const modalActivityInfo = document.getElementById('activity-info-modal');
             if (event.target == modalClient) toggleModal('editClientModal');
             if (event.target == modalTrans) toggleModal('editTransactionModal');
+            if (event.target == modalUsageInfo) closeUsageInfoModal();
+            if (event.target == modalActivityInfo) closeActivityInfoModal();
         }
 
         function switchTab(tabName) {
@@ -898,6 +1282,54 @@
             
             document.getElementById(buttons[tabName]).className = activeBase + " " + specificActiveClass;
             localStorage.setItem('activeTab', tabName);
+        }
+
+        function openUsageInfoModal() {
+            const modal = document.getElementById('usage-info-modal');
+            const card = document.getElementById('usage-info-modal-card');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100', 'pointer-events-auto');
+            card.classList.remove('scale-90');
+            card.classList.add('scale-100');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeUsageInfoModal() {
+            const modal = document.getElementById('usage-info-modal');
+            const card = document.getElementById('usage-info-modal-card');
+            modal.classList.remove('opacity-100', 'pointer-events-auto');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-100');
+            card.classList.add('scale-90');
+            const editClientModal = document.getElementById('editClientModal');
+            const editTransModal = document.getElementById('editTransactionModal');
+            if (editClientModal.classList.contains('hidden') && editTransModal.classList.contains('hidden')) {
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function openActivityInfoModal() {
+            const modal = document.getElementById('activity-info-modal');
+            const card = document.getElementById('activity-info-modal-card');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100', 'pointer-events-auto');
+            card.classList.remove('scale-90');
+            card.classList.add('scale-100');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeActivityInfoModal() {
+            const modal = document.getElementById('activity-info-modal');
+            const card = document.getElementById('activity-info-modal-card');
+            modal.classList.remove('opacity-100', 'pointer-events-auto');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-100');
+            card.classList.add('scale-90');
+            const editClientModal = document.getElementById('editClientModal');
+            const editTransModal = document.getElementById('editTransactionModal');
+            if (editClientModal.classList.contains('hidden') && editTransModal.classList.contains('hidden')) {
+                document.body.style.overflow = 'auto';
+            }
         }
 
         function formatRupiah(input) {
@@ -999,6 +1431,15 @@
             let badge = document.getElementById('queue_count_desktop');
             let current = parseInt(badge.innerText);
             if (current > 0) badge.innerText = current - 1;
+        }
+
+        function updateFileNameSupportDesktop(input) {
+            const label = document.getElementById('file-name-support-desktop');
+            if (input.files && input.files[0]) {
+                label.innerText = input.files[0].name;
+            } else {
+                label.innerText = 'Belum ada berkas dipilih...';
+            }
         }
     </script>
     <style>

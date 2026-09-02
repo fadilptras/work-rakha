@@ -45,7 +45,6 @@ class CrmController extends Controller
         $allowedEmails = [
             'tmaujana@gmail.com',
             'Agungkuntohimawan81@gmail.com',
-            'test@gmail.com'
         ];
         if (in_array($emailClean, $allowedEmails)) {
             return true;
@@ -79,10 +78,21 @@ class CrmController extends Controller
         return false;
     }
 
+    // Mode simulasi PIC (lihat semua klien tapi read-only, tanpa bisa aksi apapun)
+    private function isViewOnlyMode(): bool
+    {
+        $viewOnlyEmails = [
+            'test@gmail.com',
+        ];
+        $emailClean = strtolower(trim(Auth::user()->email ?? ''));
+        return in_array($emailClean, $viewOnlyEmails);
+    }
+
     // Cek Akses Dasar (Apakah boleh buka CRM sama sekali)
     private function hasAnyCrmAccess()
     {
         if ($this->hasFullAccess()) return true;
+        if ($this->isViewOnlyMode()) return true;
 
         $user = Auth::user();
         if (!$user) return false;
@@ -103,7 +113,7 @@ class CrmController extends Controller
         $year = $request->input('year', 'all');
         $query = Client::with('interactions')->orderBy('nama_user', 'asc');
         
-        if (!$this->hasFullAccess()) {
+        if (!$this->hasFullAccess() && !$this->isViewOnlyMode()) {
             $query->where('user_id', Auth::id());
         }
 
@@ -206,9 +216,11 @@ class CrmController extends Controller
     {
         // 1. Cek Akses Halaman
         $hasAccess = $this->hasFullAccess();
-        if ($client->user_id !== Auth::id() && !$hasAccess) abort(403, 'Akses Ditolak.');
+        $viewOnly  = $this->isViewOnlyMode();
+        if ($client->user_id !== Auth::id() && !$hasAccess && !$viewOnly) abort(403, 'Akses Ditolak.');
 
         // 2. Tentukan Hak Edit (PIC Klien atau user dengan Full Access bisa edit data)
+        // View-only mode: canEdit selalu false karena bukan owner klien manapun
         $canEdit = ($client->user_id === Auth::id()) || $hasAccess;
 
         // 3. Data Rekap
@@ -221,7 +233,7 @@ class CrmController extends Controller
         if ($historyYear) {
             $interactionQuery->whereYear('tanggal_interaksi', $historyYear);
         }
-        $interactions = $interactionQuery->paginate(10)->withQueryString(); 
+        $interactions = $interactionQuery->paginate(10)->withQueryString();
 
         // 5. Data Activity
         $activityYear = $request->input('activity_year');
@@ -404,7 +416,7 @@ class CrmController extends Controller
         $clientIds = is_array($request->client_id) ? $request->client_id : [$request->client_id];
         $clients = \App\Models\Client::whereIn('id', $clientIds)->get();
         foreach ($clients as $c) {
-            if ($c->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403, 'Akses Ditolak');
+            if ($c->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
         }
 
         $nilaiSales = $request->nilai_sales;
@@ -447,7 +459,7 @@ class CrmController extends Controller
 
         if ($isArray) {
             foreach ($request->nama_produk as $index => $produk) {
-                $rowClient = \App\Models\Client::find($request->client_id[$index]);
+                $rowClient = \App\Models\Client::where('id', $request->client_id[$index])->first();
                 $rowKomisi = $rowClient ? (float) $rowClient->komisi : 0;
                 $nilaiSales = (float) $request->nilai_sales[$index];
                 
@@ -464,7 +476,7 @@ class CrmController extends Controller
                 ]);
             }
         } else {
-            $client = \App\Models\Client::find($request->client_id);
+            $client = \App\Models\Client::where('id', $request->client_id)->first();
             $komisiClient = $client ? (float) $client->komisi : 0;
             $nilaiSales = (float) $request->nilai_sales;
 
@@ -489,28 +501,152 @@ class CrmController extends Controller
         $client = Client::findOrFail($request->client_id);
         if ($client->user_id !== Auth::id() && !$this->hasFullAccess()) abort(403);
         
-        $request->merge(['nominal' => str_replace('.', '', $request->nominal)]);
+        // Cek jika pencatatan langsung (direct usage) & memiliki akses penuh
+        if ($request->has('direct_usage') && $request->direct_usage && $this->hasFullAccess()) {
+            $request->merge(['nominal' => str_replace('.', '', $request->nominal)]);
+            $request->validate([
+                'client_id' => 'required|exists:clients,id',
+                'keperluan' => 'required|string|max:255',
+                'nominal' => 'required|numeric|min:0',
+                'tanggal_interaksi' => 'required|date',
+                'catatan' => 'nullable|string',
+            ]);
+            Interaction::create([
+                'user_id' => Auth::id(),
+                'client_id' => $request->client_id,
+                'jenis_transaksi' => 'OUT',
+                'nama_produk' => 'USAGE : ' . $request->keperluan,
+                'tanggal_interaksi' => $request->tanggal_interaksi,
+                'nilai_sales' => 0,
+                'nilai_kontribusi' => $request->nominal,
+                'catatan' => $request->catatan
+            ]);
+            return redirect()->back()->with('success', 'Dana support (Direct Usage) berhasil dicatat langsung!');
+        }
+
+        // Validasi rekening dari form
+        $request->validate([
+            'nama_bank' => 'required|string',
+            'no_rekening' => 'required|string',
+            'nama_rek' => 'required|string',
+        ]);
+
+        $user = Auth::user();
         
+        // Ambil ID approver dari profil user
+        $app1 = $user->approver_dana_1_id;
+        $app2 = $user->approver_dana_2_id;
+        $app3 = $user->approver_dana_3_id;
+        $app4 = $user->approver_dana_4_id;
+
+        if (!$app1 && !$app2 && !$app3 && !$app4) {
+            return redirect()->back()->with('error', 'Gagal: Anda belum memiliki pengaturan Approver Dana. Harap hubungi Admin/HRD.');
+        }
+
+        $request->merge(['nominal' => str_replace('.', '', $request->nominal)]);
         $request->validate([
             'client_id' => 'required|exists:clients,id',
             'keperluan' => 'required|string|max:255',
             'nominal' => 'required|numeric|min:0',
             'tanggal_interaksi' => 'required|date',
             'catatan' => 'nullable|string',
+            'lampiran_tambahan' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx,xlsx,xls|max:5120', // Upload file (opsional) maks 5MB
+        ]);
+        
+        // 1. (Dihapus) Tidak lagi menyimpan Interaction (CRM) langsung di sini.
+        // Akan disimpan saat Pengajuan Dana mencapai status 'selesai'.
+
+        // 2. Simpan Pengajuan Dana
+        $st1 = $app1 ? 'menunggu' : 'skipped';
+        $st2 = $app2 ? 'menunggu' : 'skipped';
+        $st3 = $app3 ? 'menunggu' : 'skipped';
+        $st4 = $app4 ? 'menunggu' : 'skipped';
+
+        $judulPengajuan = 'Support Klien: ' . $client->nama_perusahaan;
+
+        // Titipkan data CRM di rincian_dana
+        $rincian = [
+            [
+                'deskripsi' => $request->keperluan,
+                'jumlah' => $request->nominal,
+                'client_id' => $request->client_id, // Disisipkan untuk pencatatan riwayat nanti
+                'tanggal_interaksi' => $request->tanggal_interaksi,
+                'catatan_crm' => $request->catatan,
+            ]
+        ];
+
+        // 3. Generate File PDF Rekap Sales sebagai Lampiran
+        $year = date('Y');
+        $calc = $this->calculateRecapData($client, $year);
+        $safeClientName = str_replace(['/', '\\', ' '], '_', $client->nama_perusahaan);
+        $fileName = 'Rekap_Sales_' . $safeClientName . '_' . date('Ymd_His') . '.pdf';
+        $filePath = 'lampiran_dana/' . $fileName;
+        
+        $pdf = Pdf::loadView('exports.client_recap_pdf', [
+            'client' => $client,
+            'recap' => $calc['recap'],
+            'year' => $year,
+            'totals' => $calc['totals']
+        ]);
+        
+        Storage::disk('public')->put($filePath, $pdf->output());
+
+        // Menyimpan daftar lampiran (PDF rekap sales otomatis)
+        $lampiranArray = [$filePath];
+
+        // Jika terdapat upload lampiran tambahan dari pengguna, simpan dan gabungkan ke array
+        if ($request->hasFile('lampiran_tambahan')) {
+            $uploadedPath = $request->file('lampiran_tambahan')->store('lampiran_dana', 'public');
+            $lampiranArray[] = $uploadedPath;
+        }
+
+        $pengajuanDana = PengajuanDana::create([
+            'user_id' => $user->id,
+            'judul_pengajuan' => $judulPengajuan,
+            'divisi' => $user->divisi ?: 'Umum',
+            'nama_bank' => $request->nama_bank,
+            'no_rekening' => $request->no_rekening,
+            'nama_rek' => $request->nama_rek,
+            'total_dana' => $request->nominal,
+            'rincian_dana' => $rincian,
+            'lampiran' => $lampiranArray, // Gabungan lampiran otomatis & opsional dari pengguna
+            
+            'status' => 'diajukan',
+            
+            'approver_dana_1_id' => $app1, 'approver_1_status' => $st1,
+            'approver_dana_2_id' => $app2, 'approver_2_status' => $st2,
+            'approver_dana_3_id' => $app3, 'approver_3_status' => $st3,
+            'approver_dana_4_id' => $app4, 'approver_4_status' => $st4,
         ]);
 
-        Interaction::create([
-            'user_id' => Auth::id(),
-            'client_id' => $request->client_id,
-            'jenis_transaksi' => 'OUT',
-            'nama_produk' => 'USAGE : ' . $request->keperluan,
-            'tanggal_interaksi' => $request->tanggal_interaksi,
-            'nilai_sales' => 0,
-            'nilai_kontribusi' => $request->nominal,
-            'catatan' => $request->catatan,
-        ]);
+        // 4. Kirim Notifikasi ke Approver Pertama
+        $firstApprover = null;
+        $firstStage = null;
+        if ($pengajuanDana->approverDana1 && $st1 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana1;
+            $firstStage = 1;
+        } elseif ($pengajuanDana->approverDana2 && $st2 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana2;
+            $firstStage = 2;
+        } elseif ($pengajuanDana->approverDana3 && $st3 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana3;
+            $firstStage = 3;
+        } elseif ($pengajuanDana->approverDana4 && $st4 === 'menunggu') {
+            $firstApprover = $pengajuanDana->approverDana4;
+            $firstStage = 4;
+        }
+        
+        if ($firstStage == 3) {
+            $pengajuanDana->update(['status' => 'proses_pembayaran']);
+        } elseif ($firstStage == 4) {
+            $pengajuanDana->update(['status' => 'disetujui']);
+        }
 
-        return redirect()->back()->with('success', 'Dana support / usage berhasil dicatat langsung ke history!');
+        if ($firstApprover) {
+            Notification::send($firstApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
+        }
+
+        return redirect()->back()->with('success', 'Dana support berhasil dicatat dan Pengajuan Dana otomatis dibuat!');
     }
 
     public function storeEntertain(Request $request)
