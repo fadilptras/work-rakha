@@ -44,8 +44,9 @@ class StockController extends Controller
         $jabatan = strtolower($user->jabatan ?? '');
 
         $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
+        $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing') || \Illuminate\Support\Str::contains($jabatan, 'purchasing');
 
-        return in_array($divisi, ['marketing dan operasional', 'finance dan gudang', 'fianance dan gudang']) || $isAdminGudang;
+        return in_array($divisi, ['marketing dan operasional', 'finance dan gudang', 'fianance dan gudang']) || $isAdminGudang || $isLegalPurchasing;
     }
 
     public function index(Request $request)
@@ -509,10 +510,22 @@ class StockController extends Controller
         $jabatan = strtolower($user->jabatan ?? '');
 
         // $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
-        $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
+        $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan == 'gudang';
+        $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing');
 
-        return $isAdminGudang
+        return $isAdminGudang || $isLegalPurchasing
         // || $isTest
         ;
+    }
+
+    public function dashboard()
+    {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403, 'Anda tidak memiliki hak akses ke Dashboard Gudang.');
+        }
+
+        return view('users.stock.dashboard', [
+            'title' => 'Dashboard Gudang'
+        ]);
     }
 }

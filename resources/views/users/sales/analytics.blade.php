@@ -1,6 +1,32 @@
 @php
     $agent = new \Jenssegers\Agent\Agent();
     $isMobile = $agent->isMobile();
+
+    if (!function_exists('getAchvBadgeClass')) {
+        function getAchvBadgeClass($rate) {
+            $rateNum = floatval($rate);
+            if ($rateNum >= 100) {
+                return 'bg-sky-950/90 text-sky-400 border border-sky-600/40';
+            } elseif ($rateNum >= 85) {
+                return 'bg-emerald-950/90 text-emerald-400 border border-emerald-600/40';
+            } else {
+                return 'bg-amber-950/90 text-amber-400 border border-amber-600/40';
+            }
+        }
+    }
+
+    if (!function_exists('getAchvTextClass')) {
+        function getAchvTextClass($rate) {
+            $rateNum = floatval($rate);
+            if ($rateNum >= 100) {
+                return 'text-sky-400 font-bold';
+            } elseif ($rateNum >= 85) {
+                return 'text-emerald-400 font-bold';
+            } else {
+                return 'text-amber-400 font-bold';
+            }
+        }
+    }
 @endphp
 <x-layout-users title="{{ $title ?? 'Sales Analytics & Target' }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -72,6 +98,27 @@
         /* Monitoring Styles (Adapted for Dark Mode) */
         .mod-select { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 8px 12px; font-size: 0.85rem; color: #f8fafc; outline: none; transition: all 0.2s; height: 42px; width: 100%; }
         .mod-select:focus { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
+
+        /* Strengthened Sticky PS Column */
+        .sticky-ps-col {
+            position: sticky !important;
+            left: 0 !important;
+            min-width: 100px !important;
+            width: 100px !important;
+            max-width: 100px !important;
+            box-shadow: 4px 0 12px -2px rgba(0, 0, 0, 0.7) !important;
+        }
+        thead .sticky-ps-col {
+            background-color: #0f172a !important;
+            z-index: 30 !important;
+        }
+        tbody .sticky-ps-col {
+            background-color: #1e293b !important;
+            z-index: 20 !important;
+        }
+        tr:hover td.sticky-ps-col {
+            background-color: #334155 !important;
+        }
         
         /* Choices.js Overrides for Dark Mode */
         .choices[data-type*="select-multiple"] .choices__inner, .choices[data-type*="text"] .choices__inner { padding-bottom: 2px !important; padding-top: 2px !important; }
@@ -308,7 +355,7 @@
                                     <td class="row-header">Achievement Rate (%)</td>
                                     @foreach($chartBulan as $b)
                                         @php $rate = $monthlyOverview[$b]['achievement_rate'] ?? 0; @endphp
-                                        <td class="{{ $rate >= 100 ? 'val-good' : ($rate >= 80 ? 'text-sky-400 font-bold' : ($rate > 0 ? 'val-neutral' : 'text-slate-500')) }}">
+                                        <td class="{{ getAchvTextClass($rate) }}">
                                             {{ $rate }}%
                                         </td>
                                     @endforeach
@@ -346,7 +393,7 @@
                                         <td class="row-header">{{ $ps }}</td>
                                         <td>Rp {{ number_format($dataPs['target'], 0, ',', '.') }}</td>
                                         <td>Rp {{ number_format($dataPs['sales'], 0, ',', '.') }}</td>
-                                        <td class="{{ $dataPs['achievement_rate'] >= 100 ? 'val-good' : ($dataPs['achievement_rate'] >= 80 ? 'text-sky-400 font-bold' : ($dataPs['achievement_rate'] > 0 ? 'val-neutral' : 'text-slate-500')) }}">
+                                        <td class="{{ getAchvTextClass($dataPs['achievement_rate']) }}">
                                             {{ $dataPs['achievement_rate'] }}%
                                         </td>
                                         <td>Rp {{ number_format($dataPs['sales_last_month'], 0, ',', '.') }}</td>
@@ -378,7 +425,7 @@
                                         <td class="row-header">{{ $ps }}</td>
                                         <td>Rp {{ number_format($cumData['cum_target'], 0, ',', '.') }}</td>
                                         <td>Rp {{ number_format($cumData['cum_sales'], 0, ',', '.') }}</td>
-                                        <td class="{{ $cumData['cum_ach_rate'] >= 100 ? 'val-good' : ($cumData['cum_ach_rate'] >= 80 ? 'text-sky-400 font-bold' : ($cumData['cum_ach_rate'] > 0 ? 'val-neutral' : 'text-slate-500')) }}">
+                                        <td class="{{ getAchvTextClass($cumData['cum_ach_rate']) }}">
                                             {{ $cumData['cum_ach_rate'] }}%
                                         </td>
                                         <td class="{{ $cumData['cum_growth_rate'] > 0 ? 'val-good' : ($cumData['cum_growth_rate'] < 0 ? 'val-bad' : 'text-slate-500') }}">
@@ -398,14 +445,14 @@
                 <div class="glass-panel border-t-2 border-t-emerald-500 relative z-50">
                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 items-end">
                         <div>
-                            <label class="pbi-label">Tahun</label>
+                            <label class="pbi-label">Year</label>
                             <select id="m-tahun" class="pbi-slicer">
                                 <option value="">All</option>
                                 @foreach($listTahun as $t) <option value="{{ $t }}" {{ $t == date('Y') ? 'selected' : '' }}>{{ $t }}</option> @endforeach
                             </select>
                         </div>
                         <div>
-                            <label class="pbi-label">Bulan</label>
+                            <label class="pbi-label">Month</label>
                             <select id="m-bulan" class="pbi-slicer">
                                 <option value="">All (YTD)</option>
                                 @foreach($listBulan as $b) <option value="{{ $b }}">{{ $b }}</option> @endforeach
@@ -427,7 +474,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="pbi-label">Produk</label>
+                            <label class="pbi-label">Product</label>
                             <select id="m-produk" class="pbi-slicer">
                                 <option value="">All</option>
                                 @foreach($listProduk as $p) <option value="{{ $p }}">{{ $p }}</option> @endforeach
@@ -437,23 +484,28 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    <div class="glass-panel text-center py-4">
-                        <p class="text-xs text-slate-400 uppercase font-bold">Total Sales Nett</p>
+                    <div class="glass-panel text-center py-4 relative group">
+                        <button onclick="showKpiInfo('matrix_sales_nett')" class="absolute top-3 right-3 text-slate-500 hover:text-emerald-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
+                        <p class="text-xs text-slate-400 uppercase font-bold">Total Net Sales</p>
                         <h3 id="m-sum-nett" class="text-2xl font-black text-emerald-400 mt-1">Rp 0</h3>
                     </div>
-                    <div class="glass-panel text-center py-4">
-                        <p class="text-xs text-slate-400 uppercase font-bold">Total Qty</p>
+                    <div class="glass-panel text-center py-4 relative group">
+                        <button onclick="showKpiInfo('matrix_total_qty')" class="absolute top-3 right-3 text-slate-500 hover:text-blue-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
+                        <p class="text-xs text-slate-400 uppercase font-bold">Total Quantity</p>
                         <h3 id="m-sum-qty" class="text-2xl font-black text-blue-400 mt-1">0</h3>
                     </div>
-                    <div class="glass-panel text-center py-4">
-                        <p class="text-xs text-slate-400 uppercase font-bold">Total Customer</p>
+                    <div class="glass-panel text-center py-4 relative group">
+                        <button onclick="showKpiInfo('matrix_total_customer')" class="absolute top-3 right-3 text-slate-500 hover:text-indigo-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
+                        <p class="text-xs text-slate-400 uppercase font-bold">Total Customers</p>
                         <h3 id="m-sum-customer" class="text-2xl font-black text-indigo-400 mt-1">0</h3>
                     </div>
-                    <div class="glass-panel text-center py-4">
-                        <p class="text-xs text-slate-400 uppercase font-bold">Total Produk</p>
+                    <div class="glass-panel text-center py-4 relative group">
+                        <button onclick="showKpiInfo('matrix_total_produk')" class="absolute top-3 right-3 text-slate-500 hover:text-purple-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
+                        <p class="text-xs text-slate-400 uppercase font-bold">Total Products</p>
                         <h3 id="m-sum-produk" class="text-2xl font-black text-purple-400 mt-1">0</h3>
                     </div>
-                    <div class="glass-panel text-center py-4">
+                    <div class="glass-panel text-center py-4 relative group">
+                        <button onclick="showKpiInfo('matrix_achv_rate')" class="absolute top-3 right-3 text-slate-500 hover:text-amber-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
                         <p class="text-xs text-slate-400 uppercase font-bold">Achievement Rate (YTD)</p>
                         <h3 id="m-sum-rate" class="text-2xl font-black text-amber-400 mt-1">-</h3>
                     </div>
@@ -463,11 +515,10 @@
                 <div class="glass-panel !p-0 overflow-hidden">
                     <div class="flex flex-wrap gap-8 px-6 pt-6 border-b border-slate-700 pb-4">
                         <div class="mon-tab active" data-mtab="tab-customer">By Customer</div>
-                        <div class="mon-tab" data-mtab="tab-customer-produk">By Customer & Produk</div>
-                        <div class="mon-tab" data-mtab="tab-produk">By Produk</div>
-                        <div class="mon-tab" data-mtab="tab-produk-ps">By Produk & PS</div>
+                        <div class="mon-tab" data-mtab="tab-customer-produk">By Customer & Product</div>
+                        <div class="mon-tab" data-mtab="tab-produk">By Product</div>
+                        <div class="mon-tab" data-mtab="tab-produk-ps">By Product & PS</div>
                         <div class="mon-tab" data-mtab="tab-ps">By Sales (PS)</div>
-                        <div class="mon-tab" data-mtab="tab-forecast">Sales Forecast</div>
                     </div>
                     <div class="p-0">
                         <div id="tab-customer" class="mon-panel p-0 overflow-x-auto max-h-[500px]">
@@ -500,18 +551,6 @@
                                 <tbody id="body-ps"></tbody>
                             </table>
                         </div>
-                        <div id="tab-forecast" class="mon-panel p-6 overflow-x-auto max-h-[500px] hidden">
-                            <table class="data-table w-full text-sm">
-                                <thead>
-                                    <tr>
-                                        <th class="text-left">Nama Produk</th>
-                                        <th class="text-right">Rata-rata Qty / Bulan</th>
-                                        <th class="text-right">Estimasi Stok Depan (+20%)</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="body-forecast"></tbody>
-                            </table>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -526,31 +565,54 @@
                 
                 {{-- Target Keseluruhan --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                    <div class="glass-panel text-center py-5 border-t-2 border-t-indigo-400">
-                        <p class="text-xs text-slate-400 uppercase font-bold">Target Keseluruhan (Tahun Ini)</p>
+                    <div class="glass-panel text-center py-5 border-t-2 border-t-indigo-400 relative group">
+                        <button onclick="showKpiInfo('annual_target')" class="absolute top-3 right-3 text-slate-500 hover:text-indigo-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
+                        <p class="text-xs text-slate-400 uppercase font-bold">Annual Target</p>
                         <h3 class="text-xl font-black text-indigo-400 mt-1">Rp {{ number_format($summary['total_target'] ?? 0, 0, ',', '.') }}</h3>
                     </div>
-                    <div class="glass-panel text-center py-5 border-t-2 border-t-sky-400">
-                        <p class="text-xs text-slate-400 uppercase font-bold">Target Keseluruhan (Bulan Ini)</p>
+                    <div class="glass-panel text-center py-5 border-t-2 border-t-sky-400 relative group">
+                        <button onclick="showKpiInfo('monthly_target')" class="absolute top-3 right-3 text-slate-500 hover:text-sky-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
+                        <p class="text-xs text-slate-400 uppercase font-bold">Monthly Target</p>
                         <h3 class="text-xl font-black text-sky-400 mt-1">Rp {{ number_format($monthlyAll[date('n') > 0 ? $urutanBulan[date('n')-1] : 'Januari']['target'] ?? 0, 0, ',', '.') }}</h3>
                     </div>
-                    <div class="glass-panel text-center py-5 border-t-2 border-t-emerald-400">
+                    <div class="glass-panel text-center py-5 border-t-2 border-t-emerald-400 relative group">
+                        <button onclick="showKpiInfo('actual_sales')" class="absolute top-3 right-3 text-slate-500 hover:text-emerald-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
                         <p class="text-xs text-slate-400 uppercase font-bold">Total Actual Sales (YTD)</p>
                         <h3 class="text-xl font-black text-emerald-400 mt-1">Rp {{ number_format($summary['total_sales'] ?? 0, 0, ',', '.') }}</h3>
                     </div>
-                    <div class="glass-panel text-center py-5 border-t-2 border-t-amber-400">
-                        <p class="text-xs text-slate-400 uppercase font-bold">Achievement Rate % (Tahun)</p>
-                        <h3 class="text-xl font-black text-amber-400 mt-1">{{ $summary['overall_achievement'] ?? 0 }}%</h3>
+                    @php $overallAchv = $summary['overall_achievement'] ?? 0; @endphp
+                    <div class="glass-panel text-center py-5 border-t-2 border-t-amber-400 relative group">
+                        <button onclick="showKpiInfo('achievement')" class="absolute top-3 right-3 text-slate-500 hover:text-amber-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
+                        <p class="text-xs text-slate-400 uppercase font-bold">Annual Achievement Rate</p>
+                        <h3 class="text-xl font-black {{ getAchvTextClass($overallAchv) }} mt-1">{{ $overallAchv }}%</h3>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {{-- Target Bulanan Keseluruhan --}}
+                    {{-- Rekap Target per Bulan (Card Kiri) --}}
                     <div class="glass-panel">
-                        <h3 class="text-sm font-black text-white mb-4"><i class="fas fa-calendar-alt text-sky-400 mr-2"></i> Rekap Target per Bulan</h3>
-                        <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
-                            <table class="w-full text-sm text-left whitespace-nowrap">
-                                <thead class="text-xs text-slate-400 uppercase bg-slate-800/50 sticky top-0 z-10">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 border-b border-slate-700/50 pb-3">
+                            <h3 class="text-sm font-black text-white flex items-center gap-2">
+                                <i class="fas fa-calendar-alt text-sky-400"></i> Monthly Target Recap
+                            </h3>
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <span class="text-[11px] text-slate-400 font-extrabold uppercase tracking-wider whitespace-nowrap">Filter PS:</span>
+                                <select id="filterRekapPs" class="pbi-slicer !py-1.5 !text-xs min-w-[140px] bg-slate-900 border-slate-700 rounded-lg text-slate-200 font-bold" onchange="updateRekapTargetTable(this.value)">
+                                    <option value="all">Semua PS</option>
+                                    <option value="Sales Team">Sales Team</option>
+                                    <option value="Office">Office</option>
+                                    @foreach($listPs as $p)
+                                        @if(strtolower($p) != 'office')
+                                            <option value="{{ $p }}">{{ $p }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto max-h-[420px] overflow-y-auto custom-scrollbar border border-slate-700/50 rounded-xl relative">
+                            <table class="w-full text-xs text-left whitespace-nowrap">
+                                <thead class="text-[11px] text-slate-300 uppercase bg-[#0f172a] sticky top-0 z-20 shadow-md tracking-wider font-extrabold">
                                     <tr>
                                         <th class="px-4 py-3 rounded-tl-lg">Bulan</th>
                                         <th class="px-4 py-3 text-right">Target</th>
@@ -558,17 +620,17 @@
                                         <th class="px-4 py-3 text-center rounded-tr-lg">Achv %</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-700/50">
+                                <tbody id="rekapTargetBody" class="divide-y divide-slate-700/50">
                                     @foreach($urutanBulan as $bulan)
                                         @php
                                             $d = $monthlyAll[$bulan] ?? ['target'=>0, 'sales'=>0, 'achievement_rate'=>0];
                                         @endphp
-                                        <tr class="hover:bg-slate-800/30 transition">
+                                        <tr class="hover:bg-slate-800/40 transition">
                                             <td class="px-4 py-3 font-bold text-slate-200">{{ $bulan }}</td>
-                                            <td class="px-4 py-3 text-right text-slate-300">Rp {{ number_format($d['target'],0,',','.') }}</td>
+                                            <td class="px-4 py-3 text-right text-slate-300 font-medium">Rp {{ number_format($d['target'],0,',','.') }}</td>
                                             <td class="px-4 py-3 text-right text-emerald-400 font-bold">Rp {{ number_format($d['sales'],0,',','.') }}</td>
                                             <td class="px-4 py-3 text-center">
-                                                <span class="px-2 py-1 rounded text-xs font-bold {{ $d['achievement_rate'] >= 100 ? 'bg-emerald-900/50 text-emerald-400' : 'bg-amber-900/50 text-amber-400' }}">
+                                                <span class="px-2.5 py-1 rounded-md text-xs font-black inline-block {{ getAchvBadgeClass($d['achievement_rate']) }}">
                                                     {{ $d['achievement_rate'] }}%
                                                 </span>
                                             </td>
@@ -579,24 +641,35 @@
                         </div>
                     </div>
 
-                    {{-- Target Individu (Per PS) --}}
+                    {{-- Target Individu (Per PS - Card Kanan) --}}
                     <div class="glass-panel">
-                        <h3 class="text-sm font-black text-white mb-4"><i class="fas fa-user-tie text-emerald-400 mr-2"></i> Target Individu (PS) - Keseluruhan</h3>
-                        <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
-                            <table class="w-full text-sm text-left whitespace-nowrap">
-                                <thead class="text-xs text-slate-400 uppercase bg-slate-800/50 sticky top-0 z-10">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 border-b border-slate-700/50 pb-3">
+                            <h3 class="text-sm font-black text-white flex items-center gap-2">
+                                <i class="fas fa-user-tie text-emerald-400"></i> Individual Target (PS)
+                            </h3>
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <span class="text-[11px] text-slate-400 font-extrabold uppercase tracking-wider whitespace-nowrap">Filter:</span>
+                                <select id="filterTargetBulan" class="pbi-slicer !py-1.5 !text-xs min-w-[140px] bg-slate-900 border-slate-700 rounded-lg text-slate-200 font-bold" onchange="updateTargetIndividuTable(this.value)">
+                                    <option value="current">Bulan Ini ({{ date('n') > 0 ? $urutanBulan[date('n')-1] : 'Januari' }})</option>
+                                    <option value="ytd">Semua Bulan (YTD)</option>
+                                    @foreach($urutanBulan as $b)
+                                        <option value="{{ $b }}">{{ $b }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto max-h-[420px] overflow-y-auto custom-scrollbar border border-slate-700/50 rounded-xl relative">
+                            <table class="w-full text-xs text-left whitespace-nowrap border-separate border-spacing-0">
+                                <thead class="text-[11px] text-slate-300 uppercase bg-[#0f172a] sticky top-0 z-20 shadow-md tracking-wider font-extrabold">
                                     <tr>
-                                        <th class="px-4 py-3 rounded-tl-lg">PS</th>
-                                        <th class="px-4 py-3 text-right">Target Bulan Ini</th>
-                                        <th class="px-4 py-3 text-right">Actual Bulan Ini</th>
-                                        <th class="px-4 py-3 text-center">Achv % (Bulan)</th>
-                                        <th class="px-4 py-3 text-right">Target 1 Tahun</th>
-                                        <th class="px-4 py-3 text-right">Actual YTD</th>
-                                        <th class="px-4 py-3 text-center">Achv % (YTD)</th>
-                                        <th class="px-4 py-3 text-center rounded-tr-lg">Action</th>
+                                        <th class="px-3 py-3.5 text-left border-b border-slate-800 text-sky-400">PS</th>
+                                        <th class="px-3 py-3.5 text-center border-b border-l border-slate-800">Monthly</th>
+                                        <th class="px-3 py-3.5 text-center border-b border-l border-slate-800">YTD</th>
+                                        <th class="px-2 py-3.5 text-center border-b border-l border-slate-800 w-10"></th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-700/50">
+                                <tbody id="targetPsTableBody" class="divide-y divide-slate-700/50">
                                     @foreach($listPs as $ps)
                                         @php
                                             $d = $allPsAchievement[$ps] ?? ['target'=>0, 'sales'=>0, 'rate'=>0];
@@ -606,25 +679,22 @@
                                             $targetBulanIni = $psMonthlyData['target'] ?? 0;
                                             $actualBulanIni = $psMonthlyData['sales'] ?? 0;
                                             $rateBulanIni = $psMonthlyData['rate'] ?? 0;
+                                            $isOffice = strtolower($ps) === 'office';
                                         @endphp
-                                        <tr class="hover:bg-slate-800/30 transition">
-                                            <td class="px-4 py-3 font-bold text-slate-200">{{ $ps }}</td>
-                                            <td class="px-4 py-3 text-right text-sky-400">Rp {{ number_format($targetBulanIni,0,',','.') }}</td>
-                                            <td class="px-4 py-3 text-right text-emerald-400 font-bold">Rp {{ number_format($actualBulanIni,0,',','.') }}</td>
-                                            <td class="px-4 py-3 text-center">
-                                                <span class="px-2 py-1 rounded text-xs font-bold {{ $rateBulanIni >= 100 ? 'bg-emerald-900/50 text-emerald-400' : 'bg-amber-900/50 text-amber-400' }}">
-                                                    {{ $rateBulanIni }}%
-                                                </span>
+                                        <tr class="hover:bg-slate-800/40 transition target-ps-row" data-ps="{{ $ps }}" data-is-salesteam="{{ $isOffice ? 'false' : 'true' }}">
+                                            <td class="px-3 py-4 font-bold text-slate-200 border-b border-slate-700/50">{{ $ps }}</td>
+                                            <td class="px-3 py-4 text-center border-b border-l border-slate-700/50">
+                                                <div class="text-xs text-sky-400 font-semibold">Target: Rp {{ number_format($targetBulanIni,0,',','.') }}</div>
+                                                <div class="text-xs text-emerald-400 font-bold mt-1">Actual: Rp {{ number_format($actualBulanIni,0,',','.') }}</div>
+                                                <span class="px-2 py-0.5 rounded-md text-xs font-black inline-block mt-2 {{ getAchvBadgeClass($rateBulanIni) }}">{{ $rateBulanIni }}%</span>
                                             </td>
-                                            <td class="px-4 py-3 text-right text-slate-300">Rp {{ number_format($d['target'],0,',','.') }}</td>
-                                            <td class="px-4 py-3 text-right text-emerald-400 font-bold">Rp {{ number_format($d['sales'],0,',','.') }}</td>
-                                            <td class="px-4 py-3 text-center">
-                                                <span class="px-2 py-1 rounded text-xs font-bold {{ $d['rate'] >= 100 ? 'bg-emerald-900/50 text-emerald-400' : 'bg-amber-900/50 text-amber-400' }}">
-                                                    {{ $d['rate'] }}%
-                                                </span>
+                                            <td class="px-3 py-4 text-center border-b border-l border-slate-700/50">
+                                                <div class="text-xs text-slate-300 font-semibold">Target: Rp {{ number_format($d['target'],0,',','.') }}</div>
+                                                <div class="text-xs text-emerald-400 font-bold mt-1">Actual: Rp {{ number_format($d['sales'],0,',','.') }}</div>
+                                                <span class="px-2 py-0.5 rounded-md text-xs font-black inline-block mt-2 {{ getAchvBadgeClass($d['rate']) }}">{{ $d['rate'] }}%</span>
                                             </td>
-                                            <td class="px-4 py-3 text-center">
-                                                <button class="text-sky-400 hover:text-sky-300 transition" onclick="editTarget('{{ $ps }}')" title="Set Target Individu"><i class="fas fa-edit"></i></button>
+                                            <td class="px-2 py-4 text-center border-b border-l border-slate-700/50">
+                                                <button class="text-sky-400 hover:text-sky-300 p-1.5 rounded-lg hover:bg-sky-950 transition" onclick="editTarget('{{ $ps }}')" title="Set Target"><i class="fas fa-edit"></i></button>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -636,12 +706,12 @@
 
                 {{-- Detail Target Bulanan per PS --}}
                 <div class="glass-panel">
-                    <h3 class="text-sm font-black text-white mb-4"><i class="fas fa-table text-purple-400 mr-2"></i> Detail Target Bulanan per PS</h3>
+                    <h3 class="text-sm font-black text-white mb-4"><i class="fas fa-table text-purple-400 mr-2"></i> Monthly Target Detail per PS</h3>
                     <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
                         <table class="w-full text-xs text-center whitespace-nowrap">
                             <thead class="text-[10px] text-slate-400 uppercase bg-slate-800/50 sticky top-0 z-10">
                                 <tr>
-                                    <th class="px-4 py-3 rounded-tl-lg text-left">Sales (PS)</th>
+                                    <th class="px-4 py-3 rounded-tl-lg text-left sticky-ps-col">Sales (PS)</th>
                                     @foreach($urutanBulan as $b)
                                         <th class="px-3 py-3 border-l border-slate-700/50">{{ substr($b, 0, 3) }}</th>
                                     @endforeach
@@ -667,7 +737,7 @@
                                 
                                 @foreach($listPs as $psName)
                                     <tr class="hover:bg-slate-800/30 transition">
-                                        <td class="px-4 py-3 text-left font-bold text-slate-200">{{ $psName }}</td>
+                                        <td class="px-4 py-3 text-left font-bold text-slate-200 sticky-ps-col border-r border-slate-700/50">{{ $psName }}</td>
                                         @php $rowTotal = 0; @endphp
                                         @foreach($urutanBulan as $b)
                                             @php 
@@ -696,50 +766,66 @@
 
             <!-- Tab 4 - History Sales -->
             <div id="tab-history" class="main-tab-content {{ $activeTab == 'tab-history' ? 'active' : '' }} space-y-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-black text-white"><i class="fas fa-history text-purple-400 mr-2"></i> Riwayat Sales Tahun Sebelumnya</h2>
-                </div>
 
                 <div class="glass-panel">
                     <p class="text-sm text-slate-400 mb-4">Data di tabel ini dihitung secara otomatis dari <b>akumulasi transaksi aktual penjualan</b> pada tahun-tahun sebelumnya.</p>
                     
-                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto border border-slate-700/50 rounded-xl relative">
                         <table class="w-full text-xs text-center whitespace-nowrap">
-                            <thead class="text-[10px] text-slate-400 uppercase bg-slate-800/50 sticky top-0 z-10">
+                            <thead class="text-[10px] text-slate-400 uppercase bg-[#0f172a] sticky top-0 z-20 shadow-md tracking-wider font-extrabold">
                                 <tr>
-                                    <th class="px-4 py-3 rounded-tl-lg text-left">Tahun Riwayat</th>
-                                    @foreach($urutanBulan as $b)
-                                        <th class="px-3 py-3 border-l border-slate-700/50">{{ substr($b, 0, 3) }}</th>
-                                    @endforeach
-                                    <th class="px-4 py-3 font-bold text-purple-400 border-l border-slate-700/50 rounded-tr-lg">Total 1 Tahun</th>
+                                    <th class="px-4 py-3 rounded-tl-lg text-center">Tahun Riwayat</th>
+                                    <th colspan="6" class="px-3 py-3 border-l border-slate-700/50 text-center">Rincian Penjualan per Bulan</th>
+                                    <th class="px-4 py-3 font-bold text-purple-400 border-l border-slate-700/50 rounded-tr-lg text-center">Total 1 Tahun</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-700/50">
                                 @if($historySales && $historySales->count() > 0)
                                     @foreach($historySales as $history)
-                                        <tr class="hover:bg-slate-800/30 transition">
-                                            <td class="px-4 py-4 font-bold text-slate-200 text-left text-sm">{{ $history->tahun }}</td>
-                                            @php 
-                                                $totalHistory = 0; 
-                                                $months = ['jan', 'feb', 'mar', 'apr', 'mei', 'jun', 'jul', 'agu', 'sep', 'okt', 'nov', 'des'];
-                                            @endphp
-                                            @foreach($months as $m)
-                                                @php
-                                                    $monthHistory = $history->$m ?? 0;
-                                                    $totalHistory += $monthHistory;
-                                                @endphp
-                                                <td class="px-3 py-4 text-slate-300 border-l border-slate-700/30 {{ $monthHistory > 0 ? 'font-bold text-emerald-400' : '' }}">
-                                                    {{ $monthHistory > 0 ? 'Rp ' . number_format($monthHistory, 0, ',', '.') : '-' }}
+                                        @php 
+                                            $totalHistory = 0; 
+                                            $sem1 = ['jan' => 'Jan', 'feb' => 'Feb', 'mar' => 'Mar', 'apr' => 'Apr', 'mei' => 'Mei', 'jun' => 'Jun'];
+                                            $sem2 = ['jul' => 'Jul', 'agu' => 'Agu', 'sep' => 'Sep', 'okt' => 'Okt', 'nov' => 'Nov', 'des' => 'Des'];
+                                            
+                                            foreach($sem1 as $k => $v) { $totalHistory += ($history->$k ?? 0); }
+                                            foreach($sem2 as $k => $v) { $totalHistory += ($history->$k ?? 0); }
+                                        @endphp
+                                        
+                                        {{-- Row 1: Semester 1 --}}
+                                        <tr class="hover:bg-slate-800/30 transition group">
+                                            <td rowspan="2" class="px-4 py-4 font-black text-white text-center text-2xl border-r border-slate-700/50 align-middle bg-slate-800/20">
+                                                {{ $history->tahun }}
+                                            </td>
+                                            @foreach($sem1 as $mKey => $mName)
+                                                @php $monthHistory = $history->$mKey ?? 0; @endphp
+                                                <td class="px-3 py-4 text-slate-300 border-b border-r border-slate-700/30 w-32">
+                                                    <div class="text-[10px] text-slate-400 font-bold mb-1.5 uppercase tracking-widest">{{ $mName }}</div>
+                                                    <div class="{{ $monthHistory > 0 ? 'font-bold text-emerald-400' : '' }}">
+                                                        {{ $monthHistory > 0 ? 'Rp ' . number_format($monthHistory, 0, ',', '.') : '-' }}
+                                                    </div>
                                                 </td>
                                             @endforeach
-                                            <td class="px-4 py-4 font-black text-purple-400 bg-purple-900/10 border-l border-slate-700/50 text-sm">
+                                            <td rowspan="2" class="px-4 py-4 font-black text-purple-400 bg-purple-900/10 border-l border-slate-700/50 text-base align-middle">
                                                 Rp {{ number_format($totalHistory, 0, ',', '.') }}
                                             </td>
+                                        </tr>
+                                        
+                                        {{-- Row 2: Semester 2 --}}
+                                        <tr class="hover:bg-slate-800/30 transition group border-b border-slate-700/50">
+                                            @foreach($sem2 as $mKey => $mName)
+                                                @php $monthHistory = $history->$mKey ?? 0; @endphp
+                                                <td class="px-3 py-4 text-slate-300 border-r border-slate-700/30 w-32 bg-slate-800/20">
+                                                    <div class="text-[10px] text-slate-400 font-bold mb-1.5 uppercase tracking-widest">{{ $mName }}</div>
+                                                    <div class="{{ $monthHistory > 0 ? 'font-bold text-emerald-400' : '' }}">
+                                                        {{ $monthHistory > 0 ? 'Rp ' . number_format($monthHistory, 0, ',', '.') : '-' }}
+                                                    </div>
+                                                </td>
+                                            @endforeach
                                         </tr>
                                     @endforeach
                                 @else
                                     <tr>
-                                        <td colspan="14" class="px-4 py-12 text-center text-slate-500 italic">Belum ada data riwayat penjualan.</td>
+                                        <td colspan="8" class="px-4 py-12 text-center text-slate-500 italic">Belum ada data riwayat penjualan.</td>
                                     </tr>
                                 @endif
                             </tbody>
@@ -752,6 +838,22 @@
     </div>
 
     @push('modals')
+    {{-- Modal KPI Info --}}
+    <div id="modal-kpi-info" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="closeKpiInfo()"></div>
+        <div class="relative bg-slate-800 border border-slate-600 rounded-2xl w-full max-w-md p-6 shadow-2xl z-10 transition-all transform scale-95 opacity-0" id="modal-kpi-content-box">
+            <h3 id="kpi-info-title" class="text-xl font-black text-white mb-4 border-b border-slate-700 pb-3 flex items-center gap-2">
+                <i class="fas fa-info-circle text-sky-400"></i> <span id="kpi-info-title-text">Informasi KPI</span>
+            </h3>
+            <div id="kpi-info-content" class="text-sm text-slate-300 space-y-3 leading-relaxed">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeKpiInfo()" class="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     {{-- Modal Set Target --}}
     <div id="modal-target" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="document.getElementById('modal-target').classList.add('hidden')"></div>
@@ -1232,12 +1334,12 @@
                         document.getElementById('m-sum-qty').innerText = formatNum(data.summary.total_qty);
                         document.getElementById('m-sum-customer').innerText = formatNum(data.summary.total_customer);
                         document.getElementById('m-sum-produk').innerText = formatNum(data.summary.total_produk);
-                        document.getElementById('m-sum-rate').innerText = data.summary.achievement_rate !== null ? data.summary.achievement_rate + '%' : 'Belum ada target';
+                        document.getElementById('m-sum-rate').innerText = data.summary.achievement_rate !== null ? data.summary.achievement_rate + '%' : 'No target set';
 
                         const listBulan = data.list_bulan;
                         
                         function buildTable(bodyId, headId, rows, labelCol, nameKey) {
-                            let th = `<tr><th class="text-left sticky-col">${labelCol}</th><th class="text-right text-emerald-400">Total Nett</th>`;
+                            let th = `<tr><th class="text-left sticky-col">${labelCol}</th><th class="text-right text-emerald-400">Total Net Sales</th>`;
                             listBulan.forEach(b => th += `<th class="text-right">${b.substring(0,3)}</th>`);
                             th += `</tr>`;
                             document.getElementById(headId).innerHTML = th;
@@ -1249,11 +1351,11 @@
                                 });
                                 return td + `</tr>`;
                             }).join('');
-                            document.getElementById(bodyId).innerHTML = html || '<tr><td colspan="10" class="text-center p-4">Kosong</td></tr>';
+                            document.getElementById(bodyId).innerHTML = html || '<tr><td colspan="10" class="text-center p-4">No data available</td></tr>';
                         }
 
                         function buildTableSubGroup(bodyId, headId, rows, groupLabel, subLabel) {
-                            let th = `<tr><th class="text-left sticky-col">${groupLabel} / ${subLabel}</th><th class="text-right text-emerald-400">Total Nett</th>`;
+                            let th = `<tr><th class="text-left sticky-col">${groupLabel} / ${subLabel}</th><th class="text-right text-emerald-400">Total Net Sales</th>`;
                             listBulan.forEach(b => th += `<th class="text-right">${b.substring(0,3)}</th>`);
                             th += `</tr>`;
                             document.getElementById(headId).innerHTML = th;
@@ -1278,18 +1380,14 @@
                                     });
                                 }
                             });
-                            document.getElementById(bodyId).innerHTML = html || '<tr><td colspan="10" class="text-center p-4">Kosong</td></tr>';
+                            document.getElementById(bodyId).innerHTML = html || '<tr><td colspan="10" class="text-center p-4">No data available</td></tr>';
                         }
 
                         buildTable('body-customer', 'head-customer', data.per_customer, 'Customer', 'nama');
-                        buildTableSubGroup('body-customer-produk', 'head-customer-produk', data.per_customer_produk, 'Customer', 'Produk');
-                        buildTable('body-produk', 'head-produk', data.per_produk, 'Produk', 'nama');
-                        buildTableSubGroup('body-produk-ps', 'head-produk-ps', data.pivot_produk_ps, 'Produk', 'Sales (PS)');
-                        buildTable('body-ps', 'head-ps', data.per_ps, 'Sales', 'nama');
-
-
-                        let fHtml = data.stock_forecast.map(r => `<tr><td>${r.nama_produk||'-'}</td><td class="text-right">${formatNum(r.avg_qty)}</td><td class="text-right text-sky-400 font-bold">${formatNum(r.forecast_qty)}</td></tr>`).join('');
-                        document.getElementById('body-forecast').innerHTML = fHtml || '<tr><td colspan="3" class="text-center">Kosong</td></tr>';
+                        buildTableSubGroup('body-customer-produk', 'head-customer-produk', data.per_customer_produk, 'Customer', 'Product');
+                        buildTable('body-produk', 'head-produk', data.per_produk, 'Product', 'nama');
+                        buildTableSubGroup('body-produk-ps', 'head-produk-ps', data.pivot_produk_ps, 'Product', 'Sales (PS)');
+                        buildTable('body-ps', 'head-ps', data.per_ps, 'Sales (PS)', 'nama');
                     });
             }
 
@@ -1298,6 +1396,231 @@
             });
             loadMonitoring();
         });
+
+        const rawMonthlyAll = @json($monthlyAll);
+        const rawMonthlyPerPs = @json($monthlyPerPs);
+        const rawListPs = @json($listPs);
+        const rawAllPsAchievement = @json($allPsAchievement);
+        const rawUrutanBulan = @json($urutanBulan);
+
+        function formatNum(num) {
+            return new Intl.NumberFormat('id-ID').format(Math.round(num || 0));
+        }
+
+        function updateRekapTargetTable(psVal) {
+            const tbody = document.getElementById('rekapTargetBody');
+            if (!tbody) return;
+
+            let html = '';
+            rawUrutanBulan.forEach(b => {
+                let target = 0;
+                let sales = 0;
+
+                if (psVal === 'all') {
+                    target = rawMonthlyAll[b]?.target || 0;
+                    sales = rawMonthlyAll[b]?.sales || 0;
+                } else if (psVal === 'Sales Team') {
+                    rawListPs.forEach(p => {
+                        if (p.toLowerCase() !== 'office') {
+                            target += rawMonthlyPerPs[b]?.[p]?.target || 0;
+                            sales += rawMonthlyPerPs[b]?.[p]?.sales || 0;
+                        }
+                    });
+                } else if (psVal === 'Office') {
+                    target = rawMonthlyPerPs[b]?.['Office']?.target || 0;
+                    sales = rawMonthlyPerPs[b]?.['Office']?.sales || 0;
+                } else {
+                    target = rawMonthlyPerPs[b]?.[psVal]?.target || 0;
+                    sales = rawMonthlyPerPs[b]?.[psVal]?.sales || 0;
+                }
+
+                const achvRate = target > 0 ? (sales / target * 100).toFixed(sales / target * 100 >= 100 || Math.floor(sales / target * 100) === (sales / target * 100) ? 1 : 2) : 0;
+                const rateNum = parseFloat(achvRate);
+
+                let badgeClass = 'bg-amber-950/90 text-amber-400 border border-amber-600/40';
+                if (rateNum >= 100) {
+                    badgeClass = 'bg-sky-950/90 text-sky-400 border border-sky-600/40';
+                } else if (rateNum >= 85) {
+                    badgeClass = 'bg-emerald-950/90 text-emerald-400 border border-emerald-600/40';
+                }
+
+                html += `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="px-4 py-3 font-bold text-slate-200">${b}</td>
+                        <td class="px-4 py-3 text-right text-slate-300 font-medium">Rp ${formatNum(target)}</td>
+                        <td class="px-4 py-3 text-right text-emerald-400 font-bold">Rp ${formatNum(sales)}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2.5 py-1 rounded-md text-xs font-black inline-block ${badgeClass}">
+                                ${achvRate}%
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function updateTargetIndividuTable(bulanVal) {
+            const tbody = document.getElementById('targetPsTableBody');
+            if (!tbody) return;
+
+            let html = '';
+            const currentMonth = "{{ date('n') > 0 ? $urutanBulan[date('n')-1] : 'Januari' }}";
+            const activeMonth = (bulanVal === 'current') ? currentMonth : bulanVal;
+
+            rawListPs.forEach(ps => {
+                const isOffice = ps.toLowerCase() === 'office';
+                const dYtd = rawAllPsAchievement[ps] || { target: 0, sales: 0, rate: 0 };
+
+                let tBulan = 0;
+                let sBulan = 0;
+
+                if (activeMonth === 'ytd') {
+                    tBulan = dYtd.target;
+                    sBulan = dYtd.sales;
+                } else {
+                    tBulan = rawMonthlyPerPs[activeMonth]?.[ps]?.target || 0;
+                    sBulan = rawMonthlyPerPs[activeMonth]?.[ps]?.sales || 0;
+                }
+
+                const rateBulan = tBulan > 0 ? (sBulan / tBulan * 100).toFixed(sBulan / tBulan * 100 >= 100 || Math.floor(sBulan / tBulan * 100) === (sBulan / tBulan * 100) ? 1 : 2) : 0;
+                const rBulanNum = parseFloat(rateBulan);
+
+                let badgeBulan = 'bg-amber-950/90 text-amber-400 border border-amber-600/40';
+                if (rBulanNum >= 100) badgeBulan = 'bg-sky-950/90 text-sky-400 border border-sky-600/40';
+                else if (rBulanNum >= 85) badgeBulan = 'bg-emerald-950/90 text-emerald-400 border border-emerald-600/40';
+
+                const rYtdNum = parseFloat(dYtd.rate || 0);
+                let badgeYtd = 'bg-amber-950/90 text-amber-400 border border-amber-600/40';
+                if (rYtdNum >= 100) badgeYtd = 'bg-sky-950/90 text-sky-400 border border-sky-600/40';
+                else if (rYtdNum >= 85) badgeYtd = 'bg-emerald-950/90 text-emerald-400 border border-emerald-600/40';
+
+                html += `
+                    <tr class="hover:bg-slate-800/40 transition target-ps-row" data-ps="${ps}" data-is-salesteam="${isOffice ? 'false' : 'true'}">
+                        <td class="px-3 py-4 font-bold text-slate-200 border-b border-slate-700/50">${ps}</td>
+                        <td class="px-3 py-4 text-center border-b border-l border-slate-700/50">
+                            <div class="text-xs text-sky-400 font-semibold">Target: Rp ${formatNum(tBulan)}</div>
+                            <div class="text-xs text-emerald-400 font-bold mt-1">Actual: Rp ${formatNum(sBulan)}</div>
+                            <span class="px-2 py-0.5 rounded-md text-xs font-black inline-block mt-2 ${badgeBulan}">${rateBulan}%</span>
+                        </td>
+                        <td class="px-3 py-4 text-center border-b border-l border-slate-700/50">
+                            <div class="text-xs text-slate-300 font-semibold">Target: Rp ${formatNum(dYtd.target)}</div>
+                            <div class="text-xs text-emerald-400 font-bold mt-1">Actual: Rp ${formatNum(dYtd.sales)}</div>
+                            <span class="px-2 py-0.5 rounded-md text-xs font-black inline-block mt-2 ${badgeYtd}">${dYtd.rate}%</span>
+                        </td>
+                        <td class="px-2 py-4 text-center border-b border-l border-slate-700/50">
+                            <button class="text-sky-400 hover:text-sky-300 p-1.5 rounded-lg hover:bg-sky-950 transition" onclick="editTarget('${ps}')" title="Set Target"><i class="fas fa-edit"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function filterTargetPsTable(val) {
+            const rows = document.querySelectorAll('.target-ps-row');
+            rows.forEach(row => {
+                const psName = row.getAttribute('data-ps') || '';
+                const isSalesTeam = row.getAttribute('data-is-salesteam') === 'true';
+                
+                if (val === 'all') {
+                    row.style.display = '';
+                } else if (val === 'Sales Team') {
+                    row.style.display = isSalesTeam ? '' : 'none';
+                } else if (val === 'Office') {
+                    row.style.display = psName.toLowerCase() === 'office' ? '' : 'none';
+                } else {
+                    row.style.display = psName.toLowerCase() === val.toLowerCase() ? '' : 'none';
+                }
+            });
+        }
+
+        // KPI Info Modal Logic
+        const kpiData = {
+            'annual_target': {
+                title: 'Annual Target',
+                desc: 'Total keseluruhan target penjualan yang harus dicapai dalam tahun ini.',
+                formula: '&sum; Target Bulanan (Jan - Des)'
+            },
+            'monthly_target': {
+                title: 'Monthly Target',
+                desc: 'Total keseluruhan target penjualan yang harus dicapai pada bulan ini.',
+                formula: '&sum; Target Individu (Bulan Berjalan)'
+            },
+            'actual_sales': {
+                title: 'Total Actual Sales (YTD)',
+                desc: 'Total pendapatan dari transaksi penjualan aktual (riil) yang telah berhasil dicapai dari awal tahun hingga saat ini (Year-to-Date).',
+                formula: '&sum; Actual Sales (Jan - Bulan Berjalan)'
+            },
+            'achievement': {
+                title: 'Annual Achievement Rate',
+                desc: 'Persentase pencapaian riil penjualan saat ini jika dibandingkan dengan total target yang ditetapkan selama setahun penuh.',
+                formula: '(Total Actual Sales YTD &divide; Annual Target) &times; 100%'
+            },
+            'matrix_sales_nett': {
+                title: 'Total Net Sales',
+                desc: 'Total accumulated net sales value based on the applied filters.',
+                formula: '&sum; Net Sales Amount'
+            },
+            'matrix_total_qty': {
+                title: 'Total Quantity',
+                desc: 'Total number of product units sold based on the applied filters.',
+                formula: '&sum; Product Quantity Sold'
+            },
+            'matrix_total_customer': {
+                title: 'Total Customers',
+                desc: 'Total number of unique customers who made purchases based on the applied filters.',
+                formula: 'Count of Distinct Customers'
+            },
+            'matrix_total_produk': {
+                title: 'Total Products',
+                desc: 'Total number of unique product categories/items sold based on the applied filters.',
+                formula: 'Count of Distinct Products'
+            },
+            'matrix_achv_rate': {
+                title: 'Achievement Rate (YTD)',
+                desc: 'Sales achievement percentage compared to the target, dynamically calculated based on the applied filters.',
+                formula: '(Total Net Sales &divide; Target) &times; 100%'
+            }
+        };
+
+        function showKpiInfo(type) {
+            const data = kpiData[type];
+            if (!data) return;
+            
+            document.getElementById('kpi-info-title-text').innerText = data.title;
+            document.getElementById('kpi-info-content').innerHTML = `
+                <p class="mb-4">${data.desc}</p>
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Rumus Perhitungan:</p>
+                    <div class="font-mono text-emerald-400 text-xs break-words font-bold">
+                        ${data.formula}
+                    </div>
+                </div>
+            `;
+            
+            const modal = document.getElementById('modal-kpi-info');
+            const box = document.getElementById('modal-kpi-content-box');
+            
+            modal.classList.remove('hidden');
+            // Small delay to allow display block to apply before animating opacity/scale
+            setTimeout(() => {
+                box.classList.remove('scale-95', 'opacity-0');
+                box.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeKpiInfo() {
+            const modal = document.getElementById('modal-kpi-info');
+            const box = document.getElementById('modal-kpi-content-box');
+            
+            box.classList.remove('scale-100', 'opacity-100');
+            box.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200); // Wait for transition
+        }
     </script>
     @endpush
 </x-layout-users>

@@ -25,10 +25,11 @@ class SalesController extends Controller
         $isAdminMarketing = \Illuminate\Support\Str::contains($jabatan, 'admin support');
         $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
 
-        return $isTopManagement || $isKepalaDivisiMO || $isAdminMarketing || $isTest;
+        return $isTopManagement || $isKepalaDivisiMO || $isAdminMarketing
+        || $isTest
+        ;
     }
 
-    // akses div marketing & operasional & admin gudang
     private function hasAnySalesAccess()
     {
         if ($this->hasFullSalesAccess()) return true;
@@ -367,7 +368,12 @@ class SalesController extends Controller
         // data filter dashboard
         $listPs = Sales::whereNotNull('ps')->where('ps', '!=', '')->distinct()->orderBy('ps', 'asc')->pluck('ps')->toArray();
         $listCustomer = Sales::whereNotNull('nama_customer')->where('nama_customer', '!=', '')->distinct()->orderBy('nama_customer', 'asc')->pluck('nama_customer');
-        $listProduk = Sales::whereNotNull('nama_produk')->where('nama_produk', '!=', '')->distinct()->orderBy('nama_produk', 'asc')->pluck('nama_produk');
+
+        $listProduk = Sales::whereNotNull('nama_produk')
+            ->where('nama_produk', '!=', '')
+            ->distinct()
+            ->orderBy('nama_produk', 'asc')
+            ->pluck('nama_produk');
 
         $bulanAda = Sales::whereNotNull('bulan')->distinct()->pluck('bulan')->toArray();
         $bulanAda = array_map(fn($b) => ucfirst(strtolower($b)), $bulanAda);
@@ -1118,13 +1124,14 @@ class SalesController extends Controller
 
         $sort = $request->input('sort', 'terbaru');
         if ($sort === 'terlama') {
-            $query->orderBy('tanggal', 'asc');
+            $query->orderBy('tanggal', 'asc')->orderBy('created_at', 'asc');
         } elseif ($sort === 'tertinggi') {
-            $query->orderBy('harga_nett', 'desc');
+            $query->orderBy('harga_nett', 'desc')->orderBy('created_at', 'desc');
         } elseif ($sort === 'terendah') {
-            $query->orderBy('harga_nett', 'asc');
+            $query->orderBy('harga_nett', 'asc')->orderBy('created_at', 'asc');
         } else {
-            $query->orderBy('tanggal', 'desc');
+            // Default: terbaru — sort by tanggal desc, lalu created_at desc (waktu pembuatan)
+            $query->orderBy('tanggal', 'desc')->orderBy('created_at', 'desc');
         }
 
         $sales = $query->paginate(30)->withQueryString();
@@ -1140,9 +1147,27 @@ class SalesController extends Controller
             ->pluck('tahun');
 
         $listCustomer = Sales::whereNotNull('nama_customer')->where('nama_customer', '!=', '')->distinct()->orderBy('nama_customer', 'asc')->pluck('nama_customer');
-        $listProduk = \App\Models\Barang::whereNotNull('nama_barang')->where('nama_barang', '!=', '')->distinct()->orderBy('nama_barang', 'asc')->pluck('nama_barang');
-        $listPs = Sales::whereNotNull('ps')->where('ps', '!=', '')->distinct()->orderBy('ps', 'asc')->pluck('ps');
-        $listSatuan = Sales::whereNotNull('satuan')->where('satuan', '!=', '')->distinct()->orderBy('satuan', 'asc')->pluck('satuan');
+        $listPs = Sales::whereNotNull('ps')
+            ->where('ps', '!=', '')
+            ->distinct()
+            ->orderBy('ps', 'asc')
+            ->pluck('ps');
+        $listProduk = Sales::whereNotNull('nama_produk')
+            ->where('nama_produk', '!=', '')
+            ->distinct()
+            ->orderBy('nama_produk', 'asc')
+            ->pluck('nama_produk');
+        $listCustomer = Sales::whereNotNull('nama_customer')
+            ->where('nama_customer', '!=', '')
+            ->distinct()
+            ->orderBy('nama_customer', 'asc')
+            ->pluck('nama_customer');
+
+        $listSatuan = Sales::whereNotNull('satuan')
+            ->where('satuan', '!=', '')
+            ->distinct()
+            ->orderBy('satuan', 'asc')
+            ->pluck('satuan');
 
         return view('users.sales.manage', [
             'title'     => 'Kelola Data Sales',
@@ -1341,6 +1366,20 @@ class SalesController extends Controller
         }
         $salesPrevMonth = $salesPrevMonthQuery->select('ps', DB::raw('SUM(harga_nett) as total_sales'))->groupBy('ps')->get()->keyBy('ps');
 
+        // ======== KODE TAMBAHAN UNTUK AVG YTD ========
+        // Ambil array bulan dari Januari s/d bulan terpilih
+        $monthsYtd = array_slice($this->urutanBulan, 0, $bulanIndex + 1);
+        $pembagiYtd = count($monthsYtd);
+
+        $salesYtdQuery = Sales::whereYear('tanggal', $tahun)->whereIn('bulan', $monthsYtd);
+        if (!$this->hasFullSalesAccess()) {
+            $salesYtdQuery->where(function ($q) {
+                $q->whereRaw("LOWER(ps) != 'office'")->orWhereNull('ps');
+            });
+        }
+        $salesYtd = $salesYtdQuery->select('ps', DB::raw('SUM(harga_nett) as total_sales'))->groupBy('ps')->get()->keyBy('ps');
+        // ===============================================
+
         $pduList = array_values($pdu);
         foreach ($pduList as &$psData) {
             $psData['tanggal'] = array_values($psData['tanggal']);
@@ -1356,6 +1395,11 @@ class SalesController extends Controller
             $growthRate = $sPrevValActual > 0 ? round((($sVal - $sPrevValActual) / $sPrevValActual) * 100, 1) : 0;
             if ($sPrevValActual == 0 && $sVal > 0) $growthRate = 100;
             $psData['growth_rate'] = $growthRate;
+
+            // ======== KODE TAMBAHAN UNTUK AVG YTD ========
+            $ytdVal = isset($salesYtd[$psData['nama']]) ? (float)$salesYtd[$psData['nama']]->total_sales : 0;
+            $psData['avg_ytd'] = $pembagiYtd > 0 ? round($ytdVal / $pembagiYtd, 2) : 0;
+            // ===============================================
         }
 
         // group 2: by outlet (ps -> customer -> produk)
@@ -1876,5 +1920,241 @@ class SalesController extends Controller
             ->delete();
 
         return response()->json(['success' => true, 'message' => 'Aturan insentif berhasil dihapus.']);
+    }
+
+    public function forecast(Request $request)
+    {
+        if (!$this->hasForecastAccess()) {
+            abort(403, 'You do not have access to the Sales Forecast page.');
+        }
+
+        $tahun = $request->input('tahun', date('Y'));
+        $bulanTersediaUrut = $this->urutanBulan;
+
+        // 1. Tentukan bulan acuan (End Month yang dipilih)
+        $inputBulanAkhir = $request->input('bulan_akhir');
+        
+        $namaBulanIndo = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        $defaultBulanAktif = ($tahun == date('Y')) ? $namaBulanIndo[(int)date('n')] : 'September';
+
+        $bulanAktif = ($inputBulanAkhir && in_array($inputBulanAkhir, $bulanTersediaUrut)) ? $inputBulanAkhir : $defaultBulanAktif;
+
+        // Ambil persentase kustom dari database, default 20% jika belum diatur
+        $settingPersen = \App\Models\SalesForecastSetting::where('tahun', $tahun)
+            ->where('bulan_acuan', $bulanAktif)
+            ->value('percentage');
+        
+        $activePercentage = $settingPersen !== null ? (float)$settingPersen : 20.00;
+        $multiplier = 1 + ($activePercentage / 100);
+
+        // 2. Ambil 3 bulan KE BELAKANG SEBELUM bulan aktif yang dipilih
+        $indexAktif = array_search($bulanAktif, $bulanTersediaUrut);
+        if ($indexAktif !== false && $indexAktif >= 3) {
+            $tigaBulanTerakhir = array_slice($bulanTersediaUrut, $indexAktif - 3, 3);
+        } else {
+            $tigaBulanTerakhir = array_slice($bulanTersediaUrut, max(0, $indexAktif - 3), $indexAktif);
+            if (empty($tigaBulanTerakhir)) {
+                $tigaBulanTerakhir = ['Juni', 'Juli', 'Agustus'];
+            }
+        }
+
+        // 3. Fetch actual sales data
+        $salesRaw = Sales::whereYear('tanggal', $tahun)
+            ->whereIn('bulan', $tigaBulanTerakhir)
+            ->whereNotNull('nama_produk')
+            ->where('nama_produk', '!=', '')
+            ->select('nama_produk', 'ps', 'bulan', DB::raw('SUM(qty) as total_qty'), DB::raw('MAX(satuan) as satuan'))
+            ->groupBy('nama_produk', 'ps', 'bulan')
+            ->get();
+
+        // Normalisasi nama bulan agar sesuai (case-sensitive) saat diproses oleh Collection PHP
+        $salesRaw->transform(function ($item) {
+            $item->bulan = ucfirst(strtolower(trim($item->bulan)));
+            return $item;
+        });
+
+        $groupedByProduk = $salesRaw->groupBy('nama_produk');
+        
+        // 4. Fetch Real-time Stock Data & Unit from Barang Model
+        $stokSaatIni = [];
+        $satuanStok = [];
+        if (class_exists('\App\Models\Barang')) {
+            $namaProdukArray = $groupedByProduk->keys()->toArray();
+            $barangs = \App\Models\Barang::whereIn('nama_barang', $namaProdukArray)->get();
+            foreach ($barangs as $brg) {
+                $stokSaatIni[$brg->nama_barang] = $brg->stok;
+                $satuanStok[$brg->nama_barang] = $brg->satuan ?? 'Pcs';
+            }
+        }
+
+        // 5. Fetch Existing Saved Suggested Orders from Database
+        $savedOrders = DB::table('sales_forecast_orders')
+            ->where('tahun', $tahun)
+            ->where('bulan_acuan', $bulanAktif)
+            ->pluck('suggested_qty', 'nama_produk')
+            ->toArray();
+
+        // 6. Calculate Forecast Data
+        $stockForecast = [];
+        foreach ($groupedByProduk as $produk => $rows) {
+            $total3Bulan = $rows->sum('total_qty');
+            $jumlahBulanTerpakai = count($tigaBulanTerakhir);
+            
+            $avg = $jumlahBulanTerpakai > 0 ? $total3Bulan / $jumlahBulanTerpakai : 0;
+            $forecast = (int) ceil($avg * $multiplier); // Dinamis menggunakan persentase dari database
+
+            $psBreakdown = [];
+            foreach ($rows->groupBy('ps') as $psName => $psRows) {
+                $namaPs = $psName ?: 'Others';
+                $psBreakdown[$namaPs] = $psRows->sum('total_qty');
+            }
+            arsort($psBreakdown);
+
+            $detailBulan = [];
+            foreach ($tigaBulanTerakhir as $b) {
+                $detailBulan[$b] = $rows->where('bulan', $b)->sum('total_qty');
+            }
+
+            $satuanRow = $rows->whereNotNull('satuan')->where('satuan', '!=', '')->first();
+            $satuanSales = $satuanRow ? $satuanRow->satuan : 'Pcs';
+
+            if ($avg > 0) {
+                $stockForecast[] = [
+                    'nama_produk'    => $produk,
+                    'satuan_sales'   => $satuanSales,
+                    'satuan_stok'    => $satuanStok[$produk] ?? 'Pcs',
+                    'total_qty'      => (int) $total3Bulan,
+                    'avg_qty'        => round($avg, 2),
+                    'forecast_qty'   => $forecast,
+                    'detail_bulan'   => $detailBulan,
+                    'ps_breakdown'   => $psBreakdown,
+                    'stok_tersedia'  => $stokSaatIni[$produk] ?? 0, 
+                    'suggested_order'=> $savedOrders[$produk] ?? ''
+                ];
+            }
+        }
+        
+        usort($stockForecast, fn($a, $b) => $b['forecast_qty'] <=> $a['forecast_qty']);
+
+        // 7. Format Teks Tanggal Available Stock
+        $bulanTerakhirTampil = end($tigaBulanTerakhir);
+        $indeksBulanAkhirTampil = array_search($bulanTerakhirTampil, $this->urutanBulan);
+        $bulanEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        if ($indeksBulanAkhirTampil !== false) {
+            $mappingAngka = ['Januari' => 1, 'Februari' => 2, 'Maret' => 3, 'April' => 4, 'Mei' => 5, 'Juni' => 6, 'Juli' => 7, 'Agustus' => 8, 'September' => 9, 'Oktober' => 10, 'November' => 11, 'Desember' => 12];
+            $angkaBln = $mappingAngka[$bulanTerakhirTampil] ?? 8;
+            
+            $tanggalAkhir = \Carbon\Carbon::create($tahun, $angkaBln, 1)->endOfMonth();
+            $teksStokAkhir = $bulanEn[$angkaBln - 1] . ' ' . $tanggalAkhir->format('d');
+        } else {
+            $teksStokAkhir = 'August 31';
+        }
+
+        $monthTranslations = [
+            'Januari' => 'January', 'Februari' => 'February', 'Maret' => 'March',
+            'April' => 'April', 'Mei' => 'May', 'Juni' => 'June',
+            'Juli' => 'July', 'Agustus' => 'August', 'September' => 'September',
+            'Oktober' => 'October', 'November' => 'November', 'Desember' => 'December'
+        ];
+
+        return view('users.sales.forecast', [
+            'title' => 'Sales Forecast & Stock Estimation',
+            'stockForecast' => $stockForecast,
+            'tigaBulanTerakhir' => $tigaBulanTerakhir,
+            'bulanTersediaUrut' => $bulanTersediaUrut,
+            'bulanAktif' => $bulanAktif,
+            'monthTranslations' => $monthTranslations,
+            'tahun' => $tahun,
+            'teksStokAkhir' => $teksStokAkhir,
+            'activePercentage' => $activePercentage, 
+            'hasFullAccess' => $this->hasFullSalesAccess(), 
+            'listTahun' => Sales::selectRaw('DISTINCT YEAR(tanggal) as tahun')->orderBy('tahun', 'desc')->pluck('tahun')->toArray()
+        ]);
+    }
+
+    public function storeSuggestedOrder(Request $request)
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $jabatan = strtolower($user->jabatan ?? '');
+        $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
+        $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing') || \Illuminate\Support\Str::contains($jabatan, 'purchasing');
+
+        if ($isAdminGudang || $isLegalPurchasing) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized action for this role.'], 403);
+        }
+
+        if (!$this->hasForecastAccess()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'tahun'         => 'required|integer',
+            'bulan_acuan'   => 'required|string',
+            'nama_produk'   => 'required|string',
+            'forecast_qty'  => 'required|numeric',
+            'suggested_qty' => 'nullable|numeric',
+        ]);
+
+        $userId = \Illuminate\Support\Facades\Auth::id();
+        $cleanQty = $request->suggested_qty !== null && $request->suggested_qty !== '' 
+                    ? str_replace('.', '', $request->suggested_qty) 
+                    : 0;
+
+        \App\Models\SalesForecastOrder::updateOrCreate(
+            [
+                'tahun'       => $request->tahun,
+                'bulan_acuan' => $request->bulan_acuan,
+                'nama_produk' => $request->nama_produk,
+            ],
+            [
+                'forecast_qty'  => $request->forecast_qty,
+                'suggested_qty' => (float)$cleanQty,
+                'user_id'       => $userId,
+            ]
+        );
+
+        return response()->json(['success' => true, 'message' => 'Saved successfully']);
+    }
+
+    public function saveForecastSettings(Request $request)
+    {
+        if (!$this->hasFullSalesAccess()) {
+            abort(403, 'Unauthorized');
+        }
+
+        $request->validate([
+            'tahun' => 'required|integer',
+            'bulan_acuan' => 'required|string',
+            'percentage' => 'required|numeric|min:0|max:500',
+        ]);
+
+        \App\Models\SalesForecastSetting::updateOrCreate(
+            [
+                'tahun' => $request->tahun,
+                'bulan_acuan' => $request->bulan_acuan,
+            ],
+            [
+                'percentage' => $request->percentage,
+            ]
+        );
+
+        return redirect()->back()->with('success', 'Persentase buffer forecast berhasil diperbarui!');
+    }
+
+    private function hasForecastAccess()
+    {
+        if ($this->hasFullSalesAccess()) return true;
+
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (!$user) return false;
+
+        $divisi = strtolower($user->divisi ?? '');
+        $jabatan = strtolower($user->jabatan ?? '');
+        
+        $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
+        $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing') || \Illuminate\Support\Str::contains($jabatan, 'purchasing');
+
+        return in_array($divisi, ['marketing dan operasional', 'finance dan gudang', 'fianance dan gudang']) || $isAdminGudang || $isLegalPurchasing;
     }
 }

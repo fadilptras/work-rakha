@@ -2,22 +2,27 @@
     $agent = new \Jenssegers\Agent\Agent();
     $isMobile = $agent->isMobile();
 @endphp
-<x-layout-users title="{{ $title ?? 'Skema Insentif Sales' }}">
+<x-layout-users title="{{ $title ?? 'Sales Incentive Scheme' }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     @push('styles')
     <style>
         [x-cloak] { display: none !important; }
-        body { background-color: #ede9fe; }
+        body { background-color: #f8fafc; }
 
         /* == Background == */
         .mesh-bg { 
-            background-color: #ede9fe;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.4) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
-            background-attachment: fixed;
+                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.6) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+            pointer-events: none;
         }
 
         /* == Header Style == */
@@ -34,7 +39,7 @@
         .header-content { position: relative; z-index: 1; }
 
         /* == Cards == */
-        .glass-card {
+        .glass-panel {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
@@ -49,44 +54,25 @@
             display: inline-flex; align-items: center; gap: 10px;
             padding: 8px 18px 8px 8px;
             background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.9);
             border-radius: 9999px;
-            color: #1e293b;
-            font-size: 0.9rem; font-weight: 700;
-            text-decoration: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            margin-bottom: 0;
-            width: fit-content;
+            color: #1e293b; font-size: 0.9rem; font-weight: 700;
+            transition: all 0.2s ease; width: fit-content;
         }
         .btn-back-modern:hover { 
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
-            transform: translateY(-2px);
-            color: #1e40af;
+            background: #fff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1); color: #1e40af;
         }
         .btn-back-modern .icon-circle {
-            width: 32px; height: 32px;
-            background: #fff;
-            border-radius: 50%;
+            width: 32px; height: 32px; background: #fff; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            color: #3b82f6;
-            font-size: 0.85rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-            transition: transform 0.3s ease;
-        }
-        .btn-back-modern:hover .icon-circle {
-            transform: translateX(-3px);
-            background: #eff6ff;
+            color: #3b82f6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .tab-btn {
-            padding: 0.6rem 1.25rem; font-size: 0.95rem; border-radius: 1rem; font-weight: 700;
+            padding: 0.6rem 1rem; font-size: 0.85rem; border-radius: 0.85rem; font-weight: 700;
             color: #64748b; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent;
             background: rgba(255, 255, 255, 0.6);
-            cursor: pointer;
+            cursor: pointer; text-align: center; justify-content: center;
         }
         .tab-btn:hover { color: #2563eb; background: #eff6ff; }
         .tab-btn.active { 
@@ -94,22 +80,6 @@
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); 
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
             border-color: transparent;
-        }
-
-        .scrollbar-none::-webkit-scrollbar {
-            display: none;
-        }
-        .scrollbar-none {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        @media (max-width: 767px) {
-            .tab-btn {
-                padding: 0.5rem 0.85rem;
-                font-size: 0.8rem;
-                border-radius: 0.75rem;
-            }
         }
 
         .tier-badge {
@@ -128,11 +98,45 @@
         .tier-gold { background: #fef9c3; color: #a16207; border: 1px solid #fef08a; }
         .tier-platinum { background: #ecfeff; color: #0891b2; border: 1px solid #cffafe; }
         .tier-diamond { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+
+        /* Sticky Column PS for Table with Vertical Border Divider */
+        .table-sticky-container {
+            position: relative;
+            overflow-x: auto;
+        }
+        .table-sticky-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        @media (max-width: 767px) {
+            .table-sticky-container th:first-child,
+            .table-sticky-container td:first-child {
+                position: sticky;
+                left: 0;
+                z-index: 10;
+                background-color: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border-right: 1px solid #e2e8f0;
+                box-shadow: 4px 0 8px -3px rgba(0, 0, 0, 0.03);
+            }
+            .table-sticky-container tr:hover th:first-child,
+            .table-sticky-container tr:hover td:first-child {
+                background-color: rgba(248, 250, 252, 0.95);
+            }
+        }
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 h-full mesh-bg relative overflow-hidden text-slate-800 p-4 sm:p-6 lg:p-6" x-data="{
-        activeTab: @if($hasFullAccess) '{{ request('tab') }}' || localStorage.getItem('active_incentive_tab') || 'perbulan' @else 'perbulan' @endif,
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16" x-data="{
+        activeTab: (() => {
+            const validTabs = ['monthly', 'quarterly', 'outlet'@if($hasFullAccess), 'settings'@endif];
+            const urlTab = new URLSearchParams(window.location.search).get('tab');
+            if (urlTab && validTabs.includes(urlTab)) return urlTab;
+            const stored = localStorage.getItem('active_incentive_tab');
+            if (stored && validTabs.includes(stored)) return stored;
+            return 'monthly';
+        })(),
         showInfoModal: false,
         showInfoModalTriwulan: false,
         showInfoModalOutlet: false,
@@ -210,7 +214,7 @@
             const fmt = (num) => new Intl.NumberFormat('id-ID').format(num);
 
             if (basis !== 'nominal') {
-                return `Pencapaian ≥ ${current.min_achievement}%`;
+                return `Achievement ≥ ${current.min_achievement}%`;
             }
 
             if (idx === 0) {
@@ -229,49 +233,40 @@
             }
         },
         init() {
-            // Watch activeTab changes to persist state on refresh/reload
+            localStorage.setItem('active_incentive_tab', this.activeTab);
+
+            const url = new URL(window.location);
+            url.searchParams.set('tab', this.activeTab);
+            window.history.replaceState({}, '', url);
+
             this.$watch('activeTab', value => {
                 localStorage.setItem('active_incentive_tab', value);
                 const url = new URL(window.location);
                 url.searchParams.set('tab', value);
                 window.history.replaceState({}, '', url);
             });
-            
-            // Sync initial URL if not present
-            const url = new URL(window.location);
-            if (!url.searchParams.has('tab')) {
-                url.searchParams.set('tab', this.activeTab);
-                window.history.replaceState({}, '', url);
-            }
         }
+
     }">
-        <div class="w-full max-w-6xl mx-auto flex flex-col gap-4">
+        <div class="mesh-bg"></div>
+
+        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-6 flex flex-col gap-2.5">
             
             {{-- Navigation/Header --}}
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0 mb-0 self-start md:self-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
+                <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0">
                     <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                    Kembali ke Dashboard Sales
+                    Back to Sales Dashboard
                 </a>
             </div>
 
-            {{-- Page Title Card (Mobile - Stock Style) --}}
-            <div class="block md:hidden rounded-2xl p-4 text-white shadow-lg flex items-center gap-3 mb-2" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
-                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-lg shrink-0">
-                    <i class="fas fa-hand-holding-dollar"></i>
-                </div>
-                <div>
-                    <h2 class="text-xs font-black uppercase tracking-wider">SKEMA INSENTIF SALES</h2>
-                </div>
-            </div>
-
-            {{-- Page Title Card (Desktop - Original Style) --}}
+            {{-- Page Title Card (Desktop Style) --}}
             <div class="hidden md:block page-header mb-2">
                 <div class="header-content flex flex-row items-center justify-between gap-6">
                     <div>
-                        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Skema Insentif Sales</h1>
-                        <p class="text-blue-100 text-xs md:text-sm mt-1">
-                            Simulasikan dan pantau perhitungan insentif performa penjualan sales berdasarkan skema dan target resmi.
+                        <h1 class="text-2xl font-bold tracking-tight text-white">Sales Incentive Scheme</h1>
+                        <p class="text-blue-100 text-sm mt-1">
+                            Simulate and monitor sales performance incentive calculations based on official schemes and targets.
                         </p>
                     </div>
                     <div>
@@ -279,53 +274,65 @@
                     </div>
                 </div>
             </div>
-            @endif
 
-            {{-- Tabs Navigation --}}
-            <div class="flex flex-nowrap overflow-x-auto gap-2 pb-2 scrollbar-none whitespace-nowrap border-b border-slate-200">
-                <button @click="activeTab = 'perbulan'" :class="activeTab === 'perbulan' ? 'active' : ''" class="tab-btn flex items-center gap-2">
+            {{-- Page Title Card (Mobile Style - Stock Style) --}}
+            <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 mb-1 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
+                <div class="relative z-10 flex-1 min-w-0">
+                    <h2 class="text-sm font-black tracking-wider uppercase leading-snug truncate">Sales Incentive Scheme</h2>
+                    <p class="text-xs text-blue-100 font-medium leading-normal truncate mt-0.5">
+                        Simulate and monitor performance.
+                    </p>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white text-base shrink-0 shadow-inner relative z-10">
+                    <i class="fas fa-hand-holding-dollar"></i>
+                </div>
+            </div>
+
+            {{-- Tabs Navigation (2 columns grid for mobile, row for desktop) --}}
+            <div class="grid grid-cols-2 sm:flex sm:flex-nowrap sm:overflow-x-auto gap-2 pb-2 scrollbar-none border-b border-slate-200">
+                <button @click="activeTab = 'monthly'" :class="activeTab === 'monthly' ? 'active' : ''" class="tab-btn flex items-center gap-2">
                     <i class="fas fa-calendar-alt"></i>
-                    <span>Skema Perbulan</span>
+                    <span>Monthly Scheme</span>
                 </button>
-                <button @click="activeTab = 'pertriwulan'" :class="activeTab === 'pertriwulan' ? 'active' : ''" class="tab-btn flex items-center gap-2">
+                <button @click="activeTab = 'quarterly'" :class="activeTab === 'quarterly' ? 'active' : ''" class="tab-btn flex items-center gap-2">
                     <i class="fas fa-calendar-days"></i>
-                    <span>Skema Pertriwulan</span>
+                    <span>Quarterly Scheme</span>
                 </button>
                 <button @click="activeTab = 'outlet'" :class="activeTab === 'outlet' ? 'active' : ''" class="tab-btn flex items-center gap-2">
                     <i class="fas fa-store"></i>
-                    <span>Bonus Outlet Baru</span>
+                    <span>New Outlet Bonus</span>
                 </button>
                 @if($hasFullAccess)
-                <button @click="activeTab = 'pengaturan'" :class="activeTab === 'pengaturan' ? 'active' : ''" class="tab-btn flex items-center gap-2">
+                <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'active' : ''" class="tab-btn flex items-center gap-2">
                     <i class="fas fa-cog"></i>
-                    <span>Pengaturan Aturan</span>
+                    <span>Rules Settings</span>
                 </button>
                 @endif
             </div>
 
-            {{-- SECTION 1: PERBULAN (MONTHLY) --}}
-            <div x-show="activeTab === 'perbulan'" class="flex flex-col gap-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+            {{-- SECTION 1: MONTHLY SCHEME --}}
+            <div x-show="activeTab === 'monthly'" class="flex flex-col gap-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
                 
                 {{-- Card Realisasi & Payout (With Merged Filters) --}}
-                <div class="glass-card">
+                <div class="glass-panel border-t-4 border-t-blue-500">
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 border-b border-slate-100 pb-3 w-full">
                         <div class="flex items-center justify-between w-full lg:w-auto">
                             <div>
-                                <h3 class="text-lg md:text-xl font-bold text-slate-800"><span class="md:inline hidden">Actual Sales & Estimasi </span>Insentif Bulanan</h3>
-                                <p class="text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1">Periode: {{ $bulan }} {{ $tahun }}</p>
+                                <h3 class="text-lg md:text-xl font-bold text-slate-800"><span class="md:inline hidden">Actual Sales & Estimated </span>Monthly Incentive</h3>
+                                <p class="text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1">Period: {{ $bulan }} {{ $tahun }}</p>
                             </div>
                             
                             <!-- Info Button Top Right (Mobile only) -->
-                            <button type="button" @click="showInfoModal = true" class="lg:hidden w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="Lihat Aturan Skema Insentif">
+                            <button type="button" @click="showInfoModal = true" class="lg:hidden w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="View Incentive Scheme Rules">
                                 <i class="fas fa-info-circle text-base"></i>
                             </button>
                         </div>
                         
                         <div class="flex items-center gap-3 w-full lg:w-auto">
                             <form method="GET" action="{{ route('sales.incentive') }}" class="grid grid-cols-2 gap-3 w-full lg:flex lg:w-auto lg:items-center lg:gap-3">
-                                <input type="hidden" name="tab" value="perbulan">
+                                <input type="hidden" name="tab" value="monthly">
                                 <div class="col-span-1 flex flex-col gap-0.5 relative lg:w-28">
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Bulan</label>
+                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Month</label>
                                     <div class="relative w-full">
                                         <select name="bulan" onchange="this.form.submit()" class="w-full appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                             @foreach($listBulan as $b)
@@ -338,7 +345,7 @@
                                     </div>
                                 </div>
                                 <div class="col-span-1 flex flex-col gap-0.5 relative lg:w-24">
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tahun</label>
+                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Year</label>
                                     <div class="relative w-full">
                                         <select name="tahun" onchange="this.form.submit()" class="w-full appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                             @foreach($listTahun as $t)
@@ -370,32 +377,32 @@
                             </form>
                             
                             <!-- Info Button (Desktop only) -->
-                            <button type="button" @click="showInfoModal = true" class="hidden lg:flex w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="Lihat Aturan Skema Insentif">
+                            <button type="button" @click="showInfoModal = true" class="hidden lg:flex w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="View Incentive Scheme Rules">
                                 <i class="fas fa-info-circle text-base"></i>
                             </button>
                         </div>
                     </div>
 
                         @if(count($payouts) > 0)
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
+                        <div class="table-sticky-container">
+                            <table>
                                 <thead>
-                                    <tr class="border-b border-slate-100 text-slate-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider">
-                                        <th class="py-2.5 px-2 whitespace-nowrap">Sales Person (PS)</th>
-                                        <th class="py-2.5 px-2 text-right whitespace-nowrap">Target</th>
-                                        <th class="py-2.5 px-2 text-right whitespace-nowrap">Actual Sales</th>
-                                        <th class="py-2.5 px-2 text-center whitespace-nowrap">Ach %</th>
-                                        <th class="py-2.5 px-2 text-center whitespace-nowrap">Rate</th>
-                                        <th class="py-2.5 px-2 text-right whitespace-nowrap">Est. Insentif</th>
+                                    <tr class="border-b border-slate-200 text-slate-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider">
+                                        <th class="py-2.5 px-3 text-left whitespace-nowrap">Sales Person (PS)</th>
+                                        <th class="py-2.5 px-3 text-right whitespace-nowrap">Target</th>
+                                        <th class="py-2.5 px-3 text-right whitespace-nowrap">Actual Sales</th>
+                                        <th class="py-2.5 px-3 text-center whitespace-nowrap">Ach %</th>
+                                        <th class="py-2.5 px-3 text-center whitespace-nowrap">Rate</th>
+                                        <th class="py-2.5 px-3 text-right whitespace-nowrap">Est. Incentive</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($payouts as $payout)
-                                    <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-slate-700 text-[11px] sm:text-xs">
-                                        <td class="py-2.5 px-2 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
-                                        <td class="py-2.5 px-2 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
-                                        <td class="py-2.5 px-2 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
-                                        <td class="py-2.5 px-2 text-center whitespace-nowrap">
+                                    <tr class="border-b border-slate-200 hover:bg-slate-50/50 transition-colors text-slate-700 text-[11px] sm:text-xs">
+                                        <td class="py-2.5 px-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
+                                        <td class="py-2.5 px-3 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
+                                        <td class="py-2.5 px-3 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
+                                        <td class="py-2.5 px-3 text-center whitespace-nowrap">
                                             <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[10px] sm:text-xs
                                                 @if($payout['achievement_rate'] >= 200) bg-sky-50 text-sky-700
                                                 @elseif($payout['achievement_rate'] >= 150) bg-indigo-50 text-indigo-700
@@ -406,10 +413,10 @@
                                                 {{ number_format($payout['achievement_rate'], 1, ',', '.') }}%
                                             </span>
                                         </td>
-                                        <td class="py-2.5 px-2 text-center font-bold text-slate-600 whitespace-nowrap">
+                                        <td class="py-2.5 px-3 text-center font-bold text-slate-600 whitespace-nowrap">
                                             {{ number_format($payout['incentive_rate'], 1, ',', '.') }}%
                                         </td>
-                                        <td class="py-2.5 px-2 text-right font-black text-emerald-600 whitespace-nowrap">
+                                        <td class="py-2.5 px-3 text-right font-black text-emerald-600 whitespace-nowrap">
                                             Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                         </td>
                                     </tr>
@@ -420,8 +427,8 @@
                         @else
                         <div class="py-12 flex flex-col items-center justify-center text-center text-slate-400">
                             <i class="fas fa-folder-open text-5xl mb-4 text-slate-300"></i>
-                            <h4 class="font-bold text-lg text-slate-600">Data Tidak Ditemukan</h4>
-                            <p class="text-sm max-w-sm mt-1">Belum ada data target atau actual sales untuk periode ini.</p>
+                            <h4 class="font-bold text-lg text-slate-600">Data Not Found</h4>
+                            <p class="text-sm max-w-sm mt-1">No target or actual sales data available for this period.</p>
                         </div>
                         @endif
                     </div>
@@ -431,7 +438,7 @@
             {{-- Modal Aturan Skema --}}
             <div x-show="showInfoModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showInfoModal = false"></div>
-                <div class="glass-card w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden" 
+                <div class="glass-panel w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden" 
                      x-transition:enter="transition ease-out duration-300 transform" 
                      x-transition:enter-start="opacity-0 scale-95" 
                      x-transition:enter-end="opacity-100 scale-100"
@@ -439,12 +446,10 @@
                      x-transition:leave-start="opacity-100 scale-100"
                      x-transition:leave-end="opacity-0 scale-95">
                     
-
-                    
                     <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
                         <h3 class="text-lg font-bold flex items-center gap-2 text-slate-800">
                             <i class="fas fa-info-circle text-blue-500"></i>
-                            <span>Aturan Skema Perbulan</span>
+                            <span>Monthly Scheme Rules</span>
                         </h3>
                         <button type="button" @click="showInfoModal = false" class="text-slate-400 hover:text-slate-600 transition-colors">
                             <i class="fas fa-times text-lg"></i>
@@ -501,34 +506,34 @@
                         </div>
                     </div>
                     <p class="text-xs text-slate-400 mt-4 leading-relaxed">
-                        * Persentase insentif dikalikan langsung dari total nilai actual sales bersih (Nett Sales) yang dibukukan.
+                        * Incentive percentage is calculated directly from the total net actual sales recorded.
                     </p>
                 </div>
             </div>
 
-            {{-- SECTION 2: PERTRIWULAN (QUARTERLY) --}}
-            <div x-show="activeTab === 'pertriwulan'" class="flex flex-col gap-4" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+            {{-- SECTION 2: QUARTERLY SCHEME --}}
+            <div x-show="activeTab === 'quarterly'" class="flex flex-col gap-4" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
                 
                 {{-- Card Realisasi & Payout Triwulan --}}
-                <div class="glass-card">
+                <div class="glass-panel border-t-4 border-t-blue-500">
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 border-b border-slate-100 pb-3 w-full">
                         <div class="flex items-center justify-between w-full lg:w-auto">
                             <div>
-                                <h3 class="text-lg md:text-xl font-bold text-slate-800"><span class="md:inline hidden">Actual Sales & Estimasi </span>Insentif Triwulan</h3>
-                                <p class="text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1">Periode: {{ $triwulan }} {{ $tahun }}</p>
+                                <h3 class="text-lg md:text-xl font-bold text-slate-800"><span class="md:inline hidden">Actual Sales & Estimated </span>Quarterly Incentive</h3>
+                                <p class="text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1">Period: {{ $triwulan }} {{ $tahun }}</p>
                             </div>
                             
                             <!-- Info Button Top Right (Mobile only) -->
-                            <button type="button" @click="showInfoModalTriwulan = true" class="lg:hidden w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="Lihat Aturan Skema Insentif">
+                            <button type="button" @click="showInfoModalTriwulan = true" class="lg:hidden w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="View Incentive Scheme Rules">
                                 <i class="fas fa-info-circle text-base"></i>
                             </button>
                         </div>
                         
                         <div class="flex items-center gap-3 w-full lg:w-auto">
                             <form method="GET" action="{{ route('sales.incentive') }}" class="grid grid-cols-2 gap-3 w-full lg:flex lg:w-auto lg:items-center lg:gap-3">
-                                <input type="hidden" name="tab" value="pertriwulan">
+                                <input type="hidden" name="tab" value="quarterly">
                                 <div class="col-span-1 flex flex-col gap-0.5 relative lg:w-28">
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Triwulan</label>
+                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Quarter</label>
                                     <div class="relative w-full">
                                         <select name="triwulan" onchange="this.form.submit()" class="w-full appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                             @foreach(['Triwulan I', 'Triwulan II', 'Triwulan III', 'Triwulan IV'] as $q)
@@ -541,7 +546,7 @@
                                     </div>
                                 </div>
                                 <div class="col-span-1 flex flex-col gap-0.5 relative lg:w-24">
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tahun</label>
+                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Year</label>
                                     <div class="relative w-full">
                                         <select name="tahun" onchange="this.form.submit()" class="w-full appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                             @foreach($listTahun as $t)
@@ -573,31 +578,31 @@
                             </form>
                             
                             <!-- Info Button (Desktop only) -->
-                            <button type="button" @click="showInfoModalTriwulan = true" class="hidden lg:flex w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="Lihat Aturan Skema Insentif">
+                            <button type="button" @click="showInfoModalTriwulan = true" class="hidden lg:flex w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="View Incentive Scheme Rules">
                                 <i class="fas fa-info-circle text-base"></i>
                             </button>
                         </div>
                     </div>
 
                     @if(count($payoutsTriwulan) > 0)
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                    <div class="table-sticky-container">
+                        <table>
                             <thead>
-                                <tr class="border-b border-slate-100 text-slate-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider">
-                                    <th class="py-2.5 px-2 whitespace-nowrap">Sales Person (PS)</th>
-                                    <th class="py-2.5 px-2 text-right whitespace-nowrap">Target Triwulan</th>
-                                    <th class="py-2.5 px-2 text-right whitespace-nowrap">Actual Sales</th>
-                                    <th class="py-2.5 px-2 text-center whitespace-nowrap">Ach %</th>
-                                    <th class="py-2.5 px-2 text-right whitespace-nowrap">Est. Insentif</th>
+                                <tr class="border-b border-slate-200 text-slate-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider">
+                                    <th class="py-2.5 px-3 text-left whitespace-nowrap">Sales Person (PS)</th>
+                                    <th class="py-2.5 px-3 text-right whitespace-nowrap">Quarterly Target</th>
+                                    <th class="py-2.5 px-3 text-right whitespace-nowrap">Actual Sales</th>
+                                    <th class="py-2.5 px-3 text-center whitespace-nowrap">Ach %</th>
+                                    <th class="py-2.5 px-3 text-right whitespace-nowrap">Est. Incentive</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($payoutsTriwulan as $payout)
-                                <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-slate-700 text-[11px] sm:text-xs">
-                                    <td class="py-2.5 px-2 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
-                                    <td class="py-2.5 px-2 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
-                                    <td class="py-2.5 px-2 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
-                                    <td class="py-2.5 px-2 text-center whitespace-nowrap">
+                                <tr class="border-b border-slate-200 hover:bg-slate-50/50 transition-colors text-slate-700 text-[11px] sm:text-xs">
+                                    <td class="py-2.5 px-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
+                                    <td class="py-2.5 px-3 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
+                                    <td class="py-2.5 px-3 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
+                                    <td class="py-2.5 px-3 text-center whitespace-nowrap">
                                         <span class="inline-flex items-center justify-center font-bold px-2.5 py-1 rounded-full text-[10px] sm:text-xs
                                             @if($payout['achievement_rate'] >= 200) bg-sky-50 text-sky-700
                                             @elseif($payout['achievement_rate'] >= 150) bg-indigo-50 text-indigo-700
@@ -608,7 +613,7 @@
                                             {{ number_format($payout['achievement_rate'], 1, ',', '.') }}%
                                         </span>
                                     </td>
-                                    <td class="py-2.5 px-2 text-right font-black text-emerald-600 whitespace-nowrap">
+                                    <td class="py-2.5 px-3 text-right font-black text-emerald-600 whitespace-nowrap">
                                         Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -619,8 +624,8 @@
                     @else
                     <div class="py-12 flex flex-col items-center justify-center text-center text-slate-400">
                         <i class="fas fa-folder-open text-5xl mb-4 text-slate-300"></i>
-                        <h4 class="font-bold text-lg text-slate-600">Data Tidak Ditemukan</h4>
-                        <p class="text-sm max-w-sm mt-1">Belum ada data target atau actual sales untuk periode ini.</p>
+                        <h4 class="font-bold text-lg text-slate-600">Data Not Found</h4>
+                        <p class="text-sm max-w-sm mt-1">No target or actual sales data available for this period.</p>
                     </div>
                     @endif
                 </div>
@@ -629,7 +634,7 @@
             {{-- Modal Aturan Skema Triwulan --}}
             <div x-show="showInfoModalTriwulan" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showInfoModalTriwulan = false"></div>
-                <div class="glass-card w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden" 
+                <div class="glass-panel w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden" 
                      x-transition:enter="transition ease-out duration-300 transform" 
                      x-transition:enter-start="opacity-0 scale-95" 
                      x-transition:enter-end="opacity-100 scale-100"
@@ -637,12 +642,10 @@
                      x-transition:leave-start="opacity-100 scale-100"
                      x-transition:leave-end="opacity-0 scale-95">
                     
-
-                    
                     <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
                         <h3 class="text-lg font-bold flex items-center gap-2 text-slate-800">
                             <i class="fas fa-info-circle text-blue-500"></i>
-                            <span>Aturan Skema Pertriwulan</span>
+                            <span>Quarterly Scheme Rules</span>
                         </h3>
                         <button type="button" @click="showInfoModalTriwulan = false" class="text-slate-400 hover:text-slate-600 transition-colors">
                             <i class="fas fa-times text-lg"></i>
@@ -699,25 +702,25 @@
                         </div>
                     </div>
                     <p class="text-xs text-slate-400 mt-4 leading-relaxed">
-                        * Insentif triwulan diberikan sebagai bonus flat tetap berdasarkan tingkat akumulasi target pencapaian sales.
+                        * Quarterly incentive is awarded as a fixed flat bonus based on the accumulated sales target achievement level.
                     </p>
                 </div>
             </div>
 
-            {{-- SECTION 3: BONUS OUTLET BARU (NEW OUTLET BONUS) --}}
+            {{-- SECTION 3: NEW OUTLET BONUS --}}
             <div x-show="activeTab === 'outlet'" class="flex flex-col gap-4" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
                 
                 {{-- Card Realisasi & Payout Outlet Baru --}}
-                <div class="glass-card">
+                <div class="glass-panel border-t-4 border-t-blue-500">
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 border-b border-slate-100 pb-3 w-full">
                         <div class="flex items-center justify-between w-full lg:w-auto">
                             <div>
-                                <h3 class="text-lg md:text-xl font-bold text-slate-800"><span class="md:inline hidden">Actual Sales & Estimasi </span>Bonus Outlet Baru</h3>
-                                <p class="text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1">Periode: {{ $bulan }} {{ $tahun }}</p>
+                                <h3 class="text-lg md:text-xl font-bold text-slate-800"><span class="md:inline hidden">Actual Sales & Estimated </span>New Outlet Bonus</h3>
+                                <p class="text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1">Period: {{ $bulan }} {{ $tahun }}</p>
                             </div>
                             
                             <!-- Info Button Top Right (Mobile only) -->
-                            <button type="button" @click="showInfoModalOutlet = true" class="lg:hidden w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="Lihat Aturan Skema Insentif">
+                            <button type="button" @click="showInfoModalOutlet = true" class="lg:hidden w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="View Incentive Scheme Rules">
                                 <i class="fas fa-info-circle text-base"></i>
                             </button>
                         </div>
@@ -726,7 +729,7 @@
                             <form method="GET" action="{{ route('sales.incentive') }}" class="grid grid-cols-2 gap-3 w-full lg:flex lg:w-auto lg:items-center lg:gap-3">
                                 <input type="hidden" name="tab" value="outlet">
                                 <div class="col-span-1 flex flex-col gap-0.5 relative lg:w-28">
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Bulan</label>
+                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Month</label>
                                     <div class="relative w-full">
                                         <select name="bulan" onchange="this.form.submit()" class="w-full appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                             @foreach($listBulan as $b)
@@ -739,7 +742,7 @@
                                     </div>
                                 </div>
                                 <div class="col-span-1 flex flex-col gap-0.5 relative lg:w-24">
-                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tahun</label>
+                                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Year</label>
                                     <div class="relative w-full">
                                         <select name="tahun" onchange="this.form.submit()" class="w-full appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                             @foreach($listTahun as $t)
@@ -771,38 +774,38 @@
                             </form>
                             
                             <!-- Info Button (Desktop only) -->
-                            <button type="button" @click="showInfoModalOutlet = true" class="hidden lg:flex w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="Lihat Aturan Skema Insentif">
+                            <button type="button" @click="showInfoModalOutlet = true" class="hidden lg:flex w-8 h-8 rounded-full bg-blue-50 border border-blue-100 text-blue-600 items-center justify-center hover:bg-blue-100 hover:text-blue-700 shadow-sm shrink-0 transition-colors" title="View Incentive Scheme Rules">
                                 <i class="fas fa-info-circle text-base"></i>
                             </button>
                         </div>
                     </div>
 
                     @if(count($payoutsOutlet) > 0)
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                    <div class="table-sticky-container">
+                        <table>
                             <thead>
-                                <tr class="border-b border-slate-100 text-slate-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider">
-                                    <th class="py-2.5 px-2 whitespace-nowrap">Sales Person (PS)</th>
-                                    <th class="py-2.5 px-2 text-center whitespace-nowrap">Jumlah Outlet Baru</th>
-                                    <th class="py-2.5 px-2 whitespace-nowrap">Daftar Outlet Baru</th>
-                                    <th class="py-2.5 px-2 text-right whitespace-nowrap">Est. Bonus</th>
+                                <tr class="border-b border-slate-200 text-slate-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider">
+                                    <th class="py-2.5 px-3 text-left whitespace-nowrap">Sales Person (PS)</th>
+                                    <th class="py-2.5 px-3 text-center whitespace-nowrap">New Outlets Count</th>
+                                    <th class="py-2.5 px-3 text-left whitespace-nowrap">New Outlets List</th>
+                                    <th class="py-2.5 px-3 text-right whitespace-nowrap">Est. Bonus</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($payoutsOutlet as $payout)
-                                <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-slate-700 text-[11px] sm:text-xs">
-                                    <td class="py-2.5 px-2 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
-                                    <td class="py-2.5 px-2 text-center whitespace-nowrap">
+                                <tr class="border-b border-slate-200 hover:bg-slate-50/50 transition-colors text-slate-700 text-[11px] sm:text-xs">
+                                    <td class="py-2.5 px-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
+                                    <td class="py-2.5 px-3 text-center whitespace-nowrap">
                                         <span class="inline-flex items-center justify-center font-bold px-2.5 py-1 rounded-full text-[10px] sm:text-xs
                                             @if($payout['new_outlets_count'] >= 21) bg-sky-50 text-sky-700
                                             @elseif($payout['new_outlets_count'] >= 16) bg-indigo-50 text-indigo-700
                                             @elseif($payout['new_outlets_count'] >= 11) bg-emerald-50 text-emerald-700
                                             @elseif($payout['new_outlets_count'] >= 6) bg-blue-50 text-blue-700
                                             @else bg-amber-50 text-amber-700 @endif">
-                                            {{ $payout['new_outlets_count'] }} Outlet
+                                            {{ $payout['new_outlets_count'] }} Outlets
                                         </span>
                                     </td>
-                                    <td class="py-2.5 px-2">
+                                    <td class="py-2.5 px-3">
                                         <div class="flex flex-wrap gap-1 max-w-md">
                                             @foreach($payout['new_outlets_list'] as $outlet)
                                                 <span class="inline-block bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-md font-medium border border-slate-200/50">
@@ -811,7 +814,7 @@
                                             @endforeach
                                         </div>
                                     </td>
-                                    <td class="py-2.5 px-2 text-right font-black text-emerald-600 whitespace-nowrap">
+                                    <td class="py-2.5 px-3 text-right font-black text-emerald-600 whitespace-nowrap">
                                         Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -822,16 +825,16 @@
                     @else
                     <div class="py-12 flex flex-col items-center justify-center text-center text-slate-400">
                         <i class="fas fa-folder-open text-5xl mb-4 text-slate-300"></i>
-                        <h4 class="font-bold text-lg text-slate-600">Data Tidak Ditemukan</h4>
-                        <p class="text-sm max-w-sm mt-1">Belum ada transaksi dari outlet baru pada periode ini.</p>
+                        <h4 class="font-bold text-lg text-slate-600">Data Not Found</h4>
+                        <p class="text-sm max-w-sm mt-1">No transactions from new outlets for this period.</p>
                     </div>
                     @endif
                 </div>
             </div>
 
-            {{-- SECTION 4: PENGATURAN ATURAN (SETTINGS) --}}
+            {{-- SECTION 4: RULES SETTINGS --}}
             @if($hasFullAccess)
-            <div x-show="activeTab === 'pengaturan'" class="flex flex-col gap-3" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+            <div x-show="activeTab === 'settings'" class="flex flex-col gap-3" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
                 
                 @if(session('success'))
                     <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-3">
@@ -848,7 +851,7 @@
                         formBasisBulan = '{{ $activeBasis }}';
                         showFormModalBulan = true;
                     " class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]">
-                        <i class="fas fa-calendar-day"></i> Atur Aturan Bulanan
+                        <i class="fas fa-calendar-day"></i> Configure Monthly Rules
                     </button>
                     <button type="button" @click="
                         formTahun = '{{ $tahun }}';
@@ -856,7 +859,7 @@
                         formBasisTriwulan = '{{ $activeBasisTriwulan }}';
                         showFormModalTriwulan = true;
                     " class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]">
-                        <i class="fas fa-calendar-minus"></i> Atur Aturan Triwulan
+                        <i class="fas fa-calendar-minus"></i> Configure Quarterly Rules
                     </button>
                 </div>
                 @endif
@@ -864,7 +867,7 @@
                 {{-- Modal Form Aturan Bulanan --}}
                 <div x-show="showFormModalBulan" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                     <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showFormModalBulan = false"></div>
-                    <div class="glass-card w-full max-w-2xl shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[92vh]" 
+                    <div class="glass-panel w-full max-w-2xl shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[92vh]" 
                          x-transition:enter="transition ease-out duration-300 transform" 
                          x-transition:enter-start="opacity-0 scale-95" 
                          x-transition:enter-end="opacity-100 scale-100"
@@ -875,7 +878,7 @@
                         <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3 shrink-0">
                             <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-slate-800">
                                 <i class="fas fa-calendar-day text-blue-500"></i>
-                                <span>Atur Aturan Insentif Bulanan</span>
+                                <span>Configure Monthly Incentive Rules</span>
                             </h3>
                             <button type="button" @click="showFormModalBulan = false" class="text-slate-400 hover:text-slate-600 transition-colors">
                                 <i class="fas fa-times text-lg"></i>
@@ -888,13 +891,13 @@
                                 <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100 flex items-center justify-between gap-3 text-xs">
                                     <div class="flex items-center gap-2">
                                         <i class="fas fa-copy text-blue-500"></i>
-                                        <span class="font-bold text-slate-700">Salin dari Periode Lain:</span>
+                                        <span class="font-bold text-slate-700">Copy from Other Period:</span>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <select x-model="copySourceBulan" class="border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1 cursor-pointer outline-none">
-                                            <option value="">-- Pilih Bulan --</option>
+                                            <option value="">-- Select Month --</option>
                                             <template x-for="item in historyList.filter(h => h.type === 'bulan')" :key="item.bulan + '|' + item.tahun + '|' + item.basis">
-                                                <option :value="item.bulan + '|' + item.tahun + '|' + item.basis" x-text="item.bulan + ' ' + item.tahun + ' (' + (item.basis === 'nominal' ? 'Skema 1' : 'Skema 2') + ')'"></option>
+                                                <option :value="item.bulan + '|' + item.tahun + '|' + item.basis" x-text="item.bulan + ' ' + item.tahun + ' (' + (item.basis === 'nominal' ? 'Scheme 1' : 'Scheme 2') + ')'"></option>
                                             </template>
                                         </select>
                                         <button type="button" @click="
@@ -911,14 +914,14 @@
                                                 }
                                             }
                                         " class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-sm">
-                                            Salin
+                                            Copy
                                         </button>
                                     </div>
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
                                     <div class="flex flex-col gap-1">
-                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tahun Target</label>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Year</label>
                                         <select name="tahun" x-model="formTahun" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                             @foreach($listTahun as $t)
                                                 <option value="{{ $t }}">{{ $t }}</option>
@@ -926,7 +929,7 @@
                                         </select>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bulan Target</label>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Month</label>
                                         <select name="bulan" x-model="formBulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                             @foreach($listBulan as $b)
                                                 <option value="{{ $b }}">{{ $b }}</option>
@@ -934,10 +937,10 @@
                                         </select>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Model Skema</label>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scheme Model</label>
                                         <select x-model="formBasisBulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
-                                            <option value="nominal">Skema 1 (Nominal Actual Sales Rp)</option>
-                                            <option value="percentage">Skema 2 (Persentase % vs Target)</option>
+                                            <option value="nominal">Scheme 1 (Nominal Actual Sales Rp)</option>
+                                            <option value="percentage">Scheme 2 (Percentage % vs Target)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -947,8 +950,8 @@
                                         <thead>
                                             <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
                                                 <th class="py-2 px-1 w-7/12" x-text="formBasisBulan === 'nominal' ? 'Min. Sales (Rp)' : 'Min. Achievement (%)'"></th>
-                                                <th class="py-2 px-1 w-4/12">Insentif (%)</th>
-                                                <th class="py-2 px-1 w-1/12 text-center">Aksi</th>
+                                                <th class="py-2 px-1 w-4/12">Incentive (%)</th>
+                                                <th class="py-2 px-1 w-1/12 text-center">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -978,14 +981,14 @@
                                         </tbody>
                                     </table>
                                     <button type="button" @click="(formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-[10px] transition-colors shadow-sm">
-                                        <i class="fas fa-plus"></i> Tambah Tingkat
+                                        <i class="fas fa-plus"></i> Add Tier
                                     </button>
                                 </div>
 
                                 {{-- Action Buttons --}}
                                 <div class="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-slate-100">
                                     <button type="button" @click="showFormModalBulan = false" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs transition-colors">
-                                        Batal
+                                        Cancel
                                     </button>
                                     <button type="button" @click="
                                         const currentBulanList = formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent;
@@ -1010,21 +1013,21 @@
                                         })
                                         .then(res => {
                                             if (res.ok) {
-                                                window.location.reload();
+                                                const u = new URL(window.location); u.searchParams.set('tab', 'settings'); window.location.href = u.toString();
                                             } else {
                                                 res.json().then(data => {
-                                                    alert(data.message || 'Gagal menyimpan aturan.');
+                                                    alert(data.message || 'Failed to save rules.');
                                                 }).catch(() => {
-                                                    alert('Terjadi kesalahan server saat menyimpan.');
+                                                    alert('Server error occurred while saving.');
                                                 });
                                             }
                                         })
                                         .catch(err => {
                                             console.error(err);
-                                            alert('Terjadi kesalahan koneksi.');
+                                            alert('Connection error occurred.');
                                         });
                                     " class="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-colors">
-                                        <i class="fas fa-save"></i> Simpan & Aktifkan Bulanan
+                                        <i class="fas fa-save"></i> Save & Activate Monthly
                                     </button>
                                 </div>
                             </form>
@@ -1035,7 +1038,7 @@
                 {{-- Modal Form Aturan Triwulan --}}
                 <div x-show="showFormModalTriwulan" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                     <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showFormModalTriwulan = false"></div>
-                    <div class="glass-card w-full max-w-2xl shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[92vh]" 
+                    <div class="glass-panel w-full max-w-2xl shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[92vh]" 
                          x-transition:enter="transition ease-out duration-300 transform" 
                          x-transition:enter-start="opacity-0 scale-95" 
                          x-transition:enter-end="opacity-100 scale-100"
@@ -1046,7 +1049,7 @@
                         <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3 shrink-0">
                             <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-slate-800">
                                 <i class="fas fa-calendar-minus text-indigo-500"></i>
-                                <span>Atur Aturan Bonus Triwulan</span>
+                                <span>Configure Quarterly Bonus Rules</span>
                             </h3>
                             <button type="button" @click="showFormModalTriwulan = false" class="text-slate-400 hover:text-slate-600 transition-colors">
                                 <i class="fas fa-times text-lg"></i>
@@ -1059,13 +1062,13 @@
                                 <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 flex items-center justify-between gap-3 text-xs">
                                     <div class="flex items-center gap-2">
                                         <i class="fas fa-copy text-indigo-500"></i>
-                                        <span class="font-bold text-slate-700">Salin dari Periode Lain:</span>
+                                        <span class="font-bold text-slate-700">Copy from Other Period:</span>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <select x-model="copySourceTriwulan" class="border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1 cursor-pointer outline-none">
-                                            <option value="">-- Pilih Triwulan --</option>
+                                            <option value="">-- Select Quarter --</option>
                                             <template x-for="item in historyList.filter(h => h.type === 'triwulan')" :key="item.bulan + '|' + item.tahun + '|' + item.basis">
-                                                <option :value="item.bulan + '|' + item.tahun + '|' + item.basis" x-text="item.bulan + ' ' + item.tahun + ' (' + (item.basis === 'nominal' ? 'Skema 1' : 'Skema 2') + ')'"></option>
+                                                <option :value="item.bulan + '|' + item.tahun + '|' + item.basis" x-text="item.bulan + ' ' + item.tahun + ' (' + (item.basis === 'nominal' ? 'Scheme 1' : 'Scheme 2') + ')'"></option>
                                             </template>
                                         </select>
                                         <button type="button" @click="
@@ -1082,14 +1085,14 @@
                                                 }
                                             }
                                         " class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors shadow-sm">
-                                            Salin
+                                            Copy
                                         </button>
                                     </div>
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
                                     <div class="flex flex-col gap-1">
-                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tahun Target</label>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Year</label>
                                         <select name="tahun" x-model="formTahun" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                             @foreach($listTahun as $t)
                                                 <option value="{{ $t }}">{{ $t }}</option>
@@ -1097,7 +1100,7 @@
                                         </select>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Triwulan Target</label>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Quarter</label>
                                         <select name="triwulan" x-model="formTriwulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                             @foreach(['Triwulan I', 'Triwulan II', 'Triwulan III', 'Triwulan IV'] as $q)
                                                 <option value="{{ $q }}">{{ $q }}</option>
@@ -1105,10 +1108,10 @@
                                         </select>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Model Skema</label>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scheme Model</label>
                                         <select x-model="formBasisTriwulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
-                                            <option value="nominal">Skema 1 (Nominal Actual Sales Rp)</option>
-                                            <option value="percentage">Skema 2 (Persentase % vs Target)</option>
+                                            <option value="nominal">Scheme 1 (Nominal Actual Sales Rp)</option>
+                                            <option value="percentage">Scheme 2 (Percentage % vs Target)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -1118,8 +1121,8 @@
                                         <thead>
                                             <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
                                                 <th class="py-2 px-1 w-6/12" x-text="formBasisTriwulan === 'nominal' ? 'Min. Sales (Rp)' : 'Min. Achievement (%)'"></th>
-                                                <th class="py-2 px-1 w-5/12">Nominal Bonus (Rp)</th>
-                                                <th class="py-2 px-1 w-1/12 text-center">Aksi</th>
+                                                <th class="py-2 px-1 w-5/12">Bonus Nominal (Rp)</th>
+                                                <th class="py-2 px-1 w-1/12 text-center">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1150,14 +1153,14 @@
                                         </tbody>
                                     </table>
                                     <button type="button" @click="(formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-[10px] transition-colors shadow-sm">
-                                        <i class="fas fa-plus"></i> Tambah Tingkat
+                                        <i class="fas fa-plus"></i> Add Tier
                                     </button>
                                 </div>
 
                                 {{-- Action Buttons --}}
                                 <div class="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-slate-100">
                                     <button type="button" @click="showFormModalTriwulan = false" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs transition-colors">
-                                        Batal
+                                        Cancel
                                     </button>
                                     <button type="button" @click="
                                         const currentTriwulanList = formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent;
@@ -1182,21 +1185,21 @@
                                         })
                                         .then(res => {
                                             if (res.ok) {
-                                                window.location.reload();
+                                                const u = new URL(window.location); u.searchParams.set('tab', 'settings'); window.location.href = u.toString();
                                             } else {
                                                 res.json().then(data => {
-                                                    alert(data.message || 'Gagal menyimpan aturan.');
+                                                    alert(data.message || 'Failed to save rules.');
                                                 }).catch(() => {
-                                                    alert('Terjadi kesalahan server saat menyimpan.');
+                                                    alert('Server error occurred while saving.');
                                                 });
                                             }
                                         })
                                         .catch(err => {
                                             console.error(err);
-                                            alert('Terjadi kesalahan koneksi.');
+                                            alert('Connection error occurred.');
                                         });
                                     " class="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-colors">
-                                        <i class="fas fa-save"></i> Simpan & Aktifkan Triwulan
+                                        <i class="fas fa-save"></i> Save & Activate Quarterly
                                     </button>
                                 </div>
                             </form>
@@ -1205,34 +1208,34 @@
                 </div>
 
                 {{-- Global Filters for History --}}
-                <div class="glass-card flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="glass-panel border-t-4 border-t-blue-500 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h3 class="text-base sm:text-lg font-bold text-slate-800">Riwayat Aturan Insentif</h3>
-                        <p class="text-slate-500 text-xs mt-0.5">Daftar semua aturan insentif bulanan dan triwulan yang tersimpan dalam sistem</p>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-800">Incentive Rules History</h3>
+                        <p class="text-slate-500 text-xs mt-0.5">List of all monthly and quarterly incentive rules saved in the system</p>
                     </div>
                     
                     {{-- Shared Filters --}}
                     <div class="flex flex-wrap items-center gap-2">
                         <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1">
                             <i class="fas fa-search text-slate-400 text-[10px]"></i>
-                            <input type="text" x-model="historySearchTahun" placeholder="Cari Tahun..." class="bg-transparent text-xs font-semibold text-slate-700 outline-none w-20">
+                            <input type="text" x-model="historySearchTahun" placeholder="Search Year..." class="bg-transparent text-xs font-semibold text-slate-700 outline-none w-20">
                         </div>
                         <select x-model="historyFilterBasis" class="border border-slate-200 bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 px-2 py-1 outline-none cursor-pointer">
-                            <option value="">Semua Model Skema</option>
-                            <option value="nominal">Skema 1 (Nominal Rp)</option>
-                            <option value="percentage">Skema 2 (Persentase %)</option>
+                            <option value="">All Scheme Models</option>
+                            <option value="nominal">Scheme 1 (Nominal Rp)</option>
+                            <option value="percentage">Scheme 2 (Percentage %)</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {{-- Card Riwayat Bulanan --}}
-                    <div class="glass-card flex flex-col gap-4">
+                    <div class="glass-panel border-t-4 border-t-blue-500 flex flex-col gap-4">
                         <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
                             <div>
                                 <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                                     <i class="fas fa-calendar-alt text-indigo-500"></i>
-                                    <span>Riwayat Aturan Bulanan</span>
+                                    <span>Monthly Rules History</span>
                                 </h4>
                             </div>
                             <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('bulan').length + ' data'"></span>
@@ -1242,10 +1245,10 @@
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                                        <th class="py-2.5 px-2">Tahun</th>
-                                        <th class="py-2.5 px-2">Bulan</th>
-                                        <th class="py-2.5 px-2">Model Skema</th>
-                                        <th class="py-2.5 px-2 text-center">Aksi</th>
+                                        <th class="py-2.5 px-2">Year</th>
+                                        <th class="py-2.5 px-2">Month</th>
+                                        <th class="py-2.5 px-2">Scheme Model</th>
+                                        <th class="py-2.5 px-2 text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1256,13 +1259,13 @@
                                             <td class="py-3 px-2">
                                                 <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[9px]"
                                                     :class="row.basis === 'nominal' ? 'bg-teal-50 text-teal-700' : 'bg-violet-50 text-violet-700'"
-                                                    x-text="row.basis === 'nominal' ? 'Skema 1: Nominal' : 'Skema 2: Persentase'">
+                                                    x-text="row.basis === 'nominal' ? 'Scheme 1: Nominal' : 'Scheme 2: Percentage'">
                                                 </span>
                                             </td>
                                             <td class="py-3 px-2 text-center flex items-center justify-center gap-1">
                                                 <button type="button" @click="
                                                     historyDetailTitle = row.bulan + ' ' + row.tahun;
-                                                    historyDetailSub = 'Insentif Bulanan - ' + (row.basis === 'nominal' ? 'Skema 1 (Nominal Actual Sales)' : 'Skema 2 (Persentase vs Target)');
+                                                    historyDetailSub = 'Monthly Incentive - ' + (row.basis === 'nominal' ? 'Scheme 1 (Nominal Actual Sales)' : 'Scheme 2 (Percentage vs Target)');
                                                     historyDetailTiers = row.tiers;
                                                     historyDetailType = row.type;
                                                     showHistoryDetailModal = true;
@@ -1284,7 +1287,7 @@
                                                         <i class="fas fa-edit text-[8px]"></i> Edit
                                                     </button>
                                                     <button type="button" @click="
-                                                        if (confirm('Apakah Anda yakin ingin menghapus aturan insentif ini?')) {
+                                                        if (confirm('Are you sure you want to delete this incentive rule?')) {
                                                             fetch('{{ route('sales.incentive.settings.delete') }}', {
                                                                 method: 'POST',
                                                                 headers: {
@@ -1303,18 +1306,18 @@
                                                             .then(res => res.json())
                                                             .then(data => {
                                                                 if (data.success) {
-                                                                    window.location.reload();
+                                                                    const u = new URL(window.location); u.searchParams.set('tab', 'settings'); window.location.href = u.toString();
                                                                 } else {
-                                                                    alert(data.message || 'Gagal menghapus data.');
+                                                                    alert(data.message || 'Failed to delete data.');
                                                                 }
                                                             })
                                                             .catch(err => {
                                                                 console.error(err);
-                                                                alert('Terjadi kesalahan koneksi atau token kedaluwarsa. Silakan refresh halaman.');
+                                                                alert('Connection error or expired token. Please refresh the page.');
                                                             });
                                                         }
                                                     " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[9px] transition-colors border border-rose-100">
-                                                        <i class="fas fa-trash-can text-[8px]"></i> Hapus
+                                                        <i class="fas fa-trash-can text-[8px]"></i> Delete
                                                     </button>
                                                 @endif
                                             </td>
@@ -1323,7 +1326,7 @@
                                     <tr x-show="filteredHistoryList('bulan').length === 0">
                                         <td colspan="4" class="py-8 text-center text-slate-400">
                                             <i class="fas fa-folder-open text-2xl mb-1 text-slate-300"></i>
-                                            <p class="text-[11px] font-semibold">Tidak ada riwayat bulanan.</p>
+                                            <p class="text-[11px] font-semibold">No monthly history found.</p>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1332,12 +1335,12 @@
                     </div>
 
                     {{-- Card Riwayat Triwulan --}}
-                    <div class="glass-card flex flex-col gap-4">
+                    <div class="glass-panel border-t-4 border-t-blue-500 flex flex-col gap-4">
                         <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
                             <div>
                                 <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                                     <i class="fas fa-calendar-minus text-amber-500"></i>
-                                    <span>Riwayat Aturan Triwulan</span>
+                                    <span>Quarterly Rules History</span>
                                 </h4>
                             </div>
                             <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('triwulan').length + ' data'"></span>
@@ -1347,10 +1350,10 @@
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                                        <th class="py-2.5 px-2">Tahun</th>
-                                        <th class="py-2.5 px-2">Triwulan</th>
-                                        <th class="py-2.5 px-2">Model Skema</th>
-                                        <th class="py-2.5 px-2 text-center">Aksi</th>
+                                        <th class="py-2.5 px-2">Year</th>
+                                        <th class="py-2.5 px-2">Quarter</th>
+                                        <th class="py-2.5 px-2">Scheme Model</th>
+                                        <th class="py-2.5 px-2 text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1361,13 +1364,13 @@
                                             <td class="py-3 px-2">
                                                 <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[9px]"
                                                     :class="row.basis === 'nominal' ? 'bg-teal-50 text-teal-700' : 'bg-violet-50 text-violet-700'"
-                                                    x-text="row.basis === 'nominal' ? 'Skema 1: Nominal' : 'Skema 2: Persentase'">
+                                                    x-text="row.basis === 'nominal' ? 'Scheme 1: Nominal' : 'Scheme 2: Percentage'">
                                                 </span>
                                             </td>
                                             <td class="py-3 px-2 text-center flex items-center justify-center gap-1">
                                                 <button type="button" @click="
                                                     historyDetailTitle = row.bulan + ' ' + row.tahun;
-                                                    historyDetailSub = 'Bonus Triwulan - ' + (row.basis === 'nominal' ? 'Skema 1 (Nominal Actual Sales)' : 'Skema 2 (Persentase vs Target)');
+                                                    historyDetailSub = 'Quarterly Bonus - ' + (row.basis === 'nominal' ? 'Scheme 1 (Nominal Actual Sales)' : 'Scheme 2 (Percentage vs Target)');
                                                     historyDetailTiers = row.tiers;
                                                     historyDetailType = row.type;
                                                     showHistoryDetailModal = true;
@@ -1389,7 +1392,7 @@
                                                         <i class="fas fa-edit text-[8px]"></i> Edit
                                                     </button>
                                                     <button type="button" @click="
-                                                        if (confirm('Apakah Anda yakin ingin menghapus aturan insentif ini?')) {
+                                                        if (confirm('Are you sure you want to delete this incentive rule?')) {
                                                             fetch('{{ route('sales.incentive.settings.delete') }}', {
                                                                 method: 'POST',
                                                                 headers: {
@@ -1408,18 +1411,18 @@
                                                             .then(res => res.json())
                                                             .then(data => {
                                                                 if (data.success) {
-                                                                    window.location.reload();
+                                                                    const u = new URL(window.location); u.searchParams.set('tab', 'settings'); window.location.href = u.toString();
                                                                 } else {
-                                                                    alert(data.message || 'Gagal menghapus data.');
+                                                                    alert(data.message || 'Failed to delete data.');
                                                                 }
                                                             })
                                                             .catch(err => {
                                                                 console.error(err);
-                                                                alert('Terjadi kesalahan koneksi atau token kedaluwarsa. Silakan refresh halaman.');
+                                                                alert('Connection error or expired token. Please refresh the page.');
                                                             });
                                                         }
                                                     " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[9px] transition-colors border border-rose-100">
-                                                        <i class="fas fa-trash-can text-[8px]"></i> Hapus
+                                                        <i class="fas fa-trash-can text-[8px]"></i> Delete
                                                     </button>
                                                 @endif
                                             </td>
@@ -1428,7 +1431,7 @@
                                     <tr x-show="filteredHistoryList('triwulan').length === 0">
                                         <td colspan="4" class="py-8 text-center text-slate-400">
                                             <i class="fas fa-folder-open text-2xl mb-1 text-slate-300"></i>
-                                            <p class="text-[11px] font-semibold">Tidak ada riwayat triwulan.</p>
+                                            <p class="text-[11px] font-semibold">No quarterly history found.</p>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1440,7 +1443,7 @@
                 {{-- Modal History Detail --}}
                 <div x-show="showHistoryDetailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                     <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showHistoryDetailModal = false"></div>
-                    <div class="glass-card w-full max-w-lg shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[80vh]" 
+                    <div class="glass-panel w-full max-w-lg shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[80vh]" 
                          x-transition:enter="transition ease-out duration-300 transform" 
                          x-transition:enter-start="opacity-0 scale-95" 
                          x-transition:enter-end="opacity-100 scale-100"
@@ -1462,8 +1465,8 @@
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                                        <th class="py-2 px-1">Minimal Target</th>
-                                        <th class="py-2 px-1 text-right">Nilai Insentif / Bonus</th>
+                                        <th class="py-2 px-1">Min. Target</th>
+                                        <th class="py-2 px-1 text-right">Incentive / Bonus Value</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1487,18 +1490,19 @@
 
                         <div class="flex justify-end mt-4 pt-3 border-t border-slate-100 shrink-0">
                             <button type="button" @click="showHistoryDetailModal = false" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors">
-                                Tutup
+                                Close
                             </button>
                         </div>
                     </div>
                 </div>
 
             </div>
+            @endif
 
             {{-- Modal Aturan Skema Outlet Baru --}}
             <div x-show="showInfoModalOutlet" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showInfoModalOutlet = false"></div>
-                <div class="glass-card w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden" 
+                <div class="glass-panel w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden" 
                      x-transition:enter="transition ease-out duration-300 transform" 
                      x-transition:enter-start="opacity-0 scale-95" 
                      x-transition:enter-end="opacity-100 scale-100"
@@ -1509,7 +1513,7 @@
                     <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
                         <h3 class="text-lg font-bold flex items-center gap-2 text-slate-800">
                             <i class="fas fa-info-circle text-blue-500"></i>
-                            <span>Aturan Bonus Outlet Baru</span>
+                            <span>New Outlet Bonus Rules</span>
                         </h3>
                         <button type="button" @click="showInfoModalOutlet = false" class="text-slate-400 hover:text-slate-600 transition-colors">
                             <i class="fas fa-times text-lg"></i>
@@ -1519,7 +1523,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-diamond mb-2">
-                                <i class="fas fa-circle-chevron-up"></i> &ge; 21 Outlet
+                                <i class="fas fa-circle-chevron-up"></i> &ge; 21 Outlets
                             </span>
                             <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-sky-600 text-base">Rp 1.000.000</span>
@@ -1527,7 +1531,7 @@
 
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-platinum mb-2">
-                                <i class="fas fa-circle-chevron-up"></i> 16 - 20 Outlet
+                                <i class="fas fa-circle-chevron-up"></i> 16 - 20 Outlets
                             </span>
                             <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-indigo-600 text-base">Rp 800.000</span>
@@ -1535,7 +1539,7 @@
 
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-gold mb-2">
-                                <i class="fas fa-circle-check"></i> 11 - 15 Outlet
+                                <i class="fas fa-circle-check"></i> 11 - 15 Outlets
                             </span>
                             <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-yellow-600 text-base">Rp 500.000</span>
@@ -1543,7 +1547,7 @@
 
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-silver mb-2">
-                                <i class="fas fa-circle-check"></i> 6 - 10 Outlet
+                                <i class="fas fa-circle-check"></i> 6 - 10 Outlets
                             </span>
                             <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-slate-700 text-base">Rp 300.000</span>
@@ -1551,7 +1555,7 @@
 
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-bronze mb-2">
-                                <i class="fas fa-circle-check"></i> 1 - 5 Outlet
+                                <i class="fas fa-circle-check"></i> 1 - 5 Outlets
                             </span>
                             <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-amber-600 text-base">Rp 150.000</span>
@@ -1559,14 +1563,14 @@
 
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all opacity-60 text-center">
                             <span class="tier-badge tier-silver mb-2">
-                                <i class="fas fa-circle-xmark"></i> 0 Outlet
+                                <i class="fas fa-circle-xmark"></i> 0 Outlets
                             </span>
                             <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-rose-600 text-base">Rp 0</span>
                         </div>
                     </div>
                     <p class="text-xs text-slate-400 mt-4 leading-relaxed">
-                        * Bonus outlet baru diberikan secara flat jika nama customer tersebut belum pernah tercatat bertransaksi sama sekali di database sebelum periode terpilih.
+                        * New outlet bonus is awarded as a flat amount if the customer name has never been recorded in transactions prior to the selected period.
                     </p>
                 </div>
             </div>

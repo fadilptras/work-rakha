@@ -10,15 +10,22 @@
     <style>
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: #ede9fe;
+            /* background-color dihapus agar layout ungu bawaan bisa tembus */
         }
 
         .mesh-bg { 
-            background-color: #ede9fe;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            /* Latar belakang dibuat transparan, hanya menyisakan aksen gradient */
             background-image: 
-                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.4) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.6) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+            pointer-events: none;
         }
 
         .glass-card {
@@ -33,16 +40,10 @@
         .module-card {
             background: rgba(255, 255, 255, 0.92);
             border: 1px solid rgba(255, 255, 255, 1);
-            border-radius: 24px;
-            padding: 40px;
             position: relative;
             overflow: hidden;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 380px;
-            height: 380px;
             text-decoration: none;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
             z-index: 1;
@@ -50,29 +51,74 @@
             backface-visibility: hidden;
         }
 
-        /* Enable backdrop blur only on larger screens for best performance */
-        @media (min-width: 1024px) {
+        /* Desktop Layout (Default Besar) */
+        @media (min-width: 768px) {
             .glass-card, .module-card {
                 background: rgba(255, 255, 255, 0.85);
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
             }
-        }
-
-        @media (max-width: 767px) {
             .module-card {
-                height: auto;
-                min-height: 320px;
-                padding: 28px;
+                flex-direction: column;
+                justify-content: space-between;
+                min-height: 340px;
+                padding: 40px;
+                border-radius: 24px;
+            }
+            .module-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
+                background: rgba(255, 255, 255, 0.95);
             }
         }
 
-        .module-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
-            border-color: rgba(59, 130, 246, 0.3);
-            background: rgba(255, 255, 255, 0.95);
+        /* Mobile Layout (Persegi Panjang yang Compact) */
+        @media (max-width: 767px) {
+            .module-card {
+                flex-direction: row;
+                align-items: center;
+                gap: 16px;
+                padding: 16px 20px;
+                min-height: auto;
+                height: auto;
+                border-radius: 20px;
+            }
+            .module-card:active {
+                transform: scale(0.98);
+                background-color: #f8fafc;
+            }
+            .icon-box {
+                width: 52px !important;
+                height: 52px !important;
+                font-size: 1.25rem !important;
+                margin-bottom: 0 !important;
+                border-radius: 14px !important;
+                flex-shrink: 0;
+            }
+            .card-content {
+                display: flex;
+                flex-direction: column;
+                flex-grow: 1;
+            }
+            .card-action, .bg-decoration {
+                display: none !important;
+            }
+            .mobile-chevron {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                color: #cbd5e1;
+                font-size: 1rem;
+            }
         }
+
+        /* Hover Colors Config */
+        .card-green:hover { border-color: rgba(16, 185, 129, 0.3); }
+        .card-blue:hover { border-color: rgba(59, 130, 246, 0.3); }
+        .card-purple:hover { border-color: rgba(168, 85, 247, 0.3); }
+        .card-orange:hover { border-color: rgba(249, 115, 22, 0.3); }
+        .card-brown:hover { border-color: rgba(124, 45, 18, 0.3); }
+        .card-slate:hover { border-color: rgba(71, 85, 105, 0.3); }
 
         /* Icon Container */
         .icon-box {
@@ -89,63 +135,27 @@
             transition: all 0.4s ease;
         }
 
-        .card-green .icon-box {
-            background: #ecfdf5;
-            color: #10b981;
-            border: 1px solid #d1fae5;
-        }
-        .card-green:hover .icon-box {
-            background: #10b981;
-            color: white;
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
-        }
+        .card-green .icon-box { background: #ecfdf5; color: #10b981; border: 1px solid #d1fae5; }
+        .card-green:hover .icon-box { background: #10b981; color: white; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2); }
 
-        .card-blue .icon-box {
-            background: #eff6ff;
-            color: #3b82f6;
-            border: 1px solid #dbeafe;
-        }
-        .card-blue:hover .icon-box {
-            background: #3b82f6;
-            color: white;
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
-        }
+        .card-blue .icon-box { background: #eff6ff; color: #3b82f6; border: 1px solid #dbeafe; }
+        .card-blue:hover .icon-box { background: #3b82f6; color: white; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2); }
 
-        .card-purple .icon-box {
-            background: #faf5ff;
-            color: #a855f7;
-            border: 1px solid #f3e8ff;
-        }
-        .card-purple:hover .icon-box {
-            background: #a855f7;
-            color: white;
-            box-shadow: 0 10px 20px rgba(168, 85, 247, 0.2);
-        }
+        .card-purple .icon-box { background: #faf5ff; color: #a855f7; border: 1px solid #f3e8ff; }
+        .card-purple:hover .icon-box { background: #a855f7; color: white; box-shadow: 0 10px 20px rgba(168, 85, 247, 0.2); }
 
-        .card-orange .icon-box {
-            background: #fff7ed;
-            color: #f97316;
-            border: 1px solid #ffedd5;
-        }
-        .card-orange:hover .icon-box {
-            background: #f97316;
-            color: white;
-            box-shadow: 0 10px 20px rgba(249, 115, 22, 0.2);
-        }
+        .card-orange .icon-box { background: #fff7ed; color: #f97316; border: 1px solid #ffedd5; }
+        .card-orange:hover .icon-box { background: #f97316; color: white; box-shadow: 0 10px 20px rgba(249, 115, 22, 0.2); }
 
-        .card-brown .icon-box {
-            background: #fbf0ea;
-            color: #7c2d12;
-            border: 1px solid #f3d9ca;
-        }
-        .card-brown:hover .icon-box {
-            background: #7c2d12;
-            color: white;
-            box-shadow: 0 10px 20px rgba(124, 45, 18, 0.2);
-        }
-        .card-brown:hover h2 {
-            color: #7c2d12 !important;
-        }
+        .card-brown .icon-box { background: #fbf0ea; color: #7c2d12; border: 1px solid #f3d9ca; }
+        .card-brown:hover .icon-box { background: #7c2d12; color: white; box-shadow: 0 10px 20px rgba(124, 45, 18, 0.2); }
+        .card-brown:hover h2 { color: #7c2d12 !important; }
+
+        .card-slate .icon-box { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+        .card-slate:hover .icon-box { background: #475569; color: white; box-shadow: 0 10px 20px rgba(71, 85, 105, 0.2); }
+        .card-slate:hover h2 { color: #475569 !important; }
+        
+        .mobile-chevron { display: none; }
 
         /* Animated Title */
         .title-reveal {
@@ -164,150 +174,201 @@
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 h-full mesh-bg relative overflow-hidden text-slate-800">
+    {{-- Class min-h-screen memastikan kontainer membentang hingga bawah layar --}}
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16">
         
-        <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:px-12 lg:pb-8 flex-1 flex flex-col gap-6 justify-center mt-6 lg:mt-6">
+        {{-- Mesh BG dijadikan elemen terpisah di belakang --}}
+        <div class="mesh-bg"></div>
+        
+        <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:px-12 lg:pb-8 flex-1 flex flex-col gap-4 md:gap-6 justify-center mt-2 md:mt-6">
 
             {{-- Bagian Header --}}
-            <div class="text-center w-full title-reveal glass-card shadow-sm" style="padding: 0.75rem 2rem;">
-                <h1 class="text-3xl md:text-4xl font-black tracking-tight text-slate-800 mb-1 leading-tight">
+            <div class="text-center w-full title-reveal glass-card shadow-sm px-4 md:px-8 py-4 md:py-5">
+                <h1 class="text-2xl md:text-4xl font-black tracking-tight text-slate-800 mb-1 leading-tight">
                     Sales <span class="text-blue-600">Command Center</span>
                 </h1>
-                <p class="text-slate-500 text-base md:text-lg font-medium leading-relaxed max-w-none mx-auto">
-                    Akses terpusat untuk mengelola, menganalisis, dan memantau performa penjualan perusahaan secara komprehensif.
+                <p class="text-slate-500 text-xs md:text-lg font-medium leading-relaxed max-w-none mx-auto">
+                    Centralized access to manage, analyze, and comprehensively monitor company sales performance.
                 </p>
             </div>
 
             {{-- Kartu Utama --}}
             @if(isset($hasAnyAccess) && $hasAnyAccess)
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6 relative z-10">
                 
                 @if(isset($hasFullAccess) && $hasFullAccess)
-                {{-- Kartu 1: Kelola Data --}}
+                {{-- Kartu 1: Data Management --}}
                 <a href="{{ route('sales.manage') }}" class="module-card card-green group title-reveal stagger-1">
-                    <div>
-                        <div class="icon-box">
-                            <i class="fas fa-database"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold text-slate-800 mb-3 tracking-tight group-hover:text-emerald-600 transition-colors">Data Management</h2>
-                        <p class="text-slate-500 text-base leading-relaxed font-medium">
-                            Pusat kendali data. Input data penjualan baru, unggah file batch secara massal, atau lakukan penyesuaian pada riwayat data yang ada.
+                    <div class="icon-box">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    
+                    <div class="card-content">
+                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight group-hover:text-emerald-600 transition-colors">Data Management</h2>
+                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                            Data control center. Input new sales data, upload batch files, or adjust existing data history.
                         </p>
+                        
+                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-emerald-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                            <span>Manage Data</span>
+                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                        </div>
+                    </div>
+
+                    <div class="mobile-chevron">
+                        <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
                     </div>
                     
-                    <div class="mt-8 flex items-center gap-2 text-sm font-bold text-emerald-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                        <span>Kelola Data</span>
-                        <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
-                    </div>
-                    
-                    {{-- Dekorasi latar belakang kartu --}}
-                    <div class="absolute -bottom-6 -right-6 text-emerald-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
+                    <div class="bg-decoration absolute -bottom-6 -right-6 text-emerald-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
                         <i class="fas fa-server"></i>
                     </div>
                 </a>
                 
-                {{-- Kartu 2: Analitik & Wawasan --}}
+                {{-- Kartu 2: Analytics & Insights --}}
                 <a href="{{ route('sales.analytics') }}" class="module-card card-blue group title-reveal stagger-2">
-                    <div>
-                        <div class="icon-box">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold text-slate-800 mb-3 tracking-tight group-hover:text-blue-600 transition-colors">Analytics & Insights</h2>
-                        <p class="text-slate-500 text-base leading-relaxed font-medium">
-                            Pantau performa. Akses dashboard Power BI interaktif, evaluasi pencapaian target, dan identifikasi tren penjualan.
-                        </p>
+                    <div class="icon-box">
+                        <i class="fas fa-chart-line"></i>
                     </div>
                     
-                    <div class="mt-8 flex items-center gap-2 text-sm font-bold text-blue-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                        <span>Buka Analitik</span>
-                        <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                    <div class="card-content">
+                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight group-hover:text-blue-600 transition-colors">Analytics & Insights</h2>
+                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                            Monitor performance. Access interactive dashboards, evaluate target achievements, and identify sales trends.
+                        </p>
+                        
+                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-blue-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                            <span>Open Analytics</span>
+                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                        </div>
                     </div>
 
-                    {{-- Dekorasi latar belakang kartu --}}
-                    <div class="absolute -bottom-6 -right-6 text-blue-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
+                    <div class="mobile-chevron">
+                        <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+
+                    <div class="bg-decoration absolute -bottom-6 -right-6 text-blue-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
                         <i class="fas fa-chart-pie"></i>
                     </div>
                 </a>
                 @endif
 
-                {{-- Kartu 3: Pantauan Bulanan --}}
+                {{-- Kartu 3: Monthly Monitoring --}}
                 <a href="{{ route('sales.monthly') }}" class="module-card card-purple group title-reveal stagger-3">
-                    <div>
-                        <div class="icon-box">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold text-slate-800 mb-3 tracking-tight group-hover:text-purple-600 transition-colors">Monthly Monitoring</h2>
-                        <p class="text-slate-500 text-base leading-relaxed font-medium">
-                            Pantau secara rinci performa penjualan per bulan. Akses data drill-down ke level produk dan outlet.
-                        </p>
+                    <div class="icon-box">
+                        <i class="fas fa-calendar-check"></i>
                     </div>
                     
-                    <div class="mt-8 flex items-center gap-2 text-sm font-bold text-purple-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                        <span>Buka Monitoring</span>
-                        <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                    <div class="card-content">
+                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight group-hover:text-purple-600 transition-colors">Monthly Monitoring</h2>
+                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                            Detailed monthly sales performance monitoring. Access drill-down data to product and outlet levels.
+                        </p>
+                        
+                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-purple-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                            <span>Open Monitoring</span>
+                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                        </div>
                     </div>
 
-                    {{-- Dekorasi latar belakang kartu --}}
-                    <div class="absolute -bottom-6 -right-6 text-purple-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
+                    <div class="mobile-chevron">
+                        <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+
+                    <div class="bg-decoration absolute -bottom-6 -right-6 text-purple-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
                         <i class="fas fa-calendar-alt"></i>
                     </div>
                 </a>
 
-                {{-- Kartu 4: Monitoring Stock --}}
+                {{-- Kartu 4: Stock Monitoring --}}
                 <a href="{{ route('sales.stock') }}" class="module-card card-orange group title-reveal stagger-1" style="animation-delay: 0.4s;">
-                    <div>
-                        <div class="icon-box">
-                            <i class="fas fa-boxes-stacked"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold text-slate-800 mb-3 tracking-tight group-hover:text-orange-600 transition-colors">Stock Monitoring</h2>
-                        <p class="text-slate-500 text-base leading-relaxed font-medium">
-                            Pantau ketersediaan barang. Akses data inventori, status aman, atau menipis secara terstruktur.
-                        </p>
+                    <div class="icon-box">
+                        <i class="fas fa-boxes-stacked"></i>
                     </div>
                     
-                    <div class="mt-8 flex items-center gap-2 text-sm font-bold text-orange-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                        <span>Buka Monitoring</span>
-                        <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                    <div class="card-content">
+                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight group-hover:text-orange-600 transition-colors">Stock Monitoring</h2>
+                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                            Monitor item availability. Access structured inventory data, safe or low stock status.
+                        </p>
+                        
+                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-orange-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                            <span>Open Monitoring</span>
+                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                        </div>
                     </div>
 
-                    {{-- Dekorasi latar belakang kartu --}}
-                    <div class="absolute -bottom-6 -right-6 text-orange-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
+                    <div class="mobile-chevron">
+                        <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+
+                    <div class="bg-decoration absolute -bottom-6 -right-6 text-orange-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
                         <i class="fas fa-box-open"></i>
                     </div>
                 </a>
 
-                {{-- Kartu 5: Skema Insentif --}}
+                {{-- Kartu 5: Incentive Scheme --}}
                 <a href="{{ route('sales.incentive') }}" class="module-card card-brown group title-reveal stagger-2" style="animation-delay: 0.5s;">
-                    <div>
-                        <div class="icon-box">
-                            <i class="fas fa-hand-holding-dollar"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold text-slate-800 mb-3 tracking-tight transition-colors">Incentive Scheme</h2>
-                        <p class="text-slate-500 text-base leading-relaxed font-medium">
-                            Skema dan kalkulasi insentif sales. Lihat pencapaian target, persentase insentif, simulasi perhitungan pembayaran.
-                        </p>
+                    <div class="icon-box">
+                        <i class="fas fa-hand-holding-dollar"></i>
                     </div>
                     
-                    <div class="mt-8 flex items-center gap-2 text-sm font-bold opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300" style="color: #7c2d12;">
-                        <span>Buka Skema Insentif</span>
-                        <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                    <div class="card-content">
+                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight transition-colors">Incentive Scheme</h2>
+                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                            Sales incentive schemes and calculations. View target achievements, incentive percentages, and payout simulations.
+                        </p>
+                        
+                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300" style="color: #7c2d12;">
+                            <span>Open Incentive Scheme</span>
+                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                        </div>
                     </div>
 
-                    {{-- Dekorasi latar belakang kartu --}}
-                    <div class="absolute -bottom-6 -right-6 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]" style="color: #f3d9ca; opacity: 0.6;">
+                    <div class="mobile-chevron">
+                        <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+
+                    <div class="bg-decoration absolute -bottom-6 -right-6 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]" style="color: #f3d9ca;">
                         <i class="fas fa-coins"></i>
+                    </div>
+                </a>
+
+                {{-- Kartu 6: Sales Forecast --}}
+                <a href="{{ route('sales.forecast') }}" class="module-card card-slate group title-reveal stagger-3" style="animation-delay: 0.6s;">
+                    <div class="icon-box">
+                        <i class="fas fa-chart-area"></i>
+                    </div>
+                    
+                    <div class="card-content">
+                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight transition-colors">Sales Forecast</h2>
+                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                            Estimate and predict product stock requirements based on average sales movement over the last 3 months.
+                        </p>
+                        
+                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-slate-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                            <span>Open Forecast</span>
+                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                        </div>
+                    </div>
+
+                    <div class="mobile-chevron">
+                        <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+
+                    <div class="bg-decoration absolute -bottom-6 -right-6 text-slate-200 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
+                        <i class="fas fa-wand-magic-sparkles"></i>
                     </div>
                 </a>
 
             </div>
             @else
-            <div class="glass-card text-center w-full title-reveal py-12 flex flex-col items-center justify-center">
-                <div class="w-20 h-20 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mb-6 border border-rose-100">
-                    <i class="fas fa-lock text-3xl"></i>
+            <div class="glass-card text-center w-full title-reveal py-10 md:py-12 flex flex-col items-center justify-center mx-4 md:mx-0">
+                <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mb-4 md:mb-6 border border-rose-100">
+                    <i class="fas fa-lock text-2xl md:text-3xl"></i>
                 </div>
-                <h2 class="text-2xl font-black text-slate-800 mb-3 tracking-tight">Akses Dibatasi</h2>
-                <p class="text-slate-500 font-medium text-base max-w-2xl mx-auto leading-relaxed">
-                    Maaf, Anda tidak memiliki hak akses untuk melihat menu Sales Command Center. Fitur ini hanya tersedia untuk anggota Divisi Marketing dan Operasional & Top Management.
+                <h2 class="text-xl md:text-2xl font-black text-slate-800 mb-2 md:mb-3 tracking-tight">Access Restricted</h2>
+                <p class="text-slate-500 font-medium text-xs md:text-base max-w-2xl mx-auto leading-relaxed">
+                    Sorry, you do not have permission to view the Sales Command Center. This feature is only available for Marketing & Operations Division and Top Management members.
                 </p>
             </div>
             @endif

@@ -564,7 +564,7 @@
                             ticks: {
                                 callback: function(value) { return 'Rp ' + new Intl.NumberFormat('id-ID', { notation: "compact" , compactDisplay: "short" }).format(value); }
                             },
-                            suggestedMax: Math.max(...outletSales) * 1.2 // Tambahkan jarak di sisi kanan agar angka tidak terpotong
+                            suggestedMax: Math.max(...outletSales) * 1.2
                         },
                         y: {
                             ticks: { autoSkip: false, font: { size: 11 } }
@@ -579,7 +579,6 @@
                 c.classList.remove('active');
             });
             btnEl.classList.add('active');
-            
             
             // Tutup otomatis pilihan bulan dan perbarui label judul
             const labelEl = document.getElementById('selectedMonthLabel');
@@ -601,8 +600,6 @@
                     const fRp = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n||0));
                     const fNum = (n) => new Intl.NumberFormat('id-ID').format(n||0);
                     
-                    // Catatan: Pembuatan grafik Outlet (View 2) dan PDU (View 1) dipanggil secara terpisah
-
                     // Isi pilihan dropdown filter Product
                     let psProductSelect = document.getElementById('filterProductPs');
                     let defaultOption = @json(isset($hasFullAccess) && !$hasFullAccess) ? '<option value="Sales Team">Sales Team</option>' : '<option value="all">All</option><option value="Sales Team">Sales Team</option>';
@@ -610,8 +607,6 @@
                     data.product.forEach(ps => {
                         psProductSelect.innerHTML += `<option value="${ps.nama}">${ps.nama}</option>`;
                     });
-
-                    // Tampilkan View 1: PDU (dipanggil terpisah)
                     
                     // Isi pilihan dropdown filter PS (Project Sales)
                     let psOutletSelect = document.getElementById('filterOutletPs');
@@ -857,150 +852,169 @@
             // 2. Tampilkan Grafik PDU
             if (pduChartInstance) pduChartInstance.destroy();
             
-            let chartLabels = [];
-            let targetData = [];
             let filteredPdu = data.pdu.filter(p => {
                 if (psFilter === 'all') return true;
                 if (psFilter === 'Sales Team') return p.nama.toLowerCase() !== 'office';
                 return p.nama === psFilter;
             });
+            
             let pduLabels = filteredPdu.map(p => p.nama);
             let pduTarget = filteredPdu.map(p => p.target_amount);
             let pduSales = filteredPdu.map(p => p.total_nett);
             let pduPerc = filteredPdu.map(p => p.target_amount > 0 ? ((p.total_nett / p.target_amount) * 100).toFixed(1) : null);
             let pduGrowth = filteredPdu.map(p => p.growth_rate !== undefined ? p.growth_rate : 0);
+            
+            // Mapping Avg YTD
+            let pduAvgYtd = filteredPdu.map(p => p.avg_ytd !== undefined ? p.avg_ytd : 0);
 
             const ctxPdu = document.getElementById('chartPdu').getContext('2d');
             pduChartInstance = new Chart(ctxPdu, {
                 type: 'bar',
-
-                        data: {
-                            labels: pduLabels,
-                            datasets: [
-                                {
-                                    type: 'line',
-                                    label: 'Achievement %',
-                                    data: pduSales,
-                                    borderColor: '#9ca3af',
-                                    borderWidth: 3,
-                                    pointBackgroundColor: '#ef4444',
-                                    pointBorderColor: '#fff',
-                                    pointRadius: 5,
-                                    fill: false,
-                                    spanGaps: true
-                                },
-                                {
-                                    type: 'line',
-                                    label: 'Growth MoM %',
-                                    data: pduGrowth,
-                                    borderColor: '#10b981',
-                                    borderWidth: 3,
-                                    pointBackgroundColor: '#10b981',
-                                    pointBorderColor: '#fff',
-                                    pointRadius: 5,
-                                    fill: false,
-                                    spanGaps: true,
-                                    yAxisID: 'y1'
-                                },
-                                {
-                                    type: 'bar',
-                                    label: 'Target',
-                                    data: pduTarget,
-                                    backgroundColor: '#3b82f6',
-                                    barPercentage: 0.6,
-                                    categoryPercentage: 0.8,
-                                    yAxisID: 'y'
-                                },
-                                {
-                                    type: 'bar',
-                                    label: 'Sales',
-                                    data: pduSales,
-                                    backgroundColor: '#f97316',
-                                    barPercentage: 0.6,
-                                    categoryPercentage: 0.8,
-                                    yAxisID: 'y'
-                                }
-                            ]
+                data: {
+                    labels: pduLabels,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: 'Achievement %',
+                            data: pduSales,
+                            borderColor: '#9ca3af',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#ef4444',
+                            pointBorderColor: '#fff',
+                            pointRadius: 5,
+                            fill: false,
+                            spanGaps: true
                         },
-                        options: {
-                            events: ['mousemove', 'mouseout', 'click', 'touchstart'],
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            interaction: { mode: 'index', intersect: false },
-                            plugins: {
-                                datalabels: {
-                                    anchor: 'end',
-                                    align: function(context) {
-                                        if (context.dataset.label === 'Achievement %') return 'bottom';
-                                        if (context.dataset.label === 'Growth MoM %') return 'top';
-                                        return 'top';
-                                    },
-                                    offset: function(context) {
-                                        if (context.dataset.type === 'line') return 8;
-                                        return 4;
-                                    },
-                                    color: function(context) {
-                                        if (context.dataset.label === 'Achievement %') return '#ef4444';
-                                        if (context.dataset.label === 'Growth MoM %') return '#059669';
-                                        return '#64748b';
-                                    },
-                                    backgroundColor: function(context) {
-                                        return context.dataset.type === 'line' ? 'rgba(255, 255, 255, 0.9)' : 'transparent';
-                                    },
-                                    borderRadius: 4,
-                                    padding: 2,
-                                    font: { size: 9, weight: 'bold' },
-                                    formatter: function(value, context) {
-                                        if (context.dataset.label === 'Achievement %') {
-                                            let perc = pduPerc[context.dataIndex];
-                                            return perc > 0 ? perc + '%' : '0%';
-                                        } else if (context.dataset.label === 'Growth MoM %') {
-                                            return value + '%';
-                                        }
-                                        if (value === null || value === 0) return '';
-                                        return new Intl.NumberFormat('id-ID', { notation: "compact", maximumFractionDigits: 1 }).format(value);
-                                    }
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            let label = context.dataset.label || '';
-                                            if (label) label += ': ';
-                                            if (context.dataset.label === 'Achievement %') {
-                                                let perc = pduPerc[context.dataIndex];
-                                                label += (perc > 0 ? perc : 0) + '%';
-                                            } else if (context.dataset.label === 'Growth MoM %') {
-                                                label += context.raw + '%';
-                                            } else {
-                                                label += fRp(context.raw);
-                                            }
-                                            return label;
-                                        }
-                                    }
-                                },
-                                legend: { position: 'top' }
+                        {
+                            type: 'line',
+                            label: 'Growth MoM %',
+                            data: pduGrowth,
+                            borderColor: '#10b981',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#fff',
+                            pointRadius: 5,
+                            fill: false,
+                            spanGaps: true,
+                            yAxisID: 'y1'
+                        },
+                        // Dataset Avg YTD
+                        {
+                            type: 'line',
+                            label: 'Avg YTD',
+                            data: pduAvgYtd,
+                            borderColor: '#8b5cf6', // Warna Ungu
+                            borderWidth: 2,
+                            borderDash: [5, 5], // Garis putus-putus
+                            pointBackgroundColor: '#8b5cf6',
+                            pointBorderColor: '#fff',
+                            pointRadius: 4,
+                            fill: false,
+                            yAxisID: 'y'
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Target',
+                            data: pduTarget,
+                            backgroundColor: '#3b82f6',
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8,
+                            yAxisID: 'y'
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Sales',
+                            data: pduSales,
+                            backgroundColor: '#f97316',
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8,
+                            yAxisID: 'y'
+                        }
+                    ]
+                },
+                options: {
+                    events: ['mousemove', 'mouseout', 'click', 'touchstart'],
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: function(context) {
+                                if (context.dataset.label === 'Achievement %') return 'bottom';
+                                if (context.dataset.label === 'Growth MoM %') return 'top';
+                                return 'top';
                             },
-                            scales: {
-                                y: {
-                                    type: 'linear',
-                                    display: true,
-                                    position: 'left',
-                                    ticks: {
-                                        callback: function(value) { return 'Rp ' + new Intl.NumberFormat('id-ID', { notation: "compact" , compactDisplay: "short" }).format(value); }
+                            offset: function(context) {
+                                if (context.dataset.type === 'line') return 8;
+                                return 4;
+                            },
+                            color: function(context) {
+                                if (context.dataset.label === 'Achievement %') return '#ef4444';
+                                if (context.dataset.label === 'Growth MoM %') return '#059669';
+                                return '#64748b';
+                            },
+                            backgroundColor: function(context) {
+                                return context.dataset.type === 'line' ? 'rgba(255, 255, 255, 0.9)' : 'transparent';
+                            },
+                            borderRadius: 4,
+                            padding: 2,
+                            font: { size: 9, weight: 'bold' },
+                            formatter: function(value, context) {
+                                // Sembunyikan tulisan di atas grafik khusus untuk dataset Avg YTD agar lebih rapi
+                                if (context.dataset.label === 'Avg YTD') return '';
+
+                                if (context.dataset.label === 'Achievement %') {
+                                    let perc = pduPerc[context.dataIndex];
+                                    return perc > 0 ? perc + '%' : '0%';
+                                } else if (context.dataset.label === 'Growth MoM %') {
+                                    return value + '%';
+                                }
+                                if (value === null || value === 0) return '';
+                                return new Intl.NumberFormat('id-ID', { notation: "compact", maximumFractionDigits: 1 }).format(value);
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.dataset.label === 'Achievement %') {
+                                        let perc = pduPerc[context.dataIndex];
+                                        label += (perc > 0 ? perc : 0) + '%';
+                                    } else if (context.dataset.label === 'Growth MoM %') {
+                                        label += context.raw + '%';
+                                    } else {
+                                        // Gunakan format Rupiah untuk Target, Sales, dan Avg YTD di Popup Hover
+                                        label += fRp(context.raw);
                                     }
-                                },
-                                y1: {
-                                    type: 'linear',
-                                    display: true,
-                                    position: 'right',
-                                    grid: { drawOnChartArea: false },
-                                    ticks: {
-                                        callback: function(value) { return value + '%'; }
-                                    }
+                                    return label;
                                 }
                             }
+                        },
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: {
+                                callback: function(value) { return 'Rp ' + new Intl.NumberFormat('id-ID', { notation: "compact" , compactDisplay: "short" }).format(value); }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: {
+                                callback: function(value) { return value + '%'; }
+                            }
                         }
-                    });
+                    }
+                }
+            });
         }
     </script>
     @endpush

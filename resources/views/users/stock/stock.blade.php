@@ -19,9 +19,15 @@
         $divisi = strtolower($user->divisi ?? '');
         $isTopManagement = \Illuminate\Support\Str::contains($jabatan, 'direktur') || $divisi === 'top management';
         $isMarketing = in_array($divisi, ['marketing dan operasional']);
+        $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
+        $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing') || \Illuminate\Support\Str::contains($jabatan, 'purchasing');
+
         if ($isTopManagement || $isMarketing) {
             $backRoute = route('sales.index');
             $backText = 'Back to Sales Dashboard';
+        } elseif ($isAdminGudang || $isLegalPurchasing) {
+            $backRoute = route('sales.gudang.dashboard');
+            $backText = 'Back to Dashboard Gudang';
         }
     }
 @endphp
@@ -31,15 +37,21 @@
     <style>
         [x-cloak] { display: none !important; }
         .swal2-container { z-index: 100000 !important; }
-        body { background-color: #ede9fe; }
+
         .mesh-bg { 
-            background-color: #ede9fe;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.4) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
-            background-attachment: fixed;
+                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.6) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+            pointer-events: none;
         }
+        
         .page-header {
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             border-radius: 1.25rem; padding: 1rem 1.5rem; color: white;
@@ -77,18 +89,13 @@
         .table-header { background: #f8fafc; color: #475569; font-weight: 800; }
         .row-item { background: #ffffff; color: #1e293b; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
         .row-item:hover { background: #f1f5f9; }
-        .status-badge {
-            padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;
-            display: inline-flex; align-items: center; gap: 0.25rem;
-        }
-        .status-aman { background-color: #dcfce7; color: #166534; }
-        .status-menipis { background-color: #fef08a; color: #854d0e; }
-        .status-kosong { background-color: #fee2e2; color: #991b1b; }
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 h-full mesh-bg relative overflow-hidden text-slate-800 p-4 sm:p-6 lg:p-6" x-data="stockManager()">
-        <div class="w-full max-w-7xl mx-auto flex flex-col gap-4 relative z-10">
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16" x-data="stockManager()">
+        <div class="mesh-bg"></div>
+
+        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-6 flex flex-col gap-2.5">
             
             <!-- Alert Messages -->
             @if (session('success'))
@@ -103,8 +110,8 @@
                 </div>
             @endif
 
-            <!-- Back Button -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <!-- Back Button (Unified with Text for both Mobile & Desktop) -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
                 <a href="{{ $backRoute }}" class="btn-back-modern shrink-0">
                     <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                     {{ $backText }}
@@ -126,13 +133,16 @@
                 </div>
             </div>
 
-            <!-- Page Title Card (Mobile Style) -->
-            <div class="block md:hidden rounded-2xl p-4 text-white shadow-lg flex items-center gap-3 mb-2" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
-                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-lg shrink-0">
-                    <i class="fas fa-boxes"></i>
+            <!-- Page Title Card (Mobile Style - Icon Moved to Right) -->
+            <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 mb-1 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
+                <div class="relative z-10 flex-1 min-w-0">
+                    <h2 class="text-sm font-black tracking-wider uppercase leading-snug truncate">Stock Monitoring</h2>
+                    <p class="text-xs text-blue-100 font-medium leading-normal truncate mt-0.5">
+                        Monitor physical inventory levels.
+                    </p>
                 </div>
-                <div>
-                    <h2 class="text-xs font-black uppercase tracking-wider">STOCK MONITORING</h2>
+                <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white text-base shrink-0 shadow-inner relative z-10">
+                    <i class="fas fa-boxes-stacked"></i>
                 </div>
             </div>
 
@@ -184,8 +194,8 @@
                                 <h3 class="font-bold text-slate-700 text-sm flex items-center">Recent Upload History</h3>
                                 <a href="{{ route('sales.stock.history_index') }}" class="text-xs text-blue-600 font-bold hover:underline">All History &rarr;</a>
                             </div>
-                            <div class="overflow-hidden border border-slate-100 rounded-xl bg-white shadow-sm flex flex-col">
-                                <table class="w-full text-left text-sm whitespace-nowrap">
+                            <div class="overflow-x-auto overflow-y-hidden border border-slate-100 rounded-xl bg-white shadow-sm flex flex-col">
+                                <table class="w-full text-left text-sm whitespace-nowrap min-w-[500px]">
                                     <thead class="bg-slate-50">
                                         <tr class="text-[10px] text-slate-500 border-b border-slate-200 tracking-wider">
                                             <th class="px-4 py-3 font-bold uppercase">Date & Time</th>
@@ -243,19 +253,19 @@
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-list text-blue-500"></i> Product List</h2>
                         <p class="text-xs text-slate-500 font-medium mt-1">Last updated: @if($logs->first()) {{ $logs->first()->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i') }} @else - @endif</p>
                     </div>
-                    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                         <!-- Search Box -->
-                        <div class="relative w-full sm:w-auto">
+                        <div class="relative w-full sm:w-96">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fas fa-search text-slate-400"></i>
                             </div>
-                            <input type="text" x-model="searchQuery" placeholder="Search Product Name" class="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-8 px-3 py-2 shadow-sm transition-colors sm:w-96">
+                            <input type="text" x-model="searchQuery" placeholder="Search Product Name" class="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-8 px-3 py-2 shadow-sm transition-colors">
                             <button type="button" x-show="searchQuery.length > 0" @click="searchQuery = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
                                 <i class="fas fa-times-circle"></i>
                             </button>
                         </div>
                         @if($canManageStock)
-                        <a href="{{ route('sales.stock.export') }}" class="bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex items-center gap-2">
+                        <a href="{{ route('sales.stock.export') }}" class="bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex justify-center items-center gap-2 whitespace-nowrap">
                             <i class="fas fa-file-export"></i> Export Excel
                         </a>
                         @endif
@@ -388,8 +398,8 @@
                         </button>
                     </div>
 
-                    <div class="overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm">
-                        <table class="w-full text-sm text-left table-fixed">
+                    <div class="overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-x-auto">
+                        <table class="w-full text-sm text-left table-fixed min-w-[600px]">
                             <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                                 <tr>
                                     <th class="px-4 py-3 text-xs uppercase tracking-wider w-[280px] max-w-[280px] whitespace-normal">Item</th>
@@ -485,7 +495,7 @@
 
                     <!-- Search Box -->
                     <div class="flex items-center">
-                        <div class="relative w-64">
+                        <div class="relative w-full sm:w-64">
                             <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                                 <i class="fas fa-search text-slate-400 text-xs"></i>
                             </div>
@@ -497,8 +507,8 @@
                     </div>
 
                     <!-- Items Updated Table -->
-                    <div class="overflow-y-auto max-h-80 border border-slate-200 rounded-xl bg-white shadow-sm">
-                        <table class="w-full text-xs text-left">
+                    <div class="overflow-y-auto overflow-x-auto max-h-80 border border-slate-200 rounded-xl bg-white shadow-sm">
+                        <table class="w-full text-xs text-left min-w-[450px]">
                             <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                                 <tr>
                                     <th class="px-4 py-2.5 text-[10px] uppercase tracking-wider">Item Name</th>
@@ -575,7 +585,7 @@
                 showPreviewModal: false,
                 searchQuery: '',
                 previewSearchQuery: '',
-                filterDate: new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Jakarta'}), // Get YYYY-MM-DD local time format
+                filterDate: new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Jakarta'}),
                 isLoadingHistory: false,
                 isParsing: false,
                 limit: 50,

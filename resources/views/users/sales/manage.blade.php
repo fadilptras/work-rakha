@@ -2,7 +2,7 @@
     $agent = new \Jenssegers\Agent\Agent();
     $isMobile = $agent->isMobile();
 @endphp
-<x-layout-users title="{{ $title ?? 'Kelola Data Sales' }}">
+<x-layout-users title="{{ $title ?? 'Manage Sales Data' }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     @push('styles')
@@ -113,6 +113,16 @@
             padding-right: 2.5rem !important;
         }
 
+        /* == Custom CSS Icons == */
+        .search-wrapper { position: relative; width: 100%; display: block; }
+        .icon-left { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 5; }
+        .icon-clear-search { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .icon-clear-datalist { position: absolute; right: 36px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        .pl-icon { padding-left: 40px !important; }
+        .pr-icon-search { padding-right: 40px !important; }
+        .pr-icon-datalist { padding-right: 60px !important; }
+
         /* == Button == */
         .btn-primary { background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
         .btn-primary:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 6px 10px -1px rgba(59, 130, 246, 0.4); }
@@ -126,128 +136,143 @@
     <div class="mesh-bg flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800">
         <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start" x-data="manageData()">
 
-        {{-- Header Halaman & Tombol Kembali --}}
+        {{-- Header Page & Back Button --}}
         <div class="page-header flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="header-content">
-                <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Kelola Data Sales</h1>
-                <p class="text-blue-100 text-sm md:text-base opacity-90 max-w-2xl font-medium">Satu pusat untuk semua data sales. Input manual, import dari Excel, dan kelola riwayat data.</p>
+                <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Manage Sales Data</h1>
+                <p class="text-blue-100 text-sm md:text-base opacity-90 max-w-2xl font-medium">One hub for all sales data. Manual input, import from Excel, and manage data history.</p>
             </div>
             <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0 mb-0">
                 <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                Kembali ke Dashboard
+                Back to Dashboard
             </a>
         </div>
 
-        {{-- Navigasi Tab --}}
+        {{-- Tab Navigation --}}
         <div class="flex space-x-2 bg-white p-2.5 rounded-3xl shadow-sm border border-slate-200 overflow-x-auto">
             <button @click="activeTab = 'table'" :class="{ 'active': activeTab === 'table' }" class="tab-btn whitespace-nowrap flex items-center">
-                <i class="fas fa-table mr-2"></i> Riwayat Data
+                <i class="fas fa-table mr-2"></i> Data History
             </button>
             <button @click="activeTab = 'input'" :class="{ 'active': activeTab === 'input' }" class="tab-btn whitespace-nowrap flex items-center">
-                <i class="fas fa-keyboard mr-2"></i> Input Manual
+                <i class="fas fa-keyboard mr-2"></i> Manual Input
             </button>
             <button @click="activeTab = 'import'" :class="{ 'active': activeTab === 'import' }" class="tab-btn whitespace-nowrap flex items-center">
                 <i class="fas fa-cloud-upload-alt mr-2"></i> Import Data
             </button>
         </div>
 
-        {{-- [TAB 1] Tabel Riwayat Data --}}
+        {{-- [TAB 1] History Table --}}
         <div x-show="activeTab === 'table'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-4 flex-1 flex flex-col">
-            {{-- Form Filter Pencarian --}}
+            {{-- Filter Form --}}
             <div class="glass-card relative z-10">
-                <form action="{{ route('sales.manage') }}" method="GET">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 md:gap-4 items-end">
-                        {{-- Pencarian --}}
-                        <div class="lg:col-span-4 md:col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Pencarian Umum</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 flex items-center pointer-events-none" style="left: 1rem;">
-                                    <i class="fas fa-search text-slate-400 text-sm"></i>
+                <form action="{{ route('sales.manage') }}" method="GET" id="filterForm">
+                    <button type="submit" class="hidden" aria-hidden="true"></button>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-3 md:gap-4 items-end">
+                        
+                        {{-- Row 1: General Search, Customer, Product --}}
+                        <div class="lg:col-span-4 md:col-span-1">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">General Search</label>
+                            <div class="search-wrapper" x-data="{ search: '{{ request('search') }}' }">
+                                <div class="icon-left text-slate-400">
+                                    <i class="fas fa-search text-sm"></i>
                                 </div>
-                                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama..." class="modern-input" style="padding-left: 2.75rem;">
+                                <input type="text" name="search" x-model="search" @input.debounce.1200ms="document.getElementById('filterForm').submit()" placeholder="Search name..." class="modern-input pl-icon pr-icon-search" autocomplete="off">
+                                <button type="button" x-cloak x-show="search.length > 0" @click="search = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-search text-slate-400 hover:text-slate-600 transition-colors">
+                                    <i class="fas fa-times-circle text-sm"></i>
+                                </button>
                             </div>
                         </div>
 
-                        {{-- Filter Customer --}}
                         <div class="lg:col-span-4 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Customer</label>
-                            <input list="customer-list-options" type="text" name="nama_customer" value="{{ request('nama_customer') }}" placeholder="Semua Customer" class="modern-input" autocomplete="off" onchange="this.form.submit()">
+                            <div class="search-wrapper" x-data="{ val: '{{ request('nama_customer') }}' }">
+                                <input list="customer-list-options" type="text" name="nama_customer" x-model="val" @input.debounce.1200ms="document.getElementById('filterForm').submit()" placeholder="All Customers" class="modern-input pr-icon-datalist" autocomplete="off">
+                                <button type="button" x-cloak x-show="val.length > 0" @click="val = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-datalist text-slate-400 hover:text-slate-600 transition-colors">
+                                    <i class="fas fa-times-circle text-sm"></i>
+                                </button>
+                            </div>
                         </div>
 
-                        {{-- Filter Produk --}}
                         <div class="lg:col-span-4 md:col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Produk</label>
-                            <input list="produk-list-options" type="text" name="nama_produk" value="{{ request('nama_produk') }}" placeholder="Semua Produk" class="modern-input" autocomplete="off" onchange="this.form.submit()">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Product</label>
+                            <div class="search-wrapper" x-data="{ val: '{{ request('nama_produk') }}' }">
+                                <input list="produk-list-options" type="text" name="nama_produk" x-model="val" @input.debounce.1200ms="document.getElementById('filterForm').submit()" placeholder="All Products" class="modern-input pr-icon-datalist" autocomplete="off">
+                                <button type="button" x-cloak x-show="val.length > 0" @click="val = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-datalist text-slate-400 hover:text-slate-600 transition-colors">
+                                    <i class="fas fa-times-circle text-sm"></i>
+                                </button>
+                            </div>
                         </div>
 
-                        {{-- Filter PS --}}
-                        <div class="lg:col-span-2 md:col-span-1">
+                        {{-- Row 2: PS, Date, Month, Year, Action Buttons --}}
+                        <div class="lg:col-span-3 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">PS</label>
-                            <input list="ps-list-options" type="text" name="ps" value="{{ request('ps') }}" placeholder="Semua PS" class="modern-input !px-2" autocomplete="off" onchange="this.form.submit()">
+                            <div class="search-wrapper" x-data="{ val: '{{ request('ps') }}' }">
+                                <input list="ps-list-options" type="text" name="ps" x-model="val" @input.debounce.1200ms="document.getElementById('filterForm').submit()" placeholder="All PS" class="modern-input pr-icon-datalist" autocomplete="off">
+                                <button type="button" x-cloak x-show="val.length > 0" @click="val = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-datalist text-slate-400 hover:text-slate-600 transition-colors">
+                                    <i class="fas fa-times-circle text-sm"></i>
+                                </button>
+                            </div>
                         </div>
                         
-                        {{-- Filter Tanggal --}}
                         <div class="lg:col-span-3 md:col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tanggal</label>
-                            <input type="date" name="tanggal" value="{{ request('tanggal') }}" class="modern-input !px-2 text-sm" onchange="this.form.submit()">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
+                            <input type="date" name="tanggal" value="{{ request('tanggal') }}" class="modern-input !px-3 text-sm" onchange="document.getElementById('filterForm').submit()">
                         </div>
 
-                        {{-- Filter Bulan --}}
                         <div class="lg:col-span-2 md:col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Bulan</label>
-                            <select name="bulan" class="modern-input !px-2" onchange="this.form.submit()">
-                                <option value="">Semua</option>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Month</label>
+                            <select name="bulan" class="modern-input !px-2" onchange="document.getElementById('filterForm').submit()">
+                                <option value="">All</option>
                                 @foreach($listBulan as $bulan)
                                     <option value="{{ $bulan }}" {{ request('bulan') == $bulan ? 'selected' : '' }}>{{ $bulan }}</option>
                                 @endforeach
                             </select>
                         </div>
                         
-                        {{-- Filter Tahun --}}
                         <div class="lg:col-span-2 md:col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tahun</label>
-                            <select name="tahun" class="modern-input !px-2" onchange="this.form.submit()">
-                                <option value="">Semua</option>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Year</label>
+                            <select name="tahun" class="modern-input !px-2" onchange="document.getElementById('filterForm').submit()">
+                                <option value="">All</option>
                                 @foreach($listTahun as $tahun)
                                     <option value="{{ $tahun }}" {{ request('tahun') == $tahun ? 'selected' : '' }}>{{ $tahun }}</option>
                                 @endforeach
                             </select>
                         </div>
                         
-                        {{-- Action Buttons --}}
-                        <div class="lg:col-span-3 md:col-span-2 flex gap-2">
+                        <div class="lg:col-span-2 md:col-span-2 flex gap-2">
                             @if(request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']))
-                                <a href="{{ route('sales.manage') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 px-2 rounded-xl text-xs md:text-sm transition-all flex items-center justify-center border-[1.5px] border-slate-200" title="Reset Filter">
-                                    <i class="fas fa-undo mr-1"></i> Reset
+                                <a href="{{ route('sales.manage') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-2 rounded-xl text-xs md:text-sm transition-all flex items-center justify-center border-[1.5px] border-slate-200" title="Reset Filters">
+                                    <i class="fas fa-undo mr-1.5"></i> Reset
                                 </a>
                             @endif
-                            <button type="submit" formaction="{{ route('sales.export') }}" class="{{ request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'w-1/2' : 'w-full' }} bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-3 px-2 rounded-xl text-xs md:text-sm transition-all flex items-center justify-center border-[1.5px] border-emerald-200" title="Export Hasil Filter ke CSV">
-                                <i class="fas fa-file-export mr-1"></i> Export
+                            <button type="submit" formaction="{{ route('sales.export') }}" class="{{ request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'w-1/2' : 'w-full' }} bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-2.5 px-2 rounded-xl text-xs md:text-sm transition-all flex items-center justify-center border-[1.5px] border-emerald-200" title="Export Filtered Results to CSV">
+                                <i class="fas fa-file-export mr-1.5"></i> Export
                             </button>
                         </div>
                     </div>
                 </form>
             </div>
 
-            {{-- Tabel Data --}}
+            {{-- Data Table --}}
             <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col">
                 <div class="px-6 py-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl"><i class="fas fa-table"></i></div>
                         <div>
-                            <h3 class="text-lg font-black text-slate-800">Daftar Data Sales</h3>
-                            <p class="text-xs text-slate-500 font-semibold mt-1">Total: {{ $sales->total() }} data ditemukan.</p>
+                            <h3 class="text-lg font-black text-slate-800">Sales Data List</h3>
+                            <p class="text-xs text-slate-500 font-semibold mt-1">Total: {{ $sales->total() }} records found.</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="confirmBulkDelete()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow-sm hidden" id="btn-bulk-delete">
-                            <i class="fas fa-trash-alt mr-1"></i> Hapus (<span id="selected-count">0</span>)
+                            <i class="fas fa-trash-alt mr-1"></i> Delete (<span id="selected-count">0</span>)
                         </button>
                         <select onchange="window.location.href=this.value" class="modern-input !py-1.5 !px-3 !w-auto text-xs font-semibold text-slate-600 bg-white border-slate-200 cursor-pointer shadow-sm rounded-lg hover:border-blue-400 transition-colors focus:ring-2 focus:ring-blue-100">
-                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'terbaru']) }}" {{ request('sort', 'terbaru') == 'terbaru' ? 'selected' : '' }}>Urutkan: Terbaru</option>
-                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'terlama']) }}" {{ request('sort') == 'terlama' ? 'selected' : '' }}>Urutkan: Terlama</option>
-                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'tertinggi']) }}" {{ request('sort') == 'tertinggi' ? 'selected' : '' }}>Penjualan Tertinggi</option>
-                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'terendah']) }}" {{ request('sort') == 'terendah' ? 'selected' : '' }}>Penjualan Terendah</option>
+                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'terbaru']) }}" {{ request('sort', 'terbaru') == 'terbaru' ? 'selected' : '' }}>Sort: Newest</option>
+                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'terlama']) }}" {{ request('sort') == 'terlama' ? 'selected' : '' }}>Sort: Oldest</option>
+                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'tertinggi']) }}" {{ request('sort') == 'tertinggi' ? 'selected' : '' }}>Highest Sales</option>
+                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'terendah']) }}" {{ request('sort') == 'terendah' ? 'selected' : '' }}>Lowest Sales</option>
                         </select>
                     </div>
                 </div>
@@ -260,13 +285,13 @@
                                         <input type="checkbox" id="check-all" class="rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer">
                                     </th>
                                     <th class="px-4 py-4 w-12 text-center">No</th>
-                                    <th class="px-4 py-4">Tanggal</th>
+                                    <th class="px-4 py-4">Date</th>
                                     <th class="px-4 py-4">Customer</th>
                                     <th class="px-4 py-4 text-center">PS</th>
-                                    <th class="px-4 py-4">Produk</th>
+                                    <th class="px-4 py-4">Product</th>
                                     <th class="px-4 py-4">Qty</th>
-                                    <th class="px-4 py-4 text-right">Harga Nett</th>
-                                    <th class="px-4 py-4 text-center">Aksi</th>
+                                    <th class="px-4 py-4 text-right">Net Price</th>
+                                    <th class="px-4 py-4 text-center">Action</th>
                                 </tr>
                             </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -281,7 +306,7 @@
                                 <td class="px-4 py-3 text-center font-bold text-indigo-600">{{ $item->ps ?? '-' }}</td>
                                 <td class="px-4 py-3">
                                     <div class="text-slate-800 font-medium">{{ $item->nama_produk ?? '-' }}</div>
-                                    <div class="text-xs text-slate-400 mt-0.5">HNA: Rp {{ number_format($item->hna, 0, ',', '.') }} | Diskon: {{ $item->diskon == floor($item->diskon) ? number_format($item->diskon, 0) : $item->diskon }}%</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">HNA: Rp {{ number_format($item->hna, 0, ',', '.') }} | Discount: {{ $item->diskon == floor($item->diskon) ? number_format($item->diskon, 0) : $item->diskon }}%</div>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap"><span class="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">{{ $item->qty ?? 0 }} {{ $item->satuan }}</span></td>
                                 <td class="px-4 py-3 text-right whitespace-nowrap font-bold text-emerald-600">Rp {{ number_format($item->harga_nett, 0, ',', '.') }}</td>
@@ -293,7 +318,7 @@
                                         <form action="{{ route('sales.destroy', $item->id) }}" method="POST" id="form-delete-{{ $item->id }}" class="inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="button" onclick="confirmDelete('{{ $item->id }}')" class="btn-danger" title="Hapus">
+                                            <button type="button" onclick="confirmDelete('{{ $item->id }}')" class="btn-danger" title="Delete">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </form>
@@ -305,8 +330,8 @@
                                 <td colspan="8" class="px-6 py-12 text-center text-slate-400">
                                     <div class="flex flex-col items-center justify-center">
                                         <i class="fas fa-search text-5xl text-slate-200 mb-4"></i>
-                                        <p class="font-medium text-lg">Data tidak ditemukan.</p>
-                                        <p class="text-sm mt-1">Coba sesuaikan kata kunci pencarian atau filter bulan/tahun.</p>
+                                        <p class="font-medium text-lg">No data found.</p>
+                                        <p class="text-sm mt-1">Try adjusting the search keywords or month/year filter.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -323,28 +348,28 @@
             </div>
         </div>
 
-        {{-- [TAB 2] Input Data Manual --}}
+        {{-- [TAB 2] Manual Data Input --}}
         <div x-show="activeTab === 'input'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
             <div class="glass-card">
                 <h3 class="text-lg font-black text-slate-800 flex items-center mb-6">
                     <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg mr-3"><i class="fas fa-keyboard"></i></div>
-                    Input Data Manual
+                    Manual Data Input
                 </h3>
-                <form action="{{ route('sales.store_manual') }}" method="POST" id="manual-sales-form" onsubmit="confirmSubmit(event, 'Simpan data sales ini?')">
+                <form action="{{ route('sales.store_manual') }}" method="POST" id="manual-sales-form" onsubmit="confirmSubmit(event, 'Save this sales data?')">
                     @csrf
                     <div class="grid grid-cols-1 gap-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
-                                <label class="modern-label">Tanggal <span class="text-red-500">*</span></label>
+                                <label class="modern-label">Date <span class="text-red-500">*</span></label>
                                 <input type="date" name="tanggal" required class="modern-input">
                             </div>
                             <div>
-                                <label class="modern-label">Nama PS</label>
-                                <input list="ps-list-options" type="text" name="ps" placeholder="Daffa" class="modern-input" autocomplete="off">
+                                <label class="modern-label">PS Name</label>
+                                <input list="ps-list-options" type="text" name="ps" placeholder="e.g. John Doe" class="modern-input" autocomplete="off">
                             </div>
                             <div>
-                                <label class="modern-label">Nama Customer <span class="text-red-500">*</span></label>
-                                <input list="customer-list-options" type="text" name="nama_customer" required placeholder="Nama Customer (Contoh: RSUD Sayang)" class="modern-input bg-white shadow-sm" autocomplete="off">
+                                <label class="modern-label">Customer Name <span class="text-red-500">*</span></label>
+                                <input list="customer-list-options" type="text" name="nama_customer" required placeholder="Customer Name (e.g. Clinic ABC)" class="modern-input bg-white shadow-sm" autocomplete="off">
                             </div>
                         </div>
 
@@ -352,10 +377,10 @@
                             <div class="flex justify-between items-center mb-4 mt-1 border-t border-slate-200 pt-4">
                                 <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide flex items-center">
                                     <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-box-open"></i></div>
-                                    Rincian Produk
+                                    Product Details
                                 </h4>
                                 <button type="button" id="tambah-produk-btn" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-bold py-2 px-4 rounded-xl transition-all shadow-sm flex items-center">
-                                    <i class="fas fa-plus mr-2"></i> Tambah Baris Produk
+                                    <i class="fas fa-plus mr-2"></i> Add Product Row
                                 </button>
                             </div>
                             
@@ -369,8 +394,8 @@
                                         <i class="fas fa-coins"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-black text-indigo-900 text-sm">Total Keseluruhan</h4>
-                                        <p class="text-[10px] text-indigo-600 font-medium mt-0.5 uppercase tracking-wider">Grand Total Penjualan</p>
+                                        <h4 class="font-black text-indigo-900 text-sm">Grand Total</h4>
+                                        <p class="text-[10px] text-indigo-600 font-medium mt-0.5 uppercase tracking-wider">Total Sales Amount</p>
                                     </div>
                                 </div>
                                 <div class="text-right bg-white py-2 px-4 rounded-lg shadow-sm border border-indigo-50 w-full md:w-auto">
@@ -382,12 +407,10 @@
                     
                     <div class="mt-8 flex justify-end">
                         <button type="submit" class="btn-primary flex items-center">
-                            <i class="fas fa-save mr-2"></i> Simpan Data Manual
+                            <i class="fas fa-save mr-2"></i> Save Manual Data
                         </button>
                     </div>
                 </form>
-
-
             </div>
         </div>
 
@@ -397,18 +420,18 @@
                 <div class="lg:col-span-7 glass-card border-t-4 border-t-emerald-500 flex flex-col h-full">
                     <h3 class="text-lg font-black text-slate-800 flex items-center mb-6">
                         <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg mr-3"><i class="fas fa-cloud-upload-alt"></i></div>
-                        Import dari Excel/CSV
+                        Import from Excel/CSV
                     </h3>
-                    <form action="{{ route('sales.import_excel') }}" method="POST" enctype="multipart/form-data" class="flex-1 flex flex-col" onsubmit="confirmSubmit(event, 'Apakah Anda yakin ingin mengimpor data dari file ini?')">
+                    <form action="{{ route('sales.import_excel') }}" method="POST" enctype="multipart/form-data" class="flex-1 flex flex-col" onsubmit="confirmSubmit(event, 'Are you sure you want to import data from this file?')">
                         @csrf
                         <div class="mb-6 flex-1 flex flex-col">
-                            <label class="modern-label mb-2">Pilih File (.xlsx, .csv)</label>
+                            <label class="modern-label mb-2">Choose File (.xlsx, .csv)</label>
                             <div class="flex-1 relative border-2 border-dashed border-emerald-200 rounded-2xl bg-emerald-50/50 hover:bg-emerald-50 transition-colors py-12 px-6 flex flex-col items-center justify-center text-center cursor-pointer overflow-hidden min-h-[200px]">
                                 <input type="file" name="file" accept=".xlsx, .xls, .csv" required
                                     class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-                                    onchange="document.getElementById('fileName').textContent = this.files[0] ? this.files[0].name : 'Belum ada file dipilih';">
+                                    onchange="document.getElementById('fileName').textContent = this.files[0] ? this.files[0].name : 'No file chosen';">
                                 <i class="fas fa-file-excel text-4xl text-emerald-400 mb-3"></i>
-                                <p id="fileName" class="text-sm font-bold text-slate-600 truncate px-2">Klik atau Drop file di sini</p>
+                                <p id="fileName" class="text-sm font-bold text-slate-600 truncate px-2">Click or Drop file here</p>
                             </div>
                         </div>
                         <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg hover:shadow-emerald-500/40 flex justify-center items-center">
@@ -420,27 +443,27 @@
                 <div class="lg:col-span-5 flex flex-col gap-6">
                     <div class="glass-card bg-slate-50 border-slate-200">
                         <h4 class="font-bold text-slate-800 mb-4 flex items-center text-sm"><i class="fas fa-file-download mr-2 text-blue-500"></i> Download Template</h4>
-                        <p class="text-sm text-slate-600 mb-4">Unduh template CSV kosong dengan format kolom yang sudah disesuaikan dengan sistem.</p>
+                        <p class="text-sm text-slate-600 mb-4">Download an empty CSV template with column formats adjusted to the system.</p>
                         <a href="{{ route('sales.download_template') }}" class="inline-flex items-center justify-center w-full bg-white border-2 border-blue-200 hover:border-blue-500 text-blue-600 font-bold py-3 px-4 rounded-xl transition-all shadow-sm">
-                            <i class="fas fa-download mr-2"></i> Download Template CSV
+                            <i class="fas fa-download mr-2"></i> Download CSV Template
                         </a>
                     </div>
 
                     <div class="glass-card bg-blue-50 border-blue-200">
-                        <h4 class="font-bold text-blue-800 mb-3 flex items-center text-sm"><i class="fas fa-info-circle mr-2"></i> Petunjuk Import</h4>
+                        <h4 class="font-bold text-blue-800 mb-3 flex items-center text-sm"><i class="fas fa-info-circle mr-2"></i> Import Instructions</h4>
                         <ul class="text-xs text-blue-700 space-y-2 list-disc list-inside font-medium leading-relaxed">
-                            <li>Gunakan <b>template CSV terbaru</b> yang didownload dari tombol di atas.</li>
-                            <li><b>Mulai input data pada Baris ke-3 (Cell A3) ke bawah.</b> Baris ke-1 (Header) dan Baris ke-2 (Petunjuk Format) akan <b>otomatis diabaikan</b> oleh sistem. Anda bebas menimpa/menghapus baris ke-3.</li>
-                            <li><b class="text-blue-800">CARA PASTE YANG BENAR:</b> Saat copy-paste dari file Export, klik kanan pada cell tujuan di template, lalu pilih menu <b>Paste Formulas & Number Formatting (O)</b> atau <b>Paste Values & Number Formatting (V & %)</b> di Excel.</li>
-                            <li>Kolom Angka (HNA, Diskon, Harga Nett) sekarang <b>mendukung format teks bebas</b> (Contoh: ketik `Rp 529.500` atau `12.69%` langsung). Sistem akan membersihkannya otomatis.</li>
-                            <li><b class="text-red-600">Penting (Auto-Sync):</b> Sistem mendeteksi <b>Bulan</b> dari kolom Tanggal, lalu akan <b>menghapus & mengganti</b> seluruh data sales pada bulan tersebut dengan data yang baru di-upload.</li>
+                            <li>Use the <b>latest CSV template</b> downloaded from the button above.</li>
+                            <li><b>Start inputting data from Row 3 (Cell A3) downwards.</b> Row 1 (Header) and Row 2 (Format Instructions) will be <b>automatically ignored</b> by the system. You are free to overwrite/delete row 3.</li>
+                            <li><b class="text-blue-800">CORRECT WAY TO PASTE:</b> When copy-pasting from an Export file, right-click on the destination cell in the template, then select <b>Paste Values & Number Formatting (V & %)</b> in Excel.</li>
+                            <li>Number Columns (HNA, Discount, Net Price) now <b>support free text format</b> (Example: type `Rp 529.500` or `12.69%` directly). The system will clean it up automatically.</li>
+                            <li><b class="text-red-600">Important (Auto-Sync):</b> The system detects the <b>Month</b> from the Date column, then will <b>delete & replace</b> all sales data for that month with the newly uploaded data.</li>
                         </ul>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Modal Edit Data --}}
+        {{-- Edit Data Modal --}}
         <div x-cloak x-show="showEditModal" class="relative z-[100]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             {{-- Background backdrop --}}
             <div x-show="showEditModal" x-transition.opacity class="fixed inset-0 transition-opacity" style="background-color: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);" aria-hidden="true" @click="showEditModal = false"></div>
@@ -463,31 +486,31 @@
                             @method('PUT')
                             <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                                 <div class="flex justify-between items-center mb-5 pb-4 border-b border-slate-100">
-                                    <h3 class="text-xl leading-6 font-bold text-slate-800" id="modal-title">Edit Data Sales</h3>
+                                    <h3 class="text-xl leading-6 font-bold text-slate-800" id="modal-title">Edit Sales Data</h3>
                                     <button type="button" @click="showEditModal = false" class="text-slate-400 hover:text-slate-500 focus:outline-none">
                                         <i class="fas fa-times text-xl"></i>
                                     </button>
                                 </div>
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div><label class="modern-label">Tanggal</label><input type="date" name="tanggal" x-model="formData.tanggal" class="modern-input"></div>
+                                    <div><label class="modern-label">Date</label><input type="date" name="tanggal" x-model="formData.tanggal" class="modern-input"></div>
                                     <div><label class="modern-label">Customer</label><input list="customer-list-options" type="text" name="nama_customer" x-model="formData.nama_customer" class="modern-input" autocomplete="off"></div>
                                     
                                     <div><label class="modern-label">PS</label><input list="ps-list-options" type="text" name="ps" x-model="formData.ps" class="modern-input" autocomplete="off"></div>
-                                    <div><label class="modern-label">Produk</label><input list="produk-list-options" type="text" name="nama_produk" x-model="formData.nama_produk" class="modern-input" autocomplete="off"></div>
+                                    <div><label class="modern-label">Product</label><input list="produk-list-options" type="text" name="nama_produk" x-model="formData.nama_produk" class="modern-input" autocomplete="off"></div>
                                     
                                     <div class="grid grid-cols-2 gap-4">
                                         <div><label class="modern-label">Qty</label><input type="number" name="qty" x-model="formData.qty" @input="calculateNett()" class="modern-input"></div>
-                                        <div><label class="modern-label">Satuan</label><input list="satuan-list-options" type="text" name="satuan" x-model="formData.satuan" class="modern-input" autocomplete="off"></div>
+                                        <div><label class="modern-label">Unit</label><input list="satuan-list-options" type="text" name="satuan" x-model="formData.satuan" class="modern-input" autocomplete="off"></div>
                                     </div>
 
                                     <div class="grid grid-cols-2 gap-4">
                                         <div><label class="modern-label">HNA (Rp)</label><input type="number" name="hna" x-model="formData.hna" @input="calculateNett()" step="0.01" class="modern-input"></div>
-                                        <div><label class="modern-label">Diskon (%)</label><input type="number" name="diskon" x-model="formData.diskon" @input="calculateNett()" step="0.01" class="modern-input"></div>
+                                        <div><label class="modern-label">Discount (%)</label><input type="number" name="diskon" x-model="formData.diskon" @input="calculateNett()" step="0.01" class="modern-input"></div>
                                     </div>
                                     
                                     <div class="md:col-span-2 mt-2 border-t border-slate-100 pt-4">
-                                        <label class="block text-sm font-bold text-indigo-600 uppercase mb-2">Total Harga Nett (Rp)</label>
+                                        <label class="block text-sm font-bold text-indigo-600 uppercase mb-2">Total Net Price (Rp)</label>
                                         <input type="text" :value="formatRupiah(formData.harga_nett)" class="modern-input !bg-indigo-50 !border-indigo-200 font-black text-2xl !py-4" readonly>
                                         <input type="hidden" name="harga_nett" x-model="formData.harga_nett">
                                     </div>
@@ -495,10 +518,10 @@
                             </div>
                             <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                                 <button type="submit" class="inline-flex w-full justify-center rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto transition-all">
-                                    Simpan Perubahan
+                                    Save Changes
                                 </button>
                                 <button type="button" @click="showEditModal = false" class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto transition-all">
-                                    Batal
+                                    Cancel
                                 </button>
                             </div>
                         </form>
@@ -509,7 +532,7 @@
         </div>
     </div>
 
-    {{-- Datalist Options dari Database --}}
+    {{-- Datalist Options --}}
     <datalist id="ps-list-options">
         @foreach($listPs as $ps_item)
             <option value="{{ $ps_item }}"></option>
@@ -614,14 +637,14 @@
         // SweetAlert Delete Confirmation
         function confirmDelete(id) {
             Swal.fire({
-                title: 'Hapus Data?',
-                text: "Data sales yang dihapus tidak dapat dikembalikan!",
+                title: 'Delete Data?',
+                text: "Deleted sales data cannot be recovered!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
                 cancelButtonColor: '#94a3b8',
-                confirmButtonText: 'Ya, hapus!',
-                cancelButtonText: 'Batal'
+                confirmButtonText: 'Yes, delete!',
+                cancelButtonText: 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('form-delete-' + id).submit();
@@ -629,7 +652,7 @@
             });
         }
 
-// Vanilla JS Logic untuk Form Input Multi Produk (Mengadaptasi sistem Pengajuan Barang)
+        // Vanilla JS Logic untuk Form Input Multi Produk
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('rincian-produk-container');
             const addBtn = document.getElementById('tambah-produk-btn');
@@ -701,7 +724,6 @@
                     container.innerHTML = ''; // Clear container
                     
                     if (formData.products && formData.products.length > 0) {
-                        // Restore each row in reverse because prepend inserts them at the top
                         for (let i = formData.products.length - 1; i >= 0; i--) {
                             addProductRow(formData.products[i]);
                         }
@@ -713,7 +735,6 @@
                     addProductRow();
                 } finally {
                     isRestoring = false;
-                    // Trigger manual save once after restoration is fully complete to sync totals
                     calculateGrandTotal();
                 }
             }
@@ -728,22 +749,22 @@
                 row.innerHTML = `
                     <div class="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
                         <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-blue-600 bg-blue-100/70 px-2 py-1 rounded-md product-number-badge">Produk #${productCounter}</span>
+                            <span class="text-xs font-bold text-blue-600 bg-blue-100/70 px-2 py-1 rounded-md product-number-badge">Product #${productCounter}</span>
                             <div class="flex items-center gap-1.5 bg-white border border-slate-200/60 px-2 py-0.5 rounded-md text-[10px] shadow-sm">
                                 <span class="font-bold text-slate-400 uppercase tracking-wider">Subtotal:</span>
                                 <span class="text-indigo-600 font-black subtotal-text">Rp 0</span>
                                 <input type="hidden" name="harga_nett[]" value="0" class="input-harga-nett">
                             </div>
                         </div>
-                        <button type="button" class="btn-remove-product text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition-colors flex items-center shadow-sm border border-red-100" title="Hapus produk ini">
-                            <i class="fas fa-trash-alt mr-1"></i> Hapus
+                        <button type="button" class="btn-remove-product text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition-colors flex items-center shadow-sm border border-red-100" title="Delete this product">
+                            <i class="fas fa-trash-alt mr-1"></i> Delete
                         </button>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
                         <div>
-                            <label class="modern-label !text-[10px] !mb-1">Nama Produk <span class="text-red-500">*</span></label>
-                            <input list="produk-list-options" type="text" name="nama_produk[]" required placeholder="Nama Barang" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100" autocomplete="off">
+                            <label class="modern-label !text-[10px] !mb-1">Product Name <span class="text-red-500">*</span></label>
+                            <input list="produk-list-options" type="text" name="nama_produk[]" required placeholder="Product Name" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100" autocomplete="off">
                         </div>
                         
                         <div class="grid grid-cols-2 gap-3">
@@ -752,7 +773,7 @@
                                 <input type="number" name="qty[]" min="1" required placeholder="0" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100 input-qty">
                             </div>
                             <div>
-                                <label class="modern-label !text-[10px] !mb-1">Satuan</label>
+                                <label class="modern-label !text-[10px] !mb-1">Unit</label>
                                 <input list="satuan-list-options" type="text" name="satuan[]" placeholder="Pcs/Box" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100" autocomplete="off">
                             </div>
                         </div>
@@ -764,7 +785,7 @@
                                 <input type="hidden" name="hna[]" class="input-hna-raw" value="0">
                             </div>
                             <div>
-                                <label class="modern-label !text-[10px] !mb-1">Diskon (%)</label>
+                                <label class="modern-label !text-[10px] !mb-1">Discount (%)</label>
                                 <input type="number" name="diskon[]" step="0.01" min="0" placeholder="0" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100 input-diskon">
                             </div>
                         </div>
@@ -773,7 +794,6 @@
                 
                 container.prepend(row);
                 
-                // Add event listeners for calculation
                 const qtyInput = row.querySelector('.input-qty');
                 const hnaDisplay = row.querySelector('.input-hna-display');
                 const hnaRaw = row.querySelector('.input-hna-raw');
@@ -809,11 +829,9 @@
                 qtyInput.addEventListener('input', calculateRow);
                 diskonInput.addEventListener('input', calculateRow);
 
-                // Add list autocomplete event listener to also save draft on select
                 row.querySelector('input[name="nama_produk[]"]').addEventListener('input', saveFormToLocalStorage);
                 row.querySelector('input[name="satuan[]"]').addEventListener('input', saveFormToLocalStorage);
                 
-                // Add event listener for delete
                 const removeBtn = row.querySelector('.btn-remove-product');
                 removeBtn.addEventListener('click', function() {
                     row.remove();
@@ -822,7 +840,6 @@
                     checkRemoveButtons();
                 });
 
-                // Fill initial data if provided
                 if (initialData) {
                     row.querySelector('input[name="nama_produk[]"]').value = initialData.nama_produk || '';
                     row.querySelector('.input-qty').value = initialData.qty || '';
@@ -839,7 +856,7 @@
             function updateProductNumbers() {
                 const badges = container.querySelectorAll('.product-number-badge');
                 badges.forEach((badge, index) => {
-                    badge.textContent = 'Produk #' + (index + 1);
+                    badge.textContent = 'Product #' + (index + 1);
                 });
                 productCounter = badges.length;
             }
@@ -921,17 +938,16 @@
             if (selectedIds.length === 0) return;
 
             Swal.fire({
-                title: 'Hapus ' + selectedIds.length + ' Data Terpilih?',
-                text: "Data sales yang dihapus tidak dapat dikembalikan!",
+                title: 'Delete ' + selectedIds.length + ' Selected Data?',
+                text: "Deleted sales data cannot be recovered!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
                 cancelButtonColor: '#94a3b8',
-                confirmButtonText: 'Ya, hapus semua!',
-                cancelButtonText: 'Batal'
+                confirmButtonText: 'Yes, delete all!',
+                cancelButtonText: 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Buat form dinamis
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = '{{ route("sales.bulk_destroy") }}';
