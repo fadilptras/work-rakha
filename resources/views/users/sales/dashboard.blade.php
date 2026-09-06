@@ -119,6 +119,7 @@
         .card-orange:hover { border-color: rgba(249, 115, 22, 0.3); }
         .card-brown:hover { border-color: rgba(124, 45, 18, 0.3); }
         .card-slate:hover { border-color: rgba(71, 85, 105, 0.3); }
+        .card-sky:hover { border-color: rgba(14, 165, 233, 0.3); }
 
         /* Icon Container */
         .icon-box {
@@ -154,6 +155,10 @@
         .card-slate .icon-box { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
         .card-slate:hover .icon-box { background: #475569; color: white; box-shadow: 0 10px 20px rgba(71, 85, 105, 0.2); }
         .card-slate:hover h2 { color: #475569 !important; }
+
+        .card-sky .icon-box { background: #f0f9ff; color: #0ea5e9; border: 1px solid #e0f2fe; }
+        .card-sky:hover .icon-box { background: #0ea5e9; color: white; box-shadow: 0 10px 20px rgba(14, 165, 233, 0.2); }
+        .card-sky:hover h2 { color: #0ea5e9 !important; }
         
         .mobile-chevron { display: none; }
 
@@ -194,7 +199,7 @@
 
             {{-- Kartu Utama --}}
             @if(isset($hasAnyAccess) && $hasAnyAccess)
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6 relative z-10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 relative z-10">
                 
                 @if(isset($hasFullAccess) && $hasFullAccess)
                 {{-- Kartu 1: Data Management --}}
@@ -357,6 +362,33 @@
 
                     <div class="bg-decoration absolute -bottom-6 -right-6 text-slate-200 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
                         <i class="fas fa-wand-magic-sparkles"></i>
+                    </div>
+                </a>
+
+                {{-- Kartu Baru: Product Price & SPH (Sky Blue / Biru Awan) --}}
+                <a href="{{ route('sales.pricing') }}" class="module-card card-sky group title-reveal stagger-1" style="animation-delay: 0.7s;">
+                    <div class="icon-box">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    
+                    <div class="card-content">
+                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight transition-colors">Product Price & SPH</h2>
+                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                            Manage official product pricing lists and generate professional Sales Price Quotation (SPH) documents seamlessly.
+                        </p>
+                        
+                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-sky-500 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                            <span>Open Price & SPH</span>
+                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                        </div>
+                    </div>
+
+                    <div class="mobile-chevron">
+                        <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+
+                    <div class="bg-decoration absolute -bottom-6 -right-6 text-sky-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
+                        <i class="fas fa-tags"></i>
                     </div>
                 </a>
 

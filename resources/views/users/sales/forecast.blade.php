@@ -18,21 +18,27 @@
     @push('styles')
     <style>
         [x-cloak] { display: none !important; }
-        body { background-color: #f8fafc; }
+        body { font-family: 'Outfit', sans-serif; background-color: #ede9fe; }
 
         .mesh-bg { 
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;
+            background-color: #ede9fe;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.6) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.4) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
             pointer-events: none;
         }
 
         .page-header {
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            border-radius: 1rem; padding: 1.25rem 1.75rem; color: white;
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3); position: relative; overflow: hidden;
+            border-radius: 1.25rem; 
+            padding: 1rem 1.5rem; 
+            color: white;
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3); 
+            position: relative; 
+            overflow: hidden;
         }
         .page-header::before {
             content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
@@ -53,20 +59,39 @@
 
         .btn-back-modern {
             display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 18px 8px 8px;
+            padding: 6px 16px 6px 6px;
             background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.9);
             border-radius: 9999px;
-            color: #1e293b; font-size: 0.9rem; font-weight: 700;
-            transition: all 0.2s ease; width: fit-content;
+            color: #1e293b;
+            font-size: 0.85rem; font-weight: 700;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            margin-bottom: 0;
+            width: fit-content;
         }
         .btn-back-modern:hover { 
-            background: #fff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1); color: #1e40af;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+            color: #1d4ed8;
         }
         .btn-back-modern .icon-circle {
-            width: 32px; height: 32px; background: #fff; border-radius: 50%;
+            width: 28px; height: 28px;
+            background: #fff;
+            border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            color: #3b82f6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            color: #3b82f6;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            transition: transform 0.3s ease;
+        }
+        .btn-back-modern:hover .icon-circle {
+            transform: translateX(-3px);
+            background: #EFF6FF;
         }
 
         input[type=number]::-webkit-inner-spin-button, 
@@ -80,16 +105,16 @@
     <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16" x-data="{ showForecastModal: false }">
         <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-6 flex flex-col gap-2.5">
+        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start">
             
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
+            <div class="w-full flex justify-start">
                 <a href="{{ $backRoute }}" class="btn-back-modern shrink-0">
                     <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                     {{ $backText }}
                 </a>
-            </div>
+            </div>  
 
-            <div class="hidden md:block page-header mb-1">
+            <div class="hidden md:block page-header">
                 <div class="header-content flex flex-row items-center justify-between gap-6">
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight text-white">Sales Forecast & Stock Estimation</h1>
@@ -103,7 +128,7 @@
                 </div>
             </div>
 
-            <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 mb-1 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
+            <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
                 <div class="relative z-10 flex-1 min-w-0">
                     <h2 class="text-sm font-black tracking-wider uppercase leading-snug truncate">Product Forecast</h2>
                     <p class="text-xs text-blue-100 font-medium leading-normal truncate mt-0.5">
@@ -163,9 +188,9 @@
                                 <i class="fas fa-sliders-h"></i> Set Persentase (+{{ $activePercentage }}%)
                             </button>
                         @endif
-                        <button type="button" onclick="alert('Export to Excel feature is coming soon!')" class="flex-1 md:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap">
+                        <a href="{{ route('sales.forecast.export.excel', ['tahun' => $tahun, 'bulan_akhir' => $bulanAktif]) }}" class="flex-1 md:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap">
                             <i class="fas fa-file-excel"></i> Export
-                        </button>
+                        </a>
                     </div>
                 </div>
 

@@ -20,11 +20,15 @@
             background-attachment: fixed;
         }
 
-        /* == Header Style == */
+        /* == Header Style (Dibuat Lebih Compact) == */
         .page-header {
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            border-radius: 1.25rem; padding: 1rem 1.5rem; color: white;
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3); position: relative; overflow: hidden;
+            border-radius: 1.25rem; 
+            padding: 1rem 1.5rem; 
+            color: white;
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3); 
+            position: relative; 
+            overflow: hidden;
         }
         .page-header::before {
             content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
@@ -43,17 +47,18 @@
             padding: 1rem 1.5rem;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
         }
+        
         /* == Modern Back Button == */
         .btn-back-modern {
             display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 18px 8px 8px;
+            padding: 6px 16px 6px 6px;
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.9);
             border-radius: 9999px;
             color: #1e293b;
-            font-size: 0.9rem; font-weight: 700;
+            font-size: 0.85rem; font-weight: 700;
             text-decoration: none;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
@@ -67,12 +72,12 @@
             color: #1d4ed8;
         }
         .btn-back-modern .icon-circle {
-            width: 32px; height: 32px;
+            width: 28px; height: 28px;
             background: #fff;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             color: #3b82f6;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             box-shadow: 0 2px 6px rgba(0,0,0,0.06);
             transition: transform 0.3s ease;
         }
@@ -81,22 +86,7 @@
             background: #EFF6FF;
         }
 
-        .tab-btn {
-            padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 1.25rem; font-weight: 700;
-            color: #64748b; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent;
-        }
-        @media (min-width: 768px) {
-            .tab-btn { padding: 0.5rem 1.25rem; font-size: 0.9rem; }
-        }
-        .tab-btn:hover { color: #3b82f6; background: #f8fafc; }
-        .tab-btn.active { 
-            color: #ffffff; 
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
-            border-color: transparent;
-        }
-
-        /* == Forms == */
+        /* == Forms (TETAP BESAR UNTUK TAB LAIN) == */
         .modern-input {
             width: 100%; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 0.75rem;
             padding: 0.75rem 1rem; color: #334155; font-size: 0.875rem; transition: all 0.2s ease;
@@ -117,11 +107,14 @@
         .search-wrapper { position: relative; width: 100%; display: block; }
         .icon-left { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 5; }
         .icon-clear-search { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .icon-clear-datalist { position: absolute; right: 36px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        .icon-clear-datalist { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        input::-webkit-search-cancel-button { display: none; }
         
         .pl-icon { padding-left: 40px !important; }
         .pr-icon-search { padding-right: 40px !important; }
-        .pr-icon-datalist { padding-right: 60px !important; }
+        .pr-icon-datalist { padding-right: 52px !important; }
 
         /* == Button == */
         .btn-primary { background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
@@ -136,48 +129,53 @@
     <div class="mesh-bg flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800">
         <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start" x-data="manageData()">
 
-        {{-- Header Page & Back Button --}}
-        <div class="page-header flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="header-content">
-                <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Manage Sales Data</h1>
-                <p class="text-blue-100 text-sm md:text-base opacity-90 max-w-2xl font-medium">One hub for all sales data. Manual input, import from Excel, and manage data history.</p>
-            </div>
-            <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0 mb-0">
+        <div class="w-full flex justify-start mb-3 md:mb-4">
+            <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0">
                 <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                Back to Dashboard
+                Back to Sales Dashboard
             </a>
         </div>
 
-        {{-- Tab Navigation --}}
-        <div class="flex space-x-2 bg-white p-2.5 rounded-3xl shadow-sm border border-slate-200 overflow-x-auto">
-            <button @click="activeTab = 'table'" :class="{ 'active': activeTab === 'table' }" class="tab-btn whitespace-nowrap flex items-center">
-                <i class="fas fa-table mr-2"></i> Data History
-            </button>
-            <button @click="activeTab = 'input'" :class="{ 'active': activeTab === 'input' }" class="tab-btn whitespace-nowrap flex items-center">
-                <i class="fas fa-keyboard mr-2"></i> Manual Input
-            </button>
-            <button @click="activeTab = 'import'" :class="{ 'active': activeTab === 'import' }" class="tab-btn whitespace-nowrap flex items-center">
-                <i class="fas fa-cloud-upload-alt mr-2"></i> Import Data
-            </button>
+        {{-- Header Page & Tab Navigation --}}
+        <div class="page-header flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+            <div class="header-content">
+                <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-1 text-white">Manage Sales Data</h1>
+                <p class="text-blue-100 text-xs md:text-sm opacity-90 max-w-2xl font-medium">One hub for all sales data. Manual input, import from Excel, and manage data history.</p>
+            </div>
+            
+            <div class="flex space-x-1 bg-white/10 p-1.5 rounded-full border border-white/20 backdrop-blur-md overflow-x-auto shrink-0 w-full xl:w-auto relative z-10 mt-2 xl:mt-0">
+                <button @click="activeTab = 'table'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'table', 'text-white hover:bg-white/20': activeTab !== 'table' }" class="px-4 py-2 text-xs md:text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                    <i class="fas fa-table mr-2"></i> Data History
+                </button>
+                <button @click="activeTab = 'input'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'input', 'text-white hover:bg-white/20': activeTab !== 'input' }" class="px-4 py-2 text-xs md:text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                    <i class="fas fa-keyboard mr-2"></i> Manual Input
+                </button>
+                <button @click="activeTab = 'import'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'import', 'text-white hover:bg-white/20': activeTab !== 'import' }" class="px-4 py-2 text-xs md:text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                    <i class="fas fa-cloud-upload-alt mr-2"></i> Import Data
+                </button>
+            </div>
         </div>
 
         {{-- [TAB 1] History Table --}}
         <div x-show="activeTab === 'table'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-4 flex-1 flex flex-col">
-            {{-- Filter Form --}}
+            
+            {{-- Filter Form (MENGGUNAKAN UTILITY !py-2 AGAR LEBIH PENDEK) --}}
             <div class="glass-card relative z-10">
                 <form action="{{ route('sales.manage') }}" method="GET" id="filterForm">
                     <button type="submit" class="hidden" aria-hidden="true"></button>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-3 md:gap-4 items-end">
+                    {{-- Gap dikurangi menjadi gap-2 md:gap-3 --}}
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-2 md:gap-3 items-end">
                         
-                        {{-- Row 1: General Search, Customer, Product --}}
                         <div class="lg:col-span-4 md:col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">General Search</label>
+                            {{-- Margin label dikurangi jadi mb-1 --}}
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">General Search</label>
                             <div class="search-wrapper" x-data="{ search: '{{ request('search') }}' }">
                                 <div class="icon-left text-slate-400">
                                     <i class="fas fa-search text-sm"></i>
                                 </div>
-                                <input type="text" name="search" x-model="search" @input.debounce.1200ms="document.getElementById('filterForm').submit()" placeholder="Search name..." class="modern-input pl-icon pr-icon-search" autocomplete="off">
+                                {{-- Ditambah !py-2 !text-sm agar kolom lebih pendek --}}
+                                <input type="text" name="search" x-model="search" @input.debounce.1200ms="document.getElementById('filterForm').submit()" placeholder="Search Name" class="modern-input pl-icon pr-icon-search !py-2 !text-sm" autocomplete="off">
                                 <button type="button" x-cloak x-show="search.length > 0" @click="search = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-search text-slate-400 hover:text-slate-600 transition-colors">
                                     <i class="fas fa-times-circle text-sm"></i>
                                 </button>
@@ -185,9 +183,9 @@
                         </div>
 
                         <div class="lg:col-span-4 md:col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Customer</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Customer</label>
                             <div class="search-wrapper" x-data="{ val: '{{ request('nama_customer') }}' }">
-                                <input list="customer-list-options" type="text" name="nama_customer" x-model="val" @input.debounce.1200ms="document.getElementById('filterForm').submit()" placeholder="All Customers" class="modern-input pr-icon-datalist" autocomplete="off">
+                                <input list="customer-list-options" type="text" name="nama_customer" x-model="val" @change="document.getElementById('filterForm').submit()" placeholder="All Customers" class="modern-input pr-icon-datalist !py-2 !text-sm" autocomplete="off">
                                 <button type="button" x-cloak x-show="val.length > 0" @click="val = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-datalist text-slate-400 hover:text-slate-600 transition-colors">
                                     <i class="fas fa-times-circle text-sm"></i>
                                 </button>
@@ -195,34 +193,33 @@
                         </div>
 
                         <div class="lg:col-span-4 md:col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Product</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Product</label>
                             <div class="search-wrapper" x-data="{ val: '{{ request('nama_produk') }}' }">
-                                <input list="produk-list-options" type="text" name="nama_produk" x-model="val" @input.debounce.1200ms="document.getElementById('filterForm').submit()" placeholder="All Products" class="modern-input pr-icon-datalist" autocomplete="off">
+                                <input list="produk-list-options" type="text" name="nama_produk" x-model="val" @change="document.getElementById('filterForm').submit()" placeholder="All Products" class="modern-input pr-icon-datalist !py-2 !text-sm" autocomplete="off">
                                 <button type="button" x-cloak x-show="val.length > 0" @click="val = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-datalist text-slate-400 hover:text-slate-600 transition-colors">
                                     <i class="fas fa-times-circle text-sm"></i>
                                 </button>
                             </div>
                         </div>
 
-                        {{-- Row 2: PS, Date, Month, Year, Action Buttons --}}
-                        <div class="lg:col-span-3 md:col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">PS</label>
+                        <div class="lg:col-span-3 md:col-span-1 mt-1 lg:mt-0">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">PS</label>
                             <div class="search-wrapper" x-data="{ val: '{{ request('ps') }}' }">
-                                <input list="ps-list-options" type="text" name="ps" x-model="val" @input.debounce.1200ms="document.getElementById('filterForm').submit()" placeholder="All PS" class="modern-input pr-icon-datalist" autocomplete="off">
+                                <input list="ps-list-options" type="text" name="ps" x-model="val" @change="document.getElementById('filterForm').submit()" placeholder="All PS" class="modern-input pr-icon-datalist !py-2 !text-sm" autocomplete="off">
                                 <button type="button" x-cloak x-show="val.length > 0" @click="val = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-datalist text-slate-400 hover:text-slate-600 transition-colors">
                                     <i class="fas fa-times-circle text-sm"></i>
                                 </button>
                             </div>
                         </div>
                         
-                        <div class="lg:col-span-3 md:col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
-                            <input type="date" name="tanggal" value="{{ request('tanggal') }}" class="modern-input !px-3 text-sm" onchange="document.getElementById('filterForm').submit()">
+                        <div class="lg:col-span-3 md:col-span-1 mt-1 lg:mt-0">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date</label>
+                            <input type="date" name="tanggal" value="{{ request('tanggal') }}" class="modern-input !px-3 !py-2 !text-sm" onchange="document.getElementById('filterForm').submit()">
                         </div>
 
-                        <div class="lg:col-span-2 md:col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Month</label>
-                            <select name="bulan" class="modern-input !px-2" onchange="document.getElementById('filterForm').submit()">
+                        <div class="lg:col-span-2 md:col-span-1 mt-1 lg:mt-0">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Month</label>
+                            <select name="bulan" class="modern-input !px-2 !py-2 !text-sm" onchange="document.getElementById('filterForm').submit()">
                                 <option value="">All</option>
                                 @foreach($listBulan as $bulan)
                                     <option value="{{ $bulan }}" {{ request('bulan') == $bulan ? 'selected' : '' }}>{{ $bulan }}</option>
@@ -230,9 +227,9 @@
                             </select>
                         </div>
                         
-                        <div class="lg:col-span-2 md:col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Year</label>
-                            <select name="tahun" class="modern-input !px-2" onchange="document.getElementById('filterForm').submit()">
+                        <div class="lg:col-span-2 md:col-span-1 mt-1 lg:mt-0">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Year</label>
+                            <select name="tahun" class="modern-input !px-2 !py-2 !text-sm" onchange="document.getElementById('filterForm').submit()">
                                 <option value="">All</option>
                                 @foreach($listTahun as $tahun)
                                     <option value="{{ $tahun }}" {{ request('tahun') == $tahun ? 'selected' : '' }}>{{ $tahun }}</option>
@@ -240,13 +237,15 @@
                             </select>
                         </div>
                         
-                        <div class="lg:col-span-2 md:col-span-2 flex gap-2">
+                        <div class="lg:col-span-2 md:col-span-2 flex gap-2 mt-1 lg:mt-0">
                             @if(request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']))
-                                <a href="{{ route('sales.manage') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-2 rounded-xl text-xs md:text-sm transition-all flex items-center justify-center border-[1.5px] border-slate-200" title="Reset Filters">
+                                {{-- Tombol reset diperpendek ukurannya dengan py-2 --}}
+                                <a href="{{ route('sales.manage') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-2 rounded-xl text-xs transition-all flex items-center justify-center border-[1.5px] border-slate-200" title="Reset Filters">
                                     <i class="fas fa-undo mr-1.5"></i> Reset
                                 </a>
                             @endif
-                            <button type="submit" formaction="{{ route('sales.export') }}" class="{{ request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'w-1/2' : 'w-full' }} bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-2.5 px-2 rounded-xl text-xs md:text-sm transition-all flex items-center justify-center border-[1.5px] border-emerald-200" title="Export Filtered Results to CSV">
+                            {{-- Tombol export diperpendek ukurannya dengan py-2 --}}
+                            <button type="submit" formaction="{{ route('sales.export') }}" class="{{ request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'w-1/2' : 'w-full' }} bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-2 px-2 rounded-xl text-xs transition-all flex items-center justify-center border-[1.5px] border-emerald-200" title="Export Filtered Results to CSV">
                                 <i class="fas fa-file-export mr-1.5"></i> Export
                             </button>
                         </div>
@@ -301,15 +300,15 @@
                                     <input type="checkbox" name="ids[]" value="{{ $item->id }}" class="row-checkbox rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer">
                                 </td>
                                 <td class="px-4 py-3 text-center text-slate-400 font-medium">{{ $sales->firstItem() + $index }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap font-medium text-slate-700">{{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}</td>
-                                <td class="px-4 py-3 font-bold text-slate-900">{{ $item->nama_customer ?? '-' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap font-medium text-slate-700">{{ $item->date ? \Carbon\Carbon::parse($item->date)->format('d/m/Y') : '-' }}</td>
+                                <td class="px-4 py-3 font-bold text-slate-900">{{ $item->customer_name ?? '-' }}</td>
                                 <td class="px-4 py-3 text-center font-bold text-indigo-600">{{ $item->ps ?? '-' }}</td>
                                 <td class="px-4 py-3">
-                                    <div class="text-slate-800 font-medium">{{ $item->nama_produk ?? '-' }}</div>
-                                    <div class="text-xs text-slate-400 mt-0.5">HNA: Rp {{ number_format($item->hna, 0, ',', '.') }} | Discount: {{ $item->diskon == floor($item->diskon) ? number_format($item->diskon, 0) : $item->diskon }}%</div>
+                                    <div class="text-slate-800 font-medium">{{ $item->product_name ?? '-' }}</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">HNA: Rp {{ number_format($item->base_price, 0, ',', '.') }} | Discount: {{ $item->discount == floor($item->discount) ? number_format($item->discount, 0) : $item->discount }}%</div>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap"><span class="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">{{ $item->qty ?? 0 }} {{ $item->satuan }}</span></td>
-                                <td class="px-4 py-3 text-right whitespace-nowrap font-bold text-emerald-600">Rp {{ number_format($item->harga_nett, 0, ',', '.') }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap"><span class="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">{{ $item->qty ?? 0 }} {{ $item->unit }}</span></td>
+                                <td class="px-4 py-3 text-right whitespace-nowrap font-bold text-emerald-600">Rp {{ number_format($item->net_price, 0, ',', '.') }}</td>
                                 <td class="px-4 py-3 text-center whitespace-nowrap">
                                     <div class="flex items-center justify-center gap-2">
                                         <button type="button" data-item="{{ json_encode($item) }}" @click="openEditModal(JSON.parse($el.dataset.item))" class="btn-edit" title="Edit">
@@ -365,7 +364,7 @@
                             </div>
                             <div>
                                 <label class="modern-label">PS Name</label>
-                                <input list="ps-list-options" type="text" name="ps" placeholder="e.g. John Doe" class="modern-input" autocomplete="off">
+                                <input list="ps-input-options" type="text" name="ps" placeholder="e.g. John Doe" class="modern-input" autocomplete="off">
                             </div>
                             <div>
                                 <label class="modern-label">Customer Name <span class="text-red-500">*</span></label>
@@ -538,6 +537,16 @@
             <option value="{{ $ps_item }}"></option>
         @endforeach
     </datalist>
+    <datalist id="ps-input-options">
+        @foreach($listPs as $ps_item)
+            <option value="{{ $ps_item }}"></option>
+        @endforeach
+        @foreach($listUserPs as $ps_user)
+            @if(!$listPs->contains($ps_user))
+                <option value="{{ $ps_user }}"></option>
+            @endif
+        @endforeach
+    </datalist>
     <datalist id="customer-list-options">
         @foreach($listCustomer as $cus)
             <option value="{{ $cus }}"></option>
@@ -571,7 +580,19 @@
                     });
                 },
                 openEditModal(item) {
-                    this.formData = { ...item };
+                    this.formData = {
+                        id: item.id || '',
+                        tanggal: item.date || '',
+                        bulan: item.month || '',
+                        nama_customer: item.customer_name || '',
+                        ps: item.ps || '',
+                        nama_produk: item.product_name || '',
+                        qty: item.qty || 0,
+                        satuan: item.unit || '',
+                        hna: item.base_price || 0,
+                        diskon: item.discount || 0,
+                        harga_nett: item.net_price || 0,
+                    };
                     if(this.formData.tanggal) this.formData.tanggal = this.formData.tanggal.split('T')[0];
                     this.editUrl = `{{ url('sales') }}/${item.id}`;
                     this.showEditModal = true;

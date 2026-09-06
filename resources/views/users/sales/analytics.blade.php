@@ -187,10 +187,10 @@
                 @php
                     $chartBulan = $listBulan;
                     if (!empty($triwulanTerpilih)) {
-                        if ($triwulanTerpilih == '1') $chartBulan = ['Januari', 'Februari', 'Maret'];
-                        elseif ($triwulanTerpilih == '2') $chartBulan = ['April', 'Mei', 'Juni'];
-                        elseif ($triwulanTerpilih == '3') $chartBulan = ['Juli', 'Agustus', 'September'];
-                        elseif ($triwulanTerpilih == '4') $chartBulan = ['Oktober', 'November', 'Desember'];
+                        if ($triwulanTerpilih == '1') $chartBulan = ['January', 'February', 'March'];
+                        elseif ($triwulanTerpilih == '2') $chartBulan = ['April', 'May', 'June'];
+                        elseif ($triwulanTerpilih == '3') $chartBulan = ['July', 'August', 'September'];
+                        elseif ($triwulanTerpilih == '4') $chartBulan = ['October', 'November', 'December'];
                     }
                 @endphp
                 <div class="glass-panel border-t-2 border-t-sky-500">
@@ -573,7 +573,7 @@
                     <div class="glass-panel text-center py-5 border-t-2 border-t-sky-400 relative group">
                         <button onclick="showKpiInfo('monthly_target')" class="absolute top-3 right-3 text-slate-500 hover:text-sky-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
                         <p class="text-xs text-slate-400 uppercase font-bold">Monthly Target</p>
-                        <h3 class="text-xl font-black text-sky-400 mt-1">Rp {{ number_format($monthlyAll[date('n') > 0 ? $urutanBulan[date('n')-1] : 'Januari']['target'] ?? 0, 0, ',', '.') }}</h3>
+                        <h3 class="text-xl font-black text-sky-400 mt-1">Rp {{ number_format($monthlyAll[date('n') > 0 ? $urutanBulan[date('n')-1] : 'January']['target'] ?? 0, 0, ',', '.') }}</h3>
                     </div>
                     <div class="glass-panel text-center py-5 border-t-2 border-t-emerald-400 relative group">
                         <button onclick="showKpiInfo('actual_sales')" class="absolute top-3 right-3 text-slate-500 hover:text-emerald-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
@@ -650,7 +650,7 @@
                             <div class="flex items-center gap-2 w-full sm:w-auto">
                                 <span class="text-[11px] text-slate-400 font-extrabold uppercase tracking-wider whitespace-nowrap">Filter:</span>
                                 <select id="filterTargetBulan" class="pbi-slicer !py-1.5 !text-xs min-w-[140px] bg-slate-900 border-slate-700 rounded-lg text-slate-200 font-bold" onchange="updateTargetIndividuTable(this.value)">
-                                    <option value="current">Bulan Ini ({{ date('n') > 0 ? $urutanBulan[date('n')-1] : 'Januari' }})</option>
+                                    <option value="current">Bulan Ini ({{ date('n') > 0 ? $urutanBulan[date('n')-1] : 'January' }})</option>
                                     <option value="ytd">Semua Bulan (YTD)</option>
                                     @foreach($urutanBulan as $b)
                                         <option value="{{ $b }}">{{ $b }}</option>
@@ -673,7 +673,7 @@
                                     @foreach($listPs as $ps)
                                         @php
                                             $d = $allPsAchievement[$ps] ?? ['target'=>0, 'sales'=>0, 'rate'=>0];
-                                            $currentMonthName = date('n') > 0 ? $urutanBulan[date('n')-1] : 'Januari';
+                                            $currentMonthName = date('n') > 0 ? $urutanBulan[date('n')-1] : 'January';
                                             
                                             $psMonthlyData = $monthlyPerPs[$currentMonthName][$ps] ?? ['target' => 0, 'sales' => 0, 'rate' => 0];
                                             $targetBulanIni = $psMonthlyData['target'] ?? 0;
@@ -728,8 +728,8 @@
                                     }
                                     if(isset($targets) && is_iterable($targets)) {
                                         foreach($targets as $t) {
-                                            if(isset($matrixTarget[$t->ps][$t->bulan])) {
-                                                $matrixTarget[$t->ps][$t->bulan] = $t->target_amount;
+                                            if(isset($matrixTarget[$t->ps][$t->month])) {
+                                                $matrixTarget[$t->ps][$t->month] = $t->target_amount;
                                             }
                                         }
                                     }
@@ -784,8 +784,8 @@
                                     @foreach($historySales as $history)
                                         @php 
                                             $totalHistory = 0; 
-                                            $sem1 = ['jan' => 'Jan', 'feb' => 'Feb', 'mar' => 'Mar', 'apr' => 'Apr', 'mei' => 'Mei', 'jun' => 'Jun'];
-                                            $sem2 = ['jul' => 'Jul', 'agu' => 'Agu', 'sep' => 'Sep', 'okt' => 'Okt', 'nov' => 'Nov', 'des' => 'Des'];
+                                            $sem1 = ['jan' => 'Jan', 'feb' => 'Feb', 'mar' => 'Mar', 'apr' => 'Apr', 'mei' => 'May', 'jun' => 'Jun'];
+                                            $sem2 = ['jul' => 'Jul', 'agu' => 'Aug', 'sep' => 'Sep', 'okt' => 'Oct', 'nov' => 'Nov', 'des' => 'Dec'];
                                             
                                             foreach($sem1 as $k => $v) { $totalHistory += ($history->$k ?? 0); }
                                             foreach($sem2 as $k => $v) { $totalHistory += ($history->$k ?? 0); }
@@ -1465,7 +1465,7 @@
             if (!tbody) return;
 
             let html = '';
-            const currentMonth = "{{ date('n') > 0 ? $urutanBulan[date('n')-1] : 'Januari' }}";
+            const currentMonth = "{{ date('n') > 0 ? $urutanBulan[date('n')-1] : 'January' }}";
             const activeMonth = (bulanVal === 'current') ? currentMonth : bulanVal;
 
             rawListPs.forEach(ps => {
