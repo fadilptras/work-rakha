@@ -97,19 +97,7 @@
         .modern-section h4 { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; color: #334155; margin: 0; line-height: 1.2; }
         .modern-section p { font-size: 0.75rem; font-weight: 600; color: #94a3b8; margin: 0; mt-0.5; }
 
-        /* == Toast & Hints == */
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; max-width: 360px; width: 90%; }
-        .toast-item {
-            display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; border-radius: 0.9rem; color: #fff;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); font-size: 0.85rem; font-weight: 600; cursor: pointer; animation: toast-in 0.3s ease;
-        }
-        .toast-item.success { background: linear-gradient(135deg,#059669,#10b981); }
-        .toast-item.error { background: linear-gradient(135deg,#dc2626,#f87171); }
-        .toast-item.warning { background: linear-gradient(135deg,#d97706,#fbbf24); }
-        .toast-item.info { background: linear-gradient(135deg,#2563eb,#3b82f6); }
-        .toast-item .toast-title { font-weight: 800; display: block; margin-bottom: 2px; }
-        @keyframes toast-in { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-        .toast-item.leaving { transition: opacity 0.3s, transform 0.3s; opacity: 0; transform: translateX(40px); }
+        /* == Tab Scroller == */
 
         .tab-scroller-wrap { position: relative; }
         @keyframes swipeHint { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
@@ -119,7 +107,6 @@
 
     <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16" x-data="pricingManager({{ ($hasFullAccess ?? false) ? 'true' : 'false' }})">
         <div class="mesh-bg"></div>
-        <div class="toast-container"></div>
 
         {{-- MAIN WRAPPER: Di sini z-index utama untuk layout dijaga --}}
         <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start">
@@ -204,7 +191,6 @@
                         <table class="w-full text-left text-slate-600">
                             <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
-                                    <th class="px-5 py-3">Code</th>
                                     <th class="px-5 py-3">Product Name</th>
                                     <th class="px-5 py-3">Packaging / Qty</th>
                                     <th class="px-5 py-3 text-right">HNA Price</th>
@@ -215,7 +201,6 @@
                             <tbody class="divide-y divide-slate-100 text-sm">
                                 <template x-for="item in filteredProducts" :key="item.id">
                                     <tr class="hover:bg-indigo-50/50 transition-colors">
-                                        <td class="px-5 py-3 font-bold text-slate-700" x-text="item.product_code"></td>
                                         <td class="px-5 py-3 font-bold text-slate-900" x-text="item.product_name"></td>
                                         <td class="px-5 py-3">
                                             <span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-semibold text-xs" x-text="item.presentation"></span>
@@ -356,7 +341,7 @@
                                             <th class="py-3 px-3 text-slate-500">Product Name</th>
                                             <th class="py-3 px-3 text-slate-500">Presentation</th>
                                             <th class="py-3 px-3 text-right text-blue-600">HNA Price</th>
-                                            <th class="py-3 px-3 text-right text-slate-600">HNA / Pcs</th>
+                                            <th class="py-3 px-3 text-right text-slate-600">HNA/Pcs</th>
                                             <th class="py-3 px-3 text-center w-24 text-amber-600">Discount</th>
                                             <th class="py-3 px-3 text-right text-slate-600">Net+PPN</th>
                                             <th class="py-3 px-3 text-right bg-blue-50/60 text-blue-600">Net+PPN / Pcs</th>
@@ -541,7 +526,7 @@
                     <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
                         <div>
                             <h3 class="text-base font-bold text-slate-800"><i class="fas fa-edit text-amber-500 mr-2"></i> Edit Product & Price</h3>
-                            <p class="text-xs text-slate-500 font-semibold mt-1">Change the price or unit/packaging contents. When unit/contents change, HNA / Pcs is recalculated automatically from HNA Price.</p>
+                            <p class="text-xs text-slate-500 font-semibold mt-1">Change the price or unit/packaging contents. When unit/contents change, HNA/Pcs is recalculated automatically from HNA Price.</p>
                         </div>
                         <button @click="showEditProductModal = false" class="text-slate-400 hover:text-red-500 transition-colors cursor-pointer text-lg"><i class="fas fa-times"></i></button>
                     </div>
@@ -553,18 +538,11 @@
                                     <label class="modern-label">Product Name <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-box text-sm"></i></div>
-                                        <input type="text" x-model="editingProduct.product_name" autocomplete="off" class="w-full pl-10 pr-4 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
-                                    </div>
-                                </div>
-                                <div style="flex: 3 1 0; min-width: 180px;">
-                                    <label class="modern-label">Product Code</label>
-                                    <div class="relative">
-                                        <div class="icon-left text-slate-400"><i class="fas fa-barcode text-sm"></i></div>
-                                        <input type="text" x-model="editingProduct.product_code" placeholder="Optional" class="w-full pl-10 pr-4 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
+                                        <input type="text" x-model="editingProduct.product_name" list="product-name-suggestions" autocomplete="off" class="w-full pl-10 pr-4 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
                                     </div>
                                 </div>
                                 <div style="flex: 4 1 0; min-width: 240px;">
-                                    <label class="modern-label">HNA Price (Rp) <span class="text-red-500">*</span></label>
+                                    <label class="modern-label">HNA Price <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-money-bill-wave text-sm"></i></div>
                                         <input type="text" inputmode="numeric" :value="formatPrice(editingProduct.base_price)" @input="handlePriceInput(editingProduct, 'base_price', $event)" placeholder="Enter HNA price" class="w-full pl-10 pr-4 py-2 text-sm font-bold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-blue-600 shadow-sm transition-colors">
@@ -574,7 +552,7 @@
 
                             <div class="flex flex-wrap gap-4">
                                 <div style="flex: 5 1 0; min-width: 240px;">
-                                    <label class="modern-label">Packaging / Unit</label>
+                                    <label class="modern-label">Packaging</label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-box-open text-sm"></i></div>
                                         <input type="text" x-model="editingProduct.unit" list="packaging-suggestions" @input="onPackagingChange()" placeholder="Pcs / Pack / Box / Roll / Polybag..." class="w-full pl-10 pr-9 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
@@ -589,7 +567,7 @@
                                     </div>
                                 </div>
                                 <div style="flex: 4 1 0; min-width: 240px;">
-                                    <label class="modern-label">Qty per Packaging</label>
+                                    <label class="modern-label">QTY Per Packaging</label>
                                     <div x-show="packagingCanFill">
                                         <div class="flex items-center gap-2">
                                             <div class="relative flex-1 min-w-0">
@@ -620,7 +598,7 @@
                                     <p class="text-[10px] text-slate-400 font-semibold mt-1.5">Stored: <span class="font-black text-slate-600" x-text="packagingPreview"></span></p>
                                 </div>
                                 <div style="flex: 3 1 0; min-width: 180px;">
-                                    <label class="modern-label">HNA / Pcs <span class="text-red-500">*</span></label>
+                                    <label class="modern-label">HNA/Pcs <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-coins text-sm"></i></div>
                                         <input type="text" inputmode="numeric" :value="formatPrice(editingProduct.unit_price)" @input="handlePriceInput(editingProduct, 'unit_price', $event)" placeholder="Auto: HNA ÷ Qty" class="w-full pl-10 pr-4 py-2 text-sm font-bold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
@@ -659,7 +637,7 @@
                     <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
                         <div>
                             <h3 class="text-base font-bold text-slate-800"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i> Add Product to Pricing</h3>
-                            <p class="text-xs text-slate-500 font-semibold mt-1">Add a new product to this page's price list catalog. All form data (code, name, unit, packaging/presentation, contents qty/multiplier, HNA &amp; HNA/Pcs) is stored directly in the pricing table (<span class="font-mono font-bold text-indigo-500">product_prices</span>); products without a price do not appear in the catalog.</p>
+                            <p class="text-xs text-slate-500 font-semibold mt-1">Add a new product to this page's price list catalog. All form data (name, packaging/presentation, contents qty/multiplier, HNA &amp; HNA/Pcs) is stored directly in the pricing table (<span class="font-mono font-bold text-indigo-500">product_prices</span>); products without a price do not appear in the catalog.</p>
                         </div>
                         <button @click="showManageModal = false" class="text-slate-400 hover:text-red-500 transition-colors cursor-pointer text-lg"><i class="fas fa-times"></i></button>
                     </div>
@@ -674,15 +652,8 @@
                                         <input type="text" x-model="manageForm.product_name" list="product-name-suggestions" autocomplete="off" class="w-full pl-10 pr-4 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
                                     </div>
                                 </div>
-                                <div style="flex: 3 1 0; min-width: 180px;">
-                                    <label class="modern-label">Product Code</label>
-                                    <div class="relative">
-                                        <div class="icon-left text-slate-400"><i class="fas fa-barcode text-sm"></i></div>
-                                        <input type="text" x-model="manageForm.product_code" placeholder="Optional" class="w-full pl-10 pr-4 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
-                                    </div>
-                                </div>
                                 <div style="flex: 4 1 0; min-width: 240px;">
-                                    <label class="modern-label">HNA Price (Rp) <span class="text-red-500">*</span></label>
+                                    <label class="modern-label">HNA Price <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-money-bill-wave text-sm"></i></div>
                                         <input type="text" inputmode="numeric" :value="formatPrice(manageForm.base_price)" @input="handlePriceInput(manageForm, 'base_price', $event)" placeholder="Enter HNA price" class="w-full pl-10 pr-4 py-2 text-sm font-bold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-blue-600 shadow-sm transition-colors">
@@ -692,7 +663,7 @@
 
                             <div class="flex flex-wrap gap-4">
                                 <div style="flex: 5 1 0; min-width: 240px;">
-                                    <label class="modern-label">Packaging / Unit</label>
+                                    <label class="modern-label">Packaging</label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-box-open text-sm"></i></div>
                                         <input type="text" x-model="manageForm.unit" list="packaging-suggestions" @input="onPackagingChange()" placeholder="Pcs / Pack / Box / Roll / Polybag..." class="w-full pl-10 pr-9 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
@@ -707,7 +678,7 @@
                                     </div>
                                 </div>
                                 <div style="flex: 4 1 0; min-width: 240px;">
-                                    <label class="modern-label">Qty per Packaging</label>
+                                    <label class="modern-label">QTY Per Packaging</label>
                                     <div x-show="packagingCanFill">
                                         <div class="flex items-center gap-2">
                                             <div class="relative flex-1 min-w-0">
@@ -738,7 +709,7 @@
                                     <p class="text-[10px] text-slate-400 font-semibold mt-1.5">Stored: <span class="font-black text-slate-600" x-text="packagingPreview"></span></p>
                                 </div>
                                 <div style="flex: 3 1 0; min-width: 180px;">
-                                    <label class="modern-label">HNA / Pcs <span class="text-red-500">*</span></label>
+                                    <label class="modern-label">HNA/Pcs <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-coins text-sm"></i></div>
                                         <input type="text" inputmode="numeric" :value="formatPrice(manageForm.unit_price)" @input="handlePriceInput(manageForm, 'unit_price', $event)" placeholder="Auto: HNA ÷ Qty" class="w-full pl-10 pr-4 py-2 text-sm font-bold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
@@ -769,7 +740,7 @@
                     <div class="p-4 border-b border-slate-200 bg-white">
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400"><i class="fas fa-search text-sm"></i></div>
-                            <input type="text" x-model="modalSearch" placeholder="Type product name or code..." class="w-full pl-11 pr-4 py-2.5 text-sm font-semibold border border-slate-200 bg-white hover:bg-slate-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
+                            <input type="text" x-model="modalSearch" placeholder="Type product name..." class="w-full pl-11 pr-4 py-2.5 text-sm font-semibold border border-slate-200 bg-white hover:bg-slate-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
                         </div>
                     </div>
                     <div class="overflow-y-auto flex-1 p-4 divide-y divide-slate-100">
@@ -777,7 +748,7 @@
                             <div class="py-3 flex items-center justify-between hover:bg-slate-50 px-3 rounded-xl transition-colors">
                                 <div>
                                     <div class="font-bold text-slate-800 text-sm leading-snug" x-text="prod.product_name"></div>
-                                    <div class="text-xs text-slate-500 font-medium mt-1">Code: <span class="text-blue-600 font-bold" x-text="prod.product_code"></span> &middot; Packaging: <span x-text="prod.presentation"></span></div>
+                                    <div class="text-xs text-slate-500 font-medium mt-1">Packaging: <span x-text="prod.presentation"></span></div>
                                 </div>
                                 <div class="flex items-center gap-4 shrink-0">
                                     <div class="text-right">
@@ -838,12 +809,12 @@
                 modalSearch: '',
 
                 showEditProductModal: false,
-                editingProduct: { id: null, product_code: '', product_name: '', unit: '', pcs_pack: null, fill_unit: 'Pcs', base_price: 0, unit_price: 0, stock: 0, stock_po: 0 },
+                editingProduct: { id: null, product_name: '', unit: '', pcs_pack: null, fill_unit: 'Pcs', base_price: 0, unit_price: 0 },
                 
                 showManageModal: false,
                 manageSaving: false,
                 editSaving: false,
-                manageForm: { product_code: '', product_name: '', unit: '', pcs_pack: null, fill_unit: 'Pcs', base_price: 0, unit_price: 0, stock: 0, stock_po: 0 },
+                manageForm: { product_name: '', unit: '', pcs_pack: null, fill_unit: 'Pcs', base_price: 0, unit_price: 0 },
                 packQtyPresets: [1, 10, 100, 1000],
                 packagingSuggestions: ['Pcs', 'Pack', 'Box', 'Roll', 'Botol', 'Polybag', 'Bag', 'Pouches', 'Karton'],
                 packagingCatalog: {
@@ -876,32 +847,57 @@
                 },
 
                 init() {
+                    // Pulihkan tab terakhir (pricing / sph / history) saat refresh.
+                    const savedTab = localStorage.getItem('pricing_active_tab');
+                    if (['pricing', 'sph', 'history'].includes(savedTab)) {
+                        this.activeTab = (savedTab === 'sph' && !this.hasFullAccess) ? 'pricing' : savedTab;
+                    }
+                    // Simpan posisi tab setiap kali berpindah (termasuk setelah Simpan/Edit SPH).
+                    this.$watch('activeTab', value => {
+                        localStorage.setItem('pricing_active_tab', value);
+                        this.$nextTick(() => this.checkTabOverflow());
+                    });
                     this.fetchHistory();
                     this.$nextTick(() => this.checkTabOverflow());
                     window.addEventListener('resize', () => this.checkTabOverflow());
                 },
 
                 toast(message, type = 'success', title = '') {
-                    const container = document.querySelector('.toast-container');
-                    if (!container) return;
-                    const el = document.createElement('div');
-                    el.className = 'toast-item ' + type;
-                    const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
-                    const titles = { success: 'Success', error: 'Failed', warning: 'Warning', info: 'Info' };
-                    el.innerHTML = `<i class="fas ${icons[type] || 'fa-info-circle'} mt-1"></i><div><span class="toast-title">${title || titles[type] || ''}</span><span>${message}</span></div>`;
-                    el.addEventListener('click', () => {
-                        el.classList.add('leaving');
-                        setTimeout(() => el.remove(), 300);
+                    const titles = { success: 'Success!', error: 'Failed!', warning: 'Warning!', info: 'Info' };
+                    const colors = { success: '#10b981', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
+                    Swal.fire({
+                        title: title || titles[type] || 'Notification',
+                        text: message,
+                        icon: type,
+                        confirmButtonColor: colors[type] || '#3b82f6'
                     });
-                    container.appendChild(el);
-                    setTimeout(() => {
-                        el.classList.add('leaving');
-                        setTimeout(() => el.remove(), 300);
-                    }, 3500);
                 },
 
-                confirmDialog(message) {
-                    return window.confirm(message);
+                confirmDialog(message, title = 'Konfirmasi', confirmText = 'Ya, Lanjutkan') {
+                    return Swal.fire({
+                        position: 'center',
+                        title: title,
+                        text: message,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: confirmText,
+                        cancelButtonText: 'Batal',
+                        customClass: {
+                            popup: 'bg-white shadow-[0_15px_50px_rgba(0,0,0,0.15)] border border-gray-100 rounded-3xl p-6 text-center',
+                            title: 'text-lg font-black text-slate-800 tracking-tight mt-2 m-0',
+                            htmlContainer: 'text-sm text-slate-500 font-medium leading-relaxed m-0 mt-3 mb-6',
+                            icon: 'scale-75 m-0 mx-auto border-0 text-amber-500 -mt-2',
+                            actions: 'flex justify-center gap-3 w-full m-0',
+                            confirmButton: 'bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-md shadow-rose-200 m-0',
+                            cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold px-5 py-2.5 rounded-xl transition-all m-0'
+                        },
+                        width: '340px',
+                        buttonsStyling: false,
+                        background: '#ffffff',
+                        backdrop: 'rgba(0,0,0,0.5)',
+                        showClass: { popup: 'animate__animated animate__zoomIn animate__faster' },
+                        hideClass: { popup: 'animate__animated animate__zoomOut animate__faster' }
+                    }).then((result) => result.isConfirmed);
                 },
 
                 csrfToken() {
@@ -928,16 +924,14 @@
                 get filteredProducts() {
                     if (!this.searchQuery) return this.rawProducts;
                     return this.rawProducts.filter(p => 
-                        p.product_name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
-                        (p.product_code && p.product_code.toLowerCase().includes(this.searchQuery.toLowerCase()))
+                        p.product_name.toLowerCase().includes(this.searchQuery.toLowerCase())
                     );
                 },
 
                 get modalFilteredProducts() {
                     if (!this.modalSearch) return this.rawProducts;
                     return this.rawProducts.filter(p => 
-                        p.product_name.toLowerCase().includes(this.modalSearch.toLowerCase()) || 
-                        (p.product_code && p.product_code.toLowerCase().includes(this.modalSearch.toLowerCase()))
+                        p.product_name.toLowerCase().includes(this.modalSearch.toLowerCase())
                     );
                 },
 
@@ -952,10 +946,7 @@
 
                 addItem(product) {
                     let existing = this.selectedItems.find(i => {
-                        const iReal = i.product_code && i.product_code !== '-';
-                        const pReal = product.product_code && product.product_code !== '-';
-                        const codeOk = (iReal && pReal) ? i.product_code === product.product_code : true;
-                        return i.product_name === product.product_name && codeOk;
+                        return i.product_name === product.product_name;
                     });
                     if (existing) {
                         existing.qty += 1;
@@ -963,7 +954,6 @@
                         existing.base_price = product.base_price ?? existing.base_price;
                     } else {
                         this.selectedItems.push({
-                            product_code: product.product_code,
                             product_name: product.product_name,
                             presentation: product.presentation,
                             base_price: product.base_price ?? product.unit_price,
@@ -1081,15 +1071,12 @@
                     const parsed = this.parsePresentation(product.presentation);
                     this.editingProduct = {
                         id: product.id,
-                        product_code: product.product_code === '-' ? '' : (product.product_code || ''),
                         product_name: product.raw_product_name || product.product_name,
-                        unit: parsed.unit || product.unit || '',
+                        unit: parsed.unit || '',
                         pcs_pack: parsed.pcs_pack,
                         fill_unit: parsed.fill_unit,
                         base_price: product.base_price,
                         unit_price: product.unit_price,
-                        stock: product.stock || 0,
-                        stock_po: product.stock_po || 0,
                     };
                     if (!this.packagingCanFill) this.editingProduct.pcs_pack = 1;
                     this.showEditProductModal = true;
@@ -1113,15 +1100,11 @@
 
                     this.editSaving = true;
                     const formData = new FormData();
-                    formData.append('product_code', this.editingProduct.product_code || '');
                     formData.append('product_name', this.editingProduct.product_name.trim());
-                    formData.append('unit', (this.editingProduct.unit || '').trim());
                     formData.append('presentation', this.packagingPreview);
                     formData.append('pack_qty', this.resolvePackQty());
                     formData.append('base_price', this.editingProduct.base_price);
                     formData.append('unit_price', this.editingProduct.unit_price);
-                    formData.append('stock', this.editingProduct.stock || 0);
-                    formData.append('stock_po', this.editingProduct.stock_po || 0);
                     formData.append('_method', 'PUT');
 
                     try {
@@ -1214,7 +1197,7 @@
                     this.psPhone = history.psPhone;
                     this.ppnOption = history.ppnOption || 11;
                     this.selectedItems = JSON.parse(JSON.stringify(history.items)).map(item => {
-                        const prod = this.rawProducts.find(p => p.product_name === item.product_name && (item.product_code ? p.product_code === item.product_code : true));
+                        const prod = this.rawProducts.find(p => p.product_name === item.product_name);
                         return {
                             ...item,
                             base_price: (prod && prod.base_price != null) ? prod.base_price : (item.base_price != null ? item.base_price : item.unit_price),
@@ -1242,7 +1225,7 @@
                 },
 
                 resetManageForm() {
-                    this.manageForm = { product_code: '', product_name: '', unit: '', pcs_pack: null, fill_unit: 'Pcs', base_price: 0, unit_price: 0, stock: 0, stock_po: 0 };
+                    this.manageForm = { product_name: '', unit: '', pcs_pack: null, fill_unit: 'Pcs', base_price: 0, unit_price: 0 };
                 },
 
                 async saveManage() {
@@ -1263,15 +1246,11 @@
                     this.manageSaving = true;
                     try {
                         const formData = new FormData();
-                        formData.append('product_code', this.manageForm.product_code || '');
                         formData.append('product_name', this.manageForm.product_name.trim());
-                        formData.append('unit', (this.manageForm.unit || '').trim());
                         formData.append('presentation', this.packagingPreview);
                         formData.append('pack_qty', this.resolvePackQty());
                         formData.append('base_price', this.manageForm.base_price);
                         formData.append('unit_price', this.manageForm.unit_price);
-                        formData.append('stock', this.manageForm.stock || 0);
-                        formData.append('stock_po', this.manageForm.stock_po || 0);
 
                         const res = await fetch("{{ url('sales/pricing/barang') }}", {
                             method: 'POST',
@@ -1292,6 +1271,7 @@
 
                         this.toast(result.message || 'Produk berhasil ditambahkan.', 'success');
                         this.resetManageForm();
+                        this.showManageModal = false;
                         await this.refreshProducts();
                     } catch (e) {
                         console.error(e);
@@ -1302,7 +1282,7 @@
                 },
 
                 async deleteProduct(p) {
-                    if (!this.confirmDialog('Yakin ingin menghapus produk ini dari katalog?\n"' + p.product_name + '"')) return;
+                    if (!(await this.confirmDialog('Yakin ingin menghapus produk ini dari katalog?\n"' + p.product_name + '"', 'Hapus Produk', 'Ya, Hapus'))) return;
                     try {
                         const res = await fetch("{{ url('sales/pricing/barang') }}/" + p.id, {
                             method: 'DELETE',
@@ -1335,7 +1315,7 @@
                 },
 
                 async deleteHistory(id) {
-                    if (!this.confirmDialog('Yakin ingin menghapus riwayat SPH ini?')) return;
+                    if (!(await this.confirmDialog('Yakin ingin menghapus riwayat SPH ini?', 'Hapus Riwayat SPH', 'Ya, Hapus'))) return;
 
                     try {
                         const res = await fetch("{{ url('sales/sph') }}/" + id, {

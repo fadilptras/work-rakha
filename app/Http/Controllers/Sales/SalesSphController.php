@@ -58,11 +58,7 @@ class SalesSphController extends BaseSalesController
 
         $validated = $this->validateSph($request);
 
-        $generated = SphQuotation::generateSphNumber();
-
-        $quotation = SphQuotation::create([
-            'sph_sequence' => $generated['sequence'],
-            'sph_number' => $generated['number'],
+        $quotation = SphQuotation::createWithNumber([
             'date' => now()->toDateString(),
             'customer_name' => $validated['customerName'],
             'customer_company' => $validated['customerCompany'] ?? null,
@@ -199,7 +195,7 @@ class SalesSphController extends BaseSalesController
             'psPhone' => 'nullable|string|max:50',
             'ppnOption' => 'nullable|integer|in:0,11',
             'items' => 'required|array|min:1',
-            'items.*.product_code' => 'required|string',
+            'items.*.product_code' => 'nullable|string',
             'items.*.product_name' => 'required|string',
             'items.*.presentation' => 'nullable|string',
             'items.*.unit_price' => 'required|numeric|min:0',

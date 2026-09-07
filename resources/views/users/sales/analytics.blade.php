@@ -103,9 +103,12 @@
         .sticky-ps-col {
             position: sticky !important;
             left: 0 !important;
-            min-width: 100px !important;
-            width: 100px !important;
-            max-width: 100px !important;
+            min-width: 180px !important;
+            width: 180px !important;
+            max-width: 180px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
             box-shadow: 4px 0 12px -2px rgba(0, 0, 0, 0.7) !important;
         }
         thead .sticky-ps-col {
