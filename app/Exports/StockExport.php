@@ -11,7 +11,7 @@ class StockExport implements FromCollection, WithHeadings, WithMapping
 {
     public function collection()
     {
-        return Barang::orderBy('nama_barang')->get();
+        return Barang::orderBy('product_name')->get();
     }
 
     public function headings(): array
@@ -28,11 +28,11 @@ class StockExport implements FromCollection, WithHeadings, WithMapping
     public function map($barang): array
     {
         return [
-            $barang->kode_barang,
-            $barang->nama_barang,
-            $barang->satuan,
-            $barang->stok,
-            $barang->stok_po,
+            $barang->product_code,
+            $barang->product_name,
+            $barang->unit,
+            $barang->stock,
+            $barang->stock_po,
         ];
     }
 }

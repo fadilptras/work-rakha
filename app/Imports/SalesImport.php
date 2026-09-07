@@ -24,17 +24,17 @@ class SalesImport implements ToCollection, WithHeadingRow
 
         foreach ($rows as $row) {
             // Skip baris yang benar-benar kosong
-            if (empty($row['nama_customer']) && empty($row['nama_produk'])) {
+            if (empty($row['customer_name']) && empty($row['product_name'])) {
                 continue;
             }
 
             // Parsing tanggal (handle format serial excel dan string biasa)
             $tanggal = null;
-            if (isset($row['tanggal'])) {
-                if (is_numeric($row['tanggal'])) {
-                    $tanggal = Date::excelToDateTimeObject($row['tanggal'])->format('Y-m-d');
+            if (isset($row['date'])) {
+                if (is_numeric($row['date'])) {
+                    $tanggal = Date::excelToDateTimeObject($row['date'])->format('Y-m-d');
                 } else {
-                    $parsedDate = strtotime($row['tanggal']);
+                    $parsedDate = strtotime($row['date']);
                     if ($parsedDate !== false) {
                         $tanggal = date('Y-m-d', $parsedDate);
                     }
@@ -46,7 +46,7 @@ class SalesImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            $bulanString = ['01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei','06'=>'Juni','07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember'][date('m', strtotime($tanggal))];
+            $bulanString = ['01'=>'January','02'=>'February','03'=>'March','04'=>'April','05'=>'May','06'=>'June','07'=>'July','08'=>'August','09'=>'September','10'=>'October','11'=>'November','12'=>'December'][date('m', strtotime($tanggal))];
             $tahun = date('Y', strtotime($tanggal));
 
             // Simpan kombinasi unik (tahun-bulan) untuk mendeteksi bulan apa saja yang perlu dihapus/direfresh
@@ -78,12 +78,12 @@ class SalesImport implements ToCollection, WithHeadingRow
                 return $val !== '' ? floatval($val) : null;
             };
 
-            $hna = $cleanNumber($row['hna']) ?? 0;
+            $hna = $cleanNumber($row['base_price']) ?? 0;
             
             $diskon = null;
-            if (isset($row['diskon']) && trim($row['diskon']) !== '') {
-                $hasPercent = strpos($row['diskon'], '%') !== false;
-                $diskonStr = str_replace(['%', ' '], '', $row['diskon']);
+            if (isset($row['discount']) && trim($row['discount']) !== '') {
+                $hasPercent = strpos($row['discount'], '%') !== false;
+                $diskonStr = str_replace(['%', ' '], '', $row['discount']);
                 $diskonStr = str_replace(',', '.', $diskonStr); // antisipasi 5,5%
                 $diskonStr = preg_replace('/[^0-9.]/', '', $diskonStr);
                 $diskon = floatval($diskonStr);
@@ -93,18 +93,18 @@ class SalesImport implements ToCollection, WithHeadingRow
                 }
             }
             
-            $harga_nett = $cleanNumber($row['harga_nett']);
+            $harga_nett = $cleanNumber($row['net_price']);
 
             $salesToInsert[] = [
-                'tanggal'       => $tanggal,
-                'nama_customer' => $row['nama_customer'] ?? null,
-                'nama_produk'   => $row['nama_produk'] ?? null,
+                'date'          => $tanggal,
+                'customer_name' => $row['customer_name'] ?? null,
+                'product_name'  => $row['product_name'] ?? null,
                 'qty'           => $qty,
-                'satuan'        => $row['satuan'] ?? null,
-                'hna'           => $hna,
-                'diskon'        => $diskon,
-                'harga_nett'    => $harga_nett,
-                'bulan'         => $bulanString,
+                'unit'          => $row['unit'] ?? null,
+                'base_price'    => $hna,
+                'discount'      => $diskon,
+                'net_price'     => $harga_nett,
+                'month'         => $bulanString,
                 'ps'            => $row['ps'] ?? null,
                 'created_at'    => now(),
                 'updated_at'    => now(),
@@ -119,8 +119,8 @@ class SalesImport implements ToCollection, WithHeadingRow
         DB::transaction(function () use ($monthsToRefresh, $salesToInsert) {
             // 1. Hapus semua data yang ada sebelumnya untuk bulan & tahun yang terdeteksi di Excel
             foreach ($monthsToRefresh as $m) {
-                Sales::whereYear('tanggal', $m['tahun'])
-                     ->where('bulan', $m['bulan'])
+                Sales::whereYear('date', $m['tahun'])
+                     ->where('month', $m['bulan'])
                      ->delete();
             }
 
