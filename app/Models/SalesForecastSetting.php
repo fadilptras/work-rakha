@@ -12,8 +12,8 @@ class SalesForecastSetting extends Model
     protected $table = 'sales_forecast_settings';
 
     protected $fillable = [
-        'tahun',
-        'bulan_acuan',
+        'year',
+        'month',
         'percentage',
     ];
 }

@@ -21,6 +21,6 @@ class StockLog extends Model
 
     public function details()
     {
-        return $this->hasMany(StockLogDetail::class);
+        return $this->hasOne(StockLogDetail::class);
     }
 }

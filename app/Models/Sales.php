@@ -7,15 +7,15 @@ class Sales extends Model
 {
     protected $table = 'sales';
     protected $fillable = [
-        'tanggal', 
-        'nama_customer', 
-        'nama_produk', 
-        'qty', 
-        'satuan', 
-        'hna', 
-        'diskon', 
-        'harga_nett', 
-        'bulan', 
-        'ps'
+        'date',
+        'customer_name',
+        'product_name',
+        'qty',
+        'unit',
+        'base_price',
+        'discount',
+        'net_price',
+        'month',
+        'ps',
     ];
 }

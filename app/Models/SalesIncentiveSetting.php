@@ -9,8 +9,8 @@ class SalesIncentiveSetting extends Model
     protected $table = 'sales_incentive_settings';
 
     protected $fillable = [
-        'tahun',
-        'bulan',
+        'year',
+        'month',
         'type',
         'basis',
         'min_achievement',

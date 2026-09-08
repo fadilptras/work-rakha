@@ -11,9 +11,9 @@ class SalesForecastOrder extends Model
     protected $table = 'sales_forecast_orders';
 
     protected $fillable = [
-        'tahun',
-        'bulan_acuan',
-        'nama_produk',
+        'year',
+        'month',
+        'product_name',
         'forecast_qty',
         'suggested_qty',
         'user_id',
