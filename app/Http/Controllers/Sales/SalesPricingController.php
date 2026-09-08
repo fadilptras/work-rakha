@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Sales;
 
 use App\Models\Barang;
+use App\Models\Product;
 use App\Models\ProductPrice;
-use App\Models\ProductClean;
 use App\Exports\PricelistExport;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,10 +19,11 @@ class SalesPricingController extends BaseSalesController
             abort(403, 'Anda tidak memiliki hak akses ke halaman Product Price & SPH.');
         }
 
-        $title = 'Product Price & SPH Quotation';
+        $title = 'Product Price & SPH Form';
 
-        // Katalog jual dibaca langsung dari product_prices.
-        $products = ProductPrice::orderBy('product_name', 'asc')
+        // Katalog jual dibaca langsung dari product_prices (aktif saja).
+        $products = ProductPrice::active()
+            ->orderBy('product_name', 'asc')
             ->get()
             ->map(fn ($item) => $this->serializeProduct($item));
 
@@ -31,25 +32,19 @@ class SalesPricingController extends BaseSalesController
         $hasFullAccess = $this->hasFullSalesAccess();
 
         // Daftar nama produk untuk rekomendasi (datalist) form Tambah Barang di halaman pricing.
-        // Nama diambil dari barangs & products_clean (referensi saja) yang BELUM terdaftar
-        // di product_prices, supaya tidak bentrok dengan katalog jual.
-        $catalogNames = ProductPrice::whereNotNull('product_name')
+        // Nama diambil dari kolom kurasi products (product_name_clean) yang BELUM
+        // terdaftar di product_prices aktif, supaya tidak bentrok dengan katalog jual.
+        $catalogNames = ProductPrice::active()
+            ->whereNotNull('product_name')
             ->pluck('product_name');
 
-        $nameSuggestions = Barang::whereNotNull('product_name')
-            ->where('product_name', '!=', '')
-            ->whereNotIn('product_name', $catalogNames)
+        $nameSuggestions = Product::active()
+            ->whereNotNull('product_name_clean')
+            ->where('product_name_clean', '!=', '')
+            ->whereNotIn('product_name_clean', $catalogNames)
             ->distinct()
-            ->orderBy('product_name')
-            ->pluck('product_name')
-            ->concat(
-                ProductClean::whereNotNull('clean_name')
-                    ->where('clean_name', '!=', '')
-                    ->whereNotIn('clean_name', $catalogNames)
-                    ->distinct()
-                    ->orderBy('clean_name')
-                    ->pluck('clean_name')
-            )
+            ->orderBy('product_name_clean')
+            ->pluck('product_name_clean')
             ->unique()
             ->values();
 
@@ -65,7 +60,8 @@ class SalesPricingController extends BaseSalesController
             abort(403);
         }
 
-        $products = ProductPrice::orderBy('product_name', 'asc')
+        $products = ProductPrice::active()
+            ->orderBy('product_name', 'asc')
             ->get()
             ->map(fn ($item) => $this->serializeProduct($item));
 
@@ -83,7 +79,7 @@ class SalesPricingController extends BaseSalesController
         }
 
         $validated = $request->validate([
-            'product_name' => 'required|string|max:255|unique:product_prices,product_name',
+            'product_name' => 'required|string|max:255',
             'presentation' => 'nullable|string|max:100',
             'pack_qty' => 'nullable|integer|min:0',
             'base_price' => 'required|numeric|min:0',
@@ -95,13 +91,42 @@ class SalesPricingController extends BaseSalesController
             $packQty = Barang::packCount($validated['presentation'] ?? null);
         }
 
-        $price = ProductPrice::create([
+        $data = [
             'product_name' => $validated['product_name'],
             'presentation' => $validated['presentation'] ?? null,
             'pack_qty' => max(1, $packQty),
             'base_price' => $validated['base_price'],
             'unit_price' => $validated['unit_price'],
-        ]);
+        ];
+
+        // Tombstone (baris soft-delete) dengan nama sama -> hidupkan kembali
+        // supaya rekap & master tidak menumpuk dua baris nama yang sama.
+        $tombstone = ProductPrice::where('product_name', $validated['product_name'])
+            ->trashed()
+            ->first();
+
+        if ($tombstone) {
+            $tombstone->restore($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Barang berhasil ditambahkan. Baris lama dihidupkan kembali.',
+                'data' => $this->serializeProduct($tombstone->fresh()),
+            ]);
+        }
+
+        $exists = ProductPrice::where('product_name', $validated['product_name'])
+            ->active()
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'message' => 'Nama barang sudah terdaftar di daftar pricing.',
+                'errors' => ['product_name' => ['Nama barang sudah terdaftar di daftar pricing.']],
+            ], 422);
+        }
+
+        $price = ProductPrice::create($data);
 
         return response()->json([
             'success' => true,
@@ -150,6 +175,8 @@ class SalesPricingController extends BaseSalesController
 
     /**
      * Hapus produk dari daftar pricing (product_prices). Khusus hasFullSalesAccess.
+     * Pakai soft delete supaya rekap tetap utuh; tambah ulang dengan nama sama
+     * akan menghidupkan kembali barisnya.
      */
     public function destroyBarang(ProductPrice $barang)
     {
@@ -157,7 +184,7 @@ class SalesPricingController extends BaseSalesController
             abort(403, 'Hanya pemegang akses penuh yang dapat menghapus barang.');
         }
 
-        $barang->delete();
+        $barang->softDelete();
 
         return response()->json([
             'success' => true,
@@ -170,6 +197,10 @@ class SalesPricingController extends BaseSalesController
      */
     public function exportPdf()
     {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403, 'Anda tidak memiliki hak akses ke halaman Product Price & SPH.');
+        }
+
         $products = $this->soldProducts();
 
         $pdf = Pdf::loadView('pdf.sales.pricelist-document', compact('products'));
@@ -183,6 +214,10 @@ class SalesPricingController extends BaseSalesController
      */
     public function exportExcel()
     {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403, 'Anda tidak memiliki hak akses ke halaman Product Price & SPH.');
+        }
+
         $products = $this->soldProducts();
 
         return Excel::download(
@@ -196,7 +231,9 @@ class SalesPricingController extends BaseSalesController
      */
     private function soldProducts()
     {
-        return ProductPrice::orderBy('product_name', 'asc')->get();
+        return ProductPrice::active()
+            ->orderBy('product_name', 'asc')
+            ->get();
     }
 
     /**

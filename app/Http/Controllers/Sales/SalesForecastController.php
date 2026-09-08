@@ -66,15 +66,41 @@ class SalesForecastController extends BaseSalesController
 
         $groupedByProduk = $salesRaw->groupBy('product_name');
         
-        // 4. Fetch Real-time Stock Data & Unit from Barang Model
+        // 4. Fetch Stock Data per tanggal akhir bulan acuan (snapshot harian terakhir ≤ akhir bulan).
+        //    Fallback: stok real-time terbaru jika belum ada snapshot.
         $stokSaatIni = [];
         $satuanStok = [];
-        if (class_exists('\App\Models\Barang')) {
-            $namaProdukArray = $groupedByProduk->keys()->toArray();
-            $barangs = \App\Models\Barang::whereIn('product_name', $namaProdukArray)->get();
-            foreach ($barangs as $brg) {
-                $stokSaatIni[$brg->product_name] = $brg->stock;
-                $satuanStok[$brg->product_name] = $brg->unit ?? 'Pcs';
+        $namaProdukArray = $groupedByProduk->keys()->toArray();
+
+        // Tanggal akhir bulan terakhir pada 3 bulan referensi (bukan $bulanAktif yang dipilih user)
+        $namaBulanIdx = [
+            'January' => 1, 'February' => 2, 'March' => 3, 'April' => 4, 'May' => 5, 'June' => 6,
+            'July' => 7, 'August' => 8, 'September' => 9, 'October' => 10, 'November' => 11, 'December' => 12,
+        ];
+        $bulanReferensiTerakhir = end($tigaBulanTerakhir); // bulan terakhir dari 3 bulan acuan
+        $bulanAkhirTanggal = ($tahun && isset($namaBulanIdx[$bulanReferensiTerakhir]))
+            ? \Carbon\Carbon::create((int)$tahun, $namaBulanIdx[$bulanReferensiTerakhir], 1)->endOfMonth()->format('Y-m-d')
+            : date('Y-m-d');
+
+        $products = \App\Models\Product::active()->whereIn('product_name', $namaProdukArray)->get();
+
+        if ($products->isNotEmpty()) {
+            // Ambil snapshot harian terakhir per produk dengan tanggal ≤ akhir bulan acuan
+            $snapshots = DB::table('daily_stock_histories')
+                ->whereIn('product_id', $products->pluck('id'))
+                ->whereNotNull('product_id')
+                ->where('tanggal', '<=', $bulanAkhirTanggal)
+                ->select('product_id', 'tanggal', 'stok')
+                ->orderBy('product_id')
+                ->orderByDesc('tanggal')
+                ->get();
+
+            $snapshotTerakhir = $snapshots->groupBy('product_id')->map(fn($rows) => $rows->first());
+
+            foreach ($products as $p) {
+                $snap = $snapshotTerakhir->get($p->id);
+                $stokSaatIni[$p->product_name] = $snap ? (int)$snap->stok : (int)$p->stock;
+                $satuanStok[$p->product_name] = $p->unit ?? 'Pcs';
             }
         }
 

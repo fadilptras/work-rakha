@@ -6,6 +6,7 @@ use App\Models\SphQuotation;
 use App\Exports\SphExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -24,7 +25,7 @@ class SalesSphController extends BaseSalesController
             abort(403, 'Anda tidak memiliki hak akses ke halaman SPH.');
         }
 
-        $query = SphQuotation::orderByDesc('created_at');
+        $query = SphQuotation::active()->orderByDesc('created_at');
 
         if (!$this->hasFullSalesAccess()) {
             $query->whereRaw('LOWER(TRIM(ps)) = ?', [$this->currentUserPsName()]);
@@ -60,7 +61,7 @@ class SalesSphController extends BaseSalesController
 
         $quotation = SphQuotation::createWithNumber([
             'date' => now()->toDateString(),
-            'customer_name' => $validated['customerName'],
+            'customer_name' => $validated['customerName'] ?? null,
             'customer_company' => $validated['customerCompany'] ?? null,
             'ps' => $validated['selectedPs'] ?? null,
             'ps_phone' => $validated['psPhone'] ?? null,
@@ -91,7 +92,7 @@ class SalesSphController extends BaseSalesController
         $validated = $this->validateSph($request);
 
         $sph->update([
-            'customer_name' => $validated['customerName'],
+            'customer_name' => $validated['customerName'] ?? null,
             'customer_company' => $validated['customerCompany'] ?? null,
             'ps' => $validated['selectedPs'] ?? null,
             'ps_phone' => $validated['psPhone'] ?? null,
@@ -112,13 +113,7 @@ class SalesSphController extends BaseSalesController
      */
     public function show(SphQuotation $sph)
     {
-        if (!$this->hasAnySalesAccess()) {
-            abort(403, 'Anda tidak memiliki hak akses ke halaman SPH.');
-        }
-
-        if (!$this->hasFullSalesAccess() && strtolower(trim($sph->ps ?? '')) !== $this->currentUserPsName()) {
-            abort(403, 'Anda tidak memiliki akses ke dokumen SPH ini.');
-        }
+        $this->authorizeView($sph);
 
         return view('users.sales.sph-detail', [
             'sph' => $sph,
@@ -129,21 +124,70 @@ class SalesSphController extends BaseSalesController
 
     /**
      * Hapus riwayat SPH. Hanya hasFullSalesAccess.
+     * Pakai soft delete supaya rekap dokumen tetap utuh di DB.
+     *
+     * Setelah dihapus, seluruh SPH aktif yang berada "di bawahnya"
+     * (sph_sequence lebih besar) diturunkan 1 sehingga nomor surat kembali
+     * berurutan tanpa lubang (pola sistem surat-menyurat).
      */
     public function destroy(SphQuotation $sph)
     {
         $this->authorizeFullAccess();
 
-        $sph->delete();
+        DB::transaction(function () use ($sph) {
+            $deletedSequence = (int) $sph->sph_sequence;
+
+            $below = SphQuotation::active()
+                ->where('sph_sequence', '>', $deletedSequence)
+                ->orderBy('sph_sequence', 'asc')
+                ->get()
+                ->map(function ($item) {
+                    // Simpan nomor & sequence lama sebelum diubah (untuk
+                    // mempertahankan akhiran "/Sales/RAKHA/.../tahun").
+                    $newSequence = ((int) $item->sph_sequence) - 1;
+
+                    return [
+                        'id'          => $item->id,
+                        'new_sequence' => $newSequence,
+                        'new_number'  => SphQuotation::sequenceToNumber($item->sph_number, $newSequence),
+                    ];
+                });
+
+            // 1) Soft delete + tandai tombstone supaya nomornya "skip" dan
+            //    tidak menghalangi unique sph_number saat renumber di bawahnya.
+            $sph->softDelete();
+            $sph->update(['sph_number' => "SKIP-{$sph->id}-{$sph->sph_number}"]);
+
+            // 2) Kosongkan nomor semua calon pakai nilai sementara dulu,
+            //    supaya tidak bentrok unique saat update bertahap.
+            foreach ($below as $row) {
+                DB::table('sph_quotations')
+                    ->where('id', $row['id'])
+                    ->update(['sph_number' => "TMP-{$row['id']}"]);
+            }
+
+            // 3) Pasang sequence & nomor final (turun 1, dari yang terkecil).
+            foreach ($below as $row) {
+                DB::table('sph_quotations')
+                    ->where('id', $row['id'])
+                    ->update([
+                        'sph_sequence' => $row['new_sequence'],
+                        'sph_number'   => $row['new_number'],
+                    ]);
+            }
+        });
 
         return response()->json(['success' => true]);
     }
 
     /**
      * Export SPH sebagai PDF (DomPDF).
+     * Ikut aturan pembatasan akses yang sama dengan halaman detail (show).
      */
     public function exportPdf(SphQuotation $sph)
     {
+        $this->authorizeView($sph);
+
         $pdf = Pdf::loadView('pdf.sales.sph-document', compact('sph'));
         $pdf->setPaper('a4', 'portrait');
 
@@ -153,9 +197,12 @@ class SalesSphController extends BaseSalesController
 
     /**
      * Export SPH sebagai Excel (Maatwebsite/Laravel-Excel).
+     * Ikut aturan pembatasan akses yang sama dengan halaman detail (show).
      */
     public function exportExcel(SphQuotation $sph)
     {
+        $this->authorizeView($sph);
+
         $filename = 'SPH_' . str_replace('/', '_', $sph->sph_number) . '.xlsx';
         return Excel::download(new SphExport($sph), $filename);
     }
@@ -165,6 +212,22 @@ class SalesSphController extends BaseSalesController
      * (create/update/delete SPH -> menyesuaikan tab "SPH Form" yang
      * di frontend juga cuma ditampilkan untuk hasFullSalesAccess).
      */
+    /**
+     * Guard akses dokumen SPH — dipakai show() dan export (PDF/Excel).
+     * - Harus punya akses sales apa pun.
+     * - Non-full-access hanya untuk SPH yang dirinya terdaftar sebagai ps.
+     */
+    private function authorizeView(SphQuotation $sph): void
+    {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403, 'Anda tidak memiliki hak akses ke halaman SPH.');
+        }
+
+        if (!$this->hasFullSalesAccess() && strtolower(trim($sph->ps ?? '')) !== $this->currentUserPsName()) {
+            abort(403, 'Anda tidak memiliki akses ke dokumen SPH ini.');
+        }
+    }
+
     private function authorizeFullAccess(): void
     {
         if (!$this->hasFullSalesAccess()) {
@@ -189,8 +252,8 @@ class SalesSphController extends BaseSalesController
     private function validateSph(Request $request): array
     {
         return $request->validate([
-            'customerName' => 'required|string|max:255',
-            'customerCompany' => 'nullable|string|max:255',
+            'customerName' => 'nullable|string|max:255',
+            'customerCompany' => 'required|string|max:255',
             'selectedPs' => 'nullable|string|max:255',
             'psPhone' => 'nullable|string|max:50',
             'ppnOption' => 'nullable|integer|in:0,11',

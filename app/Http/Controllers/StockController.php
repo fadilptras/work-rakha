@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Barang;
+use App\Models\Product;
 use App\Models\StockLog;
 use App\Models\StockLogDetail;
 use App\Models\DailyStockHistory;
@@ -11,6 +11,7 @@ use App\Exports\StockExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 class StockController extends Controller
@@ -55,7 +56,9 @@ class StockController extends Controller
             abort(403, 'Anda tidak memiliki hak akses ke halaman Monitoring Stock.');
         }
 
-        $items = Barang::orderBy('nama_barang')->get();
+        $items = Product::active()
+            ->orderByRaw('LOWER(COALESCE(NULLIF(TRIM(product_name_clean), ""), product_name))')
+            ->get();
         $logs = StockLog::with('user')->orderBy('created_at', 'desc')->take(4)->get();
         $canManageStock = $this->canManageStock();
 
@@ -116,37 +119,43 @@ class StockController extends Controller
                     'status' => 'success',
                 ]);
 
-                foreach ($updates as $update) {
-                    $barang = Barang::find($update['id']);
-                    if ($barang) {
-                        $oldStok = $barang->stok;
-                        $oldStokPo = $barang->stok_po;
-                        $newStok = intval($update['stok']);
-                        $newStokPo = isset($update['stok_po']) ? intval($update['stok_po']) : $oldStokPo;
+                $detailItems = [];
 
-                        // Detail Log
-                        StockLogDetail::create([
-                            'stock_log_id' => $log->id,
-                            'barang_id' => $barang->id,
+                foreach ($updates as $update) {
+                    $product = Product::active()->find($update['id']);
+                    if ($product) {
+                        $oldStok = $product->stock;
+                        $oldStokPo = $product->stock_po;
+                        $newStok = intval($update['stock']);
+                        $newStokPo = isset($update['stock_po']) ? intval($update['stock_po']) : $oldStokPo;
+
+                        $detailItems[] = [
+                            'product_id' => $product->id,
                             'old_stok' => $oldStok,
                             'new_stok' => $newStok,
                             'old_stok_po' => $oldStokPo,
                             'new_stok_po' => $newStokPo,
-                        ]);
+                        ];
 
-                        // Update Barang
-                        $barang->update([
-                            'stok' => $newStok,
-                            'stok_po' => $newStokPo,
+                        // Update Produk
+                        $product->update([
+                            'stock' => $newStok,
+                            'stock_po' => $newStokPo,
                         ]);
 
                         // Update atau create daily stock history untuk hari ini
                         DailyStockHistory::updateOrCreate(
-                            ['barang_id' => $barang->id, 'tanggal' => date('Y-m-d')],
+                            ['product_id' => $product->id, 'tanggal' => date('Y-m-d')],
                             ['stok' => $newStok, 'stok_po' => $newStokPo]
                         );
                     }
                 }
+
+                // Rincian mutasi disimpan 1 baris per log sebagai JSON array.
+                StockLogDetail::create([
+                    'stock_log_id' => $log->id,
+                    'items' => $detailItems,
+                ]);
             });
 
             return response()->json(['success' => true]);
@@ -179,17 +188,16 @@ class StockController extends Controller
             $processed = [];
 
             foreach ($extracted as $data) {
-                // Cari kecocokan data barang berdasarkan kode barang unik
-                $barang = Barang::where('kode_barang', $data['kode'])->first();
-                if (!$barang) {
-                    $barang = Barang::where('nama_barang', $data['nama'])->first();
-                }
+                // Cari kecocokan data produk berdasarkan kode produk unik
+                $product = Product::active()->where('product_code', $data['kode'])->first();
 
-                // Hanya tampilkan di pratinjau jika barang sudah terdaftar di database
-                if ($barang) {
-                    // Normalisasi satuan agar cocok case-insensitively dengan dropdown select di frontend
-                    $dbSatuan = trim($barang->satuan ?: 'pcs');
-                    $matchedSatuan = 'pcs';
+                // Hanya tampilkan di pratinjau jika produk sudah terdaftar di database
+                if ($product) {
+                    // Normalisasi satuan agar cocok case-insensitively dengan dropdown select di frontend.
+                    // Produk yang belum dikurasi (unit kosong) dikirim sebagai '' supaya tidak menimpa
+                    // kolom unit dengan default 'pcs' saat import disimpan.
+                    $dbSatuan = trim((string) $product->unit);
+                    $matchedSatuan = '';
                     $allowedOptions = ['pcs', 'box', 'botol', 'galon', 'Jerigen', 'karton', 'pack', 'paket', 'polybag', 'pouches', 'roll'];
                     foreach ($allowedOptions as $opt) {
                         if (strtolower($dbSatuan) === strtolower($opt)) {
@@ -199,13 +207,13 @@ class StockController extends Controller
                     }
 
                     $processed[] = [
-                        'id' => $barang->id,
+                        'id' => $product->id,
                         'kode' => $data['kode'],
-                        'nama' => $barang->nama_barang,
+                        'nama' => $product->product_name,
                         'satuan' => $matchedSatuan,
-                        'stok_db' => $barang->stok,
+                        'stok_db' => $product->stock,
                         'stok_excel' => $data['stok'],
-                        'po' => $barang->stok_po
+                        'po' => $product->stock_po
                     ];
                 }
             }
@@ -254,46 +262,57 @@ class StockController extends Controller
                     'status' => 'success',
                 ]);
 
+                $detailItems = [];
+
                 foreach ($items as $item) {
-                    // Cari barang berdasarkan kode_barang yang diunggah
-                    $barang = Barang::where('kode_barang', $item['kode'])->first();
-                    if ($barang) {
-                        // Isi kode barang jika di DB masih kosong tetapi di Excel terdefinisi
-                        if (empty($barang->kode_barang) && !empty($item['kode'])) {
-                            $barang->kode_barang = $item['kode'];
+                    // Cari produk: utamakan id hasil pratinjau, lalu kode
+                    $product = null;
+                    if (!empty($item['id'])) {
+                        $product = Product::active()->find($item['id']);
+                    }
+                    if (!$product && !empty($item['kode'])) {
+                        $product = Product::active()->where('product_code', $item['kode'])->first();
+                    }
+
+                    if ($product) {
+                        // Isi kode produk jika di DB masih kosong tetapi di Excel terdefinisi
+                        if (empty($product->product_code) && !empty($item['kode'])) {
+                            $product->product_code = $item['kode'];
                         }
 
-                        $oldStok = $barang->stok;
-                        $oldStokPo = $barang->stok_po;
+                        $oldStok = $product->stock;
+                        $oldStokPo = $product->stock_po;
                         $newStok = intval($item['stok_excel']);
-                        
-                        // Perbarui satuan jika ada perubahan dari form pratinjau
-                        if (!empty($item['satuan'])) {
-                            $barang->satuan = $item['satuan'];
-                        }
 
-                        // Buat rincian log perubahan mutasi barang
-                        StockLogDetail::create([
-                            'stock_log_id' => $log->id,
-                            'barang_id' => $barang->id,
+                        // Jangan perbarui satuan/unit dari import: kolom packaging (unit, fill_unit,
+                        // pcs_per_unit) dikurasi via admin & sync pricing, bukan dari stok Excel.
+
+                        $detailItems[] = [
+                            'product_id' => $product->id,
                             'old_stok' => $oldStok,
                             'new_stok' => $newStok,
                             'old_stok_po' => $oldStokPo,
                             'new_stok_po' => $oldStokPo,
-                        ]);
+                        ];
 
                         // Perbarui jumlah stok di database produk
-                        $barang->update([
-                            'stok' => $newStok,
+                        $product->update([
+                            'stock' => $newStok,
                         ]);
 
                         // Perbarui atau buat riwayat stok harian untuk hari ini
                         DailyStockHistory::updateOrCreate(
-                            ['barang_id' => $barang->id, 'tanggal' => date('Y-m-d')],
+                            ['product_id' => $product->id, 'tanggal' => date('Y-m-d')],
                             ['stok' => $newStok, 'stok_po' => $oldStokPo]
                         );
                     }
                 }
+
+                // Rincian mutasi disimpan 1 baris per log sebagai JSON array.
+                StockLogDetail::create([
+                    'stock_log_id' => $log->id,
+                    'items' => $detailItems,
+                ]);
             });
 
             return response()->json(['success' => true, 'message' => 'Stok berhasil diperbarui!']);
@@ -308,30 +327,52 @@ class StockController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
+        // Normalisasi kode barang terlebih dahulu agar validasi unique konsisten
+        $request->merge([
+            'product_code' => preg_replace('/\s+/', ' ', trim($request->input('product_code'))),
+            'product_name' => trim($request->input('product_name')),
+        ]);
+
         $request->validate([
-            'nama_barang' => 'required|string|max:255',
-            'kode_barang' => 'required|string|max:255|unique:barangs,kode_barang',
-            'satuan' => 'required|string|max:255',
+            'product_name' => 'required|string|max:255',
+            'product_code' => [
+                'required', 'string', 'max:255',
+                Rule::unique('products', 'product_code')->where('is_deleted', 0),
+            ],
+            'unit' => 'required|string|max:255',
         ]);
 
         try {
-            $barang = Barang::create([
-                'nama_barang' => trim($request->input('nama_barang')),
-                'kode_barang' => preg_replace('/\s+/', ' ', trim($request->input('kode_barang'))),
-                'satuan' => $request->input('satuan'),
-                'stok' => 0,
-                'stok_po' => 0,
-            ]);
+            $tombstone = Product::where('product_code', $request->input('product_code'))->trashed()->first();
+
+            if ($tombstone) {
+                // Kode sama dengan produk soft-delete: hidupkan kembali tombstone tsb.
+                $tombstone->restore([
+                    'product_name' => $request->input('product_name'),
+                    'unit' => $request->input('unit'),
+                    'match_key' => Product::buildMatchKey($request->input('product_name')),
+                ]);
+                $product = $tombstone;
+            } else {
+                $product = Product::create([
+                    'product_name' => $request->input('product_name'),
+                    'product_code' => $request->input('product_code'),
+                    'unit' => $request->input('unit'),
+                    'match_key' => Product::buildMatchKey($request->input('product_name')),
+                    'stock' => 0,
+                    'stock_po' => 0,
+                ]);
+            }
 
             // Buat history awal hari ini
             DailyStockHistory::create([
-                'barang_id' => $barang->id,
+                'product_id' => $product->id,
                 'tanggal' => date('Y-m-d'),
                 'stok' => 0,
                 'stok_po' => 0,
             ]);
 
-            return response()->json(['success' => true, 'message' => 'Barang ' . $barang->nama_barang . ' berhasil ditambahkan!']);
+            return response()->json(['success' => true, 'message' => 'Barang ' . $product->product_name . ' berhasil ditambahkan!']);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -360,11 +401,11 @@ class StockController extends Controller
 
         $callback = function() {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['kode_barang', 'nama_barang', 'stok', 'stok_po']);
-            // Put some sample active barangs
-            $samples = Barang::take(5)->get();
+            fputcsv($file, ['product_code', 'product_name', 'stock', 'stock_po']);
+            // Put some sample active products
+            $samples = Product::active()->take(5)->get();
             foreach ($samples as $sample) {
-                fputcsv($file, [$sample->kode_barang, $sample->nama_barang, $sample->stok, $sample->stok_po]);
+                fputcsv($file, [$sample->product_code, $sample->product_name, $sample->stock, $sample->stock_po]);
             }
             fclose($file);
         };
@@ -384,19 +425,19 @@ class StockController extends Controller
 
         try {
             DB::transaction(function () use ($log) {
-                foreach ($log->details as $detail) {
-                    $barang = Barang::find($detail->barang_id);
-                    if ($barang) {
+                foreach (($log->details?->items ?? []) as $item) {
+                    $product = Product::active()->find($item['product_id']);
+                    if ($product) {
                         // Kembalikan ke stok lama
-                        $barang->update([
-                            'stok' => $detail->old_stok,
-                            'stok_po' => $detail->old_stok_po,
+                        $product->update([
+                            'stock' => $item['old_stok'],
+                            'stock_po' => $item['old_stok_po'],
                         ]);
 
                         // Update or create daily stock history untuk hari ini
                         DailyStockHistory::updateOrCreate(
-                            ['barang_id' => $barang->id, 'tanggal' => date('Y-m-d')],
-                            ['stok' => $detail->old_stok, 'stok_po' => $detail->old_stok_po]
+                            ['product_id' => $product->id, 'tanggal' => date('Y-m-d')],
+                            ['stok' => $item['old_stok'], 'stok_po' => $item['old_stok_po']]
                         );
                     }
                 }
@@ -417,16 +458,27 @@ class StockController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $details = $log->details()->with('barang')->get()->map(function($detail) {
+        $items = $log->details?->items ?? [];
+
+        // Muat produk sekaligus (sekali query) untuk nama & kode.
+        $productIds = array_values(array_unique(array_filter(
+            array_column($items, 'product_id')
+        )));
+        $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
+        $details = array_map(function ($item) use ($products) {
+            $product = $products[$item['product_id']] ?? null;
+
             return [
-                'nama' => $detail->barang->nama_barang ?? 'Barang Terhapus',
-                'kode' => $detail->barang->kode_barang ?? '-',
-                'old_stok' => $detail->old_stok,
-                'new_stok' => $detail->new_stok,
-                'old_stok_po' => $detail->old_stok_po,
-                'new_stok_po' => $detail->new_stok_po,
+                'id' => $item['product_id'],
+                'nama' => $product->product_name ?? 'Produk Terhapus',
+                'kode' => $product->product_code ?? '-',
+                'old_stok' => $item['old_stok'],
+                'new_stok' => $item['new_stok'],
+                'old_stok_po' => $item['old_stok_po'],
+                'new_stok_po' => $item['new_stok_po'],
             ];
-        });
+        }, $items);
 
         return response()->json([
             'success' => true,
@@ -443,65 +495,6 @@ class StockController extends Controller
         ]);
     }
 
-    public function stockHistoryData(Request $request)
-    {
-        if (!$this->hasAnySalesAccess()) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        $date = $request->input('date', date('Y-m-d'));
-
-        // Fetch daily histories for this date
-        $histories = DailyStockHistory::where('tanggal', $date)->get()->keyBy('barang_id');
-
-        // Build fallback list
-        $barangs = Barang::all();
-        $historyData = [];
-        foreach ($barangs as $barang) {
-            $history = $histories->get($barang->id);
-            if ($history) {
-                $historyData[$barang->id] = [
-                    'stok' => $history->stok,
-                    'stok_po' => $history->stok_po
-                ];
-            } else {
-                // Find latest history <= date
-                $latestBefore = DailyStockHistory::where('barang_id', $barang->id)
-                    ->where('tanggal', '<=', $date)
-                    ->orderBy('tanggal', 'desc')
-                    ->first();
-                if ($latestBefore) {
-                    $historyData[$barang->id] = [
-                        'stok' => $latestBefore->stok,
-                        'stok_po' => $latestBefore->stok_po
-                    ];
-                } else {
-                    // Fall back to current stock if date is today, or default 0
-                    if ($date === date('Y-m-d')) {
-                        $historyData[$barang->id] = [
-                            'stok' => $barang->stok,
-                            'stok_po' => $barang->stok_po
-                        ];
-                    } else {
-                        // Find oldest history
-                        $oldest = DailyStockHistory::where('barang_id', $barang->id)
-                            ->orderBy('tanggal', 'asc')
-                            ->first();
-                        $historyData[$barang->id] = [
-                            'stok' => $oldest ? $oldest->stok : 0,
-                            'stok_po' => $oldest ? $oldest->stok_po : 0
-                        ];
-                    }
-                }
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'history' => $historyData
-        ]);
-    }
-
     public function canManageStock(): bool
     {
         $user = Auth::user();
@@ -509,12 +502,12 @@ class StockController extends Controller
 
         $jabatan = strtolower($user->jabatan ?? '');
 
-        // $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
+        $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
         $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan == 'gudang';
         $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing');
 
         return $isAdminGudang || $isLegalPurchasing
-        // || $isTest
+        || $isTest
         ;
     }
 
