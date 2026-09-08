@@ -9,11 +9,11 @@ class SalesTarget extends Model
     protected $table = 'sales_targets';
 
     protected $fillable = [
-        'tahun',
-        'bulan_angka',
-        'bulan',
+        'year',
+        'month_number',
+        'month',
         'ps',
         'target_amount',
-        'sales_last_year_amount',
+        'last_year_amount',
     ];
 }
