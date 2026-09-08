@@ -7,14 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class DailyStockHistory extends Model
 {
     protected $fillable = [
-        'barang_id',
+        'product_id',
         'tanggal',
         'stok',
         'stok_po',
     ];
 
-    public function barang()
+    public function product()
     {
-        return $this->belongsTo(Barang::class);
+        return $this->belongsTo(Product::class, 'product_id');
     }
 }
