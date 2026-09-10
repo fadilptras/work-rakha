@@ -2,7 +2,7 @@
     $agent = new \Jenssegers\Agent\Agent();
     $isMobile = $agent->isMobile();
 @endphp
-<x-layout-users title="{{ $title ?? 'Product Price & SPH' }}">
+<x-layout-users :title="$title ?? 'Product Price & SPH'">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     @push('styles')
@@ -87,6 +87,12 @@
             background: transparent; border: none; padding: 0; cursor: pointer; 
             z-index: 5; display: flex; align-items: center; justify-content: center;
         }
+        /* Untuk input ber-datalist: geser tombol x ke kiri agar tidak
+           menabrak panah dropdown native browser di pojok kanan. */
+        .icon-clear-search--datalist {
+            right: 26px;
+        }
+        .input-with-clear { padding-right: 3.5rem; }
         
         /* == SPH Sections == */
         .modern-section { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
@@ -102,6 +108,61 @@
         .tab-scroller-wrap { position: relative; }
         @keyframes swipeHint { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
         .tab-hint-text { animation: swipeHint 1.4s ease-in-out infinite; font-size: 0.7rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
+
+        /* == Mobile Responsive tweaks (max-width 767px only; desktop untouched) == */
+        @media (max-width: 767px) {
+            .glass-card { padding: 0.9rem; border-radius: 1.1rem; }
+            .btn-back-modern { padding: 6px 14px 6px 6px; font-size: 0.8rem; }
+            .btn-back-modern .icon-circle { width: 26px; height: 26px; font-size: 0.75rem; }
+            .modern-section h4 { font-size: 0.78rem; }
+            .modern-section p { font-size: 0.68rem; }
+            .mobile-auto-h { flex: 0 1 auto !important; min-height: 0 !important; }
+        }
+
+        /* == Explicit desktop/mobile display switches (does NOT rely on Tailwind's
+           "hidden md:flex" combo, which was found to be unreliable in this build) == */
+        .desktop-flex, .desktop-block { display: none; }
+        @media (min-width: 768px) {
+            .desktop-flex { display: flex !important; }
+            .desktop-block { display: block !important; }
+        }
+
+        /* == Mobile Page Header (mirrors stock_blade pattern) == */
+        .mobile-page-header {
+            border-radius: 1rem; padding: 1.1rem 1.25rem; color: #fff; position: relative; overflow: hidden;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+        }
+        .mobile-page-header::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            transform: rotate(30deg); pointer-events: none;
+        }
+
+        /* == Mobile Cards (Pricing / SPH Items / History) == */
+        .mobile-card-search {
+            display: flex; align-items: center; gap: 8px;
+            background: #fff; border: 1.5px solid #e2e8f0; border-radius: 0.85rem;
+            padding: 0.6rem 0.85rem;
+        }
+        .mobile-card-search input { border: none; outline: none; flex: 1; font-size: 0.8rem; font-weight: 600; color: #334155; background: transparent; }
+        .mobile-card-search i { color: #94a3b8; font-size: 0.8rem; }
+
+        .m-card {
+            background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 0.75rem;
+            padding: 0.85rem 0.9rem; box-shadow: 0 2px 6px rgba(0,0,0,0.04); width: 100%;
+        }
+        .m-card + .m-card { margin-top: 0.5rem; }
+        .m-card-title { font-size: 0.85rem; font-weight: 800; color: #1e293b; line-height: 1.3; }
+        .m-card-tag { display: inline-flex; align-items: center; background: #f1f5f9; color: #475569; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; }
+        .m-card-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #e2e8f0; }
+        .m-card-label { font-size: 0.62rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+        .m-card-value { font-size: 0.8rem; font-weight: 800; color: #1e293b; }
+        .m-card-actions { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem; }
+        .m-card-actions button, .m-card-actions a {
+            flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 0.5rem; border-radius: 0.6rem; font-size: 0.72rem; font-weight: 800;
+        }
     </style>
     @endpush
 
@@ -109,7 +170,7 @@
         <div class="mesh-bg"></div>
 
         {{-- MAIN WRAPPER: Di sini z-index utama untuk layout dijaga --}}
-        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start">
+        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start mobile-auto-h">
             
             <div class="w-full flex justify-start mb-3 md:mb-4">
                 <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0">
@@ -118,9 +179,9 @@
                 </a>
             </div>
 
-            <div class="page-header flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5">
+            <div class="desktop-flex page-header flex-col xl:flex-row justify-between items-start xl:items-center gap-5">
                 <div class="header-content">
-                    <h1 class="text-3xl font-extrabold tracking-tight mb-1.5 text-white">Product Price & <span class="text-blue-200">SPH Manager</span></h1>
+                    <h1 class="text-3xl font-extrabold tracking-tight mb-1.5 text-white">Product Price & <span class="text-blue-200">SPH Form</span></h1>
                     <p class="text-blue-100 text-sm opacity-90 max-w-2xl font-medium">Manage official catalog pricing, create quotation forms, and inspect SPH history records.</p>
                 </div>
                 
@@ -133,7 +194,7 @@
                             <i class="fas fa-file-contract mr-2"></i> <span x-text="isEditMode ? 'Edit SPH' : 'SPH Form'"></span>
                         </button>
                         <button @click="activeTab = 'history'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'history', 'text-white hover:bg-white/20': activeTab !== 'history' }" class="px-5 py-2.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
-                            <i class="fas fa-history mr-2"></i> History
+                            <i class="fas fa-history mr-2"></i> SPH Document
                         </button>
                     </div>
                     <div x-show="showTabHint" x-cloak class="tab-hint-text xl:hidden text-right mt-1.5" x-transition.opacity.duration.300ms>
@@ -142,9 +203,37 @@
                 </div>
             </div>
 
+            {{-- MOBILE HEADER + TABS (independent from desktop header above) --}}
+            <div class="md:hidden space-y-3">
+                <div class="mobile-page-header flex items-center justify-between gap-3">
+                    <div class="relative z-10 min-w-0">
+                        <h2 class="text-sm font-black tracking-wider uppercase leading-snug truncate">Price & SPH Form</h2>
+                        <p class="text-xs text-blue-100 font-medium leading-normal truncate mt-0.5">Catalog pricing & quotation forms.</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white text-base shrink-0 shadow-inner relative z-10">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-1.5 flex items-stretch gap-1">
+                    <button @click="activeTab = 'pricing'" :class="activeTab === 'pricing' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold transition-all">
+                        <i class="fas fa-tags text-sm"></i>
+                        <span class="text-[10px] uppercase tracking-wide">Prices</span>
+                    </button>
+                    <button x-show="hasFullAccess" x-cloak @click="activeTab = 'sph'; if(!isEditMode) resetForm();" :class="activeTab === 'sph' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold transition-all">
+                        <i class="fas fa-file-contract text-sm"></i>
+                        <span class="text-[10px] uppercase tracking-wide" x-text="isEditMode ? 'Edit SPH' : 'SPH'"></span>
+                    </button>
+                    <button @click="activeTab = 'history'" :class="activeTab === 'history' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold transition-all">
+                        <i class="fas fa-history text-sm"></i>
+                        <span class="text-[10px] uppercase tracking-wide">History</span>
+                    </button>
+                </div>
+            </div>
+
             {{-- TAB 1: PRODUCT PRICE LIST --}}
-            <div x-show="activeTab === 'pricing'" class="space-y-5 flex-1 flex flex-col" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-                <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col">
+            <div x-show="activeTab === 'pricing'" class="space-y-5 flex-1 flex flex-col mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col mobile-auto-h">
                     
                     {{-- HEADER TABEL YANG SUDAH BERSIH DAN RAPI --}}
                     <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
@@ -159,7 +248,7 @@
                     <div class="flex items-center justify-start xl:justify-end gap-2.5 w-full xl:flex-1 min-w-0 overflow-x-auto hide-scrollbar pb-2 xl:pb-0">
                         
                         <!-- FIX: Hapus shrink-0, ganti dengan flex-1 dan batasan min/max width agar elastis -->
-                        <div class="relative flex-1 min-w-[140px] max-w-sm">
+                        <div class="relative flex-1 min-w-[140px] max-w-sm desktop-block">
                             <div class="icon-left text-slate-400"><i class="fas fa-search text-sm"></i></div>
                             <!-- FIX: Placeholder disingkat agar aman saat kolom menyusut -->
                             <input type="text" x-model="searchQuery" placeholder="Search Product Name" class="w-full pl-10 pr-9 py-2 text-sm border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm transition-colors" autocomplete="off">
@@ -186,8 +275,51 @@
                         </a>
                     </div>
                 </div>
+
+                    {{-- MOBILE: Dedicated search bar --}}
+                    <div class="md:hidden px-3 pt-3">
+                        <div class="mobile-card-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" x-model="searchQuery" placeholder="Search Product Name">
+                            <button type="button" x-cloak x-show="searchQuery.length > 0" @click="searchQuery = ''">
+                                <i class="fas fa-times-circle text-slate-400 text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
                     
-                    <div class="overflow-x-auto flex-1 bg-white">
+                    {{-- MOBILE: Pricing Card List --}}
+                    <div class="md:hidden px-3 pt-2 pb-3 space-y-2">
+                        <template x-for="item in filteredProducts" :key="'mp-' + item.id">
+                            <div class="m-card">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="min-w-0">
+                                        <div class="m-card-title" x-text="item.product_name"></div>
+                                        <span class="m-card-tag mt-1" x-text="item.presentation"></span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <button x-show="hasFullAccess" x-cloak @click="openEditProduct(item)" class="w-8 h-8 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-xs border border-amber-200"><i class="fas fa-edit"></i></button>
+                                        <button x-show="hasFullAccess" x-cloak @click="deleteProduct(item)" class="w-8 h-8 rounded-md bg-rose-50 text-rose-500 flex items-center justify-center text-xs border border-rose-200"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </div>
+                                <div class="m-card-row">
+                                    <div>
+                                        <div class="m-card-label">HNA Price</div>
+                                        <div class="m-card-value text-blue-600" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(item.base_price)"></div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="m-card-label">HNA / Pcs</div>
+                                        <div class="m-card-value" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(item.unit_price)"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="filteredProducts.length === 0" class="text-center py-10 text-slate-400 text-sm font-medium">
+                            <i class="fas fa-box-open text-3xl mb-3 text-slate-300 block"></i>
+                            No matching products found.
+                        </div>
+                    </div>
+
+                    <div class="desktop-block overflow-x-auto flex-1 bg-white">
                         <table class="w-full text-left text-slate-600">
                             <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
@@ -236,8 +368,8 @@
             </div>
 
             {{-- TAB 2: SPH FORM GENERATOR / EDITOR --}}
-            <div x-show="activeTab === 'sph' && hasFullAccess" class="space-y-5 flex-1 flex flex-col" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-                <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col">
+            <div x-show="activeTab === 'sph' && hasFullAccess" class="space-y-5 flex-1 flex flex-col mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col mobile-auto-h">
                     <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg"><i class="fas fa-file-contract"></i></div>
@@ -253,23 +385,23 @@
                         </template>
                     </div>
 
-                    <div class="p-6 space-y-6 bg-white">
+                    <div class="p-3 md:p-6 space-y-6 bg-white">
                         {{-- 1 & 2. Client & Sales Representative Data --}}
                         <div>
                             
                             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
                                 <div class="lg:col-span-1">
-                                    <label class="modern-label">Customer Name <span class="text-red-500">*</span></label>
-                                    <div class="relative">
-                                        <div class="icon-left text-slate-400"><i class="fas fa-user text-sm"></i></div>
-                                        <input type="text" x-model="customerName" placeholder="Client Name" class="w-full pl-10 pr-4 py-2.5 text-sm font-semibold border border-slate-200 bg-white hover:bg-slate-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
-                                    </div>
-                                </div>
-                                <div class="lg:col-span-1">
-                                    <label class="modern-label">Company / Institution</label>
+                                    <label class="modern-label">Company / Institution <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-building text-sm"></i></div>
                                         <input type="text" x-model="customerCompany" placeholder="Company / Institution" class="w-full pl-10 pr-4 py-2.5 text-sm font-semibold border border-slate-200 bg-white hover:bg-slate-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
+                                    </div>
+                                </div>
+                                <div class="lg:col-span-1">
+                                    <label class="modern-label">Customer Name</label>
+                                    <div class="relative">
+                                        <div class="icon-left text-slate-400"><i class="fas fa-user text-sm"></i></div>
+                                        <input type="text" x-model="customerName" placeholder="Customer Name (UP)" class="w-full pl-10 pr-4 py-2.5 text-sm font-semibold border border-slate-200 bg-white hover:bg-slate-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
                                     </div>
                                 </div>
                                 <div class="lg:col-span-1">
@@ -333,7 +465,55 @@
                                 </div>
                             </div>
                             
-                            <div class="rounded-xl border border-slate-200 overflow-x-auto bg-white">
+                            {{-- MOBILE: SPH Items Card List --}}
+                            <div class="md:hidden space-y-2">
+                                <template x-for="(item, index) in selectedItems" :key="'msph-' + index">
+                                    <div class="m-card">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="min-w-0 flex items-start gap-2">
+                                                <span class="text-xs font-black text-slate-400 mt-0.5" x-text="(index + 1) + '.'"></span>
+                                                <div>
+                                                    <div class="m-card-title" x-text="item.product_name"></div>
+                                                    <span class="m-card-tag mt-1" x-text="item.presentation"></span>
+                                                </div>
+                                            </div>
+                                            <button @click="selectedItems.splice(index, 1)" class="w-8 h-8 rounded-md bg-rose-50 text-rose-500 flex items-center justify-center shrink-0"><i class="fas fa-times text-sm"></i></button>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2 mt-2">
+                                            <div>
+                                                <div class="m-card-label">HNA Price</div>
+                                                <div class="m-card-value" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(itemHna(item))"></div>
+                                            </div>
+                                            <div>
+                                                <div class="m-card-label">HNA / Pcs</div>
+                                                <div class="m-card-value" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(hnaPerPcs(item))"></div>
+                                            </div>
+                                        </div>
+                                        <div class="m-card-row">
+                                            <div class="flex items-center gap-2">
+                                                <span class="m-card-label">Discount</span>
+                                                <div class="relative flex items-center w-20">
+                                                    <input type="number" x-model.number="item.discount" min="0" max="100" class="w-full pl-2 pr-6 text-right font-bold text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md py-1 outline-none focus:border-amber-500 appearance-none">
+                                                    <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-[11px] text-slate-500 font-bold pointer-events-none">%</span>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="m-card-label">Net+PPN/Pcs</div>
+                                                <div class="m-card-value text-blue-600" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(netPpnPerPcs(item))"></div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right mt-1">
+                                            <span class="m-card-label">Net+PPN: </span>
+                                            <span class="text-xs font-bold text-slate-600" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(netPpn(item))"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="selectedItems.length === 0" class="text-center py-8 text-slate-400 text-sm">
+                                    No items added. Tap "Add Product" to choose from catalog.
+                                </div>
+                            </div>
+
+                            <div class="desktop-block rounded-xl border border-slate-200 overflow-x-auto bg-white">
                                 <table class="w-full text-left border-collapse whitespace-nowrap">
                                     <thead>
                                         <tr class="bg-slate-50 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
@@ -385,7 +565,7 @@
                         </div>
 
                         {{-- 4. Ringkasan --}}
-                        <div x-show="selectedItems.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+                        <div x-show="selectedItems.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
                             <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 text-center">
                                 <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Items</div>
                                 <div class="text-xl font-black text-slate-700" x-text="selectedItems.length"></div>
@@ -398,18 +578,14 @@
                                 <div class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-1">Total Discount</div>
                                 <div class="text-xl font-black text-amber-600" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(totalDiscount)"></div>
                             </div>
-                            <div class="bg-blue-50 rounded-xl border border-blue-200 p-4 text-center">
-                                <div class="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Subtotal</div>
-                                <div class="text-xl font-black text-blue-600" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(subtotal)"></div>
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             {{-- TAB 3: SPH HISTORY SECTION --}}
-            <div x-show="activeTab === 'history'" class="space-y-5 flex-1 flex flex-col" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-                <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col">
+            <div x-show="activeTab === 'history'" class="space-y-5 flex-1 flex flex-col mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col mobile-auto-h">
                     
                     {{-- Header Table --}}
                     <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
@@ -422,7 +598,7 @@
                         </div>
                         
                         <!-- Wrapper dikembalikan ke aslinya (lg:w-auto) -->
-                        <div class="flex items-center gap-2.5 w-full lg:w-auto overflow-x-auto hide-scrollbar shrink-0 pb-2 lg:pb-0 lg:mt-3 lg:translate-y-1">
+                        <div class="desktop-flex items-center gap-2.5 w-full lg:w-auto overflow-x-auto hide-scrollbar shrink-0 pb-2 lg:pb-0 lg:mt-3 lg:translate-y-1">
                             
                             <!-- Pakai inline style width agar lebar fix tanpa nembus batas 100% container -->
                             <div class="relative w-full sm:w-80" style="width: 480px; max-width: 100%;">
@@ -436,14 +612,69 @@
                         </div>
                     </div>
 
+                    {{-- MOBILE: Dedicated search bar --}}
+                    <div class="md:hidden px-3 pt-3">
+                        <div class="mobile-card-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" x-model="historySearchQuery" placeholder="Search Client, Company or SPH Number">
+                            <button type="button" x-cloak x-show="historySearchQuery.length > 0" @click="historySearchQuery = ''">
+                                <i class="fas fa-times-circle text-slate-400 text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- MOBILE: History Card List --}}
+                    <div class="md:hidden px-3 py-3 space-y-2">
+                        <template x-if="loadingHistory">
+                            <div class="text-center py-10 text-slate-400">
+                                <i class="fas fa-spinner fa-spin text-3xl mb-3 text-blue-400 block"></i>
+                                <p class="text-sm font-medium">Loading SPH history...</p>
+                            </div>
+                        </template>
+                        <template x-for="history in filteredHistory" :key="'mh-' + history.id">
+                            <div class="m-card">
+                                <div class="flex items-start justify-between gap-2">
+                                    <a :href="'/sales/sph/' + history.id" class="min-w-0">
+                                        <div class="m-card-title text-blue-600" x-text="history.sphNumber"></div>
+                                        <div class="text-[11px] text-slate-500 font-semibold mt-0.5" x-text="history.date"></div>
+                                    </a>
+                                    <span class="m-card-tag shrink-0" x-text="history.items.length + ' Items'"></span>
+                                </div>
+                                <div class="m-card-row">
+                                    <div class="min-w-0">
+                                        <div class="m-card-label">Company / PIC</div>
+                                        <div class="text-xs font-bold text-slate-800 leading-snug" x-text="history.customerCompany"></div>
+                                        <div class="text-[11px] text-slate-500" x-text="history.customerName"></div>
+                                    </div>
+                                    <div class="text-right shrink-0">
+                                        <div class="m-card-label">Sales (PS)</div>
+                                        <div class="text-xs font-bold text-slate-700" x-text="history.selectedPs"></div>
+                                        <div class="text-[11px] text-slate-500" x-text="history.psPhone"></div>
+                                    </div>
+                                </div>
+                                <div class="m-card-actions">
+                                    <button x-show="hasFullAccess" x-cloak @click="editSph(history)" class="bg-amber-50 text-amber-600 border border-amber-200"><i class="fas fa-edit"></i> Edit</button>
+                                    <a :href="'/sales/sph/' + history.id + '/export/pdf'" class="bg-red-50 text-red-600 border border-red-200"><i class="fas fa-file-pdf"></i> PDF</a>
+                                    <a :href="'/sales/sph/' + history.id + '/export/excel'" class="bg-green-50 text-green-600 border border-green-200"><i class="fas fa-file-excel"></i> Excel</a>
+                                    <button x-show="hasFullAccess" x-cloak @click="deleteHistory(history.id)" class="bg-rose-50 text-rose-500 border border-rose-200 max-w-[44px]"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="!loadingHistory && filteredHistory.length === 0" class="text-center py-10 text-slate-400">
+                            <i class="fas fa-box-open text-3xl mb-3 text-slate-300 block"></i>
+                            <h4 class="font-bold text-sm text-slate-600">No SPH History</h4>
+                            <p class="text-xs mt-1">Create a new quotation from the SPH Form tab.</p>
+                        </div>
+                    </div>
+
                     {{-- FIX: Hapus whitespace-nowrap pada tag table utama agar nama panjang bisa wrap --}}
-                    <div class="overflow-x-auto flex-1 bg-white">
+                    <div class="desktop-block overflow-x-auto flex-1 bg-white">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-50 text-xs font-bold uppercase tracking-wider border-b border-slate-200 whitespace-nowrap">
                                     <th class="py-3 px-5 text-slate-500">SPH Number</th>
                                     <th class="py-3 px-4 text-slate-500">Date</th>
-                                    <th class="py-3 px-4 text-slate-500">Client / Company</th>
+                                    <th class="py-3 px-4 text-slate-500">Company / PIC</th>
                                     <th class="py-3 px-4 text-slate-500">Sales Person (PS)</th>
                                     <th class="py-3 px-4 text-center text-slate-500">Items</th>
                                     <th class="py-3 px-5 text-center text-slate-500">Actions</th>
@@ -470,9 +701,9 @@
                                         <td class="py-3 px-4 border-l border-slate-100">
                                             <div>
                                                 <a :href="'/sales/sph/' + history.id" class="hover:underline cursor-pointer">
-                                                    <div class="font-bold text-slate-800 whitespace-normal leading-snug" x-text="history.customerName"></div>
+                                                    <div class="font-bold text-slate-800 whitespace-normal leading-snug" x-text="history.customerCompany"></div>
                                                 </a>
-                                                <div class="text-xs text-slate-500 font-medium mt-0.5 whitespace-normal" x-text="history.customerCompany"></div>
+                                                <div class="text-xs text-slate-500 font-medium mt-0.5 whitespace-normal" x-text="history.customerName"></div>
                                             </div>
                                         </td>
                                         <td class="py-3 px-4 border-l border-slate-100 whitespace-nowrap">
@@ -521,8 +752,11 @@
             {{-- ========================================================= --}}
 
             {{-- MODAL 1: EDIT PRODUCT PRICE --}}
-            <div x-show="showEditProductModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4" style="z-index: 99999;" x-transition.opacity>
-                <div @click.away="showEditProductModal = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
+            <div x-show="showEditProductModal" x-cloak x-transition.opacity class="fixed inset-0" style="z-index: 99999;">
+                <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" aria-hidden="true" @click="showEditProductModal = false"></div>
+                <div class="fixed inset-0 w-screen overflow-y-auto">
+                    <div class="flex min-h-full items-center justify-center p-4">
+                        <div @click.away="showEditProductModal = false" class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
                     <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
                         <div>
                             <h3 class="text-base font-bold text-slate-800"><i class="fas fa-edit text-amber-500 mr-2"></i> Edit Product & Price</h3>
@@ -538,7 +772,10 @@
                                     <label class="modern-label">Product Name <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-box text-sm"></i></div>
-                                        <input type="text" x-model="editingProduct.product_name" list="product-name-suggestions" autocomplete="off" class="w-full pl-10 pr-4 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
+                                        <input type="text" x-model="editingProduct.product_name" list="product-name-suggestions" autocomplete="off" class="w-full pl-10 input-with-clear py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
+                                        <button type="button" x-cloak x-show="(editingProduct.product_name || '').length > 0" @click="editingProduct.product_name = ''" class="icon-clear-search icon-clear-search--datalist text-slate-400 hover:text-slate-600 transition-colors" title="Clear">
+                                            <i class="fas fa-times-circle text-sm"></i>
+                                        </button>
                                     </div>
                                 </div>
                                 <div style="flex: 4 1 0; min-width: 240px;">
@@ -555,8 +792,8 @@
                                     <label class="modern-label">Packaging</label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-box-open text-sm"></i></div>
-                                        <input type="text" x-model="editingProduct.unit" list="packaging-suggestions" @input="onPackagingChange()" placeholder="Pcs / Pack / Box / Roll / Polybag..." class="w-full pl-10 pr-9 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
-                                        <button type="button" x-cloak x-show="(editingProduct.unit || '').length > 0" @click="editingProduct.unit = ''; onPackagingChange()" class="icon-clear-search text-slate-400 hover:text-slate-600 transition-colors" title="Clear packaging">
+                                        <input type="text" x-model="editingProduct.unit" list="packaging-suggestions" @input="onPackagingChange()" placeholder="Pcs / Pack / Box / Roll / Polybag..." class="w-full pl-10 input-with-clear py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
+                                        <button type="button" x-cloak x-show="(editingProduct.unit || '').length > 0" @click="editingProduct.unit = ''; onPackagingChange()" class="icon-clear-search icon-clear-search--datalist text-slate-400 hover:text-slate-600 transition-colors" title="Clear packaging">
                                             <i class="fas fa-times-circle text-sm"></i>
                                         </button>
                                     </div>
@@ -618,6 +855,8 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
             <datalist id="product-name-suggestions">
                 @foreach($nameSuggestions ?? [] as $sug)
@@ -632,8 +871,11 @@
             </datalist>
 
             {{-- MODAL 3: TAMBAH BARANG BARU --}}
-            <div x-show="showManageModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4" style="z-index: 99999;" x-transition.opacity @keydown.escape.window="showManageModal = false">
-                <div @click.away="showManageModal = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
+            <div x-show="showManageModal" x-cloak x-transition.opacity class="fixed inset-0" style="z-index: 99999;" @keydown.escape.window="showManageModal = false">
+                <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" aria-hidden="true" @click="showManageModal = false"></div>
+                <div class="fixed inset-0 w-screen overflow-y-auto">
+                    <div class="flex min-h-full items-center justify-center p-4">
+                        <div @click.away="showManageModal = false" class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
                     <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
                         <div>
                             <h3 class="text-base font-bold text-slate-800"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i> Add Product to Pricing</h3>
@@ -649,7 +891,10 @@
                                     <label class="modern-label">Product Name <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-box text-sm"></i></div>
-                                        <input type="text" x-model="manageForm.product_name" list="product-name-suggestions" autocomplete="off" class="w-full pl-10 pr-4 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
+                                        <input type="text" x-model="manageForm.product_name" list="product-name-suggestions" autocomplete="off" class="w-full pl-10 input-with-clear py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
+                                        <button type="button" x-cloak x-show="(manageForm.product_name || '').length > 0" @click="manageForm.product_name = ''" class="icon-clear-search icon-clear-search--datalist text-slate-400 hover:text-slate-600 transition-colors" title="Clear">
+                                            <i class="fas fa-times-circle text-sm"></i>
+                                        </button>
                                     </div>
                                 </div>
                                 <div style="flex: 4 1 0; min-width: 240px;">
@@ -666,8 +911,8 @@
                                     <label class="modern-label">Packaging</label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-box-open text-sm"></i></div>
-                                        <input type="text" x-model="manageForm.unit" list="packaging-suggestions" @input="onPackagingChange()" placeholder="Pcs / Pack / Box / Roll / Polybag..." class="w-full pl-10 pr-9 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
-                                        <button type="button" x-cloak x-show="(manageForm.unit || '').length > 0" @click="manageForm.unit = ''; onPackagingChange()" class="icon-clear-search text-slate-400 hover:text-slate-600 transition-colors" title="Clear packaging">
+                                        <input type="text" x-model="manageForm.unit" list="packaging-suggestions" @input="onPackagingChange()" placeholder="Pcs / Pack / Box / Roll / Polybag..." class="w-full pl-10 input-with-clear py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
+                                        <button type="button" x-cloak x-show="(manageForm.unit || '').length > 0" @click="manageForm.unit = ''; onPackagingChange()" class="icon-clear-search icon-clear-search--datalist text-slate-400 hover:text-slate-600 transition-colors" title="Clear packaging">
                                             <i class="fas fa-times-circle text-sm"></i>
                                         </button>
                                     </div>
@@ -729,10 +974,15 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
             {{-- MODAL: QUICK PRODUCT PICKER --}}
-            <div x-show="showProductModal" x-cloak class="fixed inset-0 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4" style="z-index: 99999;" x-transition.opacity>
-                <div @click.away="showProductModal = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh]" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
+            <div x-show="showProductModal" x-cloak x-transition.opacity class="fixed inset-0" style="z-index: 99999;">
+                <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" aria-hidden="true" @click="showProductModal = false"></div>
+                <div class="fixed inset-0 w-screen overflow-y-auto">
+                    <div class="flex min-h-full items-center justify-center p-4">
+                        <div @click.away="showProductModal = false" class="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh]" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
                     <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 shrink-0">
                         <div><h3 class="text-base font-bold text-slate-800"><i class="fas fa-search text-blue-500 mr-2"></i> Quick Product Picker</h3></div>
                         <button @click="showProductModal = false" class="text-slate-400 hover:text-red-500 transition-colors cursor-pointer text-lg"><i class="fas fa-times"></i></button>
@@ -763,17 +1013,19 @@
                         </template>
                         <template x-if="modalFilteredProducts.length === 0">
                             <div class="py-12 text-center text-slate-400">
-                                <i class="fas fa-box-open text-3xl mb-3 text-slate-300 block"></i>
-                                <p class="text-sm font-medium">No products found.</p>
+                                <i class="fas fa-check-circle text-3xl mb-3 text-emerald-300 block"></i>
+                                <p class="text-sm font-medium">Semua produk sudah ditambahkan.</p>
                             </div>
                         </template>
                     </div>
                     <div class="px-5 py-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center shrink-0">
-                        <span class="text-xs font-bold text-slate-500"><span class="text-blue-600" x-text="modalFilteredProducts.length"></span> products available</span>
+                        <span class="text-xs font-bold text-slate-500"><span class="text-blue-600" x-text="modalFilteredProducts.length"></span> products left to add</span>
                         <button @click="showProductModal = false" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer">Done Selecting</button>
                     </div>
                 </div>
+                </div>
             </div>
+        </div>
 
         </div> {{-- Akhir dari z-10 w-full konten wrapper utama --}}
     </div> {{-- Akhir dari x-data Alpine container --}}
@@ -929,19 +1181,28 @@
                 },
 
                 get modalFilteredProducts() {
-                    if (!this.modalSearch) return this.rawProducts;
-                    return this.rawProducts.filter(p => 
-                        p.product_name.toLowerCase().includes(this.modalSearch.toLowerCase())
-                    );
+                    const added = new Set(this.selectedItems.map(i => {
+                        return (i.product_name || '').toLowerCase().trim();
+                    }));
+                    let list = this.rawProducts.filter(p => {
+                        return !added.has((p.product_name || '').toLowerCase().trim());
+                    });
+                    if (this.modalSearch) {
+                        const q = this.modalSearch.toLowerCase();
+                        list = list.filter(p => p.product_name.toLowerCase().includes(q));
+                    }
+                    return list;
                 },
 
                 get filteredHistory() {
                     if (!this.historySearchQuery) return this.sphHistory;
-                    return this.sphHistory.filter(h => 
-                        h.customerName.toLowerCase().includes(this.historySearchQuery.toLowerCase()) || 
-                        h.customerCompany.toLowerCase().includes(this.historySearchQuery.toLowerCase()) ||
-                        h.sphNumber.toLowerCase().includes(this.historySearchQuery.toLowerCase())
-                    );
+                    const q = this.historySearchQuery.toLowerCase();
+                    return this.sphHistory.filter(h => {
+                        const name = (h.customerName || '').toLowerCase();
+                        const company = (h.customerCompany || '').toLowerCase();
+                        const number = (h.sphNumber || '').toLowerCase();
+                        return name.includes(q) || company.includes(q) || number.includes(q);
+                    });
                 },
 
                 addItem(product) {
@@ -949,20 +1210,18 @@
                         return i.product_name === product.product_name;
                     });
                     if (existing) {
-                        existing.qty += 1;
-                        existing.pack_qty = product.pack_qty || existing.pack_qty || 1;
-                        existing.base_price = product.base_price ?? existing.base_price;
-                    } else {
-                        this.selectedItems.push({
-                            product_name: product.product_name,
-                            presentation: product.presentation,
-                            base_price: product.base_price ?? product.unit_price,
-                            unit_price: product.unit_price,
-                            pack_qty: product.pack_qty || 1,
-                            discount: 0,
-                            qty: 1
-                        });
+                        this.toast('Produk sudah ada di daftar. Edit langsung pada baris yang sudah ditambahkan.', 'warning');
+                        return;
                     }
+                    this.selectedItems.push({
+                        product_name: product.product_name,
+                        presentation: product.presentation,
+                        base_price: product.base_price ?? product.unit_price,
+                        unit_price: product.unit_price,
+                        pack_qty: product.pack_qty || 1,
+                        discount: 0,
+                        qty: 1
+                    });
                 },
 
                 itemHna(item) {
@@ -1136,8 +1395,8 @@
                 },
 
                 async saveAndGenerateSph() {
-                    if (!this.customerName || this.selectedItems.length === 0) {
-                        this.toast('Silakan masukkan nama klien dan pilih minimal 1 produk!', 'warning');
+                    if (!this.customerCompany || this.selectedItems.length === 0) {
+                        this.toast('Silakan masukkan nama perusahaan/instansi dan pilih minimal 1 produk!', 'warning');
                         return;
                     }
 
@@ -1195,7 +1454,7 @@
                     this.customerCompany = history.customerCompany;
                     this.selectedPs = history.selectedPs;
                     this.psPhone = history.psPhone;
-                    this.ppnOption = history.ppnOption || 11;
+                    this.ppnOption = (history.ppnOption !== null && history.ppnOption !== undefined) ? history.ppnOption : 11;
                     this.selectedItems = JSON.parse(JSON.stringify(history.items)).map(item => {
                         const prod = this.rawProducts.find(p => p.product_name === item.product_name);
                         return {

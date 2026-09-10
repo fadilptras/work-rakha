@@ -6,6 +6,7 @@
     <style>
         body {
             font-family: 'Outfit', sans-serif;
+            background-color: #ede9fe;
         }
 
         .mesh-bg { 
@@ -15,11 +16,49 @@
             right: 0;
             bottom: 0;
             z-index: 0;
+            background-color: #ede9fe;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.6) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.4) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
             pointer-events: none;
+        }
+
+        /* Modern Back Button */
+        .btn-back-modern {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 6px 16px 6px 6px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 9999px;
+            color: #1e293b;
+            font-size: 0.85rem; font-weight: 700;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            width: fit-content;
+        }
+        .btn-back-modern:hover { 
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+            color: #1d4ed8;
+        }
+        .btn-back-modern .icon-circle {
+            width: 28px; height: 28px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #3b82f6;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            transition: transform 0.3s ease;
+        }
+        .btn-back-modern:hover .icon-circle {
+            transform: translateX(-3px);
+            background: #EFF6FF;
         }
 
         .glass-card {
@@ -63,11 +102,6 @@
                 transform: translateY(-5px);
                 box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
                 background: rgba(255, 255, 255, 0.95);
-            }
-            
-            /* Kontainer khusus desktop untuk memaksa turun ke bawah sesuai keinginan */
-            .desktop-push-down {
-                margin-top: 5rem !important; /* Ubah angka 5rem ini jika ingin lebih turun atau naik */
             }
         }
 
@@ -158,8 +192,15 @@
         
         <div class="mesh-bg"></div>
         
-        {{-- Ditambahkan kelas desktop-push-down agar di layar besar bisa diatur turun terlepas dari layout utama --}}
-        <div class="relative z-10 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:pb-12 flex-1 flex flex-col gap-4 md:gap-5 justify-start pt-4 desktop-push-down">
+        <div class="relative z-10 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:pb-12 flex-1 flex flex-col space-y-4 justify-start pt-4">
+
+            {{-- Back Button --}}
+            <div class="w-full flex justify-start">
+                <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0">
+                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                    Back to Dashboard
+                </a>
+            </div>
 
             {{-- Bagian Header --}}
             <div class="text-center w-full title-reveal glass-card shadow-sm px-4 md:px-8 py-4 md:py-5">

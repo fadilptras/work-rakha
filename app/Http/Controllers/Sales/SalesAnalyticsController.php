@@ -127,26 +127,17 @@ class SalesAnalyticsController extends BaseSalesController
             DB::raw('SUM(CASE WHEN month = "December" THEN net_price ELSE 0 END) as des')
         )->whereNotNull('date')->groupBy(DB::raw('YEAR(date)'))->orderBy(DB::raw('YEAR(date)'), 'desc')->get();
 
-        $psMapping = [
-            'Arief' => 'Arief Natanael Haryanto',
-            'Eko' => 'Eko Sigit Nugroho',
-            'Hendra' => 'Rusiman Hendra Dipraja',
-            'Karsono' => 'Karsono Nu Haeman',
-            'Surachman' => 'Surachman'
-        ];
-        
-        $psAvatars = [];
-        $users = \App\Models\User::whereIn('name', array_values($psMapping))->get(['name', 'profile_picture']);
-        
-        foreach ($psMapping as $shortName => $fullName) {
-            $user = $users->firstWhere('name', $fullName);
-            if ($user && $user->profile_picture) {
-                $psAvatars[$shortName] = asset('storage/' . $user->profile_picture);
-            } else {
-                $psAvatars[$shortName] = 'https://ui-avatars.com/api/?name='.urlencode($shortName).'&background=0ea5e9&color=fff&rounded=true&bold=true';
-            }
+        // Avatar per PS via satu pintu (App\Support\PsAvatar): kunci map = nama
+        // persis seperti di sales.ps (dipakai JS: psAvatars[item.name]),
+        // pencocokan kebal varian tulisan. Dibangun dinamis dari $listPs.
+        $psAvatars = \App\Support\PsAvatar::map($listPs);
+        // 'Office' bukan personel — pakai logo khusus bila file-nya sudah
+        // ditaruh di public/images/office.png, selain itu fallback abu-abu.
+        if (isset($psAvatars['Office'])) {
+            $psAvatars['Office'] = file_exists(public_path('images/office.png'))
+                ? asset('images/office.png')
+                : \App\Support\PsAvatar::fallback('Office', '64748b');
         }
-        $psAvatars['Office'] = 'https://ui-avatars.com/api/?name=Office&background=64748b&color=fff&rounded=true&bold=true';
 
         return view('users.sales.analytics', array_merge(compact(
             'listPs',
@@ -932,6 +923,17 @@ class SalesAnalyticsController extends BaseSalesController
         $overallAchievement = $totalTargetYear > 0 ? round(($totalSalesYear / $totalTargetYear) * 100, 1) : 0;
         $overallGrowth = $totalSalesLastYear > 0 ? round((($totalSalesYear - $totalSalesLastYear) / $totalSalesLastYear) * 100, 1) : 0;
 
+        // Rata-rata sales per bulan = total sales dibagi jumlah bulan berjalan
+        // dalam cakupan (bulan yang sudah lewat bila tahun berjalan, semua bila lampau).
+        $scopeMonths = $urutanBulanVisualisasi;
+        if ((int) $tahun === (int) date('Y')) {
+            $scopeMonths = array_values(array_filter(
+                $scopeMonths,
+                fn($b) => array_search($b, $this->urutanBulan) < date('n')
+            ));
+        }
+        $avgMonthCount = max(1, count($scopeMonths));
+
         return [
             'summary' => [
                 'total_target'        => (float)$totalTargetYear,
@@ -939,6 +941,8 @@ class SalesAnalyticsController extends BaseSalesController
                 'overall_achievement' => $overallAchievement,
                 'overall_growth'      => $overallGrowth,
                 'bulan_aktif'         => $targetBulan,
+                'avg_monthly'         => (float)$totalSalesYear / $avgMonthCount,
+                'avg_months'          => $avgMonthCount,
             ],
             'monthlyOverview'      => $monthlyOverview,
             'psPerformance'        => $psPerformance,

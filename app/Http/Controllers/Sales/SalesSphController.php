@@ -183,6 +183,9 @@ class SalesSphController extends BaseSalesController
     /**
      * Export SPH sebagai PDF (DomPDF).
      * Ikut aturan pembatasan akses yang sama dengan halaman detail (show).
+     *
+     * Kolom menyesuaikan otomatis dari isi dokumen (lihat template):
+     * HNA/Pcs & Diskon hanya tampil bila relevan, judul Net mengikuti PPN.
      */
     public function exportPdf(SphQuotation $sph)
     {

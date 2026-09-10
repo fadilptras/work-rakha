@@ -1,13 +1,24 @@
 @php
     $mappedItems = $items->map(function($item) {
+        $unit = $item->unit;
+        $fillUnit = $item->fill_unit ?: 'Pcs';
+        $pcsPerUnit = (int) ($item->pcs_per_unit ?? 0);
+
+        // Packaging type single (tanpa isian) -> stock/po tampil dalam unit itu sendiri.
+        // Multi-pack (pcs_per_unit > 1) -> tampil dalam fill_unit (isi per kemasan).
+        $isSingle = $pcsPerUnit <= 1;
+        $displayUnit = $isSingle ? ($unit ?: $fillUnit) : $fillUnit;
+
         return [
             'id' => $item->id,
-            'kode' => $item->kode_barang ?? '-',
-            'nama' => $item->nama_barang,
-            'kategori' => $item->satuan ? 'Alkes / ' . $item->satuan : 'Alkes',
-            'po' => $item->stok_po,
-            'stokSistem' => $item->stok,
-            'satuan' => $item->satuan ?? 'Pcs',
+            'kode' => $item->product_code ?? '-',
+            'nama' => $item->product_name_clean ?: $item->product_name,
+            'po' => $item->stock_po,
+            'stokSistem' => $item->stock,
+            'satuan' => $displayUnit,
+            'packaging' => $unit,
+            'pcs_per_unit' => $pcsPerUnit,
+            'fill_unit' => $fillUnit,
         ];
     });
 
@@ -37,6 +48,7 @@
     <style>
         [x-cloak] { display: none !important; }
         .swal2-container { z-index: 100000 !important; }
+        body { background-color: #ede9fe; }
 
         .mesh-bg { 
             position: fixed;
@@ -45,10 +57,11 @@
             right: 0;
             bottom: 0;
             z-index: 0;
+            background-color: #ede9fe;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.6) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.4) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
             pointer-events: none;
         }
         
@@ -65,37 +78,101 @@
         .header-content { position: relative; z-index: 1; }
         .btn-back-modern {
             display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 18px 8px 8px;
+            padding: 6px 16px 6px 6px;
             background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.9);
             border-radius: 9999px;
-            color: #1e293b; font-size: 0.9rem; font-weight: 700;
-            transition: all 0.2s ease; width: fit-content;
+            color: #1e293b;
+            font-size: 0.85rem; font-weight: 700;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            width: fit-content;
         }
         .btn-back-modern:hover { 
-            background: #fff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1); color: #1e40af;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+            color: #1d4ed8;
         }
         .btn-back-modern .icon-circle {
-            width: 32px; height: 32px; background: #fff; border-radius: 50%;
+            width: 28px; height: 28px;
+            background: #fff;
+            border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            color: #3b82f6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            color: #3b82f6;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            transition: transform 0.3s ease;
+        }
+        .btn-back-modern:hover .icon-circle {
+            transform: translateX(-3px);
+            background: #EFF6FF;
         }
         .glass-panel {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 1.5rem;
-            padding: 1.5rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+            padding: 1rem 1.5rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
         }
         .table-header { background: #f8fafc; color: #475569; font-weight: 800; }
         .row-item { background: #ffffff; color: #1e293b; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
         .row-item:hover { background: #f1f5f9; }
+
+        /* == Mobile Responsive == */
+        @media (max-width: 640px) {
+            .page-header { padding: 0.9rem 1rem; border-radius: 1rem; }
+            .page-header h1 { font-size: 1.6rem; }
+            .glass-panel { padding: 0.9rem; border-radius: 1.1rem; }
+        }
+
+        /* Mobile Card Search */
+        .mobile-card-search { display: none; }
+        @media (max-width: 640px) {
+            .mobile-card-search {
+                display: flex; align-items: center; gap: 8px;
+                background: #fff; border: 1.5px solid #e2e8f0; border-radius: 0.85rem;
+                padding: 0.6rem 0.85rem; margin-top: 0.75rem;
+            }
+            .mobile-card-search input { border: none; outline: none; flex: 1; font-size: 0.8rem; font-weight: 600; color: #334155; background: transparent; }
+            .mobile-card-search i { color: #94a3b8; font-size: 0.8rem; }
+        }
+
+        /* Mobile Product Cards */
+        .mobile-product-card {
+            background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 0.9rem;
+            padding: 0.8rem 0.9rem; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .mobile-product-card.mpc-zero { border-left-color: #f43f5e; }
+        .mobile-product-card .mpc-packaging {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd;
+            font-size: 0.6rem; font-weight: 800; padding: 1px 7px; border-radius: 9999px;
+            margin-top: 4px;
+        }
+        .mobile-product-card.mpc-zero .mpc-packaging { display: none; }
+
+        /* Sync Center: Collapsible on Mobile */
+        .sync-mobile-toggle { display: none; }
+        @media (max-width: 640px) {
+            .sync-mobile-toggle {
+                display: flex; align-items: center; justify-content: center; gap: 6px;
+                width: 100%; padding: 0.55rem; margin-top: 0.5rem;
+                background: #eff6ff; color: #2563eb; border: 1px dashed #93c5fd;
+                border-radius: 0.75rem; font-size: 0.75rem; font-weight: 800; cursor: pointer;
+            }
+            .sync-collapsible { display: none; }
+            .sync-collapsible.sync-open { display: block; }
+        }
     </style>
     @endpush
 
     <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16" x-data="stockManager()">
         <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-6 flex flex-col gap-2.5">
+        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4">
             
             <!-- Alert Messages -->
             @if (session('success'))
@@ -110,8 +187,8 @@
                 </div>
             @endif
 
-            <!-- Back Button (Unified with Text for both Mobile & Desktop) -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
+            <!-- Back Button -->
+            <div class="w-full flex justify-start">
                 <a href="{{ $backRoute }}" class="btn-back-modern shrink-0">
                     <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                     {{ $backText }}
@@ -119,7 +196,7 @@
             </div>
 
             <!-- Page Title Card (Desktop Style) -->
-            <div class="hidden md:block page-header mb-2">
+            <div class="hidden md:block page-header">
                 <div class="header-content flex flex-row items-center justify-between gap-6">
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight text-white">Stock Monitoring</h1>
@@ -134,7 +211,7 @@
             </div>
 
             <!-- Page Title Card (Mobile Style - Icon Moved to Right) -->
-            <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 mb-1 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
+            <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
                 <div class="relative z-10 flex-1 min-w-0">
                     <h2 class="text-sm font-black tracking-wider uppercase leading-snug truncate">Stock Monitoring</h2>
                     <p class="text-xs text-blue-100 font-medium leading-normal truncate mt-0.5">
@@ -156,9 +233,12 @@
                         Update Stock via Excel (Daily Upload)
                     </h3>
                 </div>
+                <button type="button" class="sync-mobile-toggle" onclick="this.nextElementSibling.classList.toggle('sync-open'); this.querySelector('span').textContent = this.nextElementSibling.classList.contains('sync-open') ? 'Sembunyikan' : 'Lihat Detail'; this.querySelector('i').classList.toggle('fa-chevron-up');">
+                    <i class="fas fa-chevron-down"></i> <span>Lihat Detail</span>
+                </button>
 
-                <!-- Content -->
-                <div class="mt-2 pt-2 border-t border-slate-100">
+                <!-- Content (Collapsible on Mobile) -->
+                <div class="sync-collapsible mt-2 pt-2 border-t border-slate-100">
                     <div class="grid grid-cols-1 {{ $canManageStock ? 'lg:grid-cols-3' : 'lg:grid-cols-1' }} gap-6 items-stretch">
                         @if($canManageStock)
                         <!-- Drag & Drop Zone Form -->
@@ -248,31 +328,75 @@
 
             <!-- Content -->
             <div class="glass-panel border-t-4 border-t-blue-500">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                     <div>
-                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-list text-blue-500"></i> Product List</h2>
-                        <p class="text-xs text-slate-500 font-medium mt-1">Last updated: @if($logs->first()) {{ $logs->first()->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i') }} @else - @endif</p>
+                        <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-list text-blue-500"></i> Product List</h2>
+                        <p class="text-[11px] text-slate-500 font-medium mt-0.5">Last updated: @if($logs->first()) {{ $logs->first()->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i') }} @else - @endif</p>
                     </div>
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                        <!-- Search Box -->
-                        <div class="relative w-full sm:w-96">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                        <!-- Search Box (Desktop) -->
+                        <div class="relative w-72 hidden sm:block">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-search text-slate-400"></i>
+                                <i class="fas fa-search text-slate-400 text-sm"></i>
                             </div>
-                            <input type="text" x-model="searchQuery" placeholder="Search Product Name" class="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-8 px-3 py-2 shadow-sm transition-colors">
+                            <input type="text" x-model="searchQuery" placeholder="Search Product Name" class="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 pr-8 !py-2 shadow-sm transition-colors">
                             <button type="button" x-show="searchQuery.length > 0" @click="searchQuery = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
-                                <i class="fas fa-times-circle"></i>
+                                <i class="fas fa-times-circle text-xs"></i>
                             </button>
                         </div>
                         @if($canManageStock)
-                        <a href="{{ route('sales.stock.export') }}" class="bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex justify-center items-center gap-2 whitespace-nowrap">
-                            <i class="fas fa-file-export"></i> Export Excel
+                        <a href="{{ route('sales.stock.export') }}" class="bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm flex justify-center items-center gap-2 whitespace-nowrap">
+                            <i class="fas fa-file-export"></i> <span class="sm:hidden">Export Excel</span><span class="hidden sm:inline">Export Excel</span>
                         </a>
                         @endif
                     </div>
                 </div>
 
-                <div class="overflow-auto max-h-[800px] border border-slate-200 rounded-xl shadow-sm" @scroll.passive="scrollHandler($event)">
+                <!-- Mobile Card Search -->
+                <div class="mobile-card-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" x-model="searchQuery" placeholder="Cari produk..." class="">
+                    <button type="button" x-show="searchQuery.length > 0" @click="searchQuery = ''" x-cloak>
+                        <i class="fas fa-times-circle text-slate-400 text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- Mobile Product Cards -->
+                <div class="md:hidden space-y-2 max-h-[70vh] overflow-y-auto pb-4" @scroll.passive="mobileScrollHandler($event)">
+                    <template x-for="item in displayedItems" :key="'m-' + item.id">
+                        <div class="mobile-product-card" :class="{'mpc-zero': item.stokSistem === 0}">
+                            <div class="flex items-start gap-2.5">
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="text-[9px] font-bold text-blue-500 uppercase tracking-wide" x-text="item.kode"></div>
+                                        <template x-if="item.packaging">
+                                            <span class="mpc-packaging">
+                                                <span x-text="item.packaging"></span>
+                                                <template x-if="item.pcs_per_unit > 1">
+                                                    <span><span class="text-sky-400/70">/</span> <span x-text="item.pcs_per_unit"></span> <span x-text="item.fill_unit"></span></span>
+                                                </template>
+                                            </span>
+                                        </template>
+                                    </div>
+                                    <div class="text-[13px] font-bold text-slate-800 leading-snug break-words mt-1" x-text="item.nama"></div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <div class="font-black text-lg leading-tight" :class="{'text-rose-600': item.stokSistem === 0}">
+                                        <span x-text="item.stokSistem"></span>
+                                        <span class="text-xs font-bold text-slate-500" x-text="item.satuan"></span>
+                                    </div>
+                                    <div class="text-[10px] text-blue-500 font-bold" x-text="'PO: ' + item.po + ' ' + item.satuan"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="displayedItems.length === 0" class="text-center py-8 text-slate-400 text-sm font-medium">
+                        Tidak ada produk ditemukan.
+                    </div>
+                </div>
+
+                <!-- Desktop Table -->
+                <div class="hidden md:block overflow-auto max-h-[800px] border border-slate-200 rounded-xl shadow-sm" @scroll.passive="scrollHandler($event)">
                     <table class="w-full text-sm text-left">
                         <thead class="table-header sticky top-0 z-10 shadow-sm bg-slate-50/80 backdrop-blur-sm">
                             <tr>
@@ -282,7 +406,7 @@
                                     <span class="hidden md:inline">Available Stock</span>
                                     <span class="md:hidden">Stock</span>
                                 </th>
-                                <th class="px-3 py-3 text-center text-[11px] md:text-xs uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Unit</th>
+                                <th class="px-3 py-3 text-center text-[11px] md:text-xs uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Packaging</th>
                                 <th class="px-3 py-3 text-center text-[11px] md:text-xs uppercase tracking-wider text-blue-600 w-20 md:w-32 whitespace-nowrap">
                                     <span class="hidden md:inline">In Delivery (PO)</span>
                                     <span class="md:hidden">PO</span>
@@ -298,10 +422,21 @@
                                         <span class="text-xs md:text-sm" x-text="item.nama"></span>
                                     </td>
                                     <td class="px-3 py-2.5 text-center w-20 md:w-28 whitespace-nowrap">
-                                        <span class="font-black text-sm md:text-base" :class="{'text-rose-600': item.stokSistem === 0}" x-text="item.stokSistem"></span>
-                                        <div class="text-[9px] text-slate-400 md:hidden" x-text="item.satuan"></div>
+                                        <span class="font-black text-sm md:text-base" :class="{'text-rose-600': item.stokSistem === 0}"><span x-text="item.stokSistem"></span> <span class="text-xs font-bold text-slate-500" x-text="item.satuan"></span></span>
                                     </td>
-                                    <td class="px-3 py-2.5 text-center text-slate-600 font-medium whitespace-nowrap hidden md:table-cell text-xs md:text-sm" x-text="item.satuan"></td>
+                                    <td class="px-3 py-2.5 text-center text-slate-600 font-medium whitespace-nowrap hidden md:table-cell">
+                                        <template x-if="item.packaging">
+                                            <span class="inline-flex items-center gap-1 bg-sky-50 text-sky-600 border border-sky-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                <span x-text="item.packaging"></span>
+                                                <template x-if="item.pcs_per_unit > 1">
+                                                    <span><span class="text-sky-400/50">/</span> <span x-text="item.pcs_per_unit"></span> <span x-text="item.fill_unit"></span></span>
+                                                </template>
+                                            </span>
+                                        </template>
+                                        <template x-if="!item.packaging">
+                                            <span class="text-slate-400 text-[10px]">—</span>
+                                        </template>
+                                    </td>
                                     <td class="px-3 py-2.5 text-center text-blue-500 font-medium w-20 md:w-32 whitespace-nowrap">
                                         <span class="text-xs md:text-sm" x-text="item.po"></span>
                                         <div class="text-[9px] text-slate-400 md:hidden font-normal" x-text="item.satuan"></div>
@@ -438,6 +573,14 @@
                                 </template>
                             </tbody>
                         </table>
+                        <div x-show="previewItems.length === 0" x-cloak class="px-6 py-10 text-center">
+                            <i class="fas fa-search text-3xl text-slate-300 mb-3"></i>
+                            <p class="text-sm font-bold text-slate-600">Tidak ada item yang bisa dipratinjau.</p>
+                            <p class="text-xs text-slate-400 font-medium mt-1 leading-relaxed">
+                                Excel terbaca, tetapi tidak ada kode/nama barang yang cocok dengan data di sistem.
+                                <br>Pastikan barang sudah terdaftar lewat menu <b>&quot;Add Item Data&quot;</b> atau nama/kode barang di Excel sama persis dengan master barang.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -585,7 +728,6 @@
                 showPreviewModal: false,
                 searchQuery: '',
                 previewSearchQuery: '',
-                filterDate: new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Jakarta'}),
                 isLoadingHistory: false,
                 isParsing: false,
                 limit: 50,
@@ -604,6 +746,17 @@
                 previewScrollTimeout: null,
 
                 scrollHandler(e) {
+                    if (this.scrollTimeout) return;
+                    this.scrollTimeout = setTimeout(() => {
+                        const el = e.target;
+                        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 250) {
+                            this.limit += 50;
+                        }
+                        this.scrollTimeout = null;
+                    }, 50);
+                },
+
+                mobileScrollHandler(e) {
                     if (this.scrollTimeout) return;
                     this.scrollTimeout = setTimeout(() => {
                         const el = e.target;
@@ -656,29 +809,6 @@
                             this.scrollTimeout = null;
                         }, 50);
                     }, { passive: true });
-                },
-
-                async fetchStockByDate() {
-                    this.isLoadingHistory = true;
-                    try {
-                        const response = await fetch(`/sales/stock/data?date=${this.filterDate}`);
-                        const data = await response.json();
-                        if (data.success) {
-                            this.items = this.items.map(item => {
-                                const history = data.history[item.id];
-                                return {
-                                    ...item,
-                                    stokSistem: history ? history.stok : 0,
-                                    po: history ? history.stok_po : 0
-                                };
-                            });
-                            this.limit = 50;
-                        }
-                    } catch (e) {
-                        console.error(e);
-                    } finally {
-                        this.isLoadingHistory = false;
-                    }
                 },
 
                 get filteredItems() {
@@ -748,9 +878,9 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({
-                            nama_barang: this.addNama,
-                            kode_barang: this.addKode,
-                            satuan: this.addSatuan
+                            product_name: this.addNama,
+                            product_code: this.addKode,
+                            unit: this.addSatuan
                         })
                     })
                     .then(response => response.json())

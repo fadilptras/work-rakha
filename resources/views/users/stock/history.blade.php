@@ -13,50 +13,118 @@
                 radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
             background-attachment: fixed;
         }
+
+        /* Modern Back Button */
+        .btn-back-modern {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 6px 16px 6px 6px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 9999px;
+            color: #1e293b;
+            font-size: 0.85rem; font-weight: 700;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            width: fit-content;
+        }
+        .btn-back-modern:hover { 
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+            color: #1d4ed8;
+        }
+        .btn-back-modern .icon-circle {
+            width: 28px; height: 28px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #3b82f6;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            transition: transform 0.3s ease;
+        }
+        .btn-back-modern:hover .icon-circle {
+            transform: translateX(-3px);
+            background: #EFF6FF;
+        }
+
         .page-header {
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             border-radius: 1.25rem; padding: 1rem 1.5rem; color: white;
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3); position: relative; overflow: hidden;
+        }
+        .page-header::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            transform: rotate(30deg); pointer-events: none;
+        }
+        .header-content { position: relative; z-index: 1; }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 1.5rem;
+            padding: 1rem 1.5rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 640px) {
+            .glass-panel { padding: 0.9rem; border-radius: 1.1rem; }
+        }
+
+        /* Mobile History Cards */
+        .mobile-history-card {
+            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.9rem;
+            padding: 0.7rem 0.85rem; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
         }
     </style>
     @endpush
 
     <div class="mesh-bg min-h-screen py-8 px-4 sm:px-6 lg:px-8" x-data="historyManager">
-        <div class="max-w-6xl mx-auto space-y-6">
+        <div class="max-w-6xl mx-auto space-y-4">
             
-            <!-- Header Panel -->
-            <div class="page-header shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-white text-2xl shadow-inner backdrop-blur-md">
-                        <i class="fas fa-history"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-black tracking-tight">Manajemen Riwayat Unggah Stok</h1>
-                        <p class="text-xs text-blue-100 font-medium">Tinjau seluruh riwayat log pembaruan data stok sistem dan impor Accurate.</p>
-                    </div>
-                </div>
-                <a href="{{ route('sales.stock') }}" class="bg-white/20 hover:bg-white/30 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-inner backdrop-blur-md flex items-center gap-2 text-xs">
-                    <i class="fas fa-arrow-left"></i> Kembali ke Stok
+            <!-- Back Button -->
+            <div class="w-full flex justify-start">
+                <a href="{{ route('sales.stock') }}" class="btn-back-modern shrink-0">
+                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                    Kembali ke Stok
                 </a>
             </div>
 
+            <!-- Header Card -->
+            <div class="glass-panel border-t-4 border-t-blue-500">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500 text-lg shrink-0">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-base font-black tracking-tight text-slate-800">Manajemen Riwayat Unggah Stok</h1>
+                        <p class="text-[11px] text-slate-500 font-medium">Tinjau seluruh riwayat log pembaruan data stok sistem dan impor Accurate.</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Filter Panel -->
-            <div class="bg-white border border-slate-100 rounded-2xl shadow-lg p-5">
-                <form action="{{ route('sales.stock.history_index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div class="glass-panel">
+                <form action="{{ route('sales.stock.history_index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                     <!-- Search Input -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Cari Editor / File</label>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cari Editor / File</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400 text-sm">
                                 <i class="fas fa-search"></i>
                             </div>
-                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama editor atau file..." class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 pr-4 py-2.5 shadow-sm transition-colors">
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama editor atau file..." class="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 pr-4 !py-2 shadow-sm transition-colors">
                         </div>
                     </div>
 
                     <!-- Status Filter -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Status Riwayat</label>
-                        <select name="status" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full px-3 py-2.5 shadow-sm transition-colors">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Status Riwayat</label>
+                        <select name="status" class="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-3 !py-2 shadow-sm transition-colors">
                             <option value="">Semua Status</option>
                             <option value="success" {{ request('status') === 'success' ? 'selected' : '' }}>Sukses</option>
                             <option value="undone" {{ request('status') === 'undone' ? 'selected' : '' }}>Dibatalkan</option>
@@ -65,11 +133,11 @@
 
                     <!-- Action Buttons -->
                     <div class="flex gap-2">
-                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-md hover:shadow-blue-500/40 flex justify-center items-center text-sm">
+                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold !py-2 px-4 rounded-xl transition-all shadow-md hover:shadow-blue-500/40 flex justify-center items-center text-xs">
                             <i class="fas fa-filter mr-2"></i> Filter
                         </button>
                         @if(request()->has('search') || request()->has('status'))
-                            <a href="{{ route('sales.stock.history_index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 px-4 rounded-xl transition-all flex justify-center items-center text-sm">
+                            <a href="{{ route('sales.stock.history_index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold !py-2 px-4 rounded-xl transition-all flex justify-center items-center text-xs">
                                 <i class="fas fa-sync-alt"></i> Reset
                             </a>
                         @endif
@@ -77,43 +145,72 @@
                 </form>
             </div>
 
-            <!-- Table Container -->
-            <div class="bg-white border border-slate-100 rounded-2xl shadow-lg p-6 flex flex-col">
+            <!-- Mobile History Cards -->
+            <div class="md:hidden space-y-2 max-h-[70vh] overflow-y-auto pb-4">
+                @forelse ($logs as $log)
+                    <div class="mobile-history-card cursor-pointer" @click="showLogDetails({{ $log->id }})">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="min-w-0 flex-1">
+                                <div class="text-xs font-bold text-slate-800 leading-snug">{{ $log->nama_file ?? ($log->source === 'manual' ? 'Pembaruan Manual' : '-') }}</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">{{ $log->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i') }} WIB</div>
+                                <div class="text-[10px] text-slate-500 font-medium mt-0.5">Editor: {{ $log->user->name ?? 'System' }}</div>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <div class="font-black text-emerald-600 text-sm leading-tight">{{ $log->items_count }}</div>
+                                <div class="mt-1">
+                                    @if ($log->status === 'success')
+                                        <span class="bg-emerald-100 text-emerald-700 text-[9px] font-black px-1.5 py-0.5 rounded-md">Sukses</span>
+                                    @elseif ($log->status === 'undone')
+                                        <span class="bg-amber-100 text-amber-700 text-[9px] font-black px-1.5 py-0.5 rounded-md">Dibatalkan</span>
+                                    @else
+                                        <span class="bg-rose-100 text-rose-700 text-[9px] font-black px-1.5 py-0.5 rounded-md">Gagal</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center py-8 text-slate-400 text-sm font-medium">Belum ada riwayat log.</div>
+                @endforelse
+            </div>
+
+            <!-- Desktop Table Container -->
+            <div class="hidden md:flex glass-panel flex-col">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm whitespace-nowrap">
                         <thead class="bg-slate-50 border-b border-slate-200">
-                            <tr class="text-xs text-slate-500 font-bold uppercase tracking-wider">
-                                <th class="px-6 py-4">Tanggal & Waktu</th>
-                                <th class="px-6 py-4">File / Sumber</th>
-                                <th class="px-6 py-4">Editor</th>
-                                <th class="px-6 py-4 text-right">Barang Diperbarui</th>
-                                <th class="px-6 py-4 text-center">Status</th>
-                                <th class="px-6 py-4 text-right">Aksi</th>
+                            <tr class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                <th class="px-4 py-3">Tanggal & Waktu</th>
+                                <th class="px-4 py-3">File / Sumber</th>
+                                <th class="px-4 py-3">Editor</th>
+                                <th class="px-4 py-3 text-right">Barang Diperbarui</th>
+                                <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-4 py-3 text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             @forelse ($logs as $log)
                                 <tr class="hover:bg-slate-50/50 cursor-pointer transition-colors" @click="showLogDetails({{ $log->id }})">
-                                    <td class="px-6 py-4 text-slate-700 font-bold">
+                                    <td class="px-4 py-3 text-slate-700 font-bold text-xs">
                                         {{ $log->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i') }} WIB
                                     </td>
-                                    <td class="px-6 py-4 text-slate-600 font-semibold max-w-xs truncate" title="{{ $log->nama_file }}">
+                                    <td class="px-4 py-3 text-slate-600 font-semibold text-xs max-w-xs truncate" title="{{ $log->nama_file }}">
                                         {{ $log->nama_file ?? ($log->source === 'manual' ? 'Pembaruan Manual' : '-') }}
                                     </td>
-                                    <td class="px-6 py-4 text-slate-600">{{ $log->user->name ?? 'System' }}</td>
-                                    <td class="px-6 py-4 text-emerald-600 font-black text-right text-base">{{ $log->items_count }}</td>
-                                    <td class="px-6 py-4 text-center">
+                                    <td class="px-4 py-3 text-slate-600 text-xs">{{ $log->user->name ?? 'System' }}</td>
+                                    <td class="px-4 py-3 text-emerald-600 font-black text-right text-xs">{{ $log->items_count }}</td>
+                                    <td class="px-4 py-3 text-center">
                                         @if ($log->status === 'success')
-                                            <span class="bg-emerald-100 text-emerald-700 text-xs font-black px-2.5 py-1 rounded-lg">Sukses</span>
+                                            <span class="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded-md">Sukses</span>
                                         @elseif ($log->status === 'undone')
-                                            <span class="bg-amber-100 text-amber-700 text-xs font-black px-2.5 py-1 rounded-lg">Dibatalkan</span>
+                                            <span class="bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-md">Dibatalkan</span>
                                         @else
-                                            <span class="bg-rose-100 text-rose-700 text-xs font-black px-2.5 py-1 rounded-lg">Gagal</span>
+                                            <span class="bg-rose-100 text-rose-700 text-[10px] font-black px-2 py-0.5 rounded-md">Gagal</span>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 text-right" @click.stop>
+                                    <td class="px-4 py-3 text-right" @click.stop>
                                         @if ($log->status === 'success' && $canManageStock)
-                                            <button type="button" @click="undoLog({{ $log->id }})" class="text-red-600 hover:text-white font-bold text-xs bg-red-50 hover:bg-red-600 px-3 py-2 rounded-xl border border-red-100 hover:border-red-600 transition-all flex items-center gap-1.5 ml-auto">
+                                            <button type="button" @click="undoLog({{ $log->id }})" class="text-red-600 hover:text-white font-bold text-[10px] bg-red-50 hover:bg-red-600 px-2 py-1.5 rounded-lg border border-red-100 hover:border-red-600 transition-all flex items-center gap-1 ml-auto">
                                                 <i class="fas fa-undo"></i> Batalkan
                                             </button>
                                         @else
@@ -123,7 +220,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center text-slate-400 font-medium">
+                                    <td colspan="6" class="px-4 py-10 text-center text-slate-400 font-medium text-sm">
                                         Belum ada riwayat log pembaruan stok.
                                     </td>
                                 </tr>
@@ -133,7 +230,7 @@
                 </div>
 
                 <!-- Laravel Pagination Links -->
-                <div class="mt-6 border-t border-slate-100 pt-6">
+                <div class="mt-4 border-t border-slate-100 pt-4">
                     {{ $logs->appends(request()->query())->links() }}
                 </div>
             </div>

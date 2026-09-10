@@ -238,7 +238,7 @@
                 </div>
 
                 {{-- KPI Cards --}}
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div class="pbi-kpi bg-gradient-to-br from-slate-800 to-slate-900 border-l-4 border-l-slate-400">
                         <p class="pbi-label">Total Target ({{ $tahun }})</p>
                         <h3 class="text-xl md:text-2xl font-black text-white mt-1">Rp {{ number_format($summary['total_target'] ?? 0, 0, ',', '.') }}</h3>
@@ -259,6 +259,10 @@
                         <h3 class="text-xl md:text-2xl font-black {{ ($summary['overall_growth'] ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400' }} mt-1">
                             {{ ($summary['overall_growth'] ?? 0) >= 0 ? '+' : '' }}{{ $summary['overall_growth'] ?? 0 }}%
                         </h3>
+                    </div>
+                    <div class="pbi-kpi bg-gradient-to-br from-slate-800 to-cyan-900 border-l-4 border-l-cyan-400">
+                        <p class="pbi-label">Avg Sales By Month (YTD)</p>
+                        <h3 class="text-xl md:text-2xl font-black text-cyan-400 mt-1">Rp {{ number_format($summary['avg_monthly'] ?? 0, 0, ',', '.') }}</h3>
                     </div>
                 </div>
 
@@ -1121,6 +1125,7 @@
                         
                         let rankHtml = '';
                         const psAvatars = @json($psAvatars ?? []);
+                        console.log('[avatar-engine psavatar-v2] keys:', Object.keys(psAvatars));
 
                         rankData.forEach((item, index) => {
                             let pct = totalSalesAll > 0 ? ((item.sales / totalSalesAll) * 100).toFixed(1) : 0;
@@ -1132,7 +1137,7 @@
                                 <div class="flex justify-between items-center bg-slate-800/30 p-2.5 rounded-xl border border-slate-700/50 hover:bg-slate-700/30 transition">
                                     <div class="flex items-center gap-3 overflow-hidden">
                                         <div class="font-black text-slate-500 w-4 text-right text-xs">${index + 1}.</div>
-                                        <img src="${avatarUrl}" alt="${item.name}" class="w-8 h-8 rounded-full border border-slate-600 shadow-sm">
+                                        <img src="${avatarUrl}" alt="${item.name}" onerror="this.onerror=null;this.src=`https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=0ea5e9&color=fff&rounded=true&bold=true`;" class="w-8 h-8 shrink-0 aspect-square rounded-full object-cover border border-slate-600 shadow-sm">
                                         <span class="truncate font-bold text-slate-200 text-sm">${item.name}</span>
                                     </div>
                                     <span class="font-black text-sm sm:text-base ${color} ml-2">${pct}%</span>

@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Barang;
+use App\Models\Product;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -11,7 +11,7 @@ class StockExport implements FromCollection, WithHeadings, WithMapping
 {
     public function collection()
     {
-        return Barang::orderBy('product_name')->get();
+        return Product::active()->orderBy('product_name')->get();
     }
 
     public function headings(): array
@@ -25,14 +25,14 @@ class StockExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 
-    public function map($barang): array
+    public function map($product): array
     {
         return [
-            $barang->product_code,
-            $barang->product_name,
-            $barang->unit,
-            $barang->stock,
-            $barang->stock_po,
+            $product->product_code,
+            $product->product_name,
+            $product->unit,
+            $product->stock,
+            $product->stock_po,
         ];
     }
 }
