@@ -4,7 +4,7 @@
         <th colspan="6" align="center">REKAPITULASI SALES TAHUN {{ $year }}</th>
     </tr>
     <tr>
-        <th colspan="6" align="center">{{ strtoupper($client->nama_user) }} - {{ strtoupper($client->nama_perusahaan) }}</th>
+        <th colspan="6" align="center">{{ strtoupper($client->client_name) }} - {{ strtoupper($client->customer_name) }}</th>
     </tr>
     <tr><td colspan="6"></td></tr>
 
@@ -18,37 +18,37 @@
     {{-- Baris 1: Nama & Bank --}}
     <tr>
         <td><b>Nama Klien</b></td>
-        <td>{{ $client->nama_user }}</td>
+        <td>{{ $client->client_name }}</td>
         <td></td>
         <td><b>Nama Bank</b></td>
-        <td colspan="2" align="left">{{ $client->bank ?? '-' }}</td>
+        <td colspan="2" align="left">{{ $client->bank_name ?? '-' }}</td>
     </tr>
 
     {{-- [BARU] Baris 2: Jabatan & No. Rekening --}}
     <tr>
         <td><b>Jabatan</b></td>
-        <td>{{ $client->jabatan ?? '-' }}</td>
+        <td>{{ $client->contact_position ?? '-' }}</td>
         <td></td>
         <td><b>No. Rekening</b></td>
-        <td colspan="2" align="left" style="mso-number-format:'@';">{{ $client->no_rekening ?? '-' }}</td>
+        <td colspan="2" align="left" style="mso-number-format:'@';">{{ $client->bank_account_number ?? '-' }}</td>
     </tr>
 
     {{-- Baris 3: Instansi & Atas Nama --}}
     <tr>
         <td><b>Instansi</b></td>
-        <td>{{ $client->nama_perusahaan }}</td>
+        <td>{{ $client->customer_name }}</td>
         <td></td>
         <td><b>Atas Nama (A/N)</b></td>
-        <td colspan="2" align="left">{{ $client->nama_di_rekening ?? '-' }}</td>
+        <td colspan="2" align="left">{{ $client->bank_account_name ?? '-' }}</td>
     </tr>
 
     {{-- [BARU] Baris 4: Hobby & Saldo Awal --}}
     <tr>
         <td><b>Hobby / Minat</b></td>
-        <td>{{ $client->hobby_client ?? '-' }}</td>
+        <td>{{ $client->contact_hobby ?? '-' }}</td>
         <td></td>
         <td><b>Saldo Awal</b></td>
-        <td colspan="2">{{ $client->saldo_awal ?? 0 }}</td>
+        <td colspan="2">{{ $client->opening_balance ?? 0 }}</td>
     </tr>
 
     {{-- Baris 5: Area (Kanan Kosong) --}}
@@ -63,7 +63,7 @@
     {{-- Baris 6: PIC Sales (Kanan Kosong) --}}
     <tr>
         <td><b>PIC Sales</b></td>
-        <td>{{ $client->pic }}</td>
+        <td>{{ $client->ps }}</td>
         <td></td>
         <td></td>
         <td colspan="2"></td>
@@ -71,7 +71,7 @@
 
     <tr>
         <td><b>Kontak</b></td>
-        <td>{{ $client->email }} / {{ $client->no_telpon }}</td>
+        <td>{{ $client->email }} / {{ $client->contact_phone }}</td>
         <td></td>
         <td></td>
         <td colspan="2"></td>
@@ -79,7 +79,7 @@
 
     <tr>
         <td valign="top"><b>Alamat</b></td>
-        <td colspan="5">{{ $client->alamat_user ?? $client->alamat_perusahaan ?? '-' }}</td>
+        <td colspan="5">{{ $client->contact_address ?? $client->company_address ?? '-' }}</td>
     </tr>
 
     <tr>
@@ -103,7 +103,7 @@
         <tr>
             <td style="border: 1px solid #000000;">{{ $r['month_name'] }}</td>
             <td style="border: 1px solid #000000;">{{ $r['gross_in'] }}</td>
-            <td style="border: 1px solid #000000;" align="center">{{ $r['komisi_text'] }}</td>
+            <td style="border: 1px solid #000000;" align="center">{{ $r['commission_text'] }}</td>
             <td style="border: 1px solid #000000;">{{ $r['net_value'] }}</td>
             <td style="border: 1px solid #000000; color: #FF0000;">{{ $r['out'] }}</td>
             <td style="border: 1px solid #000000; font-weight: bold;">{{ $r['saldo'] }}</td>

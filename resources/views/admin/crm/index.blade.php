@@ -118,25 +118,24 @@
                         $row_usage = 0;
 
                         foreach($client->interactions as $i) {
-                            if($i->jenis_transaksi == 'IN') {
-                                $gross = ($i->nilai_sales > 0) ? $i->nilai_sales : $i->nilai_kontribusi;
+                            if($i->transaction_type == 'IN') {
+                                $gross = ($i->sales_amount > 0) ? $i->sales_amount : $i->amount;
                                 $row_sales += $gross;
-                                $r = $i->komisi ?? 0;
-                                if(!$r && preg_match('/\[Rate:([\d\.]+)\]/', $i->catatan, $m)) $r = floatval($m[1]);
+                                $r = (float)($i->commission_rate ?? 0);
                                 $row_net_val += $gross * ($r/100);
-                            } elseif ($i->jenis_transaksi == 'OUT') {
-                                $row_usage += $i->nilai_kontribusi;
+                            } elseif ($i->transaction_type == 'OUT') {
+                                $row_usage += $i->amount;
                             }
                         }
                         
-                        $row_saldo = ($client->saldo_awal ?? 0) + $row_net_val - $row_usage;
+                        $row_saldo = ($client->opening_balance ?? 0) + $row_net_val - $row_usage;
                     @endphp
 
                     <tr class="hover:bg-zinc-700/30 transition duration-150">
                         <td class="px-6 py-4">
-                            <div class="font-bold text-white text-base">{{ $client->nama_user }}</div>
-                            <div class="text-xs text-blue-400 font-medium mb-0.5">{{ $client->jabatan ?? '-' }}</div>
-                            <div class="text-xs text-zinc-400 font-medium">{{ $client->nama_perusahaan }}</div>
+                            <div class="font-bold text-white text-base">{{ $client->client_name }}</div>
+                            <div class="text-xs text-blue-400 font-medium mb-0.5">{{ $client->contact_position ?? '-' }}</div>
+                            <div class="text-xs text-zinc-400 font-medium">{{ $client->customer_name }}</div>
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
@@ -224,18 +223,18 @@
 
                                 <div>
                                     <label class="block text-[11px] font-bold text-zinc-400 mb-1 uppercase">Nama Client / User <span class="text-red-500">*</span></label>
-                                    <input type="text" name="nama_user" required value="{{ old('nama_user') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded focus:ring-blue-500 focus:border-blue-500 text-sm px-3 py-2 text-white font-semibold" placeholder="Nama Lengkap User">
+                                    <input type="text" name="client_name" required value="{{ old('client_name') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded focus:ring-blue-500 focus:border-blue-500 text-sm px-3 py-2 text-white font-semibold" placeholder="Nama Lengkap User">
                                 </div>
 
                                 <div>
                                     <label class="block text-[11px] font-bold text-zinc-400 mb-1 uppercase">Jabatan</label>
-                                    <input type="text" name="jabatan" value="{{ old('jabatan') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded focus:ring-blue-500 focus:border-blue-500 text-sm px-3 py-2 text-white" placeholder="Contoh: Direktur / Manager">
+                                    <input type="text" name="contact_position" value="{{ old('contact_position') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded focus:ring-blue-500 focus:border-blue-500 text-sm px-3 py-2 text-white" placeholder="Contoh: Direktur / Manager">
                                 </div>
 
                                 <div>
                                     <label class="block text-[11px] font-bold text-zinc-500 mb-1 uppercase">Kontak Personal</label>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" name="no_telpon" value="{{ old('no_telpon') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="08xxxx (WA)">
+                                        <input type="text" name="contact_phone" value="{{ old('contact_phone') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="08xxxx (WA)">
                                         <input type="email" name="email" value="{{ old('email') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Email">
                                     </div>
                                 </div>
@@ -243,17 +242,17 @@
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
                                         <label class="block text-[11px] font-bold text-zinc-500 mb-1 uppercase">Tanggal Lahir</label>
-                                        <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 [color-scheme:dark] focus:ring-blue-500 focus:border-blue-500">
+                                        <input type="date" name="contact_birth_date" value="{{ old('contact_birth_date') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 [color-scheme:dark] focus:ring-blue-500 focus:border-blue-500">
                                     </div>
                                     <div>
                                         <label class="block text-[11px] font-bold text-zinc-500 mb-1 uppercase">Hobby / Minat</label>
-                                        <input type="text" name="hobby_client" value="{{ old('hobby_client') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Contoh: Golf">
+                                        <input type="text" name="contact_hobby" value="{{ old('contact_hobby') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Contoh: Golf">
                                     </div>
                                 </div>
 
                                 <div class="flex-grow">
                                     <label class="block text-[11px] font-bold text-zinc-500 mb-1 uppercase">Alamat Rumah</label>
-                                    <textarea name="alamat_user" rows="2" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 resize-none focus:ring-blue-500 focus:border-blue-500" placeholder="Alamat tempat tinggal...">{{ old('alamat_user') }}</textarea>
+                                    <textarea name="contact_address" rows="2" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 resize-none focus:ring-blue-500 focus:border-blue-500" placeholder="Alamat tempat tinggal...">{{ old('contact_address') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -267,18 +266,22 @@
                             <div class="p-4 space-y-3 flex-grow">
                                 <div>
                                     <label class="block text-[11px] font-bold text-zinc-400 mb-1 uppercase">Nama Perusahaan / PT <span class="text-red-500">*</span></label>
-                                    <input type="text" name="nama_perusahaan" required value="{{ old('nama_perusahaan') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded focus:ring-amber-500 focus:border-amber-500 text-sm px-3 py-2 text-white font-semibold" placeholder="Nama Instansi">
+                                    <input type="text" name="customer_name" required value="{{ old('customer_name') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded focus:ring-amber-500 focus:border-amber-500 text-sm px-3 py-2 text-white font-semibold" placeholder="Nama Instansi">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-zinc-400 mb-1 uppercase">Nama di Sales / Command Center</label>
+                                    <input type="text" name="sales_customer_name" value="{{ old('sales_customer_name') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded focus:ring-amber-500 focus:border-amber-500 text-sm px-3 py-2 text-white font-semibold" placeholder="Nama di Sales (opsional)">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-bold text-zinc-500 mb-1 uppercase">Detail Perusahaan</label>
                                     <div class="grid grid-cols-2 gap-2">
                                         <input type="text" name="area" value="{{ old('area') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Area (Ex: Jaksel)">
-                                        <input type="date" name="tanggal_berdiri" value="{{ old('tanggal_berdiri') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 [color-scheme:dark] focus:ring-amber-500 focus:border-amber-500">
+                                        <input type="date" name="company_founded_date" value="{{ old('company_founded_date') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 [color-scheme:dark] focus:ring-amber-500 focus:border-amber-500">
                                     </div>
                                 </div>
                                 <div class="flex-grow">
                                     <label class="block text-[11px] font-bold text-zinc-500 mb-1 uppercase">Alamat Perusahaan</label>
-                                    <textarea name="alamat_perusahaan" rows="5" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 resize-none focus:ring-amber-500 focus:border-amber-500" placeholder="Lokasi kantor...">{{ old('alamat_perusahaan') }}</textarea>
+                                    <textarea name="company_address" rows="5" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 resize-none focus:ring-amber-500 focus:border-amber-500" placeholder="Lokasi kantor...">{{ old('company_address') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -292,22 +295,22 @@
                             <div class="p-4 space-y-3 flex-grow">
                                 <div>
                                     <label class="block text-[11px] font-bold text-zinc-500 mb-1 uppercase">Nama Bank</label>
-                                    <input type="text" name="bank" value="{{ old('bank') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ex: BCA / Mandiri">
+                                    <input type="text" name="bank_name" value="{{ old('bank_name') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ex: BCA / Mandiri">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-bold text-zinc-500 mb-1 uppercase">No. Rekening</label>
-                                    <input type="text" name="no_rekening" value="{{ old('no_rekening') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 font-mono focus:ring-emerald-500 focus:border-emerald-500" placeholder="123xxxxx">
+                                    <input type="text" name="bank_account_number" value="{{ old('bank_account_number') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 font-mono focus:ring-emerald-500 focus:border-emerald-500" placeholder="123xxxxx">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-bold text-zinc-500 mb-1 uppercase">Atas Nama (A/N)</label>
-                                    <input type="text" name="nama_di_rekening" value="{{ old('nama_di_rekening') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Pemilik Rekening">
+                                    <input type="text" name="bank_account_name" value="{{ old('bank_account_name') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Pemilik Rekening">
                                 </div>
                                 
                                 <div class="mt-auto pt-3 border-t border-zinc-700">
                                     <label class="block text-[11px] font-bold text-emerald-500 mb-1 uppercase">Saldo Awal</label>
                                     <div class="relative">
                                         <span class="absolute left-3 top-2 text-emerald-500 font-bold text-xs">Rp</span>
-                                        <input type="number" name="saldo_awal" value="{{ old('saldo_awal') }}" class="w-full pl-8 bg-zinc-900 border border-zinc-600 rounded text-lg font-bold text-white focus:ring-emerald-500 px-3 py-1.5 placeholder-zinc-600" placeholder="0">
+                                        <input type="number" name="opening_balance" value="{{ old('opening_balance') }}" class="w-full pl-8 bg-zinc-900 border border-zinc-600 rounded text-lg font-bold text-white focus:ring-emerald-500 px-3 py-1.5 placeholder-zinc-600" placeholder="0">
                                     </div>
                                 </div>
                             </div>

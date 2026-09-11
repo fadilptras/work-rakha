@@ -94,35 +94,33 @@
                     // atau jika controller memuat semua, kita filter manual disini.
                     // Asumsi: $client->interactions memuat SEMUA history (sesuai perbaikan controller)
 
-                    $pastInteractions = $client->interactions->filter(fn($i) => \Carbon\Carbon::parse($i->tanggal_interaksi)->year < $year);
-                    $carryOverBalance = $client->saldo_awal ?? 0;
+                    $pastInteractions = $client->interactions->filter(fn($i) => \Carbon\Carbon::parse($i->interaction_date)->year < $year);
+                    $carryOverBalance = $client->opening_balance ?? 0;
 
                     foreach($pastInteractions as $pastItem) {
-                        if ($pastItem->jenis_transaksi == 'IN') {
-                            $r = $pastItem->komisi ?? 0;
-                            if (!$r && preg_match('/\[Rate:([\d\.]+)\]/', $pastItem->catatan, $m)) $r = (float)$m[1];
-                            $nom = $pastItem->nilai_sales > 0 ? $pastItem->nilai_sales : $pastItem->nilai_kontribusi;
+                        if ($pastItem->transaction_type == 'IN') {
+                            $r = (float)($pastItem->commission_rate ?? 0);
+                            $nom = $pastItem->sales_amount > 0 ? $pastItem->sales_amount : $pastItem->amount;
                             $carryOverBalance += ($nom * ($r / 100));
-                        } elseif ($pastItem->jenis_transaksi == 'OUT') {
-                            $carryOverBalance -= $pastItem->nilai_kontribusi;
+                        } elseif ($pastItem->transaction_type == 'OUT') {
+                            $carryOverBalance -= $pastItem->amount;
                         }
                     }
 
                     // 2. Logic Data Tahun Ini (Current Year)
-                    $yearInts = $client->interactions->filter(fn($i) => \Carbon\Carbon::parse($i->tanggal_interaksi)->year == $year);
-                    $incomeTransactions = $yearInts->where('jenis_transaksi', 'IN')->sortBy('tanggal_interaksi');
+                    $yearInts = $client->interactions->filter(fn($i) => \Carbon\Carbon::parse($i->interaction_date)->year == $year);
+                    $incomeTransactions = $yearInts->where('transaction_type', 'IN')->sortBy('interaction_date');
                     
                     $clientTotalBudget = 0; $clientTotalGross = 0;
                     foreach($incomeTransactions as $s) {
-                        $r = $s->komisi ?? 0;
-                        if (!$r && preg_match('/\[Rate:([\d\.]+)\]/', $s->catatan, $m)) $r = (float)$m[1];
-                        $nom = $s->nilai_sales > 0 ? $s->nilai_sales : $s->nilai_kontribusi;
+                        $r = (float)($s->commission_rate ?? 0);
+                        $nom = $s->sales_amount > 0 ? $s->sales_amount : $s->amount;
                         $clientTotalGross += $nom;
                         $clientTotalBudget += ($nom * ($r / 100));
                     }
 
-                    $usageInts = $yearInts->where('jenis_transaksi', 'OUT');
-                    $clientTotalUsage = $usageInts->sum('nilai_kontribusi');
+                    $usageInts = $yearInts->where('transaction_type', 'OUT');
+                    $clientTotalUsage = $usageInts->sum('amount');
                     
                     // 3. Sisa Saldo Akhir = Saldo Bawaan + Income Tahun Ini - Usage Tahun Ini
                     $clientRemain = $carryOverBalance + $clientTotalBudget - $clientTotalUsage;
@@ -143,9 +141,9 @@
                         <div class="flex items-center gap-4">
                             <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-800 text-white font-bold text-sm shadow-md ring-4 ring-slate-50">{{ $index + 1 }}</span>
                             <div>
-                                <h3 class="text-lg font-bold text-slate-800 leading-tight">{{ $client->nama_user }}</h3>
+                                <h3 class="text-lg font-bold text-slate-800 leading-tight">{{ $client->client_name }}</h3>
                                 <div class="text-xs text-slate-500 font-medium mt-1 flex items-center gap-2">
-                                    <span class="flex items-center"><i class="far fa-building mr-1.5 opacity-70"></i> {{ $client->nama_perusahaan }}</span>
+                                    <span class="flex items-center"><i class="far fa-building mr-1.5 opacity-70"></i> {{ $client->customer_name }}</span>
                                     @if($client->area) 
                                         <span class="text-slate-300">|</span> 
                                         <span class="flex items-center"><i class="fas fa-map-marker-alt mr-1.5 opacity-70"></i> {{ $client->area }}</span>
@@ -153,9 +151,9 @@
                                 </div>
                             </div>
                         </div>
-                        @if($client->pic)
+                        @if($client->ps)
                             <span class="self-start sm:self-center text-[10px] font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-wide shadow-sm">
-                                <i class="fas fa-user-tie mr-1.5"></i> {{ $client->pic }}
+                                <i class="fas fa-user-tie mr-1.5"></i> {{ $client->ps }}
                             </span>
                         @endif
                     </div>
@@ -213,9 +211,8 @@
                             <div class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3 max-h-[350px]">
                                 @forelse($incomeTransactions as $trans)
                                     @php
-                                        $r = $trans->komisi ?? 0;
-                                        if (!$r && preg_match('/\[Rate:([\d\.]+)\]/', $trans->catatan, $m)) $r = (float)$m[1];
-                                        $nominal = $trans->nilai_sales > 0 ? $trans->nilai_sales : $trans->nilai_kontribusi;
+                                        $r = (float)($trans->commission_rate ?? 0);
+                                        $nominal = $trans->sales_amount > 0 ? $trans->sales_amount : $trans->amount;
                                         $net = $nominal * ($r / 100);
                                     @endphp
                                     <div class="relative pl-3 py-0.5 group/item">
@@ -225,10 +222,10 @@
                                         <div class="flex justify-between items-start">
                                             <div class="min-w-0 pr-2">
                                                 <div class="text-[10px] text-slate-400 font-medium mb-0.5">
-                                                    {{ \Carbon\Carbon::parse($trans->tanggal_interaksi)->isoFormat('D MMM') }}
+                                                    {{ \Carbon\Carbon::parse($trans->interaction_date)->isoFormat('D MMM') }}
                                                 </div>
-                                                <div class="font-bold text-slate-700 truncate text-xs mb-1" title="{{ $trans->nama_produk }}">
-                                                    {{ $trans->nama_produk }}
+                                                <div class="font-bold text-slate-700 truncate text-xs mb-1" title="{{ $trans->product_name }}">
+                                                    {{ $trans->product_name }}
                                                 </div>
                                                 <span class="inline-flex items-center text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">
                                                     Rate <span class="font-bold text-blue-600 ml-1">{{ $r }}%</span>
@@ -261,7 +258,7 @@
                                 <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
                                     @foreach($months as $mNum => $mName)
                                         @php
-                                            $mVal = $usageInts->filter(fn($i) => \Carbon\Carbon::parse($i->tanggal_interaksi)->month == $mNum)->sum('nilai_kontribusi');
+                                            $mVal = $usageInts->filter(fn($i) => \Carbon\Carbon::parse($i->interaction_date)->month == $mNum)->sum('amount');
                                             $isActive = $mVal > 0;
                                         @endphp
                                         <div class="flex flex-col rounded-xl border text-center overflow-hidden transition-all duration-200 h-24

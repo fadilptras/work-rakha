@@ -55,18 +55,17 @@
     @foreach($clients as $client)
         @php
             // 1. Hitung Saldo Awal (Carry Over) - Murni Saldo, dikurangi OUT saja
-            $pastInteractions = $client->interactions->filter(fn($i) => \Carbon\Carbon::parse($i->tanggal_interaksi)->year < $year);
-            $clientCarryOver = $client->saldo_awal ?? 0;
+            $pastInteractions = $client->interactions->filter(fn($i) => \Carbon\Carbon::parse($i->interaction_date)->year < $year);
+            $clientCarryOver = $client->opening_balance ?? 0;
             
             foreach($pastInteractions as $past) {
-                if ($past->jenis_transaksi == 'IN') {
-                    $r = $past->komisi ?? 0;
-                    if (!$r && preg_match('/\[Rate:([\d\.]+)\]/', $past->catatan, $m)) $r = (float)$m[1];
-                    $val = $past->nilai_sales > 0 ? $past->nilai_sales : $past->nilai_kontribusi;
+                if ($past->transaction_type == 'IN') {
+                    $r = (float)($past->commission_rate ?? 0);
+                    $val = $past->sales_amount > 0 ? $past->sales_amount : $past->amount;
                     $clientCarryOver += ($val * ($r/100));
                 } 
-                elseif ($past->jenis_transaksi == 'OUT') {
-                    $clientCarryOver -= $past->nilai_kontribusi;
+                elseif ($past->transaction_type == 'OUT') {
+                    $clientCarryOver -= $past->amount;
                 }
             }
 
@@ -77,10 +76,10 @@
             $clientSubMonthly = array_fill(1, 12, 0);
 
             // Filter Data Tahun Ini
-            $interactions = $client->interactions->filter(fn($i) => \Carbon\Carbon::parse($i->tanggal_interaksi)->year == $year);
+            $interactions = $client->interactions->filter(fn($i) => \Carbon\Carbon::parse($i->interaction_date)->year == $year);
             
             // Grouping
-            $groupedProducts = $interactions->groupBy(fn($item) => $item->nama_produk ?: 'General / Lainnya');
+            $groupedProducts = $interactions->groupBy(fn($item) => $item->product_name ?: 'General / Lainnya');
             if($groupedProducts->isEmpty() && $interactions->isEmpty()) {
                  $groupedProducts = collect();
             }
@@ -89,9 +88,9 @@
         {{-- === ROW 1: SALDO AWAL === --}}
         <tr>
             <td align="center" style="border: 1px solid #000000;">{{ $rowNumber }}</td>
-            <td style="border: 1px solid #000000;">{{ $client->nama_user }}</td>
-            <td style="border: 1px solid #000000;">{{ $client->nama_perusahaan }}</td>
-            <td style="border: 1px solid #000000; text-align: center;">{{ $client->pic ?? '-' }}</td>
+            <td style="border: 1px solid #000000;">{{ $client->client_name }}</td>
+            <td style="border: 1px solid #000000;">{{ $client->customer_name }}</td>
+            <td style="border: 1px solid #000000; text-align: center;">{{ $client->ps ?? '-' }}</td>
             <td style="border: 1px solid #000000; text-align: center;">{{ $client->area }}</td>
             
             <td style="border: 1px solid #000000; font-weight: bold; color: #4b5563; background-color: #f9fafb;">
@@ -115,10 +114,10 @@
         {{-- === ROW 2..N: PRODUK & AKTIVITAS === --}}
         @foreach($groupedProducts as $productName => $items)
             @php
-                $isEntertainGroup = ($productName === 'Activity / Entertain');
+                $isEntertainGroup = str_starts_with((string) $productName, 'ENTERTAIN');
                 
                 if ($isEntertainGroup) {
-                    $subGroups = $items->groupBy('catatan');
+                    $subGroups = $items->groupBy('notes');
                 } else {
                     $subGroups = collect([$productName => $items]);
                 }
@@ -127,13 +126,12 @@
             @foreach($subGroups as $subKey => $subItems)
                 @php
                     // Sales
-                    $pGross = $subItems->where('jenis_transaksi', 'IN')->sum(fn($s) => $s->nilai_sales > 0 ? $s->nilai_sales : $s->nilai_kontribusi);
+                    $pGross = $subItems->where('transaction_type', 'IN')->sum(fn($s) => $s->sales_amount > 0 ? $s->sales_amount : $s->amount);
                     
                     $pNetBudget = 0; $rates = [];
-                    foreach($subItems->where('jenis_transaksi', 'IN') as $s) {
-                        $r = $s->komisi ?? 0;
-                        if (!$r && preg_match('/\[Rate:([\d\.]+)\]/', $s->catatan, $m)) $r = (float)$m[1];
-                        $nom = $s->nilai_sales > 0 ? $s->nilai_sales : $s->nilai_kontribusi;
+                    foreach($subItems->where('transaction_type', 'IN') as $s) {
+                        $r = (float)($s->commission_rate ?? 0);
+                        $nom = $s->sales_amount > 0 ? $s->sales_amount : $s->amount;
                         $pNetBudget += ($nom * ($r / 100));
                         if($r > 0) $rates[] = $r;
                     }
@@ -141,10 +139,10 @@
                     
                     // Usage REAL (Hanya OUT) - Ini yang akan muncul di kolom Usage & Mengurangi Saldo
                     // Untuk Activity (ENTERTAIN), ini akan bernilai 0
-                    $pRealUsage = $subItems->where('jenis_transaksi', 'OUT')->sum('nilai_kontribusi');
+                    $pRealUsage = $subItems->where('transaction_type', 'OUT')->sum('amount');
                     
                     // Usage Display (Untuk info di nama Activity)
-                    $pEntertainCost = $subItems->where('jenis_transaksi', 'ENTERTAIN')->sum('nilai_kontribusi');
+                    $pEntertainCost = $subItems->where('transaction_type', 'ENTERTAIN')->sum('amount');
 
                     // Remain: Net - Usage Real (Activity 0, jadi aman)
                     $pRemain = $pNetBudget - $pRealUsage;
@@ -165,9 +163,9 @@
 
                 <tr>
                     <td align="center" style="border: 1px solid #000000;">{{ $rowNumber }}</td>
-                    <td style="border: 1px solid #000000;">{{ $client->nama_user }}</td>
-                    <td style="border: 1px solid #000000;">{{ $client->nama_perusahaan }}</td>
-                    <td style="border: 1px solid #000000; text-align: center;">{{ $client->pic ?? '-' }}</td>
+                    <td style="border: 1px solid #000000;">{{ $client->client_name }}</td>
+                    <td style="border: 1px solid #000000;">{{ $client->customer_name }}</td>
+                    <td style="border: 1px solid #000000; text-align: center;">{{ $client->ps ?? '-' }}</td>
                     <td style="border: 1px solid #000000; text-align: center;">{{ $client->area }}</td>
                     
                     <td style="border: 1px solid #000000;">{{ $displayName }}</td>
@@ -179,9 +177,9 @@
                     @foreach($months as $mIndex => $mName)
                         @php
                             // Ambil hanya OUT (Real Usage) untuk kolom bulanan
-                            $mUsage = $subItems->where('jenis_transaksi', 'OUT')
-                                               ->filter(fn($i) => \Carbon\Carbon::parse($i->tanggal_interaksi)->month == $mIndex)
-                                               ->sum('nilai_kontribusi');
+                            $mUsage = $subItems->where('transaction_type', 'OUT')
+                                               ->filter(fn($i) => \Carbon\Carbon::parse($i->interaction_date)->month == $mIndex)
+                                               ->sum('amount');
                             $clientSubMonthly[$mIndex] += $mUsage;
                         @endphp
                         <td style="border: 1px solid #000000; text-align: right; {{ $mUsage > 0 ? 'color: #ef4444;' : '' }}">

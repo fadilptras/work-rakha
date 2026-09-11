@@ -94,7 +94,7 @@
                     <div class="space-y-1.5 flex-1">
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="bg-white/20 backdrop-blur-md text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-white/30 shadow-sm inline-flex items-center">
-                                <i class="fas fa-hospital mr-1.5 opacity-80"></i> {{ $client->nama_perusahaan }}
+                                <i class="fas fa-hospital mr-1.5 opacity-80"></i> {{ $client->customer_name }}
                             </span>
                             <div class="hidden sm:block w-1 h-1 rounded-full bg-blue-300/50"></div>
                             <div class="flex items-center text-[10px] text-blue-100 font-medium">
@@ -102,11 +102,11 @@
                             </div>
                             <div class="hidden sm:block w-1 h-1 rounded-full bg-blue-300/50"></div>
                             <div class="flex items-center text-[10px] text-blue-100 font-medium">
-                                <i class="fas fa-user-tie mr-1.5 text-blue-300"></i> PIC: {{ $client->pic }}
+                                <i class="fas fa-user-tie mr-1.5 text-blue-300"></i> PIC: {{ $client->ps }}
                             </div>
                         </div>
                         <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white drop-shadow-sm leading-tight pt-1">
-                            {{ $client->nama_user }}
+                            {{ $client->client_name }}
                         </h2>
                     </div>
 
@@ -118,7 +118,7 @@
                                 <span class="text-blue-200 text-[8px] font-bold uppercase tracking-wider mb-0.5">Total Realisasi</span>
                                 <div class="flex items-start">
                                     <span class="text-[9px] text-blue-100 mr-1 mt-0.5">Rp</span>
-                                    <span class="text-base md:text-lg font-bold text-white leading-none">{{ number_format($client->interactions->where('jenis_transaksi', 'OUT')->sum('nilai_kontribusi'), 0, ',', '.') }}</span>
+                                    <span class="text-base md:text-lg font-bold text-white leading-none">{{ number_format($client->interactions->where('transaction_type', 'OUT')->sum('amount'), 0, ',', '.') }}</span>
                                 </div>
                             </div>
                             <div class="w-px h-8 bg-white/20 mx-1"></div>
@@ -150,10 +150,10 @@
                     <i class="fas fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
                 </summary>
                 <div class="space-y-3 relative z-10">
-                    @if($client->jabatan)
+                    @if($client->contact_position)
                     <div class="flex items-start relative pl-8">
                         <div class="absolute left-0 top-1 text-blue-300"><i class="fas fa-id-badge"></i></div>
-                        <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Jabatan</p><p class="font-bold text-sm tracking-wide">{{ $client->jabatan }}</p></div>
+                        <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Jabatan</p><p class="font-bold text-sm tracking-wide">{{ $client->contact_position }}</p></div>
                     </div>
                     @endif
                     <div class="flex items-start relative pl-8">
@@ -162,25 +162,25 @@
                     </div>
                     <div class="flex items-start relative pl-8">
                         <div class="absolute left-0 top-1 text-green-300"><i class="fab fa-whatsapp text-lg -ml-0.5"></i></div>
-                        <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Telepon / WA</p><p class="font-medium text-sm">{{ $client->no_telpon ?? '-' }}</p></div>
+                        <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Telepon / WA</p><p class="font-medium text-sm">{{ $client->contact_phone ?? '-' }}</p></div>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="flex items-start relative pl-8">
                             <div class="absolute left-0 top-1 text-pink-200"><i class="fas fa-birthday-cake"></i></div>
-                            <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Tgl Lahir</p><div class="font-medium text-sm">{{ $client->tanggal_lahir ? \Carbon\Carbon::parse($client->tanggal_lahir)->format('d M Y') : '-' }}</div></div>
+                            <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Tgl Lahir</p><div class="font-medium text-sm">{{ $client->contact_birth_date ? \Carbon\Carbon::parse($client->contact_birth_date)->format('d M Y') : '-' }}</div></div>
                         </div>
                         <div class="flex items-start relative pl-6">
                             <div class="absolute left-0 top-1 text-yellow-300"><i class="fas fa-star"></i></div>
-                            <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Hobi</p><p class="font-medium text-sm">{{ $client->hobby_client ?? '-' }}</p></div>
+                            <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Hobi</p><p class="font-medium text-sm">{{ $client->contact_hobby ?? '-' }}</p></div>
                         </div>
                     </div>
                     <div class="flex items-start relative pl-8">
                         <div class="absolute left-0 top-1 text-white/50"><i class="fas fa-home"></i></div>
-                        <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Alamat Rumah</p><p class="text-sm leading-relaxed opacity-90">{{ $client->alamat_user ?? '-' }}</p></div>
+                        <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Alamat Rumah</p><p class="text-sm leading-relaxed opacity-90">{{ $client->contact_address ?? '-' }}</p></div>
                     </div>
                     <div class="flex items-start relative pl-8">
                         <div class="absolute left-0 top-1 text-emerald-300"><i class="fas fa-percent"></i></div>
-                        <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Komisi / Rate</p><p class="font-medium text-sm">{{ $client->komisi ? (float)$client->komisi . '%' : '-' }}</p></div>
+                        <div><p class="text-[10px] text-blue-200 font-bold uppercase mb-0.5">Komisi / Rate</p><p class="font-medium text-sm">{{ $client->commission_rate ? (float)$client->commission_rate . '%' : '-' }}</p></div>
                     </div>
                 </div>
             </details>
@@ -195,32 +195,32 @@
                     <div class="p-4 bg-white/20 backdrop-blur-md rounded-lg border border-white/20 relative overflow-hidden">
                         <i class="fas fa-hospital absolute right-2 bottom-2 text-5xl text-white/20 -rotate-12 pointer-events-none"></i>
                         <p class="text-[10px] text-orange-100 font-bold uppercase mb-1">Nama Instansi / RS</p>
-                        <p class="font-bold text-lg leading-tight">{{ $client->nama_perusahaan }}</p>
+                        <p class="font-bold text-lg leading-tight">{{ $client->customer_name }}</p>
                     </div>
                     <div class="flex items-start relative pl-8">
                         <div class="absolute left-0 top-1 text-white/80"><i class="fas fa-calendar-alt"></i></div>
                         <div>
                             <p class="text-[10px] text-orange-200 font-bold uppercase mb-0.5">Tanggal Berdiri</p>
                             <div class="flex items-center font-medium text-sm">
-                                @if($client->tanggal_berdiri)
-                                    <span>{{ \Carbon\Carbon::parse($client->tanggal_berdiri)->format('d F Y') }}</span>
-                                    <span class="ml-2 text-[10px] bg-white text-orange-600 px-2 py-0.5 rounded-full font-bold shadow-sm">{{ \Carbon\Carbon::parse($client->tanggal_berdiri)->age }} Th</span>
+                                @if($client->company_founded_date)
+                                    <span>{{ \Carbon\Carbon::parse($client->company_founded_date)->format('d F Y') }}</span>
+                                    <span class="ml-2 text-[10px] bg-white text-orange-600 px-2 py-0.5 rounded-full font-bold shadow-sm">{{ \Carbon\Carbon::parse($client->company_founded_date)->age }} Th</span>
                                 @else <span class="italic opacity-70">Belum diisi</span> @endif
                             </div>
                         </div>
                     </div>
                     <div class="flex items-start relative pl-8">
                         <div class="absolute left-0 top-1 text-white/80"><i class="fas fa-map-marked-alt"></i></div>
-                        <div><p class="text-[10px] text-orange-200 font-bold uppercase mb-0.5">Alamat Kantor</p><p class="text-sm leading-relaxed opacity-90">{{ $client->alamat_perusahaan ?? '-' }}</p></div>
+                        <div><p class="text-[10px] text-orange-200 font-bold uppercase mb-0.5">Alamat Kantor</p><p class="text-sm leading-relaxed opacity-90">{{ $client->company_address ?? '-' }}</p></div>
                     </div>
 
                     {{-- Data Apoteker --}}
                     <div class="mt-4 pt-3 border-t border-white/20">
                         <p class="text-[10px] text-orange-200 font-bold uppercase mb-2"><i class="fas fa-user-md mr-1"></i> Data Apoteker Penanggung Jawab</p>
                         <div class="grid grid-cols-2 gap-y-2 text-sm">
-                            <div><p class="text-[9px] text-orange-300 uppercase">Nama</p><p class="font-bold">{{ $client->nama_apoteker ?? '-' }}</p></div>
-                            <div><p class="text-[9px] text-orange-300 uppercase">SIPA</p><p class="font-bold">{{ $client->nomor_sipa ?? '-' }}</p></div>
-                            <div class="col-span-2"><p class="text-[9px] text-orange-300 uppercase">No. Telp</p><p class="font-bold">{{ $client->no_telpon_apoteker ?? '-' }}</p></div>
+                            <div><p class="text-[9px] text-orange-300 uppercase">Nama</p><p class="font-bold">{{ $client->pharmacist_name ?? '-' }}</p></div>
+                            <div><p class="text-[9px] text-orange-300 uppercase">SIPA</p><p class="font-bold">{{ $client->pharmacist_license_no ?? '-' }}</p></div>
+                            <div class="col-span-2"><p class="text-[9px] text-orange-300 uppercase">No. Telp</p><p class="font-bold">{{ $client->pharmacist_phone ?? '-' }}</p></div>
                         </div>
                     </div>
                 </div>
@@ -238,17 +238,17 @@
                     <div class="mt-1">
                         <p class="text-[11px] text-gray-500 uppercase tracking-wider mb-1">Bank & Rekening</p>
                         <div class="flex flex-col">
-                            <span class="font-bold text-2xl tracking-wide text-white leading-tight mb-1">{{ $client->bank ?? 'BANK -' }}</span>
-                            <p class="text-xs text-gray-400 mb-2">{{ $client->nama_di_rekening ? 'A/n '.$client->nama_di_rekening : '' }}</p>
+                            <span class="font-bold text-2xl tracking-wide text-white leading-tight mb-1">{{ $client->bank_name ?? 'BANK -' }}</span>
+                            <p class="text-xs text-gray-400 mb-2">{{ $client->bank_account_name ? 'A/n '.$client->bank_account_name : '' }}</p>
                             <div class="flex items-center gap-2 font-mono text-emerald-400 tracking-widest text-base bg-white/5 px-3 py-1.5 rounded-lg w-fit border border-white/5 shadow-inner">
-                                <i class="fas fa-credit-card text-xs opacity-70"></i> <span class="font-bold">{{ $client->no_rekening ?? '----' }}</span>
+                                <i class="fas fa-credit-card text-xs opacity-70"></i> <span class="font-bold">{{ $client->bank_account_number ?? '----' }}</span>
                             </div>
                         </div>
                     </div>
                     <div class="border-t border-gray-700/50 pt-3 mt-auto">
                         <p class="text-[11px] text-gray-500 uppercase tracking-wider mb-1">Saldo Awal</p>
                         <p class="text-3xl font-mono font-bold text-emerald-400 tracking-tight text-shadow-sm flex items-baseline">
-                            <span class="text-sm text-gray-500 mr-2 font-normal">IDR</span> {{ number_format($client->saldo_awal ?? 0, 0, ',', '.') }}
+                            <span class="text-sm text-gray-500 mr-2 font-normal">IDR</span> {{ number_format($client->opening_balance ?? 0, 0, ',', '.') }}
                         </p>
                     </div>
                 </div>
@@ -294,7 +294,7 @@
             </div>
             <div class="p-6 md:p-8">
                 @if($hasFullAccess)
-                <form action="{{ route($routePrefix . 'interaction.store') }}" method="POST">
+                <form action="{{ route($routePrefix . 'interaction.store') }}" method="POST" onsubmit="const b=this.querySelector('[type=submit]');if(b){b.disabled=true;b.classList.add('opacity-60');}">
                     @csrf
                     <div class="mb-4 grid grid-cols-1 lg:grid-cols-12 gap-3">
                         <div class="lg:col-span-4">
@@ -304,9 +304,9 @@
                                     @if($salesCustomers->isEmpty())
                                         <option value="" disabled selected>Belum ada data (Cek PIC Sales)</option>
                                     @else
-                                        <option value="" disabled selected>Pilih Rumah Sakit...</option>
+                                        <option value="" disabled {{ $client->sales_customer_name ? '' : 'selected' }}>Pilih Rumah Sakit...</option>
                                         @foreach($salesCustomers as $c)
-                                            <option value="{{ $c }}">{{ $c }}</option>
+                                            <option value="{{ $c }}" @selected($client->sales_customer_name == $c)>{{ $c }}</option>
                                         @endforeach
                                     @endif
                                 </select>
@@ -314,6 +314,7 @@
                                     <i class="fas fa-chevron-down text-xs"></i>
                                 </div>
                             </div>
+                            <p class="text-[11px] text-gray-500 mt-1">Terkunci ke PS: <strong class="text-gray-700">{{ ($lockedPs ?? null) ?: '-' }}</strong>@if($client->sales_customer_name) &bull; Terhubung ke: <strong class="text-gray-700">{{ $client->sales_customer_name }}</strong>@endif</p>
                         </div>
                         <div class="lg:col-span-5">
                             <label class="block text-xs font-bold text-gray-700 mb-1">Pilih Bulan <span class="text-red-500">*</span></label>
@@ -327,7 +328,7 @@
                         </div>
                         <div class="lg:col-span-3">
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Catatan (Opsional)</label>
-                            <input type="text" name="catatan" class="w-full border border-blue-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-1.5 text-sm" placeholder="Catatan opsional...">
+                            <input type="text" name="notes" class="w-full border border-blue-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-1.5 text-sm" placeholder="Catatan opsional...">
                         </div>
                     </div>
 
@@ -411,7 +412,7 @@
                         <!-- Baris 1: Detail Pengajuan (1 Baris Sleek) -->
                         <div class="w-full custom-w-tanggal">
                             <label class="block text-xs font-bold text-gray-700 mb-1">Tanggal <span class="text-red-500">*</span></label>
-                            <input type="date" name="tanggal_interaksi" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" required>
+                            <input type="date" name="interaction_date" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" required>
                         </div>
                         <div class="w-full custom-w-nominal">
                             <label class="block text-xs font-bold text-gray-700 mb-1">Nominal Keluar <span class="text-red-500">*</span></label>
@@ -419,12 +420,12 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                     <span class="text-gray-500 text-xs font-bold">Rp</span>
                                 </div>
-                                <input type="text" name="nominal" onkeyup="formatRupiah(this)" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 pl-9 px-3 py-2 font-mono font-bold text-base text-red-700" placeholder="0" required>
+                                <input type="text" name="amount" onkeyup="formatRupiah(this)" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 pl-9 px-3 py-2 font-mono font-bold text-base text-red-700" placeholder="0" required>
                             </div>
                         </div>
                         <div class="w-full custom-w-keperluan">
                             <label class="block text-xs font-bold text-gray-700 mb-1">Keperluan Support <span class="text-red-500">*</span></label>
-                            <input type="text" name="keperluan" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Contoh: Transport" required>
+                            <input type="text" name="purpose" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Contoh: Transport" required>
                         </div>
                         <div class="w-full custom-w-lampiran">
                             <label class="block text-xs font-bold text-gray-700 mb-1 flex items-center gap-1.5">
@@ -456,15 +457,15 @@
                         <!-- Baris 2: Informasi Bank Penerima (3 Kolom) -->
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Nama Bank <span class="text-red-500">*</span></label>
-                            <input type="text" name="nama_bank" value="{{ $client->bank }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Contoh: BCA, Mandiri" required>
+                            <input type="text" name="nama_bank" value="{{ $client->bank_name }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Contoh: BCA, Mandiri" required>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">No. Rekening <span class="text-red-500">*</span></label>
-                            <input type="text" name="no_rekening" value="{{ $client->no_rekening }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm font-mono font-bold" placeholder="0987654321" required>
+                            <input type="text" name="no_rekening" value="{{ $client->bank_account_number }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm font-mono font-bold" placeholder="0987654321" required>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Nama di Rekening <span class="text-red-500">*</span></label>
-                            <input type="text" name="nama_rek" value="{{ $client->nama_di_rekening }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Atas Nama..." required>
+                            <input type="text" name="nama_rek" value="{{ $client->bank_account_name }}" class="w-full border-2 border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2 text-sm" placeholder="Atas Nama..." required>
                         </div>
                     </div>
                     <div class="flex">
@@ -517,13 +518,11 @@
                         <input type="hidden" name="client_id" value="{{ $client->id }}">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                             <div class="space-y-4">
-                                <div><label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Tanggal Kegiatan <span class="text-red-500">*</span></label><input type="date" name="tanggal_interaksi" class="w-full border-2 border-orange-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 px-3 py-2" required></div>
-                                <div><label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Lokasi / Venue</label><div class="relative"><div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fas fa-map-marker-alt text-xs"></i></div><input type="text" name="lokasi" class="w-full border-2 border-orange-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 pl-8 px-3 py-2" placeholder="Contoh: Restoran X"></div></div>
-                                <div><label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Partisipan / Klien</label><div class="relative"><div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fas fa-users text-xs"></i></div><input type="text" name="peserta" class="w-full border-2 border-orange-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 pl-8 px-3 py-2" placeholder="Sebutkan nama..."></div></div>
+                                <div><label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Tanggal Kegiatan <span class="text-red-500">*</span></label><input type="date" name="interaction_date" class="w-full border-2 border-orange-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 px-3 py-2" required></div>
                             </div>
                             <div class="space-y-4 bg-orange-50/40 p-5 rounded-xl border border-orange-100 flex flex-col h-full">
-                                <div class="flex-grow"><label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Keterangan <span class="text-red-500">*</span></label><textarea name="catatan" rows="3" class="w-full border-2 border-orange-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 px-3 py-2 text-sm" placeholder="Contoh: Makan siang membahas proyek baru, dll." required></textarea></div>
-                                <div><label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Nominal Biaya (Rp) <span class="text-red-500">*</span></label><div class="relative rounded-md shadow-sm"><div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span class="text-gray-500 sm:text-xs font-bold">Rp</span></div><input type="text" name="nominal" onkeyup="formatRupiah(this)" class="w-full border-2 border-orange-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 pl-8 px-3 py-2 font-mono font-bold text-lg text-orange-700" placeholder="0" required></div></div>
+                                <div class="flex-grow"><label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Keterangan <span class="text-red-500">*</span></label><textarea name="notes" rows="3" class="w-full border-2 border-orange-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 px-3 py-2 text-sm" placeholder="Contoh: Makan siang membahas proyek baru, dll." required></textarea></div>
+                                <div><label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Nominal Biaya (Rp) <span class="text-red-500">*</span></label><div class="relative rounded-md shadow-sm"><div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span class="text-gray-500 sm:text-xs font-bold">Rp</span></div><input type="text" name="amount" onkeyup="formatRupiah(this)" class="w-full border-2 border-orange-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 pl-8 px-3 py-2 font-mono font-bold text-lg text-orange-700" placeholder="0" required></div></div>
                                 <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition transform active:scale-95 flex items-center justify-center gap-2 mt-2"><i class="fas fa-save"></i> Simpan</button>
                             </div>
                         </div>
@@ -534,7 +533,7 @@
             {{-- TABEL AKTIVITAS + FILTER TAHUN --}}
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 @php
-                    $totalActivity = $activities->sum('nilai_kontribusi');
+                    $totalActivity = $activities->sum('amount');
                 @endphp
 
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -571,7 +570,6 @@
                             <tr>
                                 <th class="px-5 py-3">Tanggal</th>
                                 <th class="px-5 py-3">Aktivitas / Keterangan</th>
-                                <th class="px-5 py-3">Lokasi & Partisipan</th>
                                 <th class="px-5 py-3 text-right">Biaya</th>
                                 @if($hasFullAccess)
                                 <th class="px-5 py-3 text-center">Aksi</th>
@@ -582,35 +580,25 @@
                             @forelse($activities as $act)
                             <tr class="hover:bg-orange-50/30 transition">
                                 <td class="px-5 py-3 whitespace-nowrap font-medium text-gray-700">
-                                    {{ \Carbon\Carbon::parse($act->tanggal_interaksi)->format('d/m/Y') }}
+                                    {{ \Carbon\Carbon::parse($act->interaction_date)->format('d/m/Y') }}
                                 </td>
                                 <td class="px-5 py-3">
                                     <button type="button" onclick="openViewTransactionModal({
                                         id: '{{ $act->id }}',
                                         jenis: 'ENTERTAIN',
-                                        tanggal: '{{ \Carbon\Carbon::parse($act->tanggal_interaksi)->translatedFormat('d F Y') }}',
-                                        produk: '{{ addslashes($act->nama_produk) }}',
-                                        nominal: '{{ number_format($act->nilai_kontribusi, 0, ',', '.') }}',
+                                        tanggal: '{{ \Carbon\Carbon::parse($act->interaction_date)->translatedFormat('d F Y') }}',
+                                        produk: '{{ addslashes($act->product_name) }}',
+                                        nominal: '{{ number_format($act->amount, 0, ',', '.') }}',
                                         rate: '0',
                                         valueNet: '0',
-                                        catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->catatan)) }}',
-                                        lokasi: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->lokasi ?? "")) }}',
-                                        peserta: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->peserta ?? "")) }}'
+                                        catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->notes)) }}'
                                     })" class="text-left font-bold text-gray-800 hover:text-orange-600 hover:underline focus:outline-none">
-                                        {{ $act->nama_produk }}
+                                        {{ $act->product_name }}
                                     </button>
-                                    <div class="text-xs text-gray-500">{{ $act->catatan }}</div>
-                                </td>
-                                <td class="px-5 py-3">
-                                    <div class="flex items-center text-xs text-gray-600 mb-0.5">
-                                        <i class="fas fa-map-marker-alt w-4 text-center mr-1 text-gray-400"></i> {{ $act->lokasi ?? '-' }}
-                                    </div>
-                                    <div class="flex items-center text-xs text-gray-600">
-                                        <i class="fas fa-users w-4 text-center mr-1 text-gray-400"></i> {{ $act->peserta ?? '-' }}
-                                    </div>
+                                    <div class="text-xs text-gray-500">{{ $act->notes }}</div>
                                 </td>
                                 <td class="px-5 py-3 text-right font-mono font-bold text-orange-600">
-                                    {{ number_format($act->nilai_kontribusi, 0, ',', '.') }}
+                                    {{ number_format($act->amount, 0, ',', '.') }}
                                 </td>
                                 @if($hasFullAccess)
                                 <td class="px-5 py-3 text-center">
@@ -619,12 +607,10 @@
                                             onclick="openEditTransactionModal({
                                                 id: '{{ $act->id }}',
                                                 jenis: 'ENTERTAIN',
-                                                tanggal: '{{ $act->tanggal_interaksi }}',
-                                                produk: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->nama_produk)) }}', 
-                                                nominal: '{{ $act->nilai_kontribusi }}',
-                                                catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->catatan)) }}',
-                                                lokasi: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->lokasi ?? '')) }}',
-                                                peserta: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->peserta ?? '')) }}'
+                                                tanggal: '{{ $act->interaction_date }}',
+                                                produk: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->product_name)) }}', 
+                                                nominal: '{{ $act->amount }}',
+                                                catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $act->notes)) }}'
                                             })"
                                             class="text-orange-400 hover:text-orange-600 transition" title="Edit">
                                             <i class="fas fa-edit"></i>
@@ -638,13 +624,13 @@
                                 @endif
                             </tr>
                             @empty
-                            <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 italic bg-gray-50/50">Belum ada data aktivitas</td></tr>
+                            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 italic bg-gray-50/50">Belum ada data aktivitas</td></tr>
                             @endforelse
                         </tbody>
                         @if($activities->count() > 0)
                         <tfoot class="bg-gray-50 border-t border-gray-200">
                             <tr>
-                                <td colspan="3" class="px-5 py-3 text-right font-bold text-gray-600 uppercase text-xs tracking-wider">Total Pengeluaran Entertain</td>
+                                <td colspan="2" class="px-5 py-3 text-right font-bold text-gray-600 uppercase text-xs tracking-wider">Total Pengeluaran Entertain</td>
                                 <td class="px-5 py-3 text-right font-mono font-extrabold text-orange-700 text-base">{{ number_format($totalActivity, 0, ',', '.') }}</td>
                                 <td></td>
                             </tr>
@@ -696,39 +682,39 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($interactions as $item)
-                            @if($item->jenis_transaksi == 'ENTERTAIN') @continue @endif
+                            @if($item->transaction_type == 'ENTERTAIN') @continue @endif
                             @php
-                                $isOut = $item->jenis_transaksi == 'OUT';
-                                $rate = 0; if(preg_match('/\[Rate:([\d\.]+)%?\]/', $item->catatan, $m)) { $rate = $m[1]; }
-                                $displayNote = trim(preg_replace('/\[Rate:[\d\.]+%?\]\s*/', '', $item->catatan));
-                                $nominal = $item->nilai_sales > 0 ? $item->nilai_sales : $item->nilai_kontribusi;
-                                $valueNet = (!$isOut) ? ($nominal * ((float)$rate/100)) : 0;
+                                $isOut = $item->transaction_type == 'OUT';
+                                $rate = (float)($item->commission_rate ?? 0);
+                                $displayNote = trim(preg_replace('/\[Rate:[\d\.]+%?\]\s*/', '', $item->notes ?? ''));
+                                $nominal = $item->sales_amount > 0 ? $item->sales_amount : $item->amount;
+                                $valueNet = (!$isOut) ? ($nominal * ($rate/100)) : 0;
                             @endphp
                         <tr class="{{ $isOut ? 'bg-red-50/50' : 'hover:bg-blue-50/50' }} transition">
-                            <td class="px-4 py-3 whitespace-nowrap font-bold text-gray-700">{{ \Carbon\Carbon::parse($item->tanggal_interaksi)->format('d/m/Y') }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap font-bold text-gray-700">{{ \Carbon\Carbon::parse($item->interaction_date)->format('d/m/Y') }}</td>
                             <td class="px-4 py-3">
                                 <button type="button" onclick="openViewTransactionModal({
                                     id: '{{ $item->id }}',
-                                    jenis: '{{ $item->jenis_transaksi }}',
-                                    tanggal: '{{ \Carbon\Carbon::parse($item->tanggal_interaksi)->translatedFormat('d F Y') }}',
-                                    produk: '{{ addslashes($item->nama_produk) }}',
-                                    nominal: '{{ number_format(($item->jenis_transaksi == 'IN') ? $item->nilai_sales : $item->nilai_kontribusi, 0, ',', '.') }}',
+                                    jenis: '{{ $item->transaction_type }}',
+                                    tanggal: '{{ \Carbon\Carbon::parse($item->interaction_date)->translatedFormat('d F Y') }}',
+                                    produk: '{{ addslashes($item->product_name) }}',
+                                    nominal: '{{ number_format(($item->transaction_type == 'IN') ? $item->sales_amount : $item->amount, 0, ',', '.') }}',
                                     rate: '{{ $rate }}',
                                     valueNet: '{{ number_format($valueNet, 0, ',', '.') }}',
                                     catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $displayNote)) }}'
                                 })" class="text-left font-bold {{ $isOut ? 'text-red-800 hover:text-red-950' : 'text-blue-900 hover:text-blue-950' }} hover:underline focus:outline-none">
-                                    {{ $item->nama_produk }}
+                                    {{ $item->product_name }}
                                 </button>
                                 <div class="text-xs text-gray-500 italic">{{ $displayNote }}</div>
                             </td>
                             <td class="px-4 py-3 text-right font-mono text-gray-600">{{ (!$isOut) ? number_format($nominal, 0, ',', '.') : '-' }}</td>
                             <td class="px-4 py-3 text-center">@if(!$isOut && $rate > 0) <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-xs font-bold shadow-sm border border-gray-300">{{ (float)$rate }}%</span> @else <span class="text-gray-300">-</span> @endif</td>
                             <td class="px-4 py-3 text-right font-mono font-bold text-blue-700">{{ (!$isOut) ? number_format($valueNet, 0, ',', '.') : '-' }}</td>
-                            <td class="px-4 py-3 text-right font-mono font-bold text-red-600">{{ $isOut ? number_format($item->nilai_kontribusi, 0, ',', '.') : '-' }}</td>
+                            <td class="px-4 py-3 text-right font-mono font-bold text-red-600">{{ $isOut ? number_format($item->amount, 0, ',', '.') : '-' }}</td>
                             @if($hasFullAccess)
                             <td class="px-4 py-3 text-center">
                                 <div class="flex items-center justify-center gap-2">
-                                    <button type="button" onclick="openEditTransactionModal({id: '{{ $item->id }}', jenis: '{{ $item->jenis_transaksi }}', tanggal: '{{ $item->tanggal_interaksi }}', produk: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $item->nama_produk)) }}', nominal: '{{ ($item->jenis_transaksi == 'IN') ? $item->nilai_sales : $item->nilai_kontribusi }}', rate: '{{ $rate }}', catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $displayNote)) }}'})" class="text-blue-400 hover:text-blue-600 transition" title="Edit Data"><i class="fas fa-edit"></i></button>
+                                    <button type="button" onclick="openEditTransactionModal({id: '{{ $item->id }}', jenis: '{{ $item->transaction_type }}', tanggal: '{{ $item->interaction_date }}', produk: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $item->product_name)) }}', nominal: '{{ ($item->transaction_type == 'IN') ? $item->sales_amount : $item->amount }}', rate: '{{ $rate }}', catatan: '{{ addslashes(str_replace(["\r", "\n"], ["\\r", "\\n"], $displayNote)) }}'})" class="text-blue-400 hover:text-blue-600 transition" title="Edit Data"><i class="fas fa-edit"></i></button>
                                     <form action="{{ route($routePrefix . 'interaction.destroy', $item->id) }}" method="POST" onsubmit="confirmSubmit(event, 'Hapus transaksi ini?');" class="inline">@csrf @method('DELETE')<button class="text-gray-300 hover:text-red-600 transition" title="Hapus Data"><i class="fas fa-trash-alt"></i></button></form>
                                 </div>
                             </td>
@@ -786,7 +772,7 @@
                                 </button>
                             </td>
                             <td class="px-4 py-3 text-right font-mono text-gray-600">{{ $r['gross_in'] > 0 ? number_format($r['gross_in'], 0, ',', '.') : '-' }}</td>
-                            <td class="px-4 py-3 text-center font-mono text-xs text-gray-500">{{ $r['komisi_text'] }}</td>
+                            <td class="px-4 py-3 text-center font-mono text-xs text-gray-500">{{ $r['commission_text'] }}</td>
                             <td class="px-4 py-3 text-right font-mono font-bold text-blue-800 bg-blue-50/30">{{ $r['net_value'] > 0 ? number_format($r['net_value'], 0, ',', '.') : '-' }}</td>
                             <td class="px-4 py-3 text-right font-mono text-red-600">{{ $r['out'] > 0 ? number_format($r['out'], 0, ',', '.') : '-' }}</td>
                             <td class="px-4 py-3 text-right font-mono font-bold text-gray-900 border-l border-gray-200 bg-gray-50/30">{{ number_format($r['saldo'], 0, ',', '.') }}</td>
@@ -826,22 +812,22 @@
                                     <div>
                                         <label class="block text-[10px] font-bold text-gray-700 mb-1 uppercase">Nama & Jabatan <span class="text-red-500">*</span></label>
                                         <div class="space-y-2">
-                                            <input type="text" name="nama_user" value="{{ old('nama_user', $client->nama_user) }}" required class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md shadow-sm text-sm px-3 py-1.5 font-bold">
-                                            <input type="text" name="jabatan" value="{{ old('jabatan', $client->jabatan) }}" class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md shadow-sm text-xs px-3 py-1.5" placeholder="Jabatan">
+                                            <input type="text" name="client_name" value="{{ old('client_name', $client->client_name) }}" required class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md shadow-sm text-sm px-3 py-1.5 font-bold">
+                                            <input type="text" name="contact_position" value="{{ old('contact_position', $client->contact_position) }}" class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md shadow-sm text-xs px-3 py-1.5" placeholder="Jabatan">
                                         </div>
                                     </div>
                                     <div>
                                         <label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Kontak Personal</label>
                                         <div class="grid grid-cols-2 gap-2">
-                                            <input type="text" name="no_telpon" value="{{ old('no_telpon', $client->no_telpon) }}" class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md text-sm px-3 py-1.5" placeholder="WA">
+                                            <input type="text" name="contact_phone" value="{{ old('contact_phone', $client->contact_phone) }}" class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md text-sm px-3 py-1.5" placeholder="WA">
                                             <input type="email" name="email" value="{{ old('email', $client->email) }}" class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md text-sm px-3 py-1.5" placeholder="Email">
                                         </div>
                                     </div>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Tgl Lahir</label><input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir', optional($client->tanggal_lahir)->format('Y-m-d')) }}" class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md text-sm px-3 py-1.5"></div>
-                                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Hobi</label><input type="text" name="hobby_client" value="{{ old('hobby_client', $client->hobby_client) }}" class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md text-sm px-3 py-1.5" placeholder="Hobi"></div>
+                                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Tgl Lahir</label><input type="date" name="contact_birth_date" value="{{ old('contact_birth_date', optional($client->contact_birth_date)->format('Y-m-d')) }}" class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md text-sm px-3 py-1.5"></div>
+                                        <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Hobi</label><input type="text" name="contact_hobby" value="{{ old('contact_hobby', $client->contact_hobby) }}" class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md text-sm px-3 py-1.5" placeholder="Hobi"></div>
                                     </div>
-                                    <div class="flex-grow"><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Alamat Rumah</label><textarea name="alamat_user" rows="2" class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md text-sm px-3 py-1.5 resize-none">{{ old('alamat_user', $client->alamat_user) }}</textarea></div>
+                                    <div class="flex-grow"><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Alamat Rumah</label><textarea name="contact_address" rows="2" class="w-full border-2 border-gray-300 focus:border-blue-500 rounded-md text-sm px-3 py-1.5 resize-none">{{ old('contact_address', $client->contact_address) }}</textarea></div>
                                 </div>
                             </div>
                             {{-- KOLOM 2 --}}
@@ -850,16 +836,16 @@
                                     <span class="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">2</span><h4 class="text-orange-800 text-xs font-bold uppercase tracking-wider">Data Perusahaan</h4>
                                 </div>
                                 <div class="p-3 space-y-3 flex-grow">
-                                    <div><label class="block text-[10px] font-bold text-gray-700 mb-1 uppercase">Nama Perusahaan <span class="text-red-500">*</span></label><input type="text" name="nama_perusahaan" value="{{ old('nama_perusahaan', $client->nama_perusahaan) }}" required class="w-full border-2 border-gray-300 focus:border-orange-500 rounded-md text-sm px-3 py-1.5 font-semibold"></div>
-                                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Detail Perusahaan</label><div class="grid grid-cols-2 gap-2"><input type="text" name="area" value="{{ old('area', $client->area) }}" class="w-full border-2 border-gray-300 focus:border-orange-500 rounded-md text-sm px-3 py-1.5" placeholder="Area"><input type="date" name="tanggal_berdiri" value="{{ old('tanggal_berdiri', optional($client->tanggal_berdiri)->format('Y-m-d')) }}" class="w-full border-2 border-gray-300 focus:border-orange-500 rounded-md text-sm px-3 py-1.5"></div></div>
-                                    <div class="flex-grow"><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Alamat Kantor</label><textarea name="alamat_perusahaan" rows="2" class="w-full border-2 border-gray-300 focus:border-orange-500 rounded-md text-sm px-3 py-1.5 resize-none">{{ old('alamat_perusahaan', $client->alamat_perusahaan) }}</textarea></div>
+                                    <div><label class="block text-[10px] font-bold text-gray-700 mb-1 uppercase">Nama Perusahaan <span class="text-red-500">*</span></label><input type="text" name="customer_name" value="{{ old('customer_name', $client->customer_name) }}" required class="w-full border-2 border-gray-300 focus:border-orange-500 rounded-md text-sm px-3 py-1.5 font-semibold"></div><div><label class="block text-[10px] font-bold text-gray-700 mb-1 uppercase">Nama di Sales / Command Center</label><input type="text" name="sales_customer_name" value="{{ old('sales_customer_name', $client->sales_customer_name) }}" class="w-full border-2 border-gray-300 focus:border-orange-500 rounded-md text-sm px-3 py-1.5 font-semibold" placeholder="Nama di Sales (opsional, bila beda)"></div>
+                                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Detail Perusahaan</label><div class="grid grid-cols-2 gap-2"><input type="text" name="area" value="{{ old('area', $client->area) }}" class="w-full border-2 border-gray-300 focus:border-orange-500 rounded-md text-sm px-3 py-1.5" placeholder="Area"><input type="date" name="company_founded_date" value="{{ old('company_founded_date', optional($client->company_founded_date)->format('Y-m-d')) }}" class="w-full border-2 border-gray-300 focus:border-orange-500 rounded-md text-sm px-3 py-1.5"></div></div>
+                                    <div class="flex-grow"><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Alamat Kantor</label><textarea name="company_address" rows="2" class="w-full border-2 border-gray-300 focus:border-orange-500 rounded-md text-sm px-3 py-1.5 resize-none">{{ old('company_address', $client->company_address) }}</textarea></div>
                                     <div class="mt-2 pt-2 border-t border-orange-100">
                                         <label class="block text-[11px] font-bold text-orange-700 mb-1 uppercase">Data Apoteker</label>
                                         <div class="space-y-2">
-                                            <input type="text" name="nama_apoteker" value="{{ old('nama_apoteker', $client->nama_apoteker) }}" class="w-full border-2 border-gray-300 rounded-md text-xs focus:border-orange-500 px-3 py-1.5" placeholder="Nama Apoteker">
+                                            <input type="text" name="pharmacist_name" value="{{ old('pharmacist_name', $client->pharmacist_name) }}" class="w-full border-2 border-gray-300 rounded-md text-xs focus:border-orange-500 px-3 py-1.5" placeholder="Nama Apoteker">
                                             <div class="grid grid-cols-2 gap-2">
-                                                <input type="text" name="nomor_sipa" value="{{ old('nomor_sipa', $client->nomor_sipa) }}" class="w-full border-2 border-gray-300 rounded-md text-xs focus:border-orange-500 px-3 py-1.5" placeholder="Nomor SIPA">
-                                                <input type="text" name="no_telpon_apoteker" value="{{ old('no_telpon_apoteker', $client->no_telpon_apoteker) }}" class="w-full border-2 border-gray-300 rounded-md text-xs focus:border-orange-500 px-3 py-1.5" placeholder="Telp Apoteker">
+                                                <input type="text" name="pharmacist_license_no" value="{{ old('pharmacist_license_no', $client->pharmacist_license_no) }}" class="w-full border-2 border-gray-300 rounded-md text-xs focus:border-orange-500 px-3 py-1.5" placeholder="Nomor SIPA">
+                                                <input type="text" name="pharmacist_phone" value="{{ old('pharmacist_phone', $client->pharmacist_phone) }}" class="w-full border-2 border-gray-300 rounded-md text-xs focus:border-orange-500 px-3 py-1.5" placeholder="Telp Apoteker">
                                             </div>
                                         </div>
                                     </div>
@@ -871,19 +857,19 @@
                                     <span class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">3</span><h4 class="text-emerald-800 text-xs font-bold uppercase tracking-wider">Keuangan</h4>
                                 </div>
                                 <div class="p-3 space-y-3 flex-grow">
-                                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Nama Bank</label><input type="text" name="bank" value="{{ old('bank', $client->bank) }}" class="w-full border-2 border-gray-300 focus:border-emerald-500 rounded-md text-sm px-3 py-1.5"></div>
-                                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">No. Rekening</label><input type="text" name="no_rekening" value="{{ old('no_rekening', $client->no_rekening) }}" class="w-full border-2 border-gray-300 focus:border-emerald-500 rounded-md text-sm px-3 py-1.5 font-mono"></div>
-                                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Atas Nama</label><input type="text" name="nama_di_rekening" value="{{ old('nama_di_rekening', $client->nama_di_rekening) }}" class="w-full border-2 border-gray-300 focus:border-emerald-500 rounded-md text-sm px-3 py-1.5"></div>
+                                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Nama Bank</label><input type="text" name="bank_name" value="{{ old('bank_name', $client->bank_name) }}" class="w-full border-2 border-gray-300 focus:border-emerald-500 rounded-md text-sm px-3 py-1.5"></div>
+                                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">No. Rekening</label><input type="text" name="bank_account_number" value="{{ old('bank_account_number', $client->bank_account_number) }}" class="w-full border-2 border-gray-300 focus:border-emerald-500 rounded-md text-sm px-3 py-1.5 font-mono"></div>
+                                    <div><label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Atas Nama</label><input type="text" name="bank_account_name" value="{{ old('bank_account_name', $client->bank_account_name) }}" class="w-full border-2 border-gray-300 focus:border-emerald-500 rounded-md text-sm px-3 py-1.5"></div>
                                     <div>
                                         <label class="block text-[10px] font-bold text-emerald-700 mb-1 uppercase">Komisi / Rate (%)</label>
                                         <div class="relative">
-                                            <input type="number" step="0.01" name="komisi" value="{{ old('komisi', $client->komisi) }}" class="w-full border-2 border-emerald-100 bg-emerald-50/30 rounded-md text-sm font-bold text-emerald-800 focus:border-emerald-500 px-3 py-1.5" placeholder="Misal: 2.5">
+                                            <input type="number" step="0.01" name="commission_rate" value="{{ old('commission_rate', $client->commission_rate) }}" class="w-full border-2 border-emerald-100 bg-emerald-50/30 rounded-md text-sm font-bold text-emerald-800 focus:border-emerald-500 px-3 py-1.5" placeholder="Misal: 2.5">
                                             <span class="absolute right-3 top-2 text-emerald-600 font-bold text-xs">%</span>
                                         </div>
                                     </div>
                                     <div class="mt-auto pt-3 border-t border-emerald-50">
                                         <label class="block text-[10px] font-bold text-emerald-700 mb-1 uppercase">Saldo Awal</label>
-                                        <div class="relative"><span class="absolute left-3 top-2 text-emerald-600 font-bold text-xs">Rp</span><input type="number" name="saldo_awal" value="{{ old('saldo_awal', $client->saldo_awal) }}" class="w-full pl-8 border-2 border-emerald-100 bg-emerald-50/30 rounded-md text-lg font-bold text-emerald-800 focus:border-emerald-500 px-3 py-1.5"></div>
+                                        <div class="relative"><span class="absolute left-3 top-2 text-emerald-600 font-bold text-xs">Rp</span><input type="number" name="opening_balance" value="{{ old('opening_balance', $client->opening_balance) }}" class="w-full pl-8 border-2 border-emerald-100 bg-emerald-50/30 rounded-md text-lg font-bold text-emerald-800 focus:border-emerald-500 px-3 py-1.5"></div>
                                     </div>
                                 </div>
                             </div>
@@ -909,15 +895,11 @@
                     @csrf @method('PUT')
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Tanggal</label>
-                        <input type="date" name="tanggal_interaksi" id="edit_tanggal" class="w-full border-2 border-gray-300 rounded-md shadow-sm focus:border-blue-500 px-3 py-2 text-sm" required>
+                        <input type="date" name="interaction_date" id="edit_tanggal" class="w-full border-2 border-gray-300 rounded-md shadow-sm focus:border-blue-500 px-3 py-2 text-sm" required>
                     </div>
                     <div id="wrapper_produk">
                         <label class="block text-xs font-bold text-gray-700 mb-1 uppercase" id="label_produk">Nama Produk / Keperluan</label>
                         <input type="text" name="" id="edit_produk" class="w-full border-2 border-gray-300 rounded-md shadow-sm focus:border-blue-500 px-3 py-2 text-sm font-bold">
-                    </div>
-                    <div id="wrapper_entertain" class="hidden space-y-3">
-                        <div><label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Lokasi / Venue</label><input type="text" name="lokasi" id="edit_lokasi" class="w-full border-2 border-gray-300 rounded-md shadow-sm focus:border-orange-500 px-3 py-2 text-sm" placeholder="Lokasi"></div>
-                        <div><label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Partisipan / Klien</label><input type="text" name="peserta" id="edit_peserta" class="w-full border-2 border-gray-300 rounded-md shadow-sm focus:border-orange-500 px-3 py-2 text-sm" placeholder="Peserta"></div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1 uppercase">Nominal (Rp)</label>
@@ -929,7 +911,7 @@
 
                     <div>
                         <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Catatan</label>
-                        <textarea name="catatan" id="edit_catatan" rows="2" class="w-full border-2 border-gray-300 rounded-md shadow-sm focus:border-blue-500 px-3 py-2 text-sm"></textarea>
+                        <textarea name="notes" id="edit_catatan" rows="2" class="w-full border-2 border-gray-300 rounded-md shadow-sm focus:border-blue-500 px-3 py-2 text-sm"></textarea>
                     </div>
                     <div class="pt-2 flex justify-end gap-3">
                         <button type="button" onclick="toggleModal('editTransactionModal')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-bold hover:bg-gray-200">Batal</button>
@@ -961,17 +943,6 @@
                     <div>
                         <span id="view_label_produk" class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Produk / Keperluan</span>
                         <span id="view_produk" class="text-base font-bold text-gray-900 block mt-0.5"></span>
-                    </div>
-
-                    <div id="view_wrapper_entertain" class="hidden grid grid-cols-2 gap-4 bg-orange-50 border border-orange-100 rounded-lg p-3">
-                        <div>
-                            <span class="block text-[10px] font-bold text-orange-700 uppercase tracking-wider">Lokasi / Venue</span>
-                            <span id="view_lokasi" class="text-xs font-semibold text-gray-800"></span>
-                        </div>
-                        <div>
-                            <span class="block text-[10px] font-bold text-orange-700 uppercase tracking-wider">Partisipan / Klien</span>
-                            <span id="view_peserta" class="text-xs font-semibold text-gray-800"></span>
-                        </div>
                     </div>
 
                     <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 grid grid-cols-2 gap-4">
@@ -1045,12 +1016,12 @@
         function showMonthlyDetail(monthName, monthNum, year) {
             // Filter interactions for this month and year
             const filtered = clientInteractions.filter(item => {
-                const date = new Date(item.tanggal_interaksi);
+                const date = new Date(item.interaction_date);
                 return date.getFullYear() === year && (date.getMonth() + 1) === monthNum;
             });
             
             // Sort by date ascending
-            filtered.sort((a, b) => new Date(a.tanggal_interaksi) - new Date(b.tanggal_interaksi));
+            filtered.sort((a, b) => new Date(a.interaction_date) - new Date(b.interaction_date));
             
             document.getElementById('monthly_detail_title').innerText = `Detail Transaksi - ${monthName} ${year}`;
             
@@ -1065,23 +1036,21 @@
                     tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
                     
                     // Format Date
-                    const dateObj = new Date(item.tanggal_interaksi);
+                    const dateObj = new Date(item.interaction_date);
                     const formattedDate = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
                     
                     // Type Badge
                     let typeBadge = '';
-                    let details = `<strong>${item.nama_produk}</strong>`;
+                    let details = `<strong>${item.product_name}</strong>`;
                     let nominal = 0;
                     
-                    if (item.jenis_transaksi === 'IN') {
+                    if (item.transaction_type === 'IN') {
                         typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">Sales (IN)</span>';
-                        nominal = item.nilai_sales > 0 ? item.nilai_sales : item.nilai_kontribusi;
+                        nominal = item.sales_amount > 0 ? item.sales_amount : item.amount;
                         
-                        // Parse Rate if any
-                        let rate = 0;
-                        const match = item.catatan ? item.catatan.match(/\[Rate:([\d\.]+)%?\]/) : null;
-                        if (match) rate = parseFloat(match[1]);
-                        const note = item.catatan ? item.catatan.replace(/\[Rate:[\d\.]+%?\]\s*/, '') : '';
+                        // Rate from commission_rate column (single source of truth)
+                        let rate = parseFloat(item.commission_rate ?? 0) || 0;
+                        const note = item.notes || '';
                         if (rate > 0) {
                             const valueNet = nominal * (rate / 100);
                             details += `<div class="text-[10px] text-gray-500 italic mt-0.5">${note}</div>`;
@@ -1089,20 +1058,17 @@
                         } else if (note) {
                             details += `<div class="text-[10px] text-gray-500 italic mt-0.5">${note}</div>`;
                         }
-                    } else if (item.jenis_transaksi === 'OUT') {
+                    } else if (item.transaction_type === 'OUT') {
                         typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">Support (OUT)</span>';
-                        nominal = item.nilai_kontribusi;
-                        if (item.catatan) {
-                            details += `<div class="text-[10px] text-gray-500 italic mt-0.5">${item.catatan}</div>`;
+                        nominal = item.amount;
+                        if (item.notes) {
+                            details += `<div class="text-[10px] text-gray-500 italic mt-0.5">${item.notes}</div>`;
                         }
-                    } else if (item.jenis_transaksi === 'ENTERTAIN') {
+                    } else if (item.transaction_type === 'ENTERTAIN') {
                         typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800">Aktivitas</span>';
-                        nominal = item.nilai_kontribusi;
-                        if (item.lokasi || item.peserta) {
-                            details += `<div class="text-[10px] text-orange-700 mt-0.5"><i class="fas fa-map-marker-alt mr-1"></i>${item.lokasi || '-'} | <i class="fas fa-users mr-1"></i>${item.peserta || '-'}</div>`;
-                        }
-                        if (item.catatan) {
-                            details += `<div class="text-[10px] text-gray-500 italic mt-0.5">${item.catatan}</div>`;
+                        nominal = item.amount;
+                        if (item.notes) {
+                            details += `<div class="text-[10px] text-gray-500 italic mt-0.5">${item.notes}</div>`;
                         }
                     }
                     
@@ -1148,13 +1114,11 @@
             
             const header = document.getElementById('viewTransHeader');
             const jenisBadge = document.getElementById('view_jenis');
-            const wrapperEntertain = document.getElementById('view_wrapper_entertain');
             const wrapperCommission = document.getElementById('view_wrapper_commission');
             const labelNominal = document.getElementById('view_label_nominal');
             const labelProduk = document.getElementById('view_label_produk');
-            
+
             // Default hidden
-            wrapperEntertain.classList.add('hidden');
             wrapperCommission.classList.add('hidden');
             
             if (data.jenis === 'IN') {
@@ -1182,10 +1146,7 @@
                 jenisBadge.innerText = "Aktivitas (ENTERTAIN)";
                 labelNominal.innerText = "Biaya Aktivitas";
                 labelProduk.innerText = "Keterangan Aktivitas";
-                
-                wrapperEntertain.classList.remove('hidden');
-                document.getElementById('view_lokasi').innerText = data.lokasi || '-';
-                document.getElementById('view_peserta').innerText = data.peserta || '-';
+
                 document.getElementById('view_nominal').innerText = 'Rp ' + data.nominal;
             }
             
@@ -1208,35 +1169,28 @@
             let wrapperProduk = document.getElementById('wrapper_produk'); 
             let labelProduk = document.getElementById('label_produk');
             let inputProduk = document.getElementById('edit_produk');
-            let wrapperEntertain = document.getElementById('wrapper_entertain'); 
-            let inputLokasi = document.getElementById('edit_lokasi');
-            let inputPeserta = document.getElementById('edit_peserta');
             let inputNominal = document.getElementById('edit_nominal');
 
             wrapperProduk.classList.remove('hidden');
-            wrapperEntertain.classList.add('hidden');
             inputProduk.setAttribute('required', 'required');
 
             if (data.jenis === 'IN') {
                 setupModalStyle('blue', 'Edit Sales');
                 labelProduk.innerText = "Nama Produk";
-                inputProduk.name = "nama_produk";
+                inputProduk.name = "product_name";
                 inputProduk.value = data.produk; 
-                inputNominal.name = "nilai_sales"; 
+                inputNominal.name = "sales_amount"; 
             } else if (data.jenis === 'OUT') {
                 setupModalStyle('red', 'Edit Pengeluaran');
                 labelProduk.innerText = "Keperluan Support";
-                inputProduk.name = "keperluan";
+                inputProduk.name = "purpose";
                 inputProduk.value = data.produk.replace('USAGE : ', '');
-                inputNominal.name = "nominal"; 
+                inputNominal.name = "amount"; 
             } else if (data.jenis === 'ENTERTAIN') {
                 setupModalStyle('orange', 'Edit Aktivitas');
                 wrapperProduk.classList.add('hidden');
                 inputProduk.removeAttribute('required');
-                wrapperEntertain.classList.remove('hidden');
-                inputLokasi.value = data.lokasi;
-                inputPeserta.value = data.peserta;
-                inputNominal.name = "nominal"; 
+                inputNominal.name = "amount"; 
             }
 
             function setupModalStyle(color, title) {
@@ -1371,11 +1325,14 @@
                         
                         let countAdded = 0;
                         resData.data.forEach((item) => {
-                            addProductRow('desktop', item.nama_produk, item.nilai_sales, (item.tanggal || dateInput), item.client_id, item.client_name);
+                            addProductRow('desktop', item.product_name, item.sales_amount, (item.date || dateInput), item.client_id, item.customer_name);
                             countAdded++;
                         });
-                        
+
                         document.getElementById('queue_count_desktop').innerText = countAdded;
+                        if (resData.truncated) {
+                            alert(`Menampilkan 500 dari ${resData.total} baris — persempit bulan/RS bila data kurang lengkap.`);
+                        }
                     } else {
                         alert(resData.message || 'Gagal menarik data sales.');
                     }
@@ -1402,7 +1359,7 @@
                 <input type="hidden" name="client_id[]" value="${clientId}">
                 <div class="flex-1 max-w-[120px]">
                     <label class="block text-[10px] font-bold text-gray-700 mb-1">Tanggal</label>
-                    <input type="date" name="tanggal_interaksi[]" class="w-full border border-gray-200 bg-gray-50 rounded-md shadow-sm px-2 py-1.5 text-[11px] text-gray-500 font-semibold" value="${date}" readonly>
+                    <input type="date" name="interaction_date[]" class="w-full border border-gray-200 bg-gray-50 rounded-md shadow-sm px-2 py-1.5 text-[11px] text-gray-500 font-semibold" value="${date}" readonly>
                 </div>
                 <div class="flex-1 max-w-[150px]">
                     <label class="block text-[10px] font-bold text-gray-700 mb-1">Rumah Sakit</label>
@@ -1410,13 +1367,13 @@
                 </div>
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-[10px] font-bold text-gray-700 mb-1">Nama Produk <span class="text-red-500">*</span></label>
-                    <input type="text" name="nama_produk[]" class="w-full border border-gray-200 bg-gray-50 rounded-md shadow-sm px-3 py-1.5 text-sm text-gray-600" value="${produk}" readonly>
+                    <input type="text" name="product_name[]" class="w-full border border-gray-200 bg-gray-50 rounded-md shadow-sm px-3 py-1.5 text-sm text-gray-600" value="${produk}" readonly>
                 </div>
                 <div class="flex-1 max-w-[160px]">
                     <label class="block text-[10px] font-bold text-gray-700 mb-1">Nilai Sales (Rp) <span class="text-red-500">*</span></label>
                     <div class="relative rounded-md shadow-sm">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span class="text-gray-500 text-xs font-bold">Rp</span></div>
-                        <input type="text" name="nilai_sales[]" class="w-full border border-gray-200 bg-gray-50 rounded-md shadow-sm pl-9 pr-3 py-1.5 font-mono text-sm font-bold text-gray-600" value="${valNominal}" readonly>
+                        <input type="text" name="sales_amount[]" class="w-full border border-gray-200 bg-gray-50 rounded-md shadow-sm pl-9 pr-3 py-1.5 font-mono text-sm font-bold text-gray-600" value="${valNominal}" readonly>
                     </div>
                 </div>
                 <div>

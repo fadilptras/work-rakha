@@ -152,11 +152,11 @@
                         <div class="flex justify-between items-start gap-3">
                             <div class="space-y-1">
                                 <h4 class="font-extrabold text-gray-800 text-sm leading-snug">
-                                    {{ $client->nama_perusahaan }}
+                                    {{ $client->customer_name }}
                                 </h4>
                                 <div class="text-xs text-slate-500 font-semibold flex items-center gap-1.5">
                                     <i class="fas fa-user-md text-blue-500"></i>
-                                    <span>{{ $client->nama_user }}</span>
+                                    <span>{{ $client->client_name }}</span>
                                 </div>
                             </div>
                             <a href="{{ route('crm.show', $client->id) }}" class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition shadow-md" title="Lihat Detail">
@@ -175,15 +175,15 @@
                                 </div>
                                 <div>
                                     <span class="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">PIC Sales</span>
-                                    <span class="font-bold text-slate-700 text-[11px]">{{ $client->pic ?? '-' }}</span>
+                                    <span class="font-bold text-slate-700 text-[11px]">{{ $client->ps ?? '-' }}</span>
                                 </div>
                             </div>
                             <div class="space-y-2">
                                 <div>
                                     <span class="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">Kontak Klien</span>
-                                    @if($client->no_telpon)
-                                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $client->no_telpon) }}" target="_blank" class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-bold hover:underline">
-                                            <i class="fab fa-whatsapp text-xs"></i> {{ $client->no_telpon }}
+                                    @if($client->contact_phone)
+                                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $client->contact_phone) }}" target="_blank" class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-bold hover:underline">
+                                            <i class="fab fa-whatsapp text-xs"></i> {{ $client->contact_phone }}
                                         </a>
                                     @else
                                         <span class="text-slate-400 italic text-[11px]">Tidak ada telp</span>
@@ -272,16 +272,16 @@
                         </div>
                         <div>
                             <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Nama User <span class="text-red-500 font-bold">*</span></label>
-                            <input type="text" name="nama_user" required class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Nama Lengkap User">
+                            <input type="text" name="client_name" required class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Nama Lengkap User">
                         </div>
                         <div>
                             <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Jabatan</label>
-                            <input type="text" name="jabatan" class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Jabatan (Ex: Kepala Ruangan)">
+                            <input type="text" name="contact_position" class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Jabatan (Ex: Kepala Ruangan)">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">No. Telp (WA)</label>
-                                <input type="text" name="no_telpon" class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="08xxx">
+                                <input type="text" name="contact_phone" class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="08xxx">
                             </div>
                             <div>
                                 <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Email</label>
@@ -291,16 +291,16 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Tgl Lahir</label>
-                                <input type="date" name="tanggal_lahir" class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all">
+                                <input type="date" name="contact_birth_date" class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all">
                             </div>
                             <div>
                                 <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Hobi</label>
-                                <input type="text" name="hobby_client" class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Ex: Golf">
+                                <input type="text" name="contact_hobby" class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Ex: Golf">
                             </div>
                         </div>
                         <div>
                             <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Alamat Rumah</label>
-                            <textarea name="alamat_user" rows="2" class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all resize-none placeholder-slate-400" placeholder="Alamat rumah..."></textarea>
+                            <textarea name="contact_address" rows="2" class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all resize-none placeholder-slate-400" placeholder="Alamat rumah..."></textarea>
                         </div>
                     </div>
 
@@ -314,7 +314,11 @@
                         </div>
                         <div>
                             <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Nama Instansi/RS <span class="text-red-500 font-bold">*</span></label>
-                            <input type="text" name="nama_perusahaan" required class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Nama Perusahaan / RS">
+                            <input type="text" name="customer_name" required value="{{ old('customer_name') }}" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Nama Perusahaan / RS">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Nama di Sales / Command Center</label>
+                            <input type="text" name="sales_customer_name" value="{{ old('sales_customer_name') }}" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Nama di Sales (opsional, bila beda)">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -323,20 +327,20 @@
                             </div>
                             <div>
                                 <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Tgl Berdiri</label>
-                                <input type="date" name="tanggal_berdiri" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all">
+                                <input type="date" name="company_founded_date" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all">
                             </div>
                         </div>
                         <div>
                             <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Alamat Perusahaan</label>
-                            <textarea name="alamat_perusahaan" rows="2" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all resize-none placeholder-slate-400" placeholder="Lokasi kantor..."></textarea>
+                            <textarea name="company_address" rows="2" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all resize-none placeholder-slate-400" placeholder="Lokasi kantor..."></textarea>
                         </div>
                         <div class="border-t border-slate-200 pt-4">
                             <label class="block text-[11px] font-bold text-orange-800 mb-2.5 uppercase flex items-center gap-1.5"><i class="fas fa-user-md text-sm text-orange-600"></i> Data Apoteker</label>
                             <div class="space-y-2.5">
-                                <input type="text" name="nama_apoteker" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Nama Apoteker">
+                                <input type="text" name="pharmacist_name" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Nama Apoteker">
                                 <div class="grid grid-cols-2 gap-3">
-                                    <input type="text" name="nomor_sipa" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="SIPA">
-                                    <input type="text" name="no_telpon_apoteker" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Telp">
+                                    <input type="text" name="pharmacist_license_no" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="SIPA">
+                                    <input type="text" name="pharmacist_phone" class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Telp">
                                 </div>
                             </div>
                         </div>
@@ -352,23 +356,23 @@
                         </div>
                         <div>
                             <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Nama Bank</label>
-                            <input type="text" name="bank" class="w-full bg-white border border-slate-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="BCA / Mandiri">
+                            <input type="text" name="bank_name" class="w-full bg-white border border-slate-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="BCA / Mandiri">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">No. Rekening</label>
-                                <input type="text" name="no_rekening" class="w-full bg-white border border-slate-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 text-xs px-3.5 py-2.5 rounded-xl font-mono font-bold text-slate-750 transition-all placeholder-slate-400" placeholder="Rekening">
+                                <input type="text" name="bank_account_number" class="w-full bg-white border border-slate-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 text-xs px-3.5 py-2.5 rounded-xl font-mono font-bold text-slate-750 transition-all placeholder-slate-400" placeholder="Rekening">
                             </div>
                             <div>
                                 <label class="block text-[11px] font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">Atas Nama (A/N)</label>
-                                <input type="text" name="nama_di_rekening" class="w-full bg-white border border-slate-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Nama Pemilik">
+                                <input type="text" name="bank_account_name" class="w-full bg-white border border-slate-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 text-xs px-3.5 py-2.5 rounded-xl font-bold text-slate-800 transition-all placeholder-slate-400" placeholder="Nama Pemilik">
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3 border-t border-slate-150 pt-4">
                             <div>
                                 <label class="block text-[11px] font-extrabold text-emerald-800 mb-1.5 uppercase tracking-wider">Komisi (%)</label>
                                 <div class="flex rounded-xl overflow-hidden bg-white border border-slate-300 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100 transition-all">
-                                    <input type="number" step="0.01" name="komisi" class="flex-grow min-w-0 border-0 focus:outline-none text-xs font-bold text-emerald-800 px-3.5 py-2.5 bg-transparent" placeholder="Komisi">
+                                    <input type="number" step="0.01" name="commission_rate" class="flex-grow min-w-0 border-0 focus:outline-none text-xs font-bold text-emerald-800 px-3.5 py-2.5 bg-transparent" placeholder="Komisi">
                                     <span class="bg-slate-100 border-l border-slate-200 text-slate-600 font-bold text-xs px-3 flex items-center select-none shrink-0">%</span>
                                 </div>
                             </div>
@@ -376,7 +380,7 @@
                                 <label class="block text-[11px] font-extrabold text-emerald-800 mb-1.5 uppercase tracking-wider">Saldo Awal</label>
                                 <div class="flex rounded-xl overflow-hidden bg-white border border-slate-300 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-100 transition-all">
                                     <span class="bg-slate-100 border-r border-slate-200 text-slate-600 font-bold text-[11px] px-3 flex items-center select-none shrink-0">Rp</span>
-                                    <input type="number" name="saldo_awal" class="flex-grow min-w-0 border-0 focus:outline-none text-xs font-bold text-emerald-800 px-3.5 py-2.5 bg-transparent" placeholder="0">
+                                    <input type="number" name="opening_balance" class="flex-grow min-w-0 border-0 focus:outline-none text-xs font-bold text-emerald-800 px-3.5 py-2.5 bg-transparent" placeholder="0">
                                 </div>
                             </div>
                         </div>

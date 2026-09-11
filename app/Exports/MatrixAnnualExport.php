@@ -64,8 +64,8 @@ class MatrixAnnualExport implements FromView, WithStyles, WithColumnWidths
         $dataRowsCount = 0;
         foreach($this->clients as $client) {
             $products = $client->interactions->filter(function($i) {
-                return \Carbon\Carbon::parse($i->tanggal_interaksi)->year == $this->year;
-            })->groupBy(fn($item) => $item->nama_produk ?: 'General');
+                return \Carbon\Carbon::parse($i->interaction_date)->year == $this->year;
+            })->groupBy(fn($item) => $item->product_name ?: 'General');
             $count = $products->count();
             $dataRowsCount += ($count > 0 ? $count : 1);
         }

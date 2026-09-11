@@ -173,10 +173,10 @@
                                 <td class="px-6 py-4 align-middle">
                                     <div class="flex flex-col">
                                         <div class="font-bold text-gray-800 text-base group-hover:text-blue-700 transition mb-1">
-                                            {{ $client->nama_perusahaan }}
+                                            {{ $client->customer_name }}
                                         </div>
                                         <div class="text-xs text-gray-500 font-medium flex items-center gap-1">
-                                            <i class="fas fa-user-md text-blue-400"></i> {{ $client->nama_user }}
+                                            <i class="fas fa-user-md text-blue-400"></i> {{ $client->client_name }}
                                         </div>
                                     </div>
                                 </td>
@@ -188,7 +188,7 @@
                                             {{ $client->area ?? 'Non-Area' }}
                                         </span>
                                         <span class="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">
-                                            PIC: {{ $client->pic ?? '-' }}
+                                            PIC: {{ $client->ps ?? '-' }}
                                         </span>
                                     </div>
                                 </td>
@@ -196,10 +196,10 @@
                                 {{-- Kolom 3: Kontak --}}
                                 <td class="px-6 py-4 align-middle">
                                     <div class="space-y-1">
-                                        @if($client->no_telpon)
+                                        @if($client->contact_phone)
                                             <div class="flex items-center gap-2 text-xs text-gray-600">
                                                 <i class="fab fa-whatsapp text-emerald-500 w-4 text-center"></i> 
-                                                <span>{{ $client->no_telpon }}</span>
+                                                <span>{{ $client->contact_phone }}</span>
                                             </div>
                                         @endif
                                         @if($client->email)
@@ -288,8 +288,8 @@
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-700 mb-1 uppercase">Nama & Jabatan <span class="text-red-500">*</span></label>
                                     <div class="space-y-2">
-                                        <input type="text" name="nama_user" required class="w-full border-2 border-blue-100 rounded focus:ring-blue-500 focus:border-blue-500 text-sm px-3 py-2 font-bold" placeholder="Nama Lengkap User">
-                                        <input type="text" name="jabatan" class="w-full border-2 border-blue-100 rounded focus:ring-blue-500 focus:border-blue-500 text-xs px-3 py-2" placeholder="Jabatan (Ex: Kepala Ruangan / Manager)">
+                                        <input type="text" name="client_name" required class="w-full border-2 border-blue-100 rounded focus:ring-blue-500 focus:border-blue-500 text-sm px-3 py-2 font-bold" placeholder="Nama Lengkap User">
+                                        <input type="text" name="contact_position" class="w-full border-2 border-blue-100 rounded focus:ring-blue-500 focus:border-blue-500 text-xs px-3 py-2" placeholder="Jabatan (Ex: Kepala Ruangan / Manager)">
                                     </div>
                                 </div>
 
@@ -297,7 +297,7 @@
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Kontak Personal</label>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" name="no_telpon" class="w-full border-2 border-blue-100 rounded text-sm focus:ring-blue-500 px-3 py-2" placeholder="08xxxx (WA)">
+                                        <input type="text" name="contact_phone" class="w-full border-2 border-blue-100 rounded text-sm focus:ring-blue-500 px-3 py-2" placeholder="08xxxx (WA)">
                                         <input type="email" name="email" class="w-full border-2 border-blue-100 rounded text-sm focus:ring-blue-500 px-3 py-2" placeholder="Email">
                                     </div>
                                 </div>
@@ -306,18 +306,18 @@
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
                                         <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Tanggal Lahir</label>
-                                        <input type="date" name="tanggal_lahir" class="w-full border-2 border-blue-100 rounded text-sm focus:ring-blue-500 px-3 py-2">
+                                        <input type="date" name="contact_birth_date" class="w-full border-2 border-blue-100 rounded text-sm focus:ring-blue-500 px-3 py-2">
                                     </div>
                                     <div>
                                         <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Hobi / Minat</label>
-                                        <input type="text" name="hobby_client" class="w-full border-2 border-blue-100 rounded text-sm focus:ring-blue-500 px-3 py-2" placeholder="Ex: Golf, Kopi">
+                                        <input type="text" name="contact_hobby" class="w-full border-2 border-blue-100 rounded text-sm focus:ring-blue-500 px-3 py-2" placeholder="Ex: Golf, Kopi">
                                     </div>
                                 </div>
 
                                 {{-- ALAMAT --}}
                                 <div class="flex-grow">
                                     <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Alamat Rumah</label>
-                                    <textarea name="alamat_user" rows="2" class="w-full border-2 border-blue-100 rounded text-sm focus:ring-blue-500 px-3 py-2 resize-none" placeholder="Alamat tempat tinggal..."></textarea>
+                                    <textarea name="contact_address" rows="2" class="w-full border-2 border-blue-100 rounded text-sm focus:ring-blue-500 px-3 py-2 resize-none" placeholder="Alamat tempat tinggal..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -331,26 +331,30 @@
                             <div class="p-4 space-y-3 flex-grow">
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-700 mb-1 uppercase">Nama Perusahaan / PT <span class="text-red-500">*</span></label>
-                                    <input type="text" name="nama_perusahaan" required class="w-full border-2 border-orange-100 rounded focus:ring-orange-500 focus:border-orange-500 text-sm px-3 py-2 font-semibold" placeholder="Nama Instansi">
+                                    <input type="text" name="customer_name" required value="{{ old('customer_name') }}" class="w-full border-2 border-orange-100 rounded focus:ring-orange-500 focus:border-orange-500 text-sm px-3 py-2 font-semibold" placeholder="Nama Instansi">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-700 mb-1 uppercase">Nama di Sales / Command Center</label>
+                                    <input type="text" name="sales_customer_name" value="{{ old('sales_customer_name') }}" class="w-full border-2 border-orange-100 rounded focus:ring-orange-500 focus:border-orange-500 text-sm px-3 py-2 font-semibold" placeholder="Nama di Sales (opsional, bila beda)">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Detail Perusahaan</label>
                                     <div class="grid grid-cols-2 gap-2">
                                         <input type="text" name="area" class="w-full border-2 border-orange-100 rounded text-sm focus:ring-orange-500 px-3 py-2" placeholder="Area (Ex: Jaksel)">
-                                        <input type="date" name="tanggal_berdiri" class="w-full border-2 border-orange-100 rounded text-sm focus:ring-orange-500 px-3 py-2" title="Tanggal Berdiri">
+                                        <input type="date" name="company_founded_date" class="w-full border-2 border-orange-100 rounded text-sm focus:ring-orange-500 px-3 py-2" title="Tanggal Berdiri">
                                     </div>
                                 </div>
                                 <div class="flex-grow">
                                     <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Alamat Perusahaan</label>
-                                    <textarea name="alamat_perusahaan" rows="2" class="w-full border-2 border-orange-100 rounded text-sm focus:ring-orange-500 px-3 py-2 resize-none" placeholder="Lokasi kantor..."></textarea>
+                                    <textarea name="company_address" rows="2" class="w-full border-2 border-orange-100 rounded text-sm focus:ring-orange-500 px-3 py-2 resize-none" placeholder="Lokasi kantor..."></textarea>
                                 </div>
                                 <div class="mt-2 pt-2 border-t border-orange-100">
                                     <label class="block text-[11px] font-bold text-orange-700 mb-1 uppercase">Data Apoteker</label>
                                     <div class="space-y-2">
-                                        <input type="text" name="nama_apoteker" class="w-full border-2 border-orange-100 rounded text-xs focus:ring-orange-500 px-3 py-1.5" placeholder="Nama Apoteker">
+                                        <input type="text" name="pharmacist_name" class="w-full border-2 border-orange-100 rounded text-xs focus:ring-orange-500 px-3 py-1.5" placeholder="Nama Apoteker">
                                         <div class="grid grid-cols-2 gap-2">
-                                            <input type="text" name="nomor_sipa" class="w-full border-2 border-orange-100 rounded text-xs focus:ring-orange-500 px-3 py-1.5" placeholder="Nomor SIPA">
-                                            <input type="text" name="no_telpon_apoteker" class="w-full border-2 border-orange-100 rounded text-xs focus:ring-orange-500 px-3 py-1.5" placeholder="Telp Apoteker">
+                                            <input type="text" name="pharmacist_license_no" class="w-full border-2 border-orange-100 rounded text-xs focus:ring-orange-500 px-3 py-1.5" placeholder="Nomor SIPA">
+                                            <input type="text" name="pharmacist_phone" class="w-full border-2 border-orange-100 rounded text-xs focus:ring-orange-500 px-3 py-1.5" placeholder="Telp Apoteker">
                                         </div>
                                     </div>
                                 </div>
@@ -366,21 +370,21 @@
                             <div class="p-4 space-y-3 flex-grow">
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Nama Bank</label>
-                                    <input type="text" name="bank" class="w-full border-2 border-emerald-100 rounded text-sm focus:ring-emerald-500 px-3 py-2" placeholder="Ex: BCA / Mandiri">
+                                    <input type="text" name="bank_name" class="w-full border-2 border-emerald-100 rounded text-sm focus:ring-emerald-500 px-3 py-2" placeholder="Ex: BCA / Mandiri">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase">No. Rekening</label>
-                                    <input type="text" name="no_rekening" class="w-full border-2 border-emerald-100 rounded text-sm focus:ring-emerald-500 px-3 py-2 font-mono" placeholder="123xxxxx">
+                                    <input type="text" name="bank_account_number" class="w-full border-2 border-emerald-100 rounded text-sm focus:ring-emerald-500 px-3 py-2 font-mono" placeholder="123xxxxx">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Atas Nama (A/N)</label>
-                                    <input type="text" name="nama_di_rekening" class="w-full border-2 border-emerald-100 rounded text-sm focus:ring-emerald-500 px-3 py-2" placeholder="Pemilik Rekening">
+                                    <input type="text" name="bank_account_name" class="w-full border-2 border-emerald-100 rounded text-sm focus:ring-emerald-500 px-3 py-2" placeholder="Pemilik Rekening">
                                 </div>
 
                                 <div>
                                     <label class="block text-[11px] font-bold text-emerald-700 mb-1 uppercase">Komisi / Rate (%)</label>
                                     <div class="relative">
-                                        <input type="number" step="0.01" name="komisi" class="w-full border-2 border-emerald-100 bg-emerald-50/30 rounded text-sm font-bold text-emerald-800 focus:ring-emerald-500 px-3 py-1.5" placeholder="Misal: 2.5">
+                                        <input type="number" step="0.01" name="commission_rate" class="w-full border-2 border-emerald-100 bg-emerald-50/30 rounded text-sm font-bold text-emerald-800 focus:ring-emerald-500 px-3 py-1.5" placeholder="Misal: 2.5">
                                         <span class="absolute right-3 top-2 text-emerald-600 font-bold text-xs">%</span>
                                     </div>
                                 </div>
@@ -389,7 +393,7 @@
                                     <label class="block text-[11px] font-bold text-emerald-700 mb-1 uppercase">Saldo Awal</label>
                                     <div class="relative">
                                         <span class="absolute left-3 top-2 text-emerald-600 font-bold text-xs">Rp</span>
-                                        <input type="number" name="saldo_awal" class="w-full pl-8 border-2 border-emerald-100 bg-emerald-50/30 rounded text-lg font-bold text-emerald-800 focus:ring-emerald-500 px-3 py-1.5" placeholder="0">
+                                        <input type="number" name="opening_balance" class="w-full pl-8 border-2 border-emerald-100 bg-emerald-50/30 rounded text-lg font-bold text-emerald-800 focus:ring-emerald-500 px-3 py-1.5" placeholder="0">
                                     </div>
                                 </div>
                             </div>
