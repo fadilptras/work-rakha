@@ -2,49 +2,52 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SoftDeletesFlag;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Client extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletesFlag;
 
     protected $fillable = [
         'user_id',
         'area',
-        'pic',
-        
-        // Informasi Client
-        'nama_user',
+        'ps',
+
+        // Contact person
+        'client_name',
         'email',
-        'no_telpon',
-        'alamat_user', 
-        'tanggal_lahir',
-        'jabatan',
-        'hobby_client',
-        
-        // Informasi Apoteker / Komisi
-        'nama_apoteker',
-        'nomor_sipa',
-        'no_telpon_apoteker',
-        'komisi',
-        
-        // Informasi Perusahaan
-        'nama_perusahaan',
-        'tanggal_berdiri',
-        'alamat_perusahaan', 
-        
-        // Informasi Bank
-        'bank',
-        'no_rekening',
-        'nama_di_rekening',
-        'saldo_awal',
-        
+        'contact_phone',
+        'contact_address',
+        'contact_birth_date',
+        'contact_position',
+        'contact_hobby',
+
+        // Pharmacist / commission
+        'pharmacist_name',
+        'pharmacist_license_no',
+        'pharmacist_phone',
+        'commission_rate',
+
+        // Company
+        'customer_name',
+        'sales_customer_name',
+        'company_founded_date',
+        'company_address',
+
+        // Bank
+        'bank_name',
+        'bank_account_number',
+        'bank_account_name',
+        'opening_balance',
+        'is_deleted',
     ];
 
     protected $casts = [
-        'tanggal_berdiri' => 'date',
-        'tanggal_lahir' => 'date',
+        'company_founded_date' => 'date',
+        'contact_birth_date' => 'date',
+        'is_deleted' => 'boolean',
     ];
 
     /**
@@ -57,7 +60,7 @@ class Client extends Model
 
     public function interactions()
     {
-        return $this->hasMany(Interaction::class)->orderBy('tanggal_interaksi', 'desc');
+        return $this->hasMany(ClientInteraction::class)->orderBy('interaction_date', 'desc');
     }
 
     public function getTotalKontribusiAttribute()
@@ -67,12 +70,12 @@ class Client extends Model
         }
 
         $pemasukan = $this->interactions
-                          ->where('jenis_transaksi', 'IN') 
-                          ->sum('nilai_kontribusi');
-        
+                          ->where('transaction_type', 'IN')
+                          ->sum('amount');
+
         $pengeluaran = $this->interactions
-                            ->where('jenis_transaksi', 'OUT') 
-                            ->sum('nilai_kontribusi');
+                            ->where('transaction_type', 'OUT')
+                            ->sum('amount');
 
         return $pemasukan - $pengeluaran;
     }
