@@ -15,5 +15,7 @@ class SalesForecastSetting extends Model
         'year',
         'month',
         'percentage',
+        'ref_months',
+        'doi',
     ];
 }

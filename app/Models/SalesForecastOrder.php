@@ -16,6 +16,7 @@ class SalesForecastOrder extends Model
         'product_name',
         'forecast_qty',
         'suggested_qty',
+        'moq',
         'user_id',
     ];
 
