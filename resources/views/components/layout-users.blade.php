@@ -2,22 +2,26 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{{ $title ?? 'Dashboard' }}</title>
     
-    <meta name="theme-color" content="#2563eb"> 
+    <meta name="theme-color" content="#1d4ed8"> 
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('favicon-96x96.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
-    <link rel="manifest" href="{{ asset('site.webmanifest') }}?v=3">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}?v=4">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     @stack('styles')
     <style>
+        html { background-color: #1d4ed8; }
+        header { padding-top: env(safe-area-inset-top); }
         #sidebar { transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1), translate 1.5s cubic-bezier(0.25, 1, 0.5, 1); will-change: transform, translate; }
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
