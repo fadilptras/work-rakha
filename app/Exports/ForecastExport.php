@@ -170,7 +170,7 @@ class ForecastExport implements FromView, WithStyles, WithColumnWidths, WithTitl
         $styles["{$colForecast}{$dataStart}:{$colForecast}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0'], 'font' => ['bold' => true, 'color' => ['argb' => '1E40AF']]];
         $styles["{$colBuffer}{$dataStart}:{$colBuffer}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
         $styles["{$colStock}{$dataStart}:{$colStock}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
-        $styles["{$colDoi}{$dataStart}:{$colDoi}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0.0']];
+        $styles["{$colDoi}{$dataStart}:{$colDoi}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
         $styles["{$colMoq}{$dataStart}:{$colMoq}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
         $styles["{$colOrder}{$dataStart}:{$colOrder}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0'], 'font' => ['bold' => true, 'color' => ['argb' => '3730A3']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'EEF2FF']]];
 
@@ -185,3 +185,5 @@ class ForecastExport implements FromView, WithStyles, WithColumnWidths, WithTitl
         return $styles;
     }
 }
+
+

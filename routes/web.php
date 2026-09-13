@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\AdminPengajuanDanaController;
 use App\Http\Controllers\Admin\AdminLemburController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AgendaController;
+use App\Http\Controllers\Sales\SalesForecastController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\StockController;
 
@@ -159,6 +160,13 @@ Route::controller(SalesController::class)->prefix('sales')->name('sales.')->grou
     Route::get('/incentive', 'incentive')->name('incentive');
     Route::post('/incentive/settings', 'saveIncentiveSettings')->name('incentive.settings.save');
     Route::post('/incentive/settings/delete', 'deleteIncentiveSettings')->name('incentive.settings.delete');
+
+    // Forecast
+    Route::get('/forecast', [SalesForecastController::class, 'forecast'])->name('forecast');
+    Route::get('/forecast/export/excel', [SalesForecastController::class, 'exportExcel'])->name('forecast.export.excel');
+    Route::get('/forecast/export/pdf', [SalesForecastController::class, 'exportPdf'])->name('forecast.export.pdf');
+    Route::post('/forecast/store-order', [SalesForecastController::class, 'storeSuggestedOrder'])->name('forecast.store-order');
+    Route::post('/forecast/settings', [SalesForecastController::class, 'saveForecastSettings'])->name('forecast.settings.save');
     Route::get('/stock', [StockController::class, 'index'])->name('stock');
     Route::get('/stock/history', [StockController::class, 'historyIndex'])->name('stock.history_index');
     Route::post('/stock/update-bulk', [StockController::class, 'updateBulk'])->name('stock.update_bulk');

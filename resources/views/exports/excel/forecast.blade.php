@@ -50,7 +50,7 @@
             <td style="border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; font-size: 8pt; font-weight: bold; color: #1e40af;">{{ number_format($item['forecast_qty'], 0, ',', '.') }}</td>
             <td style="border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; font-size: 8pt;">{{ number_format($item['buffer_qty'], 0, ',', '.') }}</td>
             <td style="border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; font-size: 8pt;">{{ number_format($item['stok_tersedia'], 0, ',', '.') }}</td>
-            <td style="border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; font-size: 8pt;">{{ number_format($item['doi_qty'], 1, ',', '.') }} d</td>
+            <td style="border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; font-size: 8pt;">{{ number_format($item['doi_qty'], 0, ',', '.') }} d</td>
             <td style="border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; font-size: 8pt;">{{ number_format($item['moq'], 0, ',', '.') }}</td>
             <td style="border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; font-size: 9pt; font-weight: bold; color: #3730a3; background-color: #eef2ff;">{{ number_format($item['order_qty'], 0, ',', '.') }}</td>
         </tr>
@@ -61,7 +61,8 @@
     <tr>
         <td colspan="{{ count($tigaBulanTerakhir) + 10 }}" style="font-size: 7pt; color: #334155; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 5px;">
             <b>How to read:</b> &nbsp; Average = Total / {{ $activeRefMonths }} &nbsp;|&nbsp; Forecast = Average + {{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}% &nbsp;|&nbsp; Buffer = Average x ({{ $activeDoi ?? 30 }}/30) &nbsp;|&nbsp; DOI = (End Stock / Average) x 30 &nbsp;|&nbsp; Order = IF((End Stock - Forecast) &lt; Buffer) THEN CEILING(Buffer - (End Stock - Forecast), MOQ) ELSE 0
-            @if($ex) <br><span style="color: #1e40af;">Example ({{ Str::limit($ex['nama_produk'], 25) }}): Total {{ number_format($ex['total_qty'],0,',','.') }} / {{ $activeRefMonths }} = {{ number_format($ex['avg_qty'],2,',','.') }} | Forecast {{ number_format($ex['avg_qty'],2,',','.') }} +{{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}% = {{ number_format($ex['forecast_qty'],0,',','.') }} | Buffer {{ number_format($ex['buffer_qty'],0,',','.') }} | DOI {{ number_format($ex['doi_qty'],1,',','.') }}d | Order {{ number_format($ex['order_qty'],0,',','.') }}</span> @endif
+            @if($ex) <br><span style="color: #1e40af;">Example ({{ Str::limit($ex['nama_produk'], 25) }}): Total {{ number_format($ex['total_qty'],0,',','.') }} / {{ $activeRefMonths }} = {{ number_format($ex['avg_qty'],2,',','.') }} | Forecast {{ number_format($ex['avg_qty'],2,',','.') }} +{{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}% = {{ number_format($ex['forecast_qty'],0,',','.') }} | Buffer {{ number_format($ex['buffer_qty'],0,',','.') }} | DOI {{ number_format($ex['doi_qty'],0,',','.') }}d | Order {{ number_format($ex['order_qty'],0,',','.') }}</span> @endif
         </td>
     </tr>
 </table>
+

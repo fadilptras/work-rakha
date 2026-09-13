@@ -12,11 +12,12 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\ForecastExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SalesForecastController extends BaseSalesController
 {
     /**
-     * Hitung data forecast (dipakai bersama untuk view & export agar konsisten).
+     * Build forecast data (used by view and exports).
      *
      * @return array [$stockForecast, $tigaBulanTerakhir, $bulanAktif, $teksStokAkhir, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi]
      */
@@ -24,24 +25,18 @@ class SalesForecastController extends BaseSalesController
     {
         $bulanTersediaUrut = $this->urutanBulan;
 
-        // 1. Tentukan bulan acuan (End Month yang dipilih)
+        // Active month
         $namaBulan = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         $defaultBulanAktif = ($tahun == date('Y')) ? $namaBulan[(int)date('n')] : 'September';
-
         $bulanAktif = ($bulanAktif && in_array($bulanAktif, $bulanTersediaUrut)) ? $bulanAktif : $defaultBulanAktif;
 
-        // Ambil persentase kustom dari database, default 20% jika belum diatur
-        $settingPersen = \App\Models\SalesForecastSetting::where('year', $tahun)
-            ->where('month', $bulanAktif)
-            ->value('percentage');
-        
+        // Percentage
+        $settingPersen = SalesForecastSetting::where('year', $tahun)->where('month', $bulanAktif)->value('percentage');
         $activePercentage = $settingPersen !== null ? (float)$settingPersen : 20.00;
         $multiplier = 1 + ($activePercentage / 100);
 
-        // 2. Ambil N bulan KE BELAKANG SEBELUM bulan aktif yang dipilih (ref_months fleksibel, default 3)
-        $settingRefMonths = \App\Models\SalesForecastSetting::where('year', $tahun)
-            ->where('month', $bulanAktif)
-            ->value('ref_months');
+        // Reference months
+        $settingRefMonths = SalesForecastSetting::where('year', $tahun)->where('month', $bulanAktif)->value('ref_months');
         $activeRefMonths = $settingRefMonths !== null ? (int)$settingRefMonths : 6;
         $activeRefMonths = max(1, min($activeRefMonths, 12));
 
@@ -54,23 +49,19 @@ class SalesForecastController extends BaseSalesController
             $tigaBulanTerakhir = array_slice($bulanTersediaUrut, 0, $activeRefMonths);
         }
 
-        // 2b. Ambil DOI (Days of Inventory, hari) dari database, default 30 jika belum diatur
-        $settingDoi = \App\Models\SalesForecastSetting::where('year', $tahun)
-            ->where('month', $bulanAktif)
-            ->value('doi');
+        // DOI target
+        $settingDoi = SalesForecastSetting::where('year', $tahun)->where('month', $bulanAktif)->value('doi');
         $activeDoi = $settingDoi !== null ? (int)$settingDoi : 30;
         $activeDoi = max(1, min($activeDoi, 365));
 
-        // 3. Fetch actual sales data
+        // Sales data
         $salesRaw = Sales::whereYear('date', $tahun)
             ->whereIn('month', $tigaBulanTerakhir)
-            ->whereNotNull('product_name')
-            ->where('product_name', '!=', '')
+            ->whereNotNull('product_name')->where('product_name', '!=', '')
             ->select('product_name', 'ps', 'month', DB::raw('SUM(qty) as total_qty'), DB::raw('MAX(unit) as satuan'))
             ->groupBy('product_name', 'ps', 'month')
             ->get();
 
-        // Normalisasi nama bulan agar sesuai (case-sensitive) saat diproses oleh Collection PHP
         $salesRaw->transform(function ($item) {
             $item->month = ucfirst(strtolower(trim($item->month)));
             return $item;
@@ -78,33 +69,29 @@ class SalesForecastController extends BaseSalesController
 
         $groupedByProduk = $salesRaw->groupBy('product_name');
         
-        // 4. Fetch Stock Data per tanggal akhir bulan acuan (snapshot harian terakhir ≤ akhir bulan).
-        //    Fallback: stok real-time terbaru jika belum ada snapshot.
+        // Stock snapshot (as of last reference month)
         $stokSaatIni = [];
         $satuanStok = [];
         $namaProdukArray = $groupedByProduk->keys()->toArray();
 
-        // Tanggal akhir bulan terakhir pada 3 bulan referensi (bukan $bulanAktif yang dipilih user)
         $namaBulanIdx = [
             'January' => 1, 'February' => 2, 'March' => 3, 'April' => 4, 'May' => 5, 'June' => 6,
             'July' => 7, 'August' => 8, 'September' => 9, 'October' => 10, 'November' => 11, 'December' => 12,
         ];
-        $bulanReferensiTerakhir = end($tigaBulanTerakhir); // bulan terakhir dari 3 bulan acuan
+        $bulanReferensiTerakhir = end($tigaBulanTerakhir);
         $bulanAkhirTanggal = ($tahun && isset($namaBulanIdx[$bulanReferensiTerakhir]))
-            ? \Carbon\Carbon::create((int)$tahun, $namaBulanIdx[$bulanReferensiTerakhir], 1)->endOfMonth()->format('Y-m-d')
+            ? Carbon::create((int)$tahun, $namaBulanIdx[$bulanReferensiTerakhir], 1)->endOfMonth()->format('Y-m-d')
             : date('Y-m-d');
 
         $products = \App\Models\Product::active()->whereIn('product_name', $namaProdukArray)->get();
 
         if ($products->isNotEmpty()) {
-            // Ambil snapshot harian terakhir per produk dengan tanggal ≤ akhir bulan acuan
             $snapshots = DB::table('daily_stock_histories')
                 ->whereIn('product_id', $products->pluck('id'))
                 ->whereNotNull('product_id')
                 ->where('tanggal', '<=', $bulanAkhirTanggal)
                 ->select('product_id', 'tanggal', 'stok')
-                ->orderBy('product_id')
-                ->orderByDesc('tanggal')
+                ->orderBy('product_id')->orderByDesc('tanggal')
                 ->get();
 
             $snapshotTerakhir = $snapshots->groupBy('product_id')->map(fn($rows) => $rows->first());
@@ -116,33 +103,27 @@ class SalesForecastController extends BaseSalesController
             }
         }
 
-        // 5. Fetch Existing Saved Suggested Orders from Database
+        // Saved orders and MOQ
         $savedOrders = DB::table('sales_forecast_orders')
-            ->where('year', $tahun)
-            ->where('month', $bulanAktif)
-            ->pluck('suggested_qty', 'product_name')
-            ->toArray();
+            ->where('year', $tahun)->where('month', $bulanAktif)
+            ->pluck('suggested_qty', 'product_name')->toArray();
 
-        // MOQ per produk (Minimum Order Quantity)
         $savedMoqs = DB::table('sales_forecast_orders')
-            ->where('year', $tahun)
-            ->where('month', $bulanAktif)
-            ->pluck('moq', 'product_name')
-            ->toArray();
+            ->where('year', $tahun)->where('month', $bulanAktif)
+            ->pluck('moq', 'product_name')->toArray();
 
-        // 6. Calculate Forecast Data
+        // Calculate
         $stockForecast = [];
         foreach ($groupedByProduk as $produk => $rows) {
             $total3Bulan = $rows->sum('total_qty');
             $jumlahBulanTerpakai = count($tigaBulanTerakhir);
             
             $avg = $jumlahBulanTerpakai > 0 ? $total3Bulan / $jumlahBulanTerpakai : 0;
-            $forecast = (int) ceil($avg * $multiplier); // Dinamis menggunakan persentase dari database
+            $forecast = (int) ceil($avg * $multiplier);
 
             $psBreakdown = [];
             foreach ($rows->groupBy('ps') as $psName => $psRows) {
-                $namaPs = $psName ?: 'Others';
-                $psBreakdown[$namaPs] = $psRows->sum('total_qty');
+                $psBreakdown[$psName ?: 'Others'] = $psRows->sum('total_qty');
             }
             arsort($psBreakdown);
 
@@ -155,23 +136,23 @@ class SalesForecastController extends BaseSalesController
             $satuanSales = $satuanRow ? $satuanRow->satuan : 'Pcs';
 
             if ($avg > 0) {
+                // Buffer = Average * (DOI / 30)
                 $buffer = $avg * ($activeDoi / 30);
-                $moq = $savedMoqs[$produk] ?? 1;
-                $moq = max(1, (float)$moq);
+                $moq = max(1, (float)($savedMoqs[$produk] ?? 1));
 
-                // Order/Produksi = IF((endstock - forecast) < buffer) THEN CEILING(buffer - (endstock - forecast), moq) ELSE 0
+                // Order = IF((End Stock - Forecast) < Buffer) THEN CEILING(..., MOQ) ELSE 0
                 $endstock = $stokSaatIni[$produk] ?? 0;
                 $bufferQty = ceil($buffer);
                 if (($endstock - $forecast) < $bufferQty) {
                     $selisih = $bufferQty - ($endstock - $forecast);
-                    $orderQty = $moq > 0 ? (int)(ceil($selisih / $moq) * $moq) : (int)$selisih;
+                    $orderQty = (int)(ceil($selisih / $moq) * $moq);
                 } else {
                     $orderQty = 0;
                 }
 
-                // DOI (Days of Inventory) = berapa hari stok cukup dengan kecepatan penjualan saat ini
-                $doiHari = $avg > 0 ? (($endstock / $avg) * 30) : 0;
-                $doiHari = max(0, round($doiHari, 1));
+                // DOI = (End Stock / Average) * 30
+                $doiHari = $avg > 0 ? ceil(($endstock / $avg) * 30) : 0;
+                $doiHari = max(0, (int)$doiHari);
 
                 $stockForecast[] = [
                     'nama_produk'    => $produk,
@@ -194,7 +175,7 @@ class SalesForecastController extends BaseSalesController
         
         usort($stockForecast, fn($a, $b) => $b['forecast_qty'] <=> $a['forecast_qty']);
 
-        // 7. Format Teks Tanggal Available Stock
+        // Stock date label
         $bulanTerakhirTampil = end($tigaBulanTerakhir);
         $indeksBulanAkhirTampil = array_search($bulanTerakhirTampil, $this->urutanBulan);
         $bulanEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -202,8 +183,7 @@ class SalesForecastController extends BaseSalesController
         if ($indeksBulanAkhirTampil !== false) {
             $mappingAngka = ['January' => 1, 'February' => 2, 'March' => 3, 'April' => 4, 'May' => 5, 'June' => 6, 'July' => 7, 'August' => 8, 'September' => 9, 'October' => 10, 'November' => 11, 'December' => 12];
             $angkaBln = $mappingAngka[$bulanTerakhirTampil] ?? 8;
-            
-            $tanggalAkhir = \Carbon\Carbon::create($tahun, $angkaBln, 1)->endOfMonth();
+            $tanggalAkhir = Carbon::create($tahun, $angkaBln, 1)->endOfMonth();
             $teksStokAkhir = $bulanEn[$angkaBln - 1] . ' ' . $tanggalAkhir->format('d');
         } else {
             $teksStokAkhir = 'August 31';
@@ -248,9 +228,6 @@ class SalesForecastController extends BaseSalesController
         ]);
     }
 
-    /**
-     * Export hasil forecast sebagai Excel (Maatwebsite/Laravel-Excel, FromView).
-     */
     public function exportExcel(Request $request)
     {
         if (!$this->hasForecastAccess()) {
@@ -270,12 +247,40 @@ class SalesForecastController extends BaseSalesController
         );
     }
 
+    public function exportPdf(Request $request)
+    {
+        if (!$this->hasForecastAccess()) {
+            abort(403, 'You do not have access to the Sales Forecast page.');
+        }
+
+        $tahun = $request->input('tahun', date('Y'));
+
+        [$stockForecast, $tigaBulanTerakhir, $bulanAktif, $teksStokAkhir, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi] =
+            $this->buildForecastData($tahun, $request->input('bulan_akhir'));
+
+        $pdf = Pdf::loadView('pdf.sales.forecast', [
+            'stockForecast' => $stockForecast,
+            'tigaBulanTerakhir' => $tigaBulanTerakhir,
+            'bulanAktif' => $bulanAktif,
+            'tahun' => $tahun,
+            'teksStokAkhir' => $teksStokAkhir,
+            'activePercentage' => $activePercentage,
+            'activeRefMonths' => $activeRefMonths,
+            'activeDoi' => $activeDoi,
+            'monthTranslations' => $monthTranslations,
+        ])->setPaper('a4', 'landscape');
+
+        $filename = 'Forecast_' . $bulanAktif . '_' . $tahun . '_' . date('Ymd_His') . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
     public function storeSuggestedOrder(Request $request)
     {
-        $user = \Illuminate\Support\Facades\Auth::user();
+        $user = Auth::user();
         $jabatan = strtolower($user->jabatan ?? '');
-        $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
-        $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing') || \Illuminate\Support\Str::contains($jabatan, 'purchasing');
+        $isAdminGudang = Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
+        $isLegalPurchasing = Str::contains($jabatan, 'legal & purchasing') || Str::contains($jabatan, 'purchasing');
 
         if ($isAdminGudang || $isLegalPurchasing) {
             return response()->json(['success' => false, 'message' => 'Unauthorized action for this role.'], 403);
@@ -294,23 +299,14 @@ class SalesForecastController extends BaseSalesController
             'moq'           => 'nullable|numeric|min:1',
         ]);
 
-        $userId = \Illuminate\Support\Facades\Auth::id();
+        $userId = Auth::id();
         $cleanQty = $request->suggested_qty !== null && $request->suggested_qty !== '' 
                     ? str_replace('.', '', $request->suggested_qty) 
                     : 0;
 
-        \App\Models\SalesForecastOrder::updateOrCreate(
-            [
-                'year'        => $request->tahun,
-                'month'       => $request->bulan_acuan,
-                'product_name' => $request->nama_produk,
-            ],
-            [
-                'forecast_qty'  => $request->forecast_qty,
-                'suggested_qty' => (float)$cleanQty,
-                'moq'           => $request->filled('moq') ? (float)$request->moq : 1,
-                'user_id'       => $userId,
-            ]
+        SalesForecastOrder::updateOrCreate(
+            ['year' => $request->tahun, 'month' => $request->bulan_acuan, 'product_name' => $request->nama_produk],
+            ['forecast_qty' => $request->forecast_qty, 'suggested_qty' => (float)$cleanQty, 'moq' => $request->filled('moq') ? (float)$request->moq : 1, 'user_id' => $userId]
         );
 
         return response()->json(['success' => true, 'message' => 'Saved successfully']);
@@ -331,25 +327,16 @@ class SalesForecastController extends BaseSalesController
         ]);
 
         $data = [];
-        if ($request->filled('percentage')) {
-            $data['percentage'] = $request->percentage;
-        }
-        if ($request->filled('ref_months')) {
-            $data['ref_months'] = $request->ref_months;
-        }
-        if ($request->filled('doi')) {
-            $data['doi'] = $request->doi;
-        }
+        if ($request->filled('percentage')) $data['percentage'] = $request->percentage;
+        if ($request->filled('ref_months')) $data['ref_months'] = $request->ref_months;
+        if ($request->filled('doi')) $data['doi'] = $request->doi;
 
         if (empty($data)) {
             return back()->with('error', 'Tidak ada pengaturan yang dikirim.');
         }
 
-        \App\Models\SalesForecastSetting::updateOrCreate(
-            [
-                'year' => $request->tahun,
-                'month' => $request->bulan_acuan,
-            ],
+        SalesForecastSetting::updateOrCreate(
+            ['year' => $request->tahun, 'month' => $request->bulan_acuan],
             $data
         );
 

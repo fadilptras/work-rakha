@@ -256,7 +256,10 @@
                             </button>
                         @endif
                         <a href="{{ route('sales.forecast.export.excel', ['tahun' => $tahun, 'bulan_akhir' => $bulanAktif]) }}" class="flex-1 md:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap">
-                            <i class="fas fa-file-excel"></i> Export
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                        <a href="{{ route('sales.forecast.export.pdf', ['tahun' => $tahun, 'bulan_akhir' => $bulanAktif]) }}" class="flex-1 md:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap">
+                            <i class="fas fa-file-pdf"></i> PDF
                         </a>
                     </div>
                 </div>
@@ -285,33 +288,33 @@
                                 <tr class="bg-slate-50 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200">
                                     <th class="py-4 px-4 text-slate-500 text-left">Product Name & Contributor</th>
                                     <th class="py-4 px-2 text-center border-l border-slate-100 text-slate-500 leading-tight col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
-                                        <span class="inline-flex items-center justify-center gap-1 cursor-help">MOQ</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">input</span>
+                                        <span class="inline-flex items-center justify-center gap-1 cursor-help">MOQ</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">(input)</span>
                                         <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="col-tooltip-popup text-center">
                                             <span class="font-bold text-slate-200">MOQ</span> - Minimum Order Quantity. The smallest quantity that can be ordered. Final Order is rounded up to the nearest MOQ. Example: need 25, MOQ 10 -&gt; Order 30.
                                         </div>
                                     </th>
-                                    <th class="py-4 px-3 text-center border-l border-slate-100 text-blue-600 leading-tight">Monthly Qty<br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">Last {{ $activeRefMonths }} months</span></th>
+                                    <th class="py-4 px-3 text-center border-l border-slate-100 text-blue-600 leading-tight">Monthly Qty<br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">(Last {{ $activeRefMonths }} months)</span></th>
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-slate-600">Total</th>
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-blue-600 bg-blue-50/60 leading-tight col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
                                         <span class="inline-flex items-center justify-center gap-1 cursor-help">Average</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">/month</span>
                                         <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="col-tooltip-popup">
-                                            <span class="font-bold text-blue-200">Average</span> - typical sales per month.<br><span class="opacity-80">Formula:</span> Average = Total / {{ $activeRefMonths }} months @if($realEx)<br><span class="text-blue-100">Real: {{ number_format($realEx['total_qty'],0,',','.') }} / {{ $activeRefMonths }} = {{ number_format($realEx['avg_qty'],2,',','.') }} /month</span>@endif
+                                            <span class="font-bold text-blue-200">Average</span> - typical sales per month.<br><span class="text-yellow-300">Average = Total / {{ $activeRefMonths }} months</span> @if($realEx)<br><span class="text-blue-100">Real: {{ number_format($realEx['total_qty'],0,',','.') }} / {{ $activeRefMonths }} = {{ number_format($realEx['avg_qty'],2,',','.') }} /month</span>@endif
                                         </div>
                                     </th>
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-emerald-600 bg-emerald-50/60 leading-tight col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
-                                        <span class="inline-flex items-center justify-center gap-1 cursor-help">Forecast</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">+{{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}%</span>
+                                        <span class="inline-flex items-center justify-center gap-1 cursor-help">Forecast</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">(+{{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}%)</span>
                                         <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="col-tooltip-popup">
-                                            <span class="font-bold text-emerald-200">Forecast</span> - predicted demand.<br><span class="opacity-80">Formula:</span> Forecast = Average + {{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}% @if($realEx)<br><span class="text-emerald-100">Real: {{ number_format($realEx['avg_qty'],2,',','.') }} + {{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}% = {{ number_format($realEx['forecast_qty'],0,',','.') }}</span>@endif
+                                            <span class="font-bold text-emerald-200">Forecast</span> - predicted demand.<br><span class="text-yellow-300">Forecast = Average + {{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}%</span> @if($realEx)<br><span class="text-emerald-100">Real: {{ number_format($realEx['avg_qty'],2,',','.') }} + {{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}% = {{ number_format($realEx['forecast_qty'],0,',','.') }}</span>@endif
                                         </div>
                                     </th>
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-amber-600 leading-tight bg-amber-50/60 col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
-                                        <span class="inline-flex items-center justify-center gap-1 cursor-help">Buffer</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">DOI {{ $activeDoi }} days</span>
+                                        <span class="inline-flex items-center justify-center gap-1 cursor-help">Buffer</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">(DOI {{ $activeDoi }} days)</span>
                                         <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="col-tooltip-popup">
-                                            <span class="font-bold text-amber-200">Buffer</span> - safety stock needed to cover the target coverage period.<br><span class="opacity-80">Formula:</span> Buffer = Average x (Target DOI / 30)<br><span class="opacity-80">Example:</span> Average 90, Target DOI {{ $activeDoi }} days -&gt; Buffer = 90 x ({{ $activeDoi }}/30) = {{ number_format(90 * $activeDoi / 30, 0) }}.
+                                            <span class="font-bold text-amber-200">Buffer</span> - safety stock needed to cover the target coverage period.<br><span class="text-yellow-300">Buffer = Average x (Target DOI / 30)</span><br><span class="opacity-80">Example:</span> Average 90, Target DOI {{ $activeDoi }} days -&gt; Buffer = 90 x ({{ $activeDoi }}/30) = {{ number_format(90 * $activeDoi / 30, 0) }}.
                                         </div>
                                     </th>
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-orange-600 leading-tight bg-orange-50/60 col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
-                                        <span class="inline-flex items-center justify-center gap-1 cursor-help">End Stock</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">{{ $teksStokAkhir }}</span>
+                                        <span class="inline-flex items-center justify-center gap-1 cursor-help">End Stock</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">({{ $teksStokAkhir }})</span>
                                         <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="col-tooltip-popup">
                                             <span class="font-bold text-orange-200">End Stock</span> - stock on {{ $teksStokAkhir }}.@if($realEx)<br><span class="text-orange-100">Real: {{ number_format($realEx['stok_tersedia'],0,',','.') }} {{ $realEx['satuan_stok'] }}</span>@endif<br><span class="opacity-80">Source: latest daily snapshot <= end of last reference month.</span>
                                         </div>
@@ -319,13 +322,13 @@
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-rose-600 leading-tight bg-rose-50/60 col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
                                         <span class="inline-flex items-center justify-center gap-1 cursor-help">DOI</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">days</span>
                                         <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="col-tooltip-popup">
-                                            <span class="font-bold text-rose-200">DOI - Days of Inventory</span> - how long stock will last.<br><span class="opacity-80">Formula:</span> DOI = (End Stock / Average) x 30 @if($realEx)<br><span class="text-rose-100">Real: ({{ number_format($realEx['stok_tersedia'],0,',','.') }} / {{ number_format($realEx['avg_qty'],2,',','.') }}) x 30 = {{ number_format($realEx['doi_qty'],1,',','.') }} days</span>@endif
+                                            <span class="font-bold text-rose-200">DOI - Days of Inventory</span> - how long stock will last.<br><span class="text-yellow-300">DOI = (End Stock / Average) x 30</span> @if($realEx)<br><span class="text-rose-100">Real: ({{ number_format($realEx['stok_tersedia'],0,',','.') }} / {{ number_format($realEx['avg_qty'],2,',','.') }}) x 30 = {{ number_format($realEx['doi_qty'],0,',','.') }} days</span>@endif
                                         </div>
                                     </th>
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-indigo-700 leading-tight col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
                                         <span class="inline-flex items-center justify-center gap-1 cursor-help">Order</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">(Production)</span>
                                         <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="col-tooltip-popup col-tooltip-popup--right">
-                                            <span class="font-bold text-indigo-200">Order / Production</span> - quantity to keep stock above Buffer.<br><span class="opacity-80">Formula:</span> IF (End Stock - Forecast) &lt; Buffer THEN Order = CEILING(Buffer - (End Stock - Forecast), MOQ) ELSE 0 @if($realEx)<br><span class="text-indigo-100">Real: ({{ number_format($realEx['stok_tersedia'],0,',','.') }} - {{ number_format($realEx['forecast_qty'],0,',','.') }}) = {{ number_format($realEx['stok_tersedia'] - $realEx['forecast_qty'],0,',','.') }} &lt; {{ number_format($realEx['buffer_qty'],0,',','.') }} ? Order {{ number_format($realEx['order_qty'],0,',','.') }}</span>@endif
+                                            <span class="font-bold text-indigo-200">Order / Production</span> - quantity to keep stock above Buffer.<br><span class="text-yellow-300">IF (End Stock - Forecast) &lt; Buffer THEN Order = CEILING(Buffer - (End Stock - Forecast), MOQ) ELSE 0</span> @if($realEx)<br><span class="text-indigo-100">Real: ({{ number_format($realEx['stok_tersedia'],0,',','.') }} - {{ number_format($realEx['forecast_qty'],0,',','.') }}) = {{ number_format($realEx['stok_tersedia'] - $realEx['forecast_qty'],0,',','.') }} &lt; {{ number_format($realEx['buffer_qty'],0,',','.') }} ? Order {{ number_format($realEx['order_qty'],0,',','.') }}</span>@endif
                                         </div>
                                     </th>
                                 </tr>
@@ -357,15 +360,15 @@
                                         </td>
 
                                         <td class="py-4 px-3 border-l border-slate-100 align-middle">
-                                            <div class="grid grid-cols-3 gap-x-2 gap-y-2 min-w-[150px]">
+                                            <div class="grid grid-cols-3 gap-2 min-w-[150px]">
                                                 @foreach($tigaBulanTerakhir as $bulan)
                                                     @php
                                                         $shortBulan = strtoupper(substr($monthTranslations[$bulan] ?? $bulan, 0, 3));
                                                         $qtyBulan = $item['detail_bulan'][$bulan] ?? 0;
                                                     @endphp
-                                                    <div class="flex flex-col min-w-0 text-center">
-                                                        <span class="text-[9px] font-bold text-blue-500 uppercase tracking-wider">{{ $shortBulan }}</span>
-                                                        <span class="text-[11px] font-bold text-slate-700 mt-0.5">{{ number_format($qtyBulan, 0, ',', '.') }}</span>
+                                                    <div class="flex flex-col min-w-0 text-center border border-slate-200 rounded-lg py-1.5 px-1 bg-slate-50/50">
+                                                        <span class="text-[8px] font-bold text-blue-600 uppercase tracking-wider leading-none">{{ $shortBulan }}</span>
+                                                        <span class="text-[11px] font-bold text-slate-800 mt-1 leading-none">{{ number_format($qtyBulan, 0, ',', '.') }}</span>
                                                     </div>
                                                 @endforeach
                                             </div>
@@ -405,7 +408,7 @@
                                         </td>
 
                                         <td class="py-4 px-3 text-center border-l border-slate-100 bg-rose-50/60 align-middle">
-                                            <div class="font-bold text-rose-600 text-sm text-center">{{ number_format($item['doi_qty'], 1, ',', '.') }}</div>
+                                            <div class="font-bold text-rose-600 text-sm text-center">{{ number_format($item['doi_qty'], 0, ',', '.') }}</div>
                                             <div class="text-[9px] font-medium text-rose-400 mt-0.5 text-center">days</div>
                                         </td>
 
@@ -491,7 +494,7 @@
                                 <div class="flex flex-col min-w-0 border-l border-slate-200 pl-1.5 items-center text-center">
                                     <span class="text-[8px] font-bold text-rose-600 uppercase tracking-wider mb-0.5 truncate text-center">DOI</span>
                                     <span class="text-xs font-black text-rose-600 leading-tight truncate text-center">
-                                        {{ number_format($item['doi_qty'], 1, ',', '.') }}
+                                        {{ number_format($item['doi_qty'], 0, ',', '.') }}
                                     </span>
                                     <span class="text-[8px] font-semibold text-rose-400 truncate text-center">days</span>
                                 </div>
@@ -819,6 +822,7 @@
     </script>
     @endpush
 </x-layout-users>
+
 
 
 
