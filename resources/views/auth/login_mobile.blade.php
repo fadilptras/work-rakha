@@ -6,18 +6,23 @@
   <title>Masuk - Sistem Workflow</title>
 
   <meta name="theme-color" content="#0ea5e9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
   <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('favicon-96x96.png') }}">
   <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+  <link rel="manifest" href="{{ asset('site.webmanifest') }}?v=2">
 
   @vite(['resources/css/app.css', 'resources/js/app.js'])
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <style>
+    html { background-color: #0ea5e9; }
     body { 
       font-family: 'Plus Jakarta Sans', sans-serif; 
       -webkit-tap-highlight-color: transparent; 
       overscroll-behavior-y: none;
+      padding-top: env(safe-area-inset-top);
     }
     
     @keyframes slideUp {
