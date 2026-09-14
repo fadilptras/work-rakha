@@ -172,7 +172,7 @@
         {{-- MAIN WRAPPER: Di sini z-index utama untuk layout dijaga --}}
         <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start mobile-auto-h">
             
-            <div class="w-full flex justify-start mb-3 md:mb-4">
+            <div class="w-full flex justify-start">
                 <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0">
                     <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                     Back to Sales Dashboard
@@ -251,27 +251,27 @@
                         <div class="relative flex-1 min-w-[140px] max-w-sm desktop-block">
                             <div class="icon-left text-slate-400"><i class="fas fa-search text-sm"></i></div>
                             <!-- FIX: Placeholder disingkat agar aman saat kolom menyusut -->
-                            <input type="text" x-model="searchQuery" placeholder="Search Product Name" class="w-full pl-10 pr-9 py-2 text-sm border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm transition-colors" autocomplete="off">
+                            <input type="text" x-model="searchQuery" placeholder="Search Product Name" class="w-full pl-10 pr-9 py-2 text-sm font-semibold border border-slate-200 bg-white hover:bg-slate-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors" autocomplete="off">
                             <button type="button" x-cloak x-show="searchQuery.length > 0" @click="searchQuery = ''" class="icon-clear-search text-slate-400 hover:text-slate-600 transition-colors">
                                 <i class="fas fa-times-circle text-sm"></i>
                             </button>
                         </div>
                         
-                        <button x-show="hasFullAccess" x-cloak @click="openManageModal()" class="shrink-0 inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 hover:text-indigo-700 font-bold py-2 px-4 rounded-lg text-sm transition-all border border-indigo-200 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-100 hover:-translate-y-0.5 cursor-pointer" title="Add a new product with its selling price to the price list catalog">
+                        <button x-show="hasFullAccess" x-cloak @click="openManageModal()" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);" class="shrink-0 inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-bold rounded-lg shadow-md hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap" title="Add a new product with its selling price to the price list catalog">
                             <i class="fas fa-plus"></i> Add to Pricing
                         </button>
 
-                        <div class="shrink-0 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1.5" title="Total Products">
+                        <div class="shrink-0 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1.5" title="Total Products">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total:</span>
                             <span class="text-sm font-black text-blue-600" x-text="filteredProducts.length"></span>
                         </div>
 
-                        <a href="{{ route('sales.pricing.export.pdf') }}" class="shrink-0 inline-flex items-center justify-center w-9 h-9 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg text-base transition-all border border-red-200 hover:border-red-300 hover:shadow-md hover:shadow-red-100 hover:-translate-y-0.5 cursor-pointer" title="Download Price List (PDF)">
-                            <i class="fas fa-file-pdf"></i>
+                        <a href="{{ route('sales.pricing.export.pdf') }}" class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap" title="Download Price List (PDF)">
+                            <i class="fas fa-file-pdf"></i> PDF
                         </a>
 
-                        <a href="{{ route('sales.pricing.export.excel') }}" class="shrink-0 inline-flex items-center justify-center w-9 h-9 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-base transition-all border border-emerald-200 cursor-pointer" title="Download Price List (Excel)">
-                            <i class="fas fa-file-excel"></i>
+                        <a href="{{ route('sales.pricing.export.excel') }}" class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap" title="Download Price List (Excel)">
+                            <i class="fas fa-file-excel"></i> Excel
                         </a>
                     </div>
                 </div>

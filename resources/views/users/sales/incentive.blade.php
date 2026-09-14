@@ -1,4 +1,4 @@
-@php
+﻿@php
     $agent = new \Jenssegers\Agent\Agent();
     $isMobile = $agent->isMobile();
 @endphp
@@ -216,10 +216,10 @@
             const current = sorted[idx];
             if (!current) return '';
             const fmt = (num) => new Intl.NumberFormat('id-ID').format(num);
-            if (basis !== 'nominal') return `Achievement ≥ ${current.min_achievement}%`;
+            if (basis !== 'nominal') return `Achievement â‰¥ ${current.min_achievement}%`;
             if (idx === 0) {
                 if (current.min_achievement % 1000000 === 1) return `Actual Sales > Rp ${fmt(current.min_achievement - 1)}`;
-                return `Actual Sales ≥ Rp ${fmt(current.min_achievement)}`;
+                return `Actual Sales â‰¥ Rp ${fmt(current.min_achievement)}`;
             } else {
                 const nextHigher = sorted[idx - 1];
                 const maxVal = nextHigher.min_achievement % 1000000 === 1 ? nextHigher.min_achievement - 1 : (nextHigher.min_achievement % 1000000 === 0 ? nextHigher.min_achievement - 1000000 : nextHigher.min_achievement - 1);
@@ -242,7 +242,7 @@
             
             {{-- Back Button diletakkan di atas --}}
             <div class="w-full flex justify-start">
-                <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0 shadow-sm">
+                <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0">
                     <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                     Back to Sales Dashboard
                 </a>
@@ -298,30 +298,30 @@
                             <input type="hidden" name="tab" value="monthly">
                             
                             <div class="relative w-[110px] shrink-0">
-                                <select name="bulan" onchange="document.getElementById('filterMonthly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
+                                <select name="bulan" onchange="document.getElementById('filterMonthly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                     @foreach($listBulan as $b)
                                         <option value="{{ $b }}" {{ $bulan == $b ? 'selected' : '' }}>{{ $b }}</option>
                                     @endforeach
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                    <i class="fas fa-chevron-down text-xs"></i>
                                 </div>
                             </div>
                             
                             <div class="relative w-[90px] shrink-0">
-                                <select name="tahun" onchange="document.getElementById('filterMonthly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
+                                <select name="tahun" onchange="document.getElementById('filterMonthly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                     @foreach($listTahun as $t)
                                         <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
                                     @endforeach
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                    <i class="fas fa-chevron-down text-xs"></i>
                                 </div>
                             </div>
                             
                             @if($hasFullAccess)
                             <div class="relative w-[160px] shrink-0">
-                                <select name="ps" onchange="document.getElementById('filterMonthly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
+                                <select name="ps" onchange="document.getElementById('filterMonthly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                     <option value="">All PS</option>
                                     <option value="Sales Team" {{ $psTerpilih == 'Sales Team' ? 'selected' : '' }}>Sales Team</option>
                                     @foreach($listPs as $p)
@@ -329,12 +329,12 @@
                                     @endforeach
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                    <i class="fas fa-chevron-down text-xs"></i>
                                 </div>
                             </div>
                             @endif
                             
-                            <button type="button" @click="showInfoModal = true" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-1.5 px-3 rounded-lg text-xs transition-all border border-slate-200 flex items-center justify-center shrink-0 shadow-sm" title="View Scheme Rules">
+                            <button type="button" @click="showInfoModal = true" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2 px-4 rounded-lg text-sm transition-all border border-slate-200 flex items-center justify-center shrink-0 shadow-sm" title="View Scheme Rules">
                                 <i class="fas fa-info-circle mr-1.5"></i> Rules
                             </button>
                         </form>
@@ -349,7 +349,7 @@
                                 <div class="min-w-0 flex-1">
                                     <div class="font-bold text-slate-800 text-sm truncate">{{ $payout['ps'] }}</div>
                                     <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
-                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[10px]
+                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-xs
                                             @if($payout['achievement_rate'] >= 200) bg-sky-50 text-sky-700
                                             @elseif($payout['achievement_rate'] >= 150) bg-indigo-50 text-indigo-700
                                             @elseif($payout['achievement_rate'] >= 130) bg-emerald-50 text-emerald-700
@@ -358,7 +358,7 @@
                                             @else bg-rose-50 text-rose-700 @endif">
                                             {{ number_format($payout['achievement_rate'], 1, ',', '.') }}%
                                         </span>
-                                        <span class="text-[10px] font-semibold text-slate-500">Rate: {{ number_format($payout['incentive_rate'], 1, ',', '.') }}%</span>
+                                        <span class="text-xs font-semibold text-slate-500">Rate: {{ number_format($payout['incentive_rate'], 1, ',', '.') }}%</span>
                                     </div>
                                 </div>
                                 <div class="text-right shrink-0">
@@ -366,7 +366,7 @@
                                     <div class="text-[9px] font-semibold text-slate-400 mt-0.5">Insentif</div>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100 text-[10px] font-semibold text-slate-500">
+                            <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100 text-xs font-semibold text-slate-500">
                                 <div>Target: <span class="font-bold text-slate-700">Rp {{ number_format($payout['target'], 0, ',', '.') }}</span></div>
                                 <div>Actual: <span class="font-bold text-slate-700">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</span></div>
                             </div>
@@ -445,30 +445,30 @@
                             <input type="hidden" name="tab" value="quarterly">
                             
                             <div class="relative w-[110px] shrink-0">
-                                <select name="triwulan" onchange="document.getElementById('filterQuarterly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
+                                <select name="triwulan" onchange="document.getElementById('filterQuarterly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                     @foreach(['Triwulan I', 'Triwulan II', 'Triwulan III', 'Triwulan IV'] as $q)
                                         <option value="{{ $q }}" {{ $triwulan == $q ? 'selected' : '' }}>{{ $q }}</option>
                                     @endforeach
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                    <i class="fas fa-chevron-down text-xs"></i>
                                 </div>
                             </div>
                             
                             <div class="relative w-[90px] shrink-0">
-                                <select name="tahun" onchange="document.getElementById('filterQuarterly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
+                                <select name="tahun" onchange="document.getElementById('filterQuarterly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                     @foreach($listTahun as $t)
                                         <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
                                     @endforeach
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                    <i class="fas fa-chevron-down text-xs"></i>
                                 </div>
                             </div>
                             
                             @if($hasFullAccess)
                             <div class="relative w-[160px] shrink-0">
-                                <select name="ps" onchange="document.getElementById('filterQuarterly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
+                                <select name="ps" onchange="document.getElementById('filterQuarterly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                     <option value="">All PS</option>
                                     <option value="Sales Team" {{ $psTerpilih == 'Sales Team' ? 'selected' : '' }}>Sales Team</option>
                                     @foreach($listPs as $p)
@@ -476,12 +476,12 @@
                                     @endforeach
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                    <i class="fas fa-chevron-down text-xs"></i>
                                 </div>
                             </div>
                             @endif
                             
-                            <button type="button" @click="showInfoModalTriwulan = true" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-1.5 px-3 rounded-lg text-xs transition-all border border-slate-200 flex items-center justify-center shrink-0 shadow-sm" title="View Scheme Rules">
+                            <button type="button" @click="showInfoModalTriwulan = true" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2 px-4 rounded-lg text-sm transition-all border border-slate-200 flex items-center justify-center shrink-0 shadow-sm" title="View Scheme Rules">
                                 <i class="fas fa-info-circle mr-1.5"></i> Rules
                             </button>
                         </form>
@@ -496,7 +496,7 @@
                                 <div class="min-w-0 flex-1">
                                     <div class="font-bold text-slate-800 text-sm truncate">{{ $payout['ps'] }}</div>
                                     <div class="mt-1.5">
-                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[10px]
+                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-xs
                                             @if($payout['achievement_rate'] >= 200) bg-sky-50 text-sky-700
                                             @elseif($payout['achievement_rate'] >= 150) bg-indigo-50 text-indigo-700
                                             @elseif($payout['achievement_rate'] >= 130) bg-emerald-50 text-emerald-700
@@ -512,7 +512,7 @@
                                     <div class="text-[9px] font-semibold text-slate-400 mt-0.5">Insentif</div>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100 text-[10px] font-semibold text-slate-500">
+                            <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100 text-xs font-semibold text-slate-500">
                                 <div>Target: <span class="font-bold text-slate-700">Rp {{ number_format($payout['target'], 0, ',', '.') }}</span></div>
                                 <div>Actual: <span class="font-bold text-slate-700">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</span></div>
                             </div>
@@ -587,30 +587,30 @@
                             <input type="hidden" name="tab" value="outlet">
                             
                             <div class="relative w-[110px] shrink-0">
-                                <select name="bulan" onchange="document.getElementById('filterOutlet').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
+                                <select name="bulan" onchange="document.getElementById('filterOutlet').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                     @foreach($listBulan as $b)
                                         <option value="{{ $b }}" {{ $bulan == $b ? 'selected' : '' }}>{{ $b }}</option>
                                     @endforeach
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                    <i class="fas fa-chevron-down text-xs"></i>
                                 </div>
                             </div>
                             
                             <div class="relative w-[90px] shrink-0">
-                                <select name="tahun" onchange="document.getElementById('filterOutlet').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
+                                <select name="tahun" onchange="document.getElementById('filterOutlet').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                     @foreach($listTahun as $t)
                                         <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
                                     @endforeach
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                    <i class="fas fa-chevron-down text-xs"></i>
                                 </div>
                             </div>
                             
                             @if($hasFullAccess)
                             <div class="relative w-[160px] shrink-0">
-                                <select name="ps" onchange="document.getElementById('filterOutlet').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
+                                <select name="ps" onchange="document.getElementById('filterOutlet').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
                                     <option value="">All PS</option>
                                     <option value="Sales Team" {{ $psTerpilih == 'Sales Team' ? 'selected' : '' }}>Sales Team</option>
                                     @foreach($listPs as $p)
@@ -618,12 +618,12 @@
                                     @endforeach
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                    <i class="fas fa-chevron-down text-xs"></i>
                                 </div>
                             </div>
                             @endif
                             
-                            <button type="button" @click="showInfoModalOutlet = true" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-1.5 px-3 rounded-lg text-xs transition-all border border-slate-200 flex items-center justify-center shrink-0 shadow-sm" title="View Scheme Rules">
+                            <button type="button" @click="showInfoModalOutlet = true" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2 px-4 rounded-lg text-sm transition-all border border-slate-200 flex items-center justify-center shrink-0 shadow-sm" title="View Scheme Rules">
                                 <i class="fas fa-info-circle mr-1.5"></i> Rules
                             </button>
                         </form>
@@ -638,7 +638,7 @@
                                 <div class="min-w-0 flex-1">
                                     <div class="font-bold text-slate-800 text-sm truncate">{{ $payout['ps'] }}</div>
                                     <div class="mt-1.5">
-                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[10px]
+                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-xs
                                             @if($payout['new_outlets_count'] >= 21) bg-sky-50 text-sky-700
                                             @elseif($payout['new_outlets_count'] >= 16) bg-indigo-50 text-indigo-700
                                             @elseif($payout['new_outlets_count'] >= 11) bg-emerald-50 text-emerald-700
@@ -692,7 +692,7 @@
                                     <td class="px-4 py-3">
                                         <div class="flex flex-wrap gap-1 max-w-md">
                                             @foreach($payout['new_outlets_list'] as $outlet)
-                                                <span class="inline-block bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-md font-medium border border-slate-200/50">
+                                                <span class="inline-block bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-md font-medium border border-slate-200/50">
                                                     {{ $outlet }}
                                                 </span>
                                             @endforeach
@@ -755,7 +755,7 @@
                     
                     <div class="flex flex-wrap items-center gap-2">
                         <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1">
-                            <i class="fas fa-search text-slate-400 text-[10px]"></i>
+                            <i class="fas fa-search text-slate-400 text-xs"></i>
                             <input type="text" x-model="historySearchTahun" placeholder="Search Year..." class="bg-transparent text-xs font-semibold text-slate-700 outline-none w-20">
                         </div>
                         <select x-model="historyFilterBasis" class="border border-slate-200 bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 px-2 py-1 outline-none cursor-pointer">
@@ -776,13 +776,13 @@
                                     <span>Monthly Rules History</span>
                                 </h4>
                             </div>
-                            <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('bulan').length + ' data'"></span>
+                            <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('bulan').length + ' data'"></span>
                         </div>
 
                         <div class="overflow-x-auto w-full">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                    <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
                                         <th class="py-2.5 px-2">Year</th>
                                         <th class="py-2.5 px-2">Month</th>
                                         <th class="py-2.5 px-2">Scheme Model</th>
@@ -881,13 +881,13 @@
                                     <span>Quarterly Rules History</span>
                                 </h4>
                             </div>
-                            <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('triwulan').length + ' data'"></span>
+                            <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('triwulan').length + ' data'"></span>
                         </div>
 
                         <div class="overflow-x-auto w-full">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                    <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
                                         <th class="py-2.5 px-2">Year</th>
                                         <th class="py-2.5 px-2">Quarter</th>
                                         <th class="py-2.5 px-2">Scheme Model</th>
@@ -1005,32 +1005,32 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-diamond mb-2"><i class="fas fa-circle-chevron-up"></i> &ge; 200%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-sky-600 text-lg">3.0%</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-platinum mb-2"><i class="fas fa-circle-chevron-up"></i> &ge; 150%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-indigo-600 text-lg">2.0%</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-gold mb-2"><i class="fas fa-circle-check"></i> &ge; 130%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-yellow-600 text-lg">1.5%</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-check"></i> &ge; 100%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-slate-700 text-lg">1.0%</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-bronze mb-2"><i class="fas fa-circle-check"></i> &ge; 95%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-amber-600 text-lg">0.5%</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all opacity-60 text-center">
                             <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-xmark"></i> &lt; 95%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-rose-600 text-lg">0%</span>
                         </div>
                     </div>
@@ -1062,32 +1062,32 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-diamond mb-2"><i class="fas fa-circle-chevron-up"></i> &ge; 200%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-sky-600 text-base">Rp 6.000.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-platinum mb-2"><i class="fas fa-circle-chevron-up"></i> &ge; 150%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-indigo-600 text-base">Rp 4.500.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-gold mb-2"><i class="fas fa-circle-check"></i> &ge; 130%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-yellow-600 text-base">Rp 3.000.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-check"></i> &ge; 100%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-slate-700 text-base">Rp 1.500.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-bronze mb-2"><i class="fas fa-circle-check"></i> &ge; 95%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-amber-600 text-base">Rp 1.000.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all opacity-60 text-center">
                             <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-xmark"></i> &lt; 95%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-rose-600 text-base">Rp 0</span>
                         </div>
                     </div>
@@ -1119,32 +1119,32 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-diamond mb-2"><i class="fas fa-circle-chevron-up"></i> &ge; 21 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-sky-600 text-base">Rp 1.000.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-platinum mb-2"><i class="fas fa-circle-chevron-up"></i> 16 - 20 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-indigo-600 text-base">Rp 800.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-gold mb-2"><i class="fas fa-circle-check"></i> 11 - 15 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-yellow-600 text-base">Rp 500.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-check"></i> 6 - 10 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-slate-700 text-base">Rp 300.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-bronze mb-2"><i class="fas fa-circle-check"></i> 1 - 5 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-amber-600 text-base">Rp 150.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all opacity-60 text-center">
                             <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-xmark"></i> 0 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
                             <span class="font-bold text-rose-600 text-base">Rp 0</span>
                         </div>
                     </div>
@@ -1208,7 +1208,7 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Year</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Target Year</label>
                                     <select name="tahun" x-model="formTahun" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         @foreach($listTahun as $t)
                                             <option value="{{ $t }}">{{ $t }}</option>
@@ -1216,7 +1216,7 @@
                                     </select>
                                 </div>
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Month</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Target Month</label>
                                     <select name="bulan" x-model="formBulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         @foreach($listBulan as $b)
                                             <option value="{{ $b }}">{{ $b }}</option>
@@ -1224,7 +1224,7 @@
                                     </select>
                                 </div>
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scheme Model</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Scheme Model</label>
                                     <select x-model="formBasisBulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         <option value="nominal">Scheme 1 (Nominal Actual Sales Rp)</option>
                                         <option value="percentage">Scheme 2 (Percentage % vs Target)</option>
@@ -1235,7 +1235,7 @@
                             <div class="flex flex-col gap-3">
                                 <table class="w-full text-left border-collapse">
                                     <thead>
-                                        <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                        <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
                                             <th class="py-2 px-1 w-7/12" x-text="formBasisBulan === 'nominal' ? 'Min. Sales (Rp)' : 'Min. Achievement (%)'"></th>
                                             <th class="py-2 px-1 w-4/12">Incentive (%)</th>
                                             <th class="py-2 px-1 w-1/12 text-center">Action</th>
@@ -1250,7 +1250,7 @@
                                                         <input type="number" name="min_achievement[]" x-model="tier.min_achievement" required class="w-full border border-slate-200 bg-white rounded-lg py-1 text-xs font-semibold text-slate-800 focus:ring-blue-500 focus:border-blue-500 transition-colors" :class="formBasisBulan === 'nominal' ? 'pl-7 pr-3' : 'pl-3 pr-6'">
                                                         <span x-show="formBasisBulan === 'percentage'" class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 text-[11px] font-bold">%</span>
                                                     </div>
-                                                    <div x-show="formBasisBulan === 'nominal' && tier.min_achievement" class="text-[10px] text-blue-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.min_achievement)"></div>
+                                                    <div x-show="formBasisBulan === 'nominal' && tier.min_achievement" class="text-xs text-blue-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.min_achievement)"></div>
                                                 </td>
                                                 <td class="py-1.5 px-1">
                                                     <div class="relative">
@@ -1260,14 +1260,14 @@
                                                 </td>
                                                 <td class="py-1.5 px-1 text-center">
                                                     <button type="button" @click="(formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent).splice(index, 1)" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 inline-flex items-center justify-center transition-colors border border-rose-100">
-                                                        <i class="fas fa-trash-can text-[10px]"></i>
+                                                        <i class="fas fa-trash-can text-xs"></i>
                                                     </button>
                                                 </td>
                                             </tr>
                                         </template>
                                     </tbody>
                                 </table>
-                                <button type="button" @click="(formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-[10px] transition-colors shadow-sm">
+                                <button type="button" @click="(formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-xs transition-colors shadow-sm">
                                     <i class="fas fa-plus"></i> Add Tier
                                 </button>
                             </div>
@@ -1357,7 +1357,7 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Year</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Target Year</label>
                                     <select name="tahun" x-model="formTahun" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         @foreach($listTahun as $t)
                                             <option value="{{ $t }}">{{ $t }}</option>
@@ -1365,7 +1365,7 @@
                                     </select>
                                 </div>
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Quarter</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Target Quarter</label>
                                     <select name="triwulan" x-model="formTriwulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         @foreach(['Triwulan I', 'Triwulan II', 'Triwulan III', 'Triwulan IV'] as $q)
                                             <option value="{{ $q }}">{{ $q }}</option>
@@ -1373,7 +1373,7 @@
                                     </select>
                                 </div>
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scheme Model</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Scheme Model</label>
                                     <select x-model="formBasisTriwulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         <option value="nominal">Scheme 1 (Nominal Actual Sales Rp)</option>
                                         <option value="percentage">Scheme 2 (Percentage % vs Target)</option>
@@ -1384,7 +1384,7 @@
                             <div class="flex flex-col gap-3">
                                 <table class="w-full text-left border-collapse">
                                     <thead>
-                                        <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                        <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
                                             <th class="py-2 px-1 w-6/12" x-text="formBasisTriwulan === 'nominal' ? 'Min. Sales (Rp)' : 'Min. Achievement (%)'"></th>
                                             <th class="py-2 px-1 w-5/12">Bonus Nominal (Rp)</th>
                                             <th class="py-2 px-1 w-1/12 text-center">Action</th>
@@ -1399,25 +1399,25 @@
                                                         <input type="number" name="min_achievement_triwulan[]" x-model="tier.min_achievement" required class="w-full border border-slate-200 bg-white rounded-lg py-1 text-xs font-semibold text-slate-800 focus:ring-blue-500 focus:border-blue-500 transition-colors" :class="formBasisTriwulan === 'nominal' ? 'pl-7 pr-3' : 'pl-3 pr-6'">
                                                         <span x-show="formBasisTriwulan === 'percentage'" class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 text-[11px] font-bold">%</span>
                                                     </div>
-                                                    <div x-show="formBasisTriwulan === 'nominal' && tier.min_achievement" class="text-[10px] text-blue-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.min_achievement)"></div>
+                                                    <div x-show="formBasisTriwulan === 'nominal' && tier.min_achievement" class="text-xs text-blue-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.min_achievement)"></div>
                                                 </td>
                                                 <td class="py-1.5 px-1">
                                                     <div class="relative">
                                                         <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-[11px] font-bold">Rp</span>
                                                         <input type="number" name="incentive_value_triwulan[]" x-model="tier.incentive_value" required class="w-full border border-slate-200 bg-white rounded-lg pl-7 pr-3 py-1 text-xs font-semibold text-slate-800 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                                     </div>
-                                                    <div x-show="tier.incentive_value" class="text-[10px] text-indigo-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.incentive_value)"></div>
+                                                    <div x-show="tier.incentive_value" class="text-xs text-indigo-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.incentive_value)"></div>
                                                 </td>
                                                 <td class="py-1.5 px-1 text-center">
                                                     <button type="button" @click="(formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent).splice(index, 1)" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 inline-flex items-center justify-center transition-colors border border-rose-100">
-                                                        <i class="fas fa-trash-can text-[10px]"></i>
+                                                        <i class="fas fa-trash-can text-xs"></i>
                                                     </button>
                                                 </td>
                                             </tr>
                                         </template>
                                     </tbody>
                                 </table>
-                                <button type="button" @click="(formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-[10px] transition-colors shadow-sm">
+                                <button type="button" @click="(formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-xs transition-colors shadow-sm">
                                     <i class="fas fa-plus"></i> Add Tier
                                 </button>
                             </div>
@@ -1475,7 +1475,7 @@
                     <div class="flex-1 overflow-y-auto pr-1">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
                                     <th class="py-2 px-1">Min. Target</th>
                                     <th class="py-2 px-1 text-right">Incentive / Bonus Value</th>
                                 </tr>
