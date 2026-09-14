@@ -2,26 +2,22 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{ $title ?? 'Dashboard' }}</title>
     
-    <meta name="theme-color" content="#1d4ed8"> 
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2563eb"> 
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('favicon-96x96.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
-    <link rel="manifest" href="{{ asset('site.webmanifest') }}?v=4">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     @stack('styles')
     <style>
-        html { background-color: #1d4ed8; }
-        header { padding-top: env(safe-area-inset-top); }
         #sidebar { transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1), translate 1.5s cubic-bezier(0.25, 1, 0.5, 1); will-change: transform, translate; }
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -30,7 +26,7 @@
     </style>
 </head>
 
-<body class="font-sans flex flex-col min-h-screen overflow-x-hidden" style="background-color: #ede9fe;">
+<body class="font-sans flex flex-col min-h-screen overflow-x-hidden" style="background-color: #1d4ed8;">
 
     {{-- Overlay Sidebar --}}
     <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden" style="background-color: rgba(0, 0, 0, 0.25);"></div>
@@ -75,7 +71,8 @@
 
     <div class="flex-1 flex flex-col min-h-screen relative">
         {{-- Navbar --}}
-        <header class="bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg sticky top-0 z-20 text-white shrink-0">
+        <header class="bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg sticky top-0 z-20 text-white shrink-0"
+    style="padding-top: env(safe-area-inset-top">
             <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="py-3 flex items-center justify-between">
                     <div class="flex items-center">
