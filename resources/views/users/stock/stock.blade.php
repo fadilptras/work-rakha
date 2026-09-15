@@ -166,22 +166,17 @@
             .sync-collapsible { display: none; }
             .sync-collapsible.sync-open { display: block; }
         }
+        @media (max-width: 767px) {
+            .mobile-auto-h { flex: 0 1 auto !important; min-height: 0 !important; }
+        }
     </style>
     @endpush
 
-    <div class="mesh-bg flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16" x-data="stockManager()">
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16 mobile-auto-h" x-data="stockManager()">
         <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start">
+        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start mobile-auto-h">
             
-            <!-- Back Button -->
-            <div class="w-full flex justify-start">
-                <a href="{{ $backRoute }}" class="btn-back-modern shrink-0">
-                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                    {{ $backText }}
-                </a>
-            </div>
-
             <!-- Alert Messages -->
             @if (session('success'))
                 <div class="bg-emerald-100 border border-emerald-400 text-emerald-700 px-4 py-3 rounded-xl relative shadow-md" role="alert">
@@ -194,6 +189,14 @@
                     <span class="block sm:inline font-bold">{{ session('error') }}</span>
                 </div>
             @endif
+
+            <!-- Back Button -->
+            <div class="w-full flex justify-start">
+                <a href="{{ $backRoute }}" class="btn-back-modern shrink-0">
+                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                    {{ $backText }}
+                </a>
+            </div>
 
             <!-- Page Title Card (Desktop Style) -->
             <div class="hidden md:block page-header">
@@ -339,14 +342,14 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fas fa-search text-slate-400 text-sm"></i>
                             </div>
-                            <input type="text" x-model="searchQuery" placeholder="Search Product Name" class="bg-white border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 pr-9 py-2 outline-none shadow-sm transition-colors">
+                            <input type="text" x-model="searchQuery" placeholder="Search Product Name" class="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 pr-8 !py-2 shadow-sm transition-colors">
                             <button type="button" x-show="searchQuery.length > 0" @click="searchQuery = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
                                 <i class="fas fa-times-circle text-xs"></i>
                             </button>
                         </div>
                         @if($canManageStock)
-                        <a href="{{ route('sales.stock.export') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap">
-                            <i class="fas fa-file-excel"></i> Excel
+                        <a href="{{ route('sales.stock.export') }}" class="bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm flex justify-center items-center gap-2 whitespace-nowrap">
+                            <i class="fas fa-file-export"></i> <span class="sm:hidden">Export Excel</span><span class="hidden sm:inline">Export Excel</span>
                         </a>
                         @endif
                     </div>

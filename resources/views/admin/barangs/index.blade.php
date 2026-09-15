@@ -353,14 +353,14 @@
                             </td>
 
                             {{-- Accurate: Nama Barang --}}
-                            <td class="px-6 py-4 text-white font-semibold break-words">
+                            <td class="px-6 py-4 text-zinc-400 break-words">
                                 {{ $barang->product_name }}
                             </td>
 
-                            {{-- Nama Barang (bersih) --}}
+                            {{-- Nama Barang (bersih) - bold --}}
                             <td class="px-6 py-4 break-words">
                                 @if($product && $product->product_name_clean)
-                                    <span class="text-zinc-200">{{ $product->product_name_clean }}</span>
+                                    <span class="text-white font-semibold break-words">{{ $product->product_name_clean }}</span>
                                 @else
                                     <span class="text-zinc-600 italic text-xs">—</span>
                                 @endif

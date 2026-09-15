@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{{ $title ?? 'Dashboard' }}</title>
     
     <meta name="theme-color" content="#2563eb"> 
@@ -18,15 +18,21 @@
     
     @stack('styles')
     <style>
+        html { margin: 0 !important; padding: 0 !important; background-color: #ede9fe; }
+        body { margin: 0 !important; padding: 0 !important; }
         #sidebar { transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1), translate 1.5s cubic-bezier(0.25, 1, 0.5, 1); will-change: transform, translate; }
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* FIX gap di atas navbar */
+        header.sticky { top: 0 !important; margin: 0 !important; padding-top: env(safe-area-inset-top) !important; }
+        /* diagnostic - hapus setelah cek: html=red, body=ungu, header=biru */
+        /* html{outline: 2px solid red} header{outline:2px solid yellow} */
     </style>
 </head>
 
-<body class="font-sans flex flex-col min-h-screen overflow-x-hidden" style="background-color: #1d4ed8;">
+<body class="font-sans flex flex-col min-h-screen m-0 p-0" style="background-color: #ede9fe;">
 
     {{-- Overlay Sidebar --}}
     <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden" style="background-color: rgba(0, 0, 0, 0.25);"></div>
@@ -69,10 +75,9 @@
         </div>
     </div>
 
-    <div class="flex-1 flex flex-col min-h-screen relative">
+    <div class="flex-1 flex flex-col min-h-screen relative m-0 p-0">
         {{-- Navbar --}}
-        <header class="bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg sticky top-0 z-20 text-white shrink-0"
-    style="padding-top: env(safe-area-inset-top">
+        <header class="bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg sticky top-0 z-20 text-white shrink-0 m-0">
             <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="py-3 flex items-center justify-between">
                     <div class="flex items-center">
@@ -90,7 +95,7 @@
         </header>
 
         {{-- Main Content --}}
-        <main class="flex-1 relative">
+        <main class="flex-1 relative m-0 p-0">
             {{ $slot }}
         </main>
     </div>

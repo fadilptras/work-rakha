@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Barang;
 use App\Models\Product;
+use App\Models\ProductPackaging;
 use App\Models\StockLog;
 use App\Models\StockLogDetail;
 use App\Models\DailyStockHistory;
 use App\Imports\StockImport;
 use App\Exports\StockExport;
+use App\Exports\BarangMasterExport;
+use App\Support\PackagingCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
@@ -520,5 +525,425 @@ class StockController extends Controller
         return view('users.stock.dashboard', [
             'title' => 'Dashboard Gudang'
         ]);
+    }
+
+    // ==============================================================
+    // Master Barang (Product Master) — untuk user gudang / sales
+    // Route: sales.stock.barang.*
+    // ==============================================================
+
+    public function barangIndex(Request $request)
+    {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403, 'Anda tidak memiliki hak akses ke halaman Master Barang.');
+        }
+
+        $filter = $request->get('filter', 'all');
+        $search = trim((string) $request->get('search', ''));
+
+        $barangs = Barang::orderBy('product_name')->get();
+        $productMap = Product::whereIn('product_code', $barangs->pluck('product_code')->filter()->unique()->values())
+            ->get()
+            ->keyBy('product_code');
+
+        $isPending = fn ($barang) => ($productMap[$barang->product_code] ?? null)
+            && ($productMap[$barang->product_code]->product_name_clean === null);
+
+        $filtered = $barangs->filter(function ($barang) use ($filter, $isPending) {
+            if ($filter === 'pending') return $isPending($barang);
+            if ($filter === 'done') return !$isPending($barang);
+            return true;
+        });
+
+        if ($search !== '') {
+            $filtered = $filtered->filter(function ($barang) use ($search, $productMap) {
+                $clean = ($productMap[$barang->product_code] ?? null)?->product_name_clean ?? null;
+                $haystack = strtolower(implode(' ', array_filter([
+                    $barang->product_code,
+                    $barang->product_name,
+                    $clean,
+                ])));
+                return str_contains($haystack, strtolower($search));
+            });
+        }
+
+        $total = $barangs->count();
+        $catalog = PackagingCatalog::toArray();
+        $canManageStock = $this->canManageStock();
+
+        // Health summary untuk modal Check Data
+        $health = $this->buildBarangHealth($barangs, $productMap);
+
+        return view('users.stock.manage-barang', compact(
+            'filtered',
+            'productMap',
+            'total',
+            'filter',
+            'search',
+            'catalog',
+            'canManageStock',
+            'health'
+        ));
+    }
+
+    private function buildBarangHealth($barangs, $productMap): array
+    {
+        $missingPackaging = [];
+        $missingClean = [];
+        $missingQty = [];
+        $seen = [];
+        $duplicatesMap = [];
+
+        foreach ($barangs as $barang) {
+            $product = $productMap[$barang->product_code] ?? null;
+            $kode = $barang->product_code ?: '—';
+            $nama = $barang->product_name;
+            $unit = $barang->unit ?: ($product->unit ?? null);
+
+            if (empty($unit)) {
+                $missingPackaging[] = ['kode' => $kode, 'nama' => $nama];
+            } elseif (PackagingCatalog::canFill($unit)) {
+                $pcs = (int) ($product->pcs_per_unit ?? 0);
+                if ($pcs < 1) {
+                    $missingQty[] = ['kode' => $kode, 'nama' => $nama, 'unit' => $unit];
+                }
+            }
+
+            if (!$product || $product->product_name_clean === null) {
+                $missingClean[] = ['kode' => $kode, 'nama' => $nama];
+            }
+
+            $key = strtolower(trim($barang->product_code ?: $barang->product_name));
+            if ($key !== '') {
+                $duplicatesMap[$key][] = ['kode' => $kode, 'nama' => $nama];
+            }
+        }
+
+        $duplicates = array_values(array_filter($duplicatesMap, fn ($g) => count($g) > 1));
+
+        return [
+            'missingPackaging' => $missingPackaging,
+            'missingQty' => $missingQty,
+            'missingClean' => $missingClean,
+            'duplicates' => $duplicates,
+        ];
+    }
+
+    public function storeBarang(Request $request)
+    {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403, 'Unauthorized');
+        }
+        if (!$this->canManageStock()) {
+            return redirect()->route('sales.stock.barang.index')->withErrors(['msg' => 'Anda tidak memiliki hak untuk menambah barang.']);
+        }
+
+        $request->merge([
+            'product_code' => trim((string) $request->input('product_code')) ?: null,
+            'product_name' => trim((string) $request->input('product_name')),
+            'unit' => trim((string) $request->input('unit')) ?: null,
+            'product_name_clean' => trim((string) $request->input('product_name_clean')) ?: null,
+            'fill_unit' => trim((string) $request->input('fill_unit')) ?: null,
+        ]);
+
+        $newCode = trim((string) $request->get('product_code'));
+        $targetProduct = $newCode !== '' && $newCode !== null ? Product::where('product_code', $newCode)->first() : null;
+
+        $request->validate([
+            'product_code' => 'nullable|string|max:50|unique:barangs,product_code',
+            'product_name' => 'required|string|max:255|unique:barangs,product_name',
+            'unit' => 'nullable|string|max:50',
+            'product_name_clean' => [
+                'nullable', 'string', 'max:255',
+                Rule::unique('products', 'product_name_clean')->ignore($targetProduct?->id),
+            ],
+            'pcs_per_unit' => 'nullable|integer|min:0|max:100000',
+            'fill_unit' => 'nullable|string|max:50',
+        ]);
+
+        $barang = Barang::create($request->only(['product_code', 'product_name', 'unit']));
+
+        $this->restoreTombstoneForBarang($barang->product_code, $barang->product_name, $barang->unit);
+        $this->saveKurasiForBarang($barang, $request);
+
+        Cache::forget('barang_list_dropdown');
+
+        return redirect()->route('sales.stock.barang.index')->with('success', 'Barang berhasil ditambahkan.');
+    }
+
+    public function updateBarang(Request $request, Barang $barang)
+    {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403, 'Unauthorized');
+        }
+        if (!$this->canManageStock()) {
+            return redirect()->route('sales.stock.barang.index')->withErrors(['msg' => 'Anda tidak memiliki hak untuk mengubah barang.']);
+        }
+
+        $request->merge([
+            'product_code' => trim((string) $request->input('product_code')) ?: null,
+            'product_name' => trim((string) $request->input('product_name')),
+            'unit' => trim((string) $request->input('unit')) ?: null,
+            'product_name_clean' => trim((string) $request->input('product_name_clean')) ?: null,
+            'fill_unit' => trim((string) $request->input('fill_unit')) ?: null,
+        ]);
+
+        $newCode = trim((string) $request->get('product_code'));
+        $targetProduct = $newCode !== '' && $newCode !== null ? Product::where('product_code', $newCode)->first() : null;
+
+        $request->validate([
+            'product_code' => 'nullable|string|max:50|unique:barangs,product_code,' . $barang->id,
+            'product_name' => 'required|string|max:255|unique:barangs,product_name,' . $barang->id,
+            'unit' => 'nullable|string|max:50',
+            'product_name_clean' => [
+                'nullable', 'string', 'max:255',
+                Rule::unique('products', 'product_name_clean')->ignore($targetProduct?->id),
+            ],
+            'pcs_per_unit' => 'nullable|integer|min:0|max:100000',
+            'fill_unit' => 'nullable|string|max:50',
+        ]);
+
+        $barang->update($request->only(['product_code', 'product_name', 'unit']));
+
+        $this->restoreTombstoneForBarang($barang->product_code, $barang->product_name, $barang->unit);
+        $this->saveKurasiForBarang($barang, $request);
+
+        Cache::forget('barang_list_dropdown');
+
+        return redirect()->route('sales.stock.barang.index')->with('success', 'Barang berhasil diperbarui.');
+    }
+
+    public function destroyBarang(Barang $barang)
+    {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403, 'Unauthorized');
+        }
+        if (!$this->canManageStock()) {
+            abort(403, 'Unauthorized');
+        }
+
+        Product::where('product_code', $barang->product_code)->first()?->softDelete();
+
+        $barang->delete();
+        Cache::forget('barang_list_dropdown');
+
+        return redirect()->route('sales.stock.barang.index')->with('success', 'Barang berhasil dihapus.');
+    }
+
+    public function exportBarang()
+    {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403, 'Unauthorized');
+        }
+
+        return Excel::download(new BarangMasterExport, 'master_barang_' . date('Ymd_His') . '.xlsx');
+    }
+
+    public function bulkUpdateBarang(Request $request)
+    {
+        if (!$this->canManageStock()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.id' => 'required|exists:barangs,id',
+            'items.*.name' => 'nullable|string|max:255',
+            'items.*.unit' => 'nullable|string|max:50',
+            'items.*.pcs_per_unit' => 'nullable|integer|min:0|max:100000',
+            'items.*.fill_unit' => 'nullable|string|max:50',
+        ]);
+
+        $failed = [];
+        $successCount = 0;
+
+        foreach ($request->input('items') as $item) {
+            try {
+                $barang = Barang::find($item['id']);
+                if (!$barang) {
+                    $failed[] = ['id' => $item['id'], 'reason' => 'Not found'];
+                    continue;
+                }
+
+                $newUnit = trim((string) ($item['unit'] ?? ''));
+                $newName = trim((string) ($item['name'] ?? ''));
+
+                // Update unit di barangs bila berubah
+                if ($newUnit !== ($barang->unit ?? '')) {
+                    $barang->unit = $newUnit !== '' ? $newUnit : null;
+                    $barang->save();
+                }
+
+                // Kurasi produk
+                $fakeRequest = new Request([
+                    'product_name_clean' => $newName !== '' ? $newName : null,
+                    'pcs_per_unit' => $item['pcs_per_unit'] ?? null,
+                    'fill_unit' => $item['fill_unit'] ?? null,
+                ]);
+                $this->saveKurasiForBarang($barang, $fakeRequest);
+                $successCount++;
+            } catch (\Throwable $e) {
+                $failed[] = ['id' => $item['id'], 'reason' => $e->getMessage()];
+            }
+        }
+
+        Cache::forget('barang_list_dropdown');
+
+        if (!empty($failed) && $successCount === 0) {
+            return response()->json(['message' => 'Semua item gagal diperbarui.', 'failed' => $failed], 422);
+        }
+
+        $message = $successCount . ' item berhasil diperbarui.';
+        if (!empty($failed)) {
+            $message .= ' ' . count($failed) . ' gagal.';
+        }
+
+        return response()->json(['message' => $message, 'failed' => $failed]);
+    }
+
+    // Packaging JSON endpoints (mirip AdminProductPackagingController tapi dengan guard gudang)
+    public function barangPackagings()
+    {
+        if (!$this->hasAnySalesAccess()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $rows = ProductPackaging::orderBy('id')->get();
+        return response()->json([
+            'data' => $rows->map(fn ($r) => [
+                'id' => $r->id,
+                'packaging' => $r->packaging,
+                'type' => ProductPackaging::typeFromPack($r->pack),
+                'pack' => $r->pack,
+            ]),
+        ]);
+    }
+
+    public function storeBarangPackaging(Request $request)
+    {
+        if (!$this->canManageStock()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $data = $this->validatePackagingData($request);
+        $row = ProductPackaging::create([
+            'packaging' => $data['packaging'],
+            'pack' => $data['pack'],
+            'type' => ProductPackaging::typeFromPack($data['pack']),
+        ]);
+        PackagingCatalog::flush();
+        return response()->json([
+            'message' => 'Aturan packaging "' . $row->packaging . '" ditambahkan.',
+            'data' => [
+                'id' => $row->id,
+                'packaging' => $row->packaging,
+                'type' => ProductPackaging::typeFromPack($row->pack),
+                'pack' => $row->pack,
+            ],
+        ], 201);
+    }
+
+    public function updateBarangPackaging(Request $request, ProductPackaging $packaging)
+    {
+        if (!$this->canManageStock()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $data = $this->validatePackagingData($request, $packaging);
+        $packaging->update([
+            'packaging' => $data['packaging'],
+            'pack' => $data['pack'],
+            'type' => ProductPackaging::typeFromPack($data['pack']),
+        ]);
+        PackagingCatalog::flush();
+        return response()->json([
+            'message' => 'Aturan packaging "' . $packaging->packaging . '" diperbarui.',
+            'data' => [
+                'id' => $packaging->id,
+                'packaging' => $packaging->packaging,
+                'type' => ProductPackaging::typeFromPack($packaging->pack),
+                'pack' => $packaging->pack,
+            ],
+        ]);
+    }
+
+    public function destroyBarangPackaging(ProductPackaging $packaging)
+    {
+        if (!$this->canManageStock()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $name = $packaging->packaging;
+        $packaging->delete();
+        PackagingCatalog::flush();
+        return response()->json(['message' => 'Aturan packaging "' . $name . '" dihapus.']);
+    }
+
+    private function validatePackagingData(Request $request, ?ProductPackaging $ignore = null): array
+    {
+        $validated = $request->validate([
+            'packaging' => ['required', 'string', 'max:100', Rule::unique('product_packaging', 'packaging')->ignore($ignore?->id)],
+            'pack' => ['present', 'array'],
+            'pack.*' => ['required', 'string', 'max:50'],
+        ]);
+        return [
+            'packaging' => trim($validated['packaging']),
+            'pack' => array_values(array_filter(array_map(fn ($u) => trim((string) $u), $validated['pack'] ?? []), fn ($u) => $u !== '')),
+        ];
+    }
+
+    private function saveKurasiForBarang(Barang $barang, Request $request): void
+    {
+        $product = Product::where('product_code', $barang->product_code)->first();
+        if (!$product) {
+            $product = Product::create([
+                'product_code' => $barang->product_code,
+                'product_name' => $barang->product_name,
+                'unit' => $barang->unit,
+                'match_key' => Product::buildMatchKey($barang->product_name),
+                'stock' => 0,
+                'stock_po' => 0,
+            ]);
+        }
+
+        $clean = trim((string) $request->input('product_name_clean'));
+        $fillUnit = trim((string) $request->input('fill_unit'));
+        $pcsPerUnit = $request->input('pcs_per_unit');
+        $unit = $barang->unit !== '' && $barang->unit !== null ? $barang->unit : null;
+
+        $packUnits = $unit !== null ? PackagingCatalog::unitsFor($unit) : [];
+        if (PackagingCatalog::isSingle($unit ?? '')) {
+            $fillUnit = null;
+            $pcsPerUnit = null;
+        } elseif ($fillUnit === '' && isset($packUnits[0])) {
+            $fillUnit = $packUnits[0];
+        }
+
+        if (!empty($packUnits)) {
+            $fillKey = ProductPackaging::normalize($fillUnit);
+            $matched = array_values(array_filter($packUnits, fn ($u) => ProductPackaging::normalize($u) === $fillKey));
+            $fillUnit = $matched[0] ?? $packUnits[0];
+        }
+
+        $packQty = PackagingCatalog::resolvePackQty($unit, (int) ($pcsPerUnit ?? 0));
+
+        $data = [
+            'product_name' => $barang->product_name,
+            'unit' => $unit,
+            'product_name_clean' => $clean !== '' ? $clean : null,
+            'pcs_per_unit' => $packQty,
+            'fill_unit' => $fillUnit !== '' ? $fillUnit : 'Pcs',
+        ];
+        $data['match_key'] = Product::buildMatchKey($data['product_name_clean'] ?: $barang->product_name);
+
+        $product->update($data);
+    }
+
+    private function restoreTombstoneForBarang(?string $productCode, ?string $productName, ?string $unit): bool
+    {
+        $tombstone = Product::where('product_code', $productCode)->trashed()->first();
+        if (!$tombstone) return false;
+        $tombstone->restore([
+            'product_name' => $productName,
+            'unit' => $unit,
+            'match_key' => Product::buildMatchKey($productName),
+        ]);
+        return true;
     }
 }
