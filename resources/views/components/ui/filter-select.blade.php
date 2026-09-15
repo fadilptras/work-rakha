@@ -11,7 +11,7 @@
 <div class="relative {{ $wrapperClass }}">
   <select {{ $selectAttrs->merge(array_merge(['class' => 'ui-filter'], $attrs)) }}>
     @if($placeholder !== null)
-      <option value="">{{ $placeholder }}</option>
+      <option value="" class="text-blue-400 font-normal">{{ $placeholder }}</option>
     @endif
     @foreach($options as $optValue => $optLabel)
       @if(is_int($optValue))
