@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Sales;
 use App\Models\Barang;
 use App\Models\Product;
 use App\Models\ProductPrice;
+use App\Models\User;
 use App\Exports\PricelistExport;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -228,27 +229,45 @@ class SalesPricingController extends BaseSalesController
 
     /**
      * Daftar produk yang dijual (data dari product_prices), urut alfabetis nama.
+     * Koreksi unit_price on-the-fly agar Excel/PDF tidak ngaco bila DB lama selisih.
      */
     private function soldProducts()
     {
         return ProductPrice::active()
             ->orderBy('product_name', 'asc')
-            ->get();
+            ->get()
+            ->each(function ($item) {
+                $pack = max(1, (int) ($item->pack_qty ?: Barang::packCount($item->presentation)));
+                $base = (float) ($item->base_price ?? 0);
+                $item->pack_qty = $pack;
+                $item->unit_price = $pack > 0 ? (int) round($base / $pack) : (int) round($base);
+                // presentation fallback biar tidak kosong di export
+                if (empty($item->presentation)) {
+                    $item->presentation = 'General';
+                }
+            });
     }
 
     /**
      * Normalisasi payload produk untuk frontend (konsisten di semua endpoint pricing).
+     * HNA / PCS selalu dihitung ulang dari HNA / pack_qty agar export & display tidak ngaco
+     * meski data lama unit_price di DB sempat tidak sinkron (selisih 19-500 ditemukan di 6 baris).
      */
     private function serializeProduct(ProductPrice $item): array
     {
+        $pack = max(1, (int) ($item->pack_qty ?: Barang::packCount($item->presentation)));
+        $base = (float) ($item->base_price ?? 0);
+        // HNA/PCS = HNA / isi, bulat ke rupiah terdekat (konsisten dengan form manage)
+        $unit = $pack > 0 ? (int) round($base / $pack) : (int) round($base);
+
         return [
             'id' => $item->id,
             'product_name' => $item->product_name,
             'raw_product_name' => $item->product_name,
             'presentation' => $item->presentation ?: 'General',
-            'pack_qty' => (int) ($item->pack_qty ?: 1),
-            'base_price' => (float) ($item->base_price ?? 0),
-            'unit_price' => (float) ($item->unit_price ?? 0),
+            'pack_qty' => $pack,
+            'base_price' => $base,
+            'unit_price' => $unit,
             'price_id' => $item->id,
         ];
     }

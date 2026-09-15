@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Sales;
 use App\Models\Sales;
 use App\Models\SalesTarget;
 use App\Models\SalesIncentiveSetting;
+use App\Models\SalesOutletClosing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SalesAnalyticsController extends BaseSalesController
 {
@@ -504,10 +506,10 @@ class SalesAnalyticsController extends BaseSalesController
             });
         }
 
-        // Group 1: PDU
+        // Group 1: PDU — terbaru di atas (date desc), terlama di bawah; PS tetap alfabet
         $pduRaw = (clone $query)->select('ps', 'date', 'customer_name', 'product_name', DB::raw('SUM(qty) as total_qty'), DB::raw('SUM(net_price) as total_nett'), DB::raw('MAX(unit) as satuan'))
             ->groupBy('ps', 'date', 'customer_name', 'product_name')
-            ->orderBy('ps')->orderBy('date')->orderBy('customer_name')->orderBy('product_name')
+            ->orderBy('ps')->orderByDesc('date')->orderBy('customer_name')->orderBy('product_name')
             ->get();
 
         $pdu = [];
@@ -564,6 +566,16 @@ class SalesAnalyticsController extends BaseSalesController
         }
         $salesYtd = $salesYtdQuery->select('ps', DB::raw('SUM(net_price) as total_sales'))->groupBy('ps')->get()->keyBy('ps');
 
+        // Paksa urutan tanggal desc (akhir di atas, 01 di bawah) untuk filter & general — jaga-jaga MySQL group/order
+        foreach ($pdu as &$psSort) {
+            uksort($psSort['tanggal'], function ($a, $b) {
+                $ta = strtotime(str_replace('/', '-', $a));
+                $tb = strtotime(str_replace('/', '-', $b));
+                return $tb <=> $ta;
+            });
+        }
+        unset($psSort);
+
         $pduList = array_values($pdu);
         foreach ($pduList as &$psData) {
             $psData['tanggal'] = array_values($psData['tanggal']);
@@ -614,7 +626,39 @@ class SalesAnalyticsController extends BaseSalesController
             $outlet[$ps]['total_nett'] += $row->total_nett;
         }
 
-        foreach ($outlet as &$psData) {
+        // Ambil data closing rate & count untuk outlet jika tabel tersedia
+        $outletClosings = Schema::hasTable('sales_outlet_closings')
+            ? SalesOutletClosing::where('year', $tahun)->whereRaw('LOWER(month) = ?', [strtolower($bulan)])->get()
+            : collect();
+        $closingMap = [];
+        foreach ($outletClosings as $oc) {
+            $keyWithPs = strtolower(trim($oc->ps ?? '')) . '|' . strtolower(trim($oc->customer_name));
+            $keyOnlyCust = strtolower(trim($oc->customer_name));
+            $closingMap[$keyWithPs] = $oc;
+            if (!isset($closingMap[$keyOnlyCust])) {
+                $closingMap[$keyOnlyCust] = $oc;
+            }
+        }
+
+        foreach ($outlet as $psName => &$psData) {
+            foreach ($psData['customer'] as $custName => &$cData) {
+                $k1 = strtolower(trim($psName)) . '|' . strtolower(trim($custName));
+                $k2 = strtolower(trim($custName));
+                $ocRecord = $closingMap[$k1] ?? $closingMap[$k2] ?? null;
+
+                // closing_count dipakai sebagai Add. Closing Sales (input outlet), closing_rate legacy
+                $addClosing = $ocRecord ? (float) $ocRecord->closing_rate : null;
+                $addSales = $ocRecord ? (float) $ocRecord->closing_count : null;
+                // prioritas Add. Closing Sales (closing_count) sebagai add utama
+                $addForTotal = $addSales ?? $addClosing;
+
+                $cData['closing_rate'] = $addClosing;
+                $cData['closing_count'] = $addSales;
+                // alias baru untuk Tab Closing
+                $cData['add_closing'] = $addClosing;
+                $cData['add_closing_sales'] = $addSales;
+                $cData['total_akhir'] = ($cData['nett'] ?? 0) + (float) ($addForTotal ?? 0);
+            }
             $psData['customer'] = array_values($psData['customer']);
             usort($psData['customer'], fn($a, $b) => $b['nett'] <=> $a['nett']);
         }
@@ -644,6 +688,54 @@ class SalesAnalyticsController extends BaseSalesController
             'pdu' => $pduList,
             'outlet' => array_values($outlet),
             'product' => array_values($product)
+        ]);
+    }
+
+    public function updateOutletClosing(Request $request)
+    {
+        if (!$this->hasFullSalesAccess()) {
+            return response()->json(['error' => 'Unauthorized. Hanya pengguna dengan akses penuh yang dapat mengubah data closing.'], 403);
+        }
+
+        $validated = $request->validate([
+            'year' => 'required|integer',
+            'month' => 'required|string',
+            'ps' => 'nullable|string',
+            'customer_name' => 'required|string',
+            // Add. Closing (Rp) = dulu closing_rate % -> sekarang amount tanpa max 100
+            'closing_rate' => 'nullable|numeric|min:0',
+            // Add. Closing Sales = dulu closing_count
+            'closing_count' => 'nullable|integer|min:0',
+            // alias baru untuk Tab Closing (opsional, fallback)
+            'add_closing' => 'nullable|numeric|min:0',
+            'add_closing_sales' => 'nullable|integer|min:0',
+        ]);
+
+        // normalisasi alias -> simpan tetap ke kolom closing_rate / closing_count
+        if (isset($validated['add_closing']) && $validated['add_closing'] !== null) {
+            $validated['closing_rate'] = $validated['add_closing'];
+        }
+        if (isset($validated['add_closing_sales']) && $validated['add_closing_sales'] !== null) {
+            $validated['closing_count'] = $validated['add_closing_sales'];
+        }
+
+        $closing = SalesOutletClosing::updateOrCreate(
+            [
+                'year' => $validated['year'],
+                'month' => $validated['month'],
+                'ps' => $validated['ps'] ?? null,
+                'customer_name' => $validated['customer_name'],
+            ],
+            [
+                'closing_rate' => $validated['closing_rate'],
+                'closing_count' => $validated['closing_count'],
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data closing outlet berhasil disimpan.',
+            'data' => $closing
         ]);
     }
 

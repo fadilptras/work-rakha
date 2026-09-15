@@ -85,6 +85,28 @@ class SphQuotation extends Model
         return preg_replace('/^\d+/', (string) $newSequence, $currentNumber) ?? $currentNumber;
     }
 
+    /**
+     * Accessor: selalu kembalikan ps_phone dalam format 08...
+     * agar PDF/detail/history konsisten meski data lama tersimpan
+     * dengan format +62 / 62 / 8.
+     */
+    public function getPsPhoneAttribute($value): ?string
+    {
+        if ($value === null || trim((string) $value) === '' || trim((string) $value) === '-') {
+            return $value;
+        }
+        $digits = preg_replace('/[^0-9]/', '', (string) $value);
+        if ($digits === '' || $digits === null) {
+            return $value;
+        }
+        if (str_starts_with($digits, '62')) {
+            $digits = '0' . substr($digits, 2);
+        } elseif (str_starts_with($digits, '8')) {
+            $digits = '0' . $digits;
+        }
+        return $digits;
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'user_id');

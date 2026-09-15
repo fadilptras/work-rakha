@@ -117,7 +117,7 @@
         <tr>
             <td style="border: none; padding: 2px 0;">Telp.</td>
             <td style="border: none; padding: 2px 0;">:</td>
-            <td style="border: none; padding: 2px 0;"><strong>{{ $sph->ps_phone ?? '+62 813-2191-9149' }}</strong></td>
+            <td style="border: none; padding: 2px 0;"><strong>{{ $sph->ps_phone ?? '0813-2191-9149' }}</strong></td>
         </tr>
     </table>
     <p style="margin-bottom: 15px;">Demikian Penawaran ini kami sampaikan, atas perhatian dan kerjasamanya kami ucapkan terima kasih.</p>

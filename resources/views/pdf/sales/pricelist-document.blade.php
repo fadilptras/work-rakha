@@ -45,9 +45,9 @@
                 <tr>
                     <td style="text-align: center;">{{ $i + 1 }}</td>
                     <td>{{ $item->product_name }}</td>
-                    <td>{{ $item->presentation ?: 'General' }}</td>
-                    <td style="text-align: right;">Rp {{ number_format($item->base_price ?? 0, 0, ',', '.') }}</td>
-                    <td style="text-align: right;">Rp {{ number_format($item->unit_price ?? 0, 0, ',', '.') }}</td>
+                    <td style="text-align: center;">{{ $item->presentation ?: 'General' }}</td>
+                    <td style="text-align: center;">Rp {{ number_format($item->base_price ?? 0, 0, ',', '.') }}</td>
+                    <td style="text-align: center;">Rp {{ number_format($item->unit_price ?? 0, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>

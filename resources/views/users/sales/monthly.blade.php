@@ -72,8 +72,11 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(226, 232, 240, 0.8);
             border-radius: 1.5rem;
-            padding: 1rem 1.5rem;
+            padding: 1.5rem;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+        }
+        @media (max-width: 640px) {
+            .glass-panel { padding: 1.1rem !important; }
         }
         
         .main-tab-content { display: block; animation: fadeIn 0.4s ease-in-out; }
@@ -83,6 +86,16 @@
         .overflow-x-auto::-webkit-scrollbar-track, .overflow-y-auto::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
         .overflow-x-auto::-webkit-scrollbar-thumb, .overflow-y-auto::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .overflow-x-auto::-webkit-scrollbar-thumb:hover, .overflow-y-auto::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Hide number input spinners (arrows up/down) */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
 
         @media (max-width: 640px) {
             .glass-panel { padding: 0.9rem 0.9rem; border-radius: 1.1rem; }
@@ -370,12 +383,9 @@
         <div class="mesh-bg"></div>
         <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 flex flex-col gap-2.5 md:gap-4">
 
-        {{-- Back Button --}}
+        {{-- Back Button — unified component --}}
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
-            <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0">
-                <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                Back to Sales Dashboard
-            </a>
+            <x-ui.back-button href="{{ route('sales.index') }}" label="Back to Sales Dashboard" />
         </div>
 
         {{-- =========================================================================
@@ -452,15 +462,18 @@
 
                 {{-- Sub Tabs --}}
                 <div id="monthNavExtra" class="relative">
-                    <div class="grid grid-cols-3 gap-1 sm:gap-2 bg-white p-1.5 sm:p-2.5 rounded-3xl shadow-sm border border-slate-200" id="sub-tabs-container">
-                        <button class="month-sub-tab active" data-target="m-view-pdu" onclick="switchMonthSubTab('m-view-pdu', this)">
+                    <div class="grid grid-cols-4 gap-1 sm:gap-2 bg-white p-1.5 sm:p-2.5 rounded-3xl shadow-sm border border-slate-200" id="sub-tabs-container">
+                        <button class="month-sub-tab active" data-target="m-view-pdu" onclick="switchMonthSubTab('m-view-pdu', this)" title="by PDU — Sales per Date" aria-label="by PDU">
                             <i class="fas fa-list"></i> <span>PDU</span>
                         </button>
-                        <button class="month-sub-tab" data-target="m-view-outlet" onclick="switchMonthSubTab('m-view-outlet', this)">
+                        <button class="month-sub-tab" data-target="m-view-outlet" onclick="switchMonthSubTab('m-view-outlet', this)" title="by outlet — Sales per Customer" aria-label="by outlet">
                             <i class="fas fa-store"></i> <span class="md:hidden lg:inline">Customer</span><span class="hidden md:inline lg:hidden">Cust</span>
                         </button>
-                        <button class="month-sub-tab" data-target="m-view-product" onclick="switchMonthSubTab('m-view-product', this)">
+                        <button class="month-sub-tab" data-target="m-view-product" onclick="switchMonthSubTab('m-view-product', this)" title="by product — Sales per Product" aria-label="by product">
                             <i class="fas fa-box"></i> <span class="md:hidden lg:inline">Product</span><span class="hidden md:inline lg:hidden">Prod</span>
+                        </button>
+                        <button class="month-sub-tab" data-target="m-view-closing" onclick="switchMonthSubTab('m-view-closing', this)" title="Closing — Est. Closing" aria-label="Closing">
+                            <i class="fas fa-clipboard-check text-[14px]"></i>
                         </button>
                     </div>
                 </div>
@@ -475,9 +488,9 @@
         </div>
         </div>
 
-        {{-- Container ini tidak lagi di-hide (class 'hidden' dihapus agar langsung ter-render) --}}
+        {{-- Container detail — hiasan biru konsisten dengan forecast --}}
         <div id="monthly-detail-container" class="space-y-4 transition-all duration-500">
-            <div class="glass-panel border-t-0 shadow-lg !rounded-3xl">
+            <x-ui.glass-card padding="none" class="border-t-4 border-t-blue-500 shadow-lg !rounded-3xl !p-6">
                 {{-- Tampilan 1: Data PDU --}}
                 <div id="m-view-pdu" class="month-view">
                     {{-- Ringkasan cepat (mobile only) --}}
@@ -521,7 +534,7 @@
                         </div>
                     </div>
                     
-                    <div class="hidden md:block overflow-x-auto max-h-[600px] border border-slate-200 rounded-xl mt-4">
+                    <div class="hidden md:block overflow-x-auto border border-slate-200 rounded-xl mt-4 md:mt-6">
                         <table class="w-full text-sm text-left whitespace-nowrap">
                             <thead class="table-header sticky top-0 z-10 shadow-sm bg-slate-50/80 backdrop-blur-sm">
                                 <tr>
@@ -538,7 +551,7 @@
                         <i class="fas fa-search"></i>
                         <input type="text" id="m-search-pdu" placeholder="Cari tanggal / sales / customer..." oninput="filterAccCards('m-cards-pdu', this.value)">
                     </div>
-                    <div id="m-cards-pdu" class="md:hidden space-y-2.5 max-h-[70vh] overflow-y-auto pb-6"></div>
+                    <div id="m-cards-pdu" class="md:hidden space-y-2.5 pb-6"></div>
                 </div>
 
                 {{-- Tampilan 2: Data per Outlet --}}
@@ -582,13 +595,13 @@
                         </div>
                     </div>
 
-                    <div class="hidden md:block overflow-x-auto max-h-[600px] border border-slate-200 rounded-xl mt-4">
+                    <div class="hidden md:block overflow-x-auto border border-slate-200 rounded-xl mt-4 md:mt-6">
                         <table class="w-full text-sm text-left whitespace-nowrap">
                             <thead class="table-header sticky top-0 z-10 shadow-sm bg-slate-50/80 backdrop-blur-sm">
                                 <tr>
-                                    <th class="px-4 py-3 rounded-tl-xl text-xs md:text-sm uppercase tracking-wider">Sales & Outlet</th>
-                                    <th class="px-4 py-3 text-right text-xs md:text-sm uppercase tracking-wider border-l border-slate-200">Sum of Qty</th>
-                                    <th class="px-4 py-3 text-right rounded-tr-xl text-xs md:text-sm uppercase tracking-wider border-l border-slate-200">Sum of Net Price</th>
+                                    <th class="px-4 py-3 rounded-tl-xl text-xs md:text-sm uppercase tracking-wider min-w-[200px] max-w-[260px]">Sales & Outlet</th>
+                                    <th class="px-4 py-3 text-right text-xs md:text-sm uppercase tracking-wider border-l border-slate-200 w-40">Sum of Qty</th>
+                                    <th class="px-4 py-3 text-right text-xs md:text-sm uppercase tracking-wider border-l border-slate-200 w-44">Sum of Net Price</th>
                                 </tr>
                             </thead>
                             <tbody id="m-tbody-outlet" class="divide-y divide-slate-200 bg-white">
@@ -599,7 +612,7 @@
                         <i class="fas fa-search"></i>
                         <input type="text" id="m-search-outlet" placeholder="Cari sales / outlet / produk..." oninput="filterAccCards('m-cards-outlet', this.value)">
                     </div>
-                    <div id="m-cards-outlet" class="md:hidden space-y-2.5 max-h-[70vh] overflow-y-auto pb-6"></div>
+                    <div id="m-cards-outlet" class="md:hidden space-y-2.5 pb-6"></div>
                 </div>
 
                 {{-- Tampilan 3: Data per Produk --}}
@@ -617,7 +630,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-4 p-4 border border-slate-200 rounded-xl bg-slate-50 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+                    <div class="mb-4 sm:mb-6 p-4 border border-slate-200 rounded-xl bg-slate-50 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
                         <div class="w-full sm:w-auto mb-3 sm:mb-0">
                             <h4 class="font-bold text-slate-800 text-lg">Sales Table per Product</h4>
                             <p class="text-sm text-slate-500 font-medium mt-1">Grand Total Sales: <span class="font-black text-blue-600 text-base ml-1" id="grandTotalProduct">Rp 0</span></p>
@@ -632,7 +645,7 @@
                         </div>
                     </div>
                     
-                    <div class="hidden md:block overflow-x-auto max-h-[600px] border border-slate-200 rounded-xl mt-4">
+                    <div class="hidden md:block overflow-x-auto border border-slate-200 rounded-xl mt-4 md:mt-6">
                         <table class="w-full text-sm text-left whitespace-nowrap">
                             <thead class="table-header sticky top-0 z-10 shadow-sm bg-slate-50/80 backdrop-blur-sm">
                                 <tr>
@@ -649,9 +662,65 @@
                         <i class="fas fa-search"></i>
                         <input type="text" id="m-search-product" placeholder="Cari nama produk..." oninput="filterAccCards('m-cards-product', this.value)">
                     </div>
-                    <div id="m-cards-product" class="md:hidden space-y-2.5 max-h-[70vh] overflow-y-auto pb-6"></div>
+                    <div id="m-cards-product" class="md:hidden space-y-2.5 pb-6"></div>
                 </div>
-            </div>
+
+                {{-- Tampilan 4: Closing — Input per Outlet, Produk Read-only Lengkap --}}
+                <div id="m-view-closing" class="month-view hidden">
+                    {{-- Ringkasan cepat (mobile only) --}}
+                    <div class="mobile-summary-bar">
+                        <div class="ms-item">
+                            <div class="ms-label">Total Sales</div>
+                            <div class="ms-value" id="grandTotalClosingMobile">Rp 0</div>
+                        </div>
+                        <div class="ms-divider"></div>
+                        <div class="ms-item">
+                            <div class="ms-label">Total Add</div>
+                            <div class="ms-value" id="grandAddClosingMobile">Rp 0</div>
+                        </div>
+                        <div class="ms-divider"></div>
+                        <div class="ms-item">
+                            <div class="ms-label">Total Akhir</div>
+                            <div class="ms-value" id="grandTotalAkhirMobile">Rp 0</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 sm:mb-6 p-4 border border-slate-200 rounded-xl bg-slate-50 flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
+                        <div class="w-full lg:w-auto mb-3 lg:mb-0">
+                            <h4 class="font-bold text-slate-800 text-lg">Closing Adjustment</h4>
+                            <p class="text-sm text-slate-500 font-medium mt-1">Grand Total = Total Sum Nett + Total Est. Closing &nbsp;<br> Total Sum Nett: <span class="font-black text-blue-600 text-base ml-1" id="grandTotalClosing">Rp 0</span> <span class="text-slate-400 hidden sm:inline">| Total Est. Closing: <span id="grandAddClosing" class="font-bold text-purple-600">Rp 0</span> | Grand Total: <span id="grandTotalAkhir" class="font-black text-green-600">Rp 0</span></span></p>
+                        </div>
+                        <div class="relative inline-block w-full lg:w-auto">
+                            <select id="filterClosingPs" class="w-full lg:w-auto appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-2 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="drawClosingView()">
+                                <option value="all">All</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-blue-700">
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hidden md:block overflow-x-auto border border-slate-200 rounded-xl mt-4 md:mt-6">
+                        <table class="w-full text-sm text-left whitespace-nowrap">
+                            <thead class="table-header sticky top-0 z-10 shadow-sm bg-slate-50/80 backdrop-blur-sm">
+                                <tr>
+                                    <th class="px-4 py-3 rounded-tl-xl text-xs md:text-sm uppercase tracking-wider">Sales & Outlet</th>
+                                    <th class="px-4 py-3 text-right text-xs md:text-sm uppercase tracking-wider border-l border-slate-200 w-32">Sum of Qty</th>
+                                    <th class="px-4 py-3 text-right text-xs md:text-sm uppercase tracking-wider border-l border-slate-200 w-44">Sum of Net Price</th>
+                                    <th class="px-3 py-3 text-center text-xs md:text-sm uppercase tracking-wider border-l border-slate-200 w-36 bg-purple-50 text-purple-700">Est. Closing</th>
+                                    <th class="px-4 py-3 text-right rounded-tr-xl text-xs md:text-sm uppercase tracking-wider border-l border-slate-200 w-44 bg-emerald-50 text-emerald-700">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="m-tbody-closing" class="divide-y divide-slate-200 bg-white">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mobile-card-search md:hidden">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="m-search-closing" placeholder="Cari sales / outlet / produk..." oninput="filterAccCards('m-cards-closing', this.value)">
+                    </div>
+                    <div id="m-cards-closing" class="md:hidden space-y-2.5 pb-6"></div>
+                </div>
+            </x-ui.glass-card>
         </div>
     </div>
     </div>
@@ -725,7 +794,199 @@
 
         let pduChartInstance = null;
         let outletChartInstance = null;
+        let closingChartInstance = null;
         let currentMonthlyData = null;
+        let currentSelectedBulan = "{{ $currentMonth }}";
+        const HAS_FULL_ACCESS = {{ json_encode($hasFullAccess ?? false) }};
+
+        function escapeJsStr(str) {
+            if (!str) return '';
+            return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        function formatNumberWithDots(val) {
+            if (val === null || val === undefined || val === '') return '';
+            const num = Math.round(Number(val));
+            if (isNaN(num)) return '';
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+
+        function parseRawNumber(valStr) {
+            if (valStr === null || valStr === undefined || valStr === '') return null;
+            let clean = String(valStr).replace(/[^\d]/g, '');
+            if (!clean) return null;
+            return parseInt(clean, 10);
+        }
+
+        function onClosingInputFormat(inputEl) {
+            let cursorPos = inputEl.selectionStart;
+            let oldLen = inputEl.value.length;
+            let raw = inputEl.value.replace(/[^\d]/g, '');
+            if (!raw) {
+                inputEl.value = '';
+                return;
+            }
+            let formatted = new Intl.NumberFormat('id-ID').format(parseInt(raw, 10));
+            inputEl.value = formatted;
+            let newLen = inputEl.value.length;
+            cursorPos = cursorPos + (newLen - oldLen);
+            if (cursorPos < 0) cursorPos = 0;
+            try { inputEl.setSelectionRange(cursorPos, cursorPos); } catch(e) {}
+        }
+
+        // Tab 2 (Outlet) — sekarang READ-ONLY (input pindah ke Tab Closing)
+        function renderClosingRateCell(ps, customerName, rateVal) {
+            const displayVal = (rateVal !== null && rateVal !== undefined && rateVal !== '') ? `Rp ${formatNumberWithDots(rateVal)}` : '-';
+            return `<td class="px-3 py-2 text-right border-l border-slate-200 text-xs font-semibold text-slate-600 w-36">${displayVal}</td>`;
+        }
+        function renderClosingCountCell(ps, customerName, countVal) {
+            const displayVal = (countVal !== null && countVal !== undefined && countVal !== '') ? formatNumberWithDots(countVal) : '-';
+            return `<td class="px-3 py-2 text-center border-l border-slate-200 text-xs font-semibold text-slate-700 w-32">${displayVal}</td>`;
+        }
+        // Tab 4 (Closing) — input per outlet, hanya editable di tab ini
+        function renderAddClosingCell(ps, customerName, val) {
+            if (!HAS_FULL_ACCESS) {
+                const displayVal = (val !== null && val !== undefined && val !== '') ? `Rp ${formatNumberWithDots(val)}` : '-';
+                return `<td class="px-3 py-2 text-right border-l border-slate-200 text-xs font-semibold text-slate-700 w-36">${displayVal}</td>`;
+            }
+            const v = (val !== null && val !== undefined && val !== '') ? formatNumberWithDots(val) : '';
+            const safePs = escapeJsStr(ps);
+            const safeCust = escapeJsStr(customerName);
+            return `<td class="px-2 py-1 text-center border-l border-slate-200 w-36">
+                <input type="text" placeholder="0" value="${v}"
+                    class="w-24 text-right text-xs py-1 px-2 border border-amber-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-bold text-slate-800 bg-amber-50 mx-auto block"
+                    oninput="onClosingInputFormat(this)"
+                    onchange="saveOutletClosing('${safePs}', '${safeCust}', 'closing_rate', this.value, this)">
+            </td>`;
+        }
+        function renderAddClosingSalesCell(ps, customerName, val) {
+            if (!HAS_FULL_ACCESS) {
+                const displayVal = (val !== null && val !== undefined && val !== '') ? formatNumberWithDots(val) : '-';
+                return `<td class="px-3 py-2 text-center border-l border-slate-200 text-xs font-bold text-purple-700 bg-purple-50/40 w-36">${displayVal}</td>`;
+            }
+            const v = (val !== null && val !== undefined && val !== '') ? formatNumberWithDots(val) : '';
+            const safePs = escapeJsStr(ps);
+            const safeCust = escapeJsStr(customerName);
+            return `<td class="px-2 py-1 text-center border-l border-slate-200 w-36 bg-purple-50/30">
+                <input type="text" placeholder="0" value="${v}"
+                    class="w-20 text-center text-xs py-1 px-1.5 border border-purple-300 rounded focus:border-purple-500 focus:ring-1 focus:ring-purple-300 font-bold text-purple-800 bg-white mx-auto block"
+                    oninput="onClosingInputFormat(this)"
+                    onchange="saveOutletClosing('${safePs}', '${safeCust}', 'closing_count', this.value, this)">
+            </td>`;
+        }
+        function renderTotalAkhirCell(nett, addClosing) {
+            const add = parseInt(addClosing||0,10) || 0;
+            const total = (parseFloat(nett)||0) + add;
+            return `<td class="px-4 py-2 text-right border-l border-slate-200 font-black text-emerald-700 bg-emerald-50/40 text-xs w-44 closing-total-cell">${fRp(total)}</td>`;
+        }
+
+        function saveOutletClosing(ps, customerName, field, value, inputEl) {
+            const year = document.getElementById('filterTahun')?.value || "{{ $tahun }}";
+            const month = currentSelectedBulan || "{{ $currentMonth }}";
+
+            if (inputEl) {
+                inputEl.classList.remove('border-emerald-500', 'border-red-500', 'border-slate-300');
+                inputEl.classList.add('border-blue-500', 'ring-2', 'ring-blue-200');
+            }
+
+            const tr = inputEl ? inputEl.closest('tr') : null;
+            let rateInput = tr ? tr.querySelector('input[onchange*="closing_rate"]') : null;
+            let countInput = tr ? tr.querySelector('input[onchange*="closing_count"]') : null;
+
+            const rateVal = rateInput ? rateInput.value : (field === 'closing_rate' ? value : null);
+            const countVal = countInput ? countInput.value : (field === 'closing_count' ? value : null);
+
+            const payload = {
+                _token: '{{ csrf_token() }}',
+                year: parseInt(year),
+                month: month,
+                ps: ps || null,
+                customer_name: customerName,
+                closing_rate: parseRawNumber(rateVal),
+                closing_count: parseRawNumber(countVal)
+            };
+
+            fetch('{{ route("sales.monthly.update-closing") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (inputEl) {
+                        inputEl.classList.remove('border-blue-500', 'ring-2', 'ring-blue-200', 'border-red-500');
+                        inputEl.classList.add('border-emerald-500', 'ring-2', 'ring-emerald-200');
+                        setTimeout(() => {
+                            inputEl.classList.remove('border-emerald-500', 'ring-2', 'ring-emerald-200');
+                            inputEl.classList.add('border-slate-300');
+                        }, 1500);
+                    }
+                    if (currentMonthlyData && currentMonthlyData.outlet) {
+                        let matchedNett = 0;
+                        let matchedAdd = 0;
+                        currentMonthlyData.outlet.forEach(p => {
+                            if (p.customer) {
+                                p.customer.forEach(c => {
+                                    const psMatch = !ps || String(p.nama).toLowerCase().trim() === String(ps).toLowerCase().trim();
+                                    if (c.nama === customerName && psMatch) {
+                                        c.closing_rate = payload.closing_rate;
+                                        c.closing_count = payload.closing_count;
+                                        c.add_closing = payload.closing_rate;
+                                        c.add_closing_sales = payload.closing_count;
+                                        const addVal = payload.closing_count ?? payload.closing_rate ?? 0;
+                                        c.total_akhir = (parseFloat(c.nett)||0) + (parseFloat(addVal)||0);
+                                        matchedNett = c.nett;
+                                        matchedAdd = addVal;
+                                    }
+                                });
+                            }
+                        });
+                        // update Total Akhir cell in Closing tab inline without full redraw
+                        if (tr) {
+                            const totalCell = tr.querySelector('.closing-total-cell');
+                            if (totalCell) {
+                                const totalVal = (parseFloat(matchedNett)||0) + (parseFloat(matchedAdd)||0);
+                                totalCell.innerHTML = fRp(totalVal);
+                                totalCell.classList.add('bg-purple-100');
+                                setTimeout(()=> totalCell.classList.remove('bg-purple-100'), 1200);
+                            }
+                        }
+                        // update grand totals for Closing tab without full redraw (recalc) — only Add. Closing Sales
+                        try {
+                            let gNett=0,gAdd=0,gAkhir=0,gSales=0;
+                            currentMonthlyData.outlet.forEach(p=> p.customer.forEach(c=>{ const add = c.add_closing_sales ?? c.closing_count ?? c.add_closing ?? c.closing_rate ?? 0; gNett+=parseFloat(c.nett)||0; gAdd+=parseFloat(add)||0; gAkhir+=(parseFloat(c.nett)||0)+(parseFloat(add)||0); gSales+=parseFloat(add)||0; }));
+                            const setT=(id,v)=>{const el=document.getElementById(id); if(el) el.innerText=v;};
+                            setT('grandTotalClosing', fRp(gNett));
+                            setT('grandAddClosing', fRp(gAdd));
+                            setT('grandTotalAkhir', fRp(gAkhir));
+                            setT('grandTotalClosingMobile', fRp(gNett));
+                            setT('grandAddClosingMobile', fRp(gAdd));
+                            setT('grandTotalAkhirMobile', fRp(gAkhir));
+                            // also refresh outlet tab grand totals if visible
+                            // lightweight: call drawOutletChart only if needed? skip to avoid flicker
+                        } catch(e){}
+                    }
+                } else {
+                    alert(data.error || 'Gagal menyimpan data closing.');
+                    if (inputEl) {
+                        inputEl.classList.remove('border-blue-500', 'ring-2', 'ring-blue-200');
+                        inputEl.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                if (inputEl) {
+                    inputEl.classList.remove('border-blue-500', 'ring-2', 'ring-blue-200');
+                    inputEl.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                }
+            });
+        }
 
         const fRp = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n||0));
         const fNum = (n) => new Intl.NumberFormat('id-ID').format(n||0);
@@ -738,7 +999,7 @@
         };
 
         let accSeq = 0;
-        function accNode(icon, label, qtyStr, nett, level, parentId, parentAncestors, hasChildren) {
+        function accNode(icon, label, qtyStr, nett, level, parentId, parentAncestors, hasChildren, closingRate, closingCount) {
             level = Math.min(level || 1, 4);
             const id = 'acc' + (accSeq++);
             const ancestors = parentId ? (parentAncestors || []).concat([parentId]) : [];
@@ -757,12 +1018,26 @@
                 startsHidden ? 'hidden' : '',
             ].filter(Boolean).join(' ');
 
+            let closingBadge = '';
+            if (closingRate !== undefined && closingRate !== null || closingCount !== undefined && closingCount !== null) {
+                const hasRate = closingRate !== null && closingRate !== undefined && closingRate !== '';
+                const hasCount = closingCount !== null && closingCount !== undefined && closingCount !== '';
+                const rateText = hasRate ? `Rp ${formatNumberWithDots(closingRate)}` : '-';
+                const countText = hasCount ? `${formatNumberWithDots(closingCount)}` : '-';
+                if (hasRate || hasCount) {
+                    closingBadge = `<div class="text-[10px] font-semibold mt-0.5 flex flex-wrap gap-1"><span class="bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200">Add: ${rateText}</span><span class="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">Sales: ${countText}</span></div>`;
+                }
+            }
+
             const html = `<div id="${id}" class="${classes}" data-parent="${parentId || ''}" data-ancestors="${ancestors.join(',')}" data-label="${safeLabel}"${clickAttr}>
                 <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-2.5 min-w-0 pr-2">
-                        ${icon ? `<i class="${icon} text-slate-400 text-xs shrink-0"></i>` : `<span class="w-1 shrink-0"></span>`}
-                        <span class="${weight} ${textColor} text-[13px] leading-snug break-words">${label}</span>
-                        ${chevron}
+                    <div class="flex flex-col min-w-0 pr-2">
+                        <div class="flex items-center gap-2.5">
+                            ${icon ? `<i class="${icon} text-slate-400 text-xs shrink-0"></i>` : `<span class="w-1 shrink-0"></span>`}
+                            <span class="${weight} ${textColor} text-[13px] leading-snug break-words">${label}</span>
+                            ${chevron}
+                        </div>
+                        ${closingBadge}
                     </div>
                     <div class="text-right shrink-0">
                         <div class="font-black text-slate-800 text-[13px] leading-tight">${qtyStr}</div>
@@ -865,7 +1140,8 @@
             let totalNettOutlet = 0;
 
             if (psFilter === 'all' || psFilter === 'Sales Team') {
-                let aggCust = {};
+                // General: tampilkan per PS + per Customer terpisah (jangan merge customer nama sama beda PS)
+                let allEntries = [];
                 data.outlet.forEach(ps => {
                     if (psFilter === 'Sales Team' && ps.nama.toLowerCase() === 'office') return;
                     totalQtyOutlet += ps.total_qty;
@@ -878,39 +1154,29 @@
                         outletLabels.push(`[${ps.nama}] ${c.nama}`);
                         outletSales.push(c.nett);
                         outletBgColors.push(psColorMap[ps.nama]);
-                        
-                        if (!aggCust[c.nama]) {
-                            aggCust[c.nama] = { nama: c.nama, nett: 0, qty: 0, produk: {} };
-                        }
-                        aggCust[c.nama].nett += c.nett;
-                        aggCust[c.nama].qty += c.total_qty;
-
-                        c.produk.forEach(p => {
-                            if (!aggCust[c.nama].produk[p.nama]) {
-                                aggCust[c.nama].produk[p.nama] = { nama: p.nama, qty: 0, nett: 0, satuan: p.satuan || '' };
-                            }
-                            aggCust[c.nama].produk[p.nama].qty += p.qty;
-                            aggCust[c.nama].produk[p.nama].nett += p.nett;
-                        });
+                        allEntries.push({ ps: ps.nama, c: c });
                     });
                 });
-                
-                Object.values(aggCust).sort((a,b)=>b.nett-a.nett).forEach(c => {
+                // sort global by nett desc biar yang terbesar di atas, tapi tetap pisah per PS
+                allEntries.sort((a,b)=> b.c.nett - a.c.nett);
+                allEntries.forEach(entry => {
+                    const psName = entry.ps;
+                    const c = entry.c;
                     htmlOutlet += `
                         <tr class="row-level-1 hover:bg-slate-50 transition-colors">
-                            <td class="px-4 py-3"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4 text-center"></i><span class="font-bold text-slate-700">${c.nama}</span></div></td>
-                            <td class="px-4 py-3 text-right border-l border-slate-200">${fNum(c.qty)}</td>
-                            <td class="px-4 py-3 text-right text-emerald-600 border-l border-slate-200">${fRp(c.nett)}</td>
+                            <td class="px-4 py-3"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4 text-center"></i><span class="font-bold text-slate-700">${c.nama}</span><span class="ml-2 text-[10px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 text-blue-600">${psName}</span></div></td>
+                            <td class="px-4 py-3 text-right border-l border-slate-200 font-semibold">${fNum(c.total_qty)}</td>
+                            <td class="px-4 py-3 text-right border-l border-slate-200 font-semibold text-emerald-600">${fRp(c.nett)}</td>
                         </tr>
                     `;
-                    htmlCards += (n1 = accNode('fas fa-store', c.nama, fQtyStr(c.qty), fRp(c.nett), 1, null, [], c.produk && Object.keys(c.produk).length > 0)).html;
-                    Object.values(c.produk).sort((a,b)=>b.nett-a.nett).forEach(p => {
+                    htmlCards += (n1 = accNode('fas fa-store', `${c.nama} [${psName}]`, fQtyStr(c.total_qty), fRp(c.nett), 1, null, [], c.produk && c.produk.length > 0)).html;
+                    [...c.produk].sort((a,b)=>b.nett-a.nett).forEach(p => {
                         let tableQtyStr = p.satuan ? `${fNum(p.qty)} <span class="text-xs text-slate-400 font-semibold ml-1">${p.satuan}</span>` : fNum(p.qty);
                         htmlOutlet += `
                             <tr class="row-level-2 hover:bg-slate-50 transition-colors">
-                                <td class="py-2 pr-4 pl-8 md:pl-10 break-words whitespace-normal leading-tight"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${p.nama}</span></div></td>
+                                <td class="py-2 pr-4 pl-8 md:pl-10 break-words whitespace-normal leading-tight"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span class="text-slate-500">${p.nama}</span></div></td>
                                 <td class="px-4 py-2 text-right border-l border-slate-200">${tableQtyStr}</td>
-                                <td class="px-4 py-2 text-right border-l border-slate-200">${fRp(p.nett)}</td>
+                                <td class="px-4 py-2 text-right border-l border-slate-200 text-slate-500">${fRp(p.nett)}</td>
                             </tr>
                         `;
                         htmlCards += accNode('', p.nama, fQtyStr(p.qty, p.satuan), fRp(p.nett), 2, n1.id, n1.ancestors, false).html;
@@ -935,8 +1201,8 @@
                         htmlOutlet += `
                             <tr class="row-level-1 hover:bg-slate-50 transition-colors">
                                 <td class="px-4 py-3"><div class="flex items-start"><i class="fas fa-users mr-2 mt-1 text-blue-500 w-4 text-center"></i><span class="font-bold text-slate-700">${ps.nama}</span></div></td>
-                                <td class="px-4 py-3 text-right border-l border-slate-200">${fNum(ps.total_qty)}</td>
-                                <td class="px-4 py-3 text-right text-emerald-600 border-l border-slate-200">${fRp(ps.total_nett)}</td>
+                                <td class="px-4 py-3 text-right border-l border-slate-200 font-semibold">${fNum(ps.total_qty)}</td>
+                                <td class="px-4 py-3 text-right border-l border-slate-200 font-semibold text-emerald-600">${fRp(ps.total_nett)}</td>
                             </tr>
                         `;
                         htmlCards += (n1 = accNode('fas fa-users', ps.nama, fQtyStr(ps.total_qty), fRp(ps.total_nett), 1, null, [], ps.customer && ps.customer.length > 0)).html;
@@ -944,8 +1210,8 @@
                             htmlOutlet += `
                                 <tr class="row-level-2 hover:bg-slate-50 transition-colors">
                                     <td class="py-2 pr-4 pl-6 md:pl-10"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4 text-center"></i><span class="font-bold text-slate-700">${c.nama}</span></div></td>
-                                    <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(c.total_qty)}</td>
-                                    <td class="px-4 py-2 text-right text-emerald-600 border-l border-slate-200">${fRp(c.nett)}</td>
+                                    <td class="px-4 py-2 text-right border-l border-slate-200 font-semibold">${fNum(c.total_qty)}</td>
+                                    <td class="px-4 py-2 text-right border-l border-slate-200 font-semibold text-emerald-600">${fRp(c.nett)}</td>
                                 </tr>
                             `;
                             htmlCards += (n2 = accNode('fas fa-store', c.nama, fQtyStr(c.total_qty), fRp(c.nett), 2, n1.id, n1.ancestors, c.produk && c.produk.length > 0)).html;
@@ -955,7 +1221,7 @@
                                     <tr class="row-level-3 hover:bg-slate-50 transition-colors">
                                         <td class="py-2 pr-4 pl-8 md:pl-12 break-words whitespace-normal leading-tight"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span>${p.nama}</span></div></td>
                                         <td class="px-4 py-2 text-right border-l border-slate-200">${tableQtyStr}</td>
-                                        <td class="px-4 py-2 text-right border-l border-slate-200">${fRp(p.nett)}</td>
+                                        <td class="px-4 py-2 text-right border-l border-slate-200 text-slate-500">${fRp(p.nett)}</td>
                                     </tr>
                                 `;
                                 htmlCards += accNode('', p.nama, fQtyStr(p.qty, p.satuan), fRp(p.nett), 3, n2.id, n2.ancestors, false).html;
@@ -970,7 +1236,7 @@
                     <tr class="bg-blue-50 font-bold border-t-2 border-blue-200">
                         <td class="px-4 py-3">GRAND TOTAL</td>
                         <td class="px-4 py-3 text-right border-l border-slate-200">${fNum(totalQtyOutlet)}</td>
-                        <td class="px-4 py-3 text-right text-emerald-700 border-l border-slate-200">${fRp(totalNettOutlet)}</td>
+                        <td class="px-4 py-3 text-right border-l border-slate-200 text-emerald-700">${fRp(totalNettOutlet)}</td>
                     </tr>
                 `;
             }
@@ -1026,20 +1292,224 @@
                     },
                     scales: {
                         x: {
+                            min: 0,
+                            suggestedMax: Math.max(0, ...outletSales) + 15000000,
                             ticks: {
-                                callback: function(value) { return 'Rp ' + new Intl.NumberFormat('id-ID', { notation: "compact" , compactDisplay: "short" }).format(value); }
+                                callback: function(value) { return 'Rp ' + new Intl.NumberFormat('id-ID', { notation: "compact" , compactDisplay: "short" }).format(value); },
+                                font: { size: 10 },
+                                maxTicksLimit: 7
                             },
-                            suggestedMax: Math.max(...outletSales) * 1.2
+                            grid: { color: 'rgba(148,163,184,0.12)' },
+                            border: { display: false }
                         },
                         y: {
-                            ticks: { autoSkip: false, font: { size: 11 } }
+                            ticks: {
+                                autoSkip: false,
+                                font: { size: 11, weight: '600' },
+                                padding: 14,
+                                color: '#1e293b',
+                                maxWidth: 220,
+                                callback: function(value) {
+                                    const label = this.getLabelForValue(value);
+                                    if (String(label).length > 42) return String(label).substring(0,42) + '…';
+                                    return label;
+                                }
+                            },
+                            grid: { display: false },
+                            border: { display: false }
                         }
-                    }
+                    },
+                    layout: { padding: { left: 18, right: 18 } }
                 }
             });
         }
 
+        function drawClosingView() {
+            if (!currentMonthlyData) return;
+            const data = currentMonthlyData;
+            const psFilter = document.getElementById('filterClosingPs').value;
+            let htmlClosing = '';
+            let htmlCards = '';
+            let totalQty = 0, totalNett = 0, totalAdd = 0, totalAkhir = 0, totalAddSales = 0;
+            let closingLabels = [], closingSales = [], closingAdd = [], closingBg = [];
+            const palette = ['#3b82f6','#f97316','#10b981','#8b5cf6','#ef4444','#06b6d4','#f59e0b','#ec4899','#64748b'];
+            let colorMap = {}, cIdx=0;
+            if (closingChartInstance) closingChartInstance.destroy();
+
+            const buildRow = (psName, c, level) => {
+                const addSalesVal = c.add_closing_sales ?? c.closing_count ?? c.add_closing ?? c.closing_rate ?? null;
+                const total = (parseFloat(c.nett)||0) + (parseFloat(addSalesVal)||0);
+                let salesCell = renderAddClosingSalesCell(psName, c.nama, addSalesVal);
+                let totalCell = renderTotalAkhirCell(c.nett, addSalesVal);
+                return {salesCell, totalCell, total, addSalesVal};
+            };
+
+            if (psFilter === 'all' || psFilter === 'Sales Team') {
+                // General: pisah per PS + Customer (jangan merge nama sama beda PS)
+                let allEntries = [];
+                data.outlet.forEach(ps => {
+                    if (psFilter === 'Sales Team' && ps.nama.toLowerCase() === 'office') return;
+                    if (!colorMap[ps.nama]) { colorMap[ps.nama]=palette[cIdx%palette.length]; cIdx++; }
+                    ps.customer.forEach(c => {
+                        allEntries.push({ ps: ps.nama, c: c });
+                        totalQty+=c.total_qty;
+                        totalNett+=c.nett;
+                    });
+                });
+                totalAdd = 0; totalAkhir = 0; totalAddSales = 0;
+                // hitung totalAdd/totalAkhir dulu untuk grand total
+                allEntries.forEach(e => {
+                    const add = e.c.add_closing_sales ?? e.c.closing_count ?? e.c.add_closing ?? e.c.closing_rate ?? 0;
+                    totalAdd += parseFloat(add)||0;
+                    totalAkhir += (parseFloat(e.c.nett)||0) + (parseFloat(add)||0);
+                    totalAddSales += parseFloat(add)||0;
+                });
+                allEntries.sort((a,b)=> {
+                    const totA = (parseFloat(a.c.nett)||0)+(parseFloat(a.c.add_closing_sales ?? a.c.closing_count ?? a.c.add_closing ?? a.c.closing_rate)||0);
+                    const totB = (parseFloat(b.c.nett)||0)+(parseFloat(b.c.add_closing_sales ?? b.c.closing_count ?? b.c.add_closing ?? b.c.closing_rate)||0);
+                    return totB - totA;
+                });
+                allEntries.forEach(entry => {
+                    const psName = entry.ps;
+                    const c = entry.c;
+                    if (!colorMap[psName]) { colorMap[psName]=palette[cIdx%palette.length]; cIdx++; }
+                    const {salesCell, totalCell, total, addSalesVal} = buildRow(psName, c, 1);
+                    closingLabels.push(`[${psName}] ${c.nama}`);
+                    closingSales.push(c.nett);
+                    closingAdd.push(parseFloat(addSalesVal)||0);
+                    closingBg.push(colorMap[psName]||'#3b82f6');
+                    htmlClosing += `<tr class="row-level-1 hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4"></i><span class="font-bold text-slate-700">${c.nama}</span><span class="ml-2 text-[10px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 text-blue-600">${psName}</span></div></td>
+                        <td class="px-4 py-3 text-right border-l border-slate-200 font-semibold">${fNum(c.total_qty)}</td>
+                        <td class="px-4 py-3 text-right border-l border-slate-200 font-semibold text-slate-600">${fRp(c.nett)}</td>
+                        ${salesCell}
+                        ${totalCell}
+                    </tr>`;
+                    let n1 = accNode('fas fa-store', `${c.nama} <span class="text-[10px] text-blue-500 font-bold ml-1">${psName}</span>`, fQtyStr(c.total_qty), `Total: ${fRp(total)}`, 1, null, [], c.produk && c.produk.length>0, null, addSalesVal);
+                    htmlCards += n1.html;
+                    [...c.produk].sort((a,b)=>b.nett-a.nett).forEach(p=>{
+                        let qtyStr = p.satuan? `${fNum(p.qty)} <span class="text-xs text-slate-400 font-semibold ml-1">${p.satuan}</span>` : fNum(p.qty);
+                        htmlClosing += `<tr class="row-level-2 hover:bg-slate-50 transition-colors">
+                            <td class="py-2 pr-4 pl-8 md:pl-10 break-words whitespace-normal"><div class="flex items-start"><span class="w-4 mr-3 inline-block"></span><span class="text-slate-500">${p.nama}</span></div></td>
+                            <td class="px-4 py-2 text-right border-l border-slate-200">${qtyStr}</td>
+                            <td class="px-4 py-2 text-right border-l border-slate-200 text-slate-500">${fRp(p.nett)}</td>
+                            <td class="px-3 py-2 text-center border-l border-slate-200 text-slate-300 text-xs">—</td>
+                            <td class="px-4 py-2 text-right border-l border-slate-200 text-slate-300 text-xs">—</td>
+                        </tr>`;
+                        htmlCards += accNode('', p.nama, fQtyStr(p.qty, p.satuan), fRp(p.nett), 2, n1.id, n1.ancestors, false).html;
+                    });
+                });
+            } else {
+                data.outlet.forEach(ps=>{
+                    if (!colorMap[ps.nama]) { colorMap[ps.nama]=palette[cIdx%palette.length]; cIdx++; }
+                    if (psFilter !== ps.nama) return;
+                    totalQty+=ps.total_qty; totalNett+=ps.total_nett;
+                    // sum Add. Closing Sales for ps header (cukup 1 kolom)
+                    let psAddSales=0; ps.customer.forEach(c=>{ psAddSales+=parseFloat(c.add_closing_sales ?? c.closing_count ?? c.add_closing ?? c.closing_rate ?? 0); });
+                    totalAdd+=psAddSales; totalAddSales+=psAddSales; totalAkhir+=ps.total_nett+psAddSales;
+                    htmlClosing += `<tr class="row-level-1 bg-slate-50 font-bold">
+                        <td class="px-4 py-3"><div class="flex items-start"><i class="fas fa-users mr-2 mt-1 text-blue-500 w-4"></i><span>${ps.nama}</span></div></td>
+                        <td class=\"px-4 py-3 text-right border-l border-slate-200\">${fNum(ps.total_qty)}</td>
+                        <td class=\"px-4 py-3 text-right border-l border-slate-200\">${fRp(ps.total_nett)}</td>
+                        <td class="px-3 py-3 text-center border-l border-slate-200 text-purple-700 bg-purple-50/60">${psAddSales? fRp(psAddSales):'-'}</td>
+                        <td class="px-4 py-3 text-right border-l border-slate-200 text-emerald-700 bg-emerald-50/40">${fRp(ps.total_nett+psAddSales)}</td>
+                    </tr>`;
+                    let n1 = accNode('fas fa-users', ps.nama, fQtyStr(ps.total_qty), `Total: ${fRp(ps.total_nett+psAddSales)}`, 1, null, [], ps.customer.length>0);
+                    htmlCards += n1.html;
+                    ps.customer.forEach(c=>{
+                        const {salesCell, totalCell, total, addSalesVal} = buildRow(ps.nama, c, 2);
+                        totalQty+=0; // already counted via ps
+                        closingLabels.push(`${c.nama}`); closingSales.push(c.nett); closingAdd.push(parseFloat(addSalesVal)||0); closingBg.push(colorMap[ps.nama]);
+                        htmlClosing += `<tr class="row-level-2 hover:bg-slate-50">
+                            <td class="py-2 pr-4 pl-6 md:pl-10"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4"></i><span class="font-bold text-slate-700">${c.nama}</span></div></td>
+                            <td class=\"px-4 py-2 text-right border-l border-slate-200 font-semibold\">${fNum(c.total_qty)}</td>
+                            <td class=\"px-4 py-2 text-right border-l border-slate-200 font-semibold text-slate-600\">${fRp(c.nett)}</td>
+                            ${salesCell}
+                            ${totalCell}
+                        </tr>`;
+                        let n2 = accNode('fas fa-store', c.nama, fQtyStr(c.total_qty), `Total: ${fRp(total)}`, 2, n1.id, n1.ancestors, c.produk.length>0, null, addSalesVal);
+                        htmlCards += n2.html;
+                        c.produk.forEach(p=>{
+                            let qtyStr = p.satuan? `${fNum(p.qty)} <span class="text-xs text-slate-400 font-semibold ml-1">${p.satuan}</span>` : fNum(p.qty);
+                            htmlClosing += `<tr class="row-level-3">
+                                <td class="py-2 pr-4 pl-8 md:pl-12 whitespace-normal"><span class="text-slate-500">${p.nama}</span></td>
+                                <td class=\"px-4 py-2 text-right border-l border-slate-200\">${qtyStr}</td>
+                            <td class=\"px-4 py-2 text-right border-l border-slate-200 text-slate-500\">${fRp(p.nett)}</td>
+                                <td class="px-3 py-2 text-center border-l border-slate-200 text-slate-300">—</td>
+                                <td class="px-4 py-2 text-right border-l border-slate-200 text-slate-300">—</td>
+                            </tr>`;
+                            htmlCards += accNode('', p.nama, fQtyStr(p.qty, p.satuan), fRp(p.nett), 3, n2.id, n2.ancestors, false).html;
+                        });
+                    });
+                    // de-duplicate totals already counted
+                });
+                // When specific ps, we already added ps totals; need adjust closingLabels already
+            }
+
+            if (htmlClosing) {
+                htmlClosing += `<tr class="bg-blue-50 font-bold border-t-2 border-blue-200">
+                    <td class="px-4 py-3">GRAND TOTAL</td>
+                    <td class=\"px-4 py-3 text-right border-l border-slate-200\">${fNum(totalQty)}</td>
+                    <td class=\"px-4 py-3 text-right border-l border-slate-200\">${fRp(totalNett)}</td>
+                    <td class="px-3 py-3 text-center border-l border-slate-200 text-amber-700">${fRp(totalAddSales)}</td>
+                    <td class="px-4 py-3 text-right border-l border-slate-200 text-emerald-700">${fRp(totalAkhir)}</td>
+                </tr>`;
+            }
+            document.getElementById('m-tbody-closing').innerHTML = htmlClosing || '<tr><td colspan="5" class="text-center p-6 text-slate-500">No data</td></tr>';
+            document.getElementById('m-cards-closing').innerHTML = htmlCards ? htmlCards + accNode('fas fa-flag-checkered','GRAND TOTAL', fQtyStr(totalQty), `Akhir: ${fRp(totalAkhir)}`,1,null,[],false).html : mcEmpty('No data');
+            document.getElementById('m-search-closing').value='';
+
+            const setText = (id,val)=>{ const el=document.getElementById(id); if(el) el.innerText=val; };
+            setText('grandTotalClosing', fRp(totalNett));
+            setText('grandAddClosing', fRp(totalAdd));
+            setText('grandTotalAkhir', fRp(totalAkhir));
+            setText('grandTotalClosingMobile', fRp(totalNett));
+            setText('grandAddClosingMobile', fRp(totalAdd));
+            setText('grandTotalAkhirMobile', fRp(totalAkhir));
+
+            const ctx = document.getElementById('chartClosing');
+            if (ctx) {
+                const ctn = document.getElementById('closingChartContainer');
+                ctn.style.height = Math.max(320, closingLabels.length*42+80)+'px';
+                closingChartInstance = new Chart(ctx.getContext('2d'), {
+                    type:'bar',
+                    data:{ labels: closingLabels, datasets:[
+                        {label:'Sales', data:closingSales, backgroundColor:closingBg, borderRadius:4, maxBarThickness:36},
+                        {label:'Add. Closing', data:closingAdd, backgroundColor:'#f59e0b', borderRadius:4, maxBarThickness:36}
+                    ]},
+                    options:{
+                        indexAxis:'y', responsive:true, maintainAspectRatio:false,
+                        plugins:{ datalabels:{anchor:'end',align:'end',color:'#475569',font:{size:10,weight:'bold'},formatter:v=> v? new Intl.NumberFormat('id-ID').format(v):''}, legend:{display:true,position:'top'}, tooltip:{callbacks:{label:ctx=> ctx.dataset.label+': '+fRp(ctx.raw)}}},
+                        scales:{
+                            x:{
+                                min:0,
+                                suggestedMax: Math.max(0, ...closingSales, ...closingAdd) + 15000000,
+                                stacked:false,
+                                ticks:{ stepSize:10000000, callback:v=>'Rp '+new Intl.NumberFormat('id-ID',{notation:"compact",compactDisplay:"short"}).format(v), font:{size:10}, maxTicksLimit:7 },
+                                grid:{ color:'rgba(148,163,184,0.12)' },
+                                border:{ display:false }
+                            },
+                            y:{
+                                ticks:{
+                                    autoSkip:false,
+                                    font:{size:11, weight:'600'},
+                                    padding:14,
+                                    color:'#1e293b',
+                                    maxWidth: 220,
+                                    callback:function(value){ const label=this.getLabelForValue(value); if(String(label).length>42) return String(label).substring(0,42)+'…'; return label; }
+                                },
+                                grid:{ display:false },
+                                border:{ display:false }
+                            }
+                        },
+                        layout:{ padding:{ left:18, right:18 } }
+                    }
+                });
+            }
+        }
+
         function loadMonthlyDetail(bulan, btnEl) {
+            currentSelectedBulan = bulan;
             document.querySelectorAll('.monthly-card').forEach(c => {
                 c.classList.remove('active');
             });
@@ -1089,11 +1559,14 @@
                     
                     let psOutletSelect = document.getElementById('filterOutletPs');
                     let psPduSelect = document.getElementById('filterPduPs');
+                    let psClosingSelect = document.getElementById('filterClosingPs');
                     psOutletSelect.innerHTML = defaultOption;
                     psPduSelect.innerHTML = defaultOption;
+                    if (psClosingSelect) psClosingSelect.innerHTML = defaultOption;
                     
                     data.outlet.forEach(ps => {
                         psOutletSelect.innerHTML += `<option value="${ps.nama}">${ps.nama}</option>`;
+                        if (psClosingSelect) psClosingSelect.innerHTML += `<option value="${ps.nama}">${ps.nama}</option>`;
                     });
                     data.pdu.forEach(ps => {
                         psPduSelect.innerHTML += `<option value="${ps.nama}">${ps.nama}</option>`;
@@ -1105,6 +1578,7 @@
                     drawPduView();
                     drawOutletChart();
                     drawProductTable();
+                    drawClosingView();
 
                 }).catch(err => {
                     console.error("Failed to load monthly details", err);
@@ -1206,6 +1680,7 @@
             let n1, n2, n3; 
             
             if (psFilter === 'all' || psFilter === 'Sales Team') {
+                // General: 1 baris per tanggal (tidak duplikat), customer dipisah per PS via badge
                 let aggTgl = {};
                 data.pdu.forEach(ps => {
                     if (psFilter === 'Sales Team' && ps.nama.toLowerCase() === 'office') return;
@@ -1216,48 +1691,45 @@
                         aggTgl[tgl.nama].total_qty += tgl.total_qty;
                         aggTgl[tgl.nama].total_nett += tgl.total_nett;
                         tgl.customer.forEach(cust => {
-                            if (!aggTgl[tgl.nama].customer[cust.nama]) aggTgl[tgl.nama].customer[cust.nama] = { nama: cust.nama, total_qty: 0, total_nett: 0, produk: {} };
-                            aggTgl[tgl.nama].customer[cust.nama].total_qty += cust.total_qty;
-                            aggTgl[tgl.nama].customer[cust.nama].total_nett += cust.total_nett;
+                            const key = ps.nama + '|' + cust.nama;
+                            if (!aggTgl[tgl.nama].customer[key]) aggTgl[tgl.nama].customer[key] = { nama: cust.nama, ps: ps.nama, total_qty: 0, total_nett: 0, produk: {} };
+                            aggTgl[tgl.nama].customer[key].total_qty += cust.total_qty;
+                            aggTgl[tgl.nama].customer[key].total_nett += cust.total_nett;
                             cust.produk.forEach(prod => {
-                                if (!aggTgl[tgl.nama].customer[cust.nama].produk[prod.nama]) aggTgl[tgl.nama].customer[cust.nama].produk[prod.nama] = { nama: prod.nama, qty: 0, nett: 0, satuan: prod.satuan || '' };
-                                aggTgl[tgl.nama].customer[cust.nama].produk[prod.nama].qty += prod.qty;
-                                aggTgl[tgl.nama].customer[cust.nama].produk[prod.nama].nett += prod.nett;
+                                if (!aggTgl[tgl.nama].customer[key].produk[prod.nama]) aggTgl[tgl.nama].customer[key].produk[prod.nama] = { nama: prod.nama, qty: 0, nett: 0, satuan: prod.satuan || '' };
+                                aggTgl[tgl.nama].customer[key].produk[prod.nama].qty += prod.qty;
+                                aggTgl[tgl.nama].customer[key].produk[prod.nama].nett += prod.nett;
                             });
                         });
                     });
                 });
-                
-                let sortedTgl = Object.values(aggTgl).sort((a, b) => {
-                    let partsA = a.nama.split('/');
-                    let partsB = b.nama.split('/');
-                    if (partsA.length === 3 && partsB.length === 3) {
-                        let dateA = new Date(partsA[2], partsA[1]-1, partsA[0]);
-                        let dateB = new Date(partsB[2], partsB[1]-1, partsB[0]);
-                        return dateA - dateB;
+                let sortedTgl = Object.values(aggTgl).sort((a,b)=>{
+                    let pa=a.nama.split('/'), pb=b.nama.split('/');
+                    if(pa.length===3 && pb.length===3){
+                        let da=new Date(pa[2],pa[1]-1,pa[0]), db=new Date(pb[2],pb[1]-1,pb[0]);
+                        return db - da;
                     }
-                    return a.nama.localeCompare(b.nama);
+                    return b.nama.localeCompare(a.nama);
                 });
-                
                 sortedTgl.forEach(tgl => {
                     htmlPdu += `
                         <tr class="row-level-1 hover:bg-slate-50 transition-colors">
-                            <td class="px-4 py-3 text-[14px]"><div class="flex items-start"><i class="far fa-calendar-alt mr-3 mt-1 text-blue-500 w-4 text-center"></i><span class="font-bold text-slate-700">${tgl.nama}</span></div></td>
-                            <td class="px-4 py-3 text-right border-l border-slate-200">${fNum(tgl.total_qty)}</td>
-                            <td class="px-4 py-3 text-right text-emerald-600 border-l border-slate-200">${fRp(tgl.total_nett)}</td>
+                            <td class="py-2 pr-4 pl-4 md:pl-6"><div class="flex items-start"><i class="far fa-calendar-alt mr-3 mt-1 text-blue-500 w-4"></i><span class="font-bold text-slate-700">${tgl.nama}</span></div></td>
+                            <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(tgl.total_qty)}</td>
+                            <td class="px-4 py-2 text-right text-emerald-600 border-l border-slate-200">${fRp(tgl.total_nett)}</td>
                         </tr>
                     `;
-                    htmlCards += (n1 = accNode('far fa-calendar-alt', tgl.nama, fQtyStr(tgl.total_qty), fRp(tgl.total_nett), 1, null, [], Object.keys(tgl.customer).length > 0)).html;
-                    Object.values(tgl.customer).forEach(cust => {
+                    htmlCards += (n1 = accNode('far fa-calendar-alt', tgl.nama, fQtyStr(tgl.total_qty), fRp(tgl.total_nett), 1, null, [], Object.keys(tgl.customer).length>0)).html;
+                    Object.values(tgl.customer).sort((a,b)=>b.total_nett-a.total_nett).forEach(cust => {
                         htmlPdu += `
                             <tr class="row-level-2 hover:bg-slate-50 transition-colors">
-                                <td class="py-2 pr-4 pl-4 md:pl-6"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4 text-center"></i><span>${cust.nama}</span></div></td>
+                                <td class="py-2 pr-4 pl-6 md:pl-8"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4"></i><span>${cust.nama}</span><span class="ml-2 text-[10px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 text-blue-600">${cust.ps}</span></div></td>
                                 <td class="px-4 py-2 text-right border-l border-slate-200">${fNum(cust.total_qty)}</td>
                                 <td class="px-4 py-2 text-right text-emerald-600 border-l border-slate-200">${fRp(cust.total_nett)}</td>
                             </tr>
                         `;
-                        htmlCards += (n2 = accNode('fas fa-store', cust.nama, fQtyStr(cust.total_qty), fRp(cust.total_nett), 2, n1.id, n1.ancestors, Object.keys(cust.produk).length > 0)).html;
-                        Object.values(cust.produk).forEach(prod => {
+                        htmlCards += (n2 = accNode('fas fa-store', `${cust.nama} [${cust.ps}]`, fQtyStr(cust.total_qty), fRp(cust.total_nett), 2, n1.id, n1.ancestors, Object.keys(cust.produk).length>0)).html;
+                        Object.values(cust.produk).sort((a,b)=>b.nett-a.nett).forEach(prod => {
                             let tableQtyStr = prod.satuan ? `${fNum(prod.qty)} <span class="text-xs text-slate-400 font-semibold ml-1">${prod.satuan}</span>` : fNum(prod.qty);
                             htmlPdu += `
                                 <tr class="row-level-3 hover:bg-slate-50 transition-colors">
@@ -1292,9 +1764,9 @@
                         if (partsA.length === 3 && partsB.length === 3) {
                             let dateA = new Date(partsA[2], partsA[1]-1, partsA[0]);
                             let dateB = new Date(partsB[2], partsB[1]-1, partsB[0]);
-                            return dateA - dateB;
+                            return dateB - dateA;
                         }
-                        return a.nama.localeCompare(b.nama);
+                        return b.nama.localeCompare(a.nama);
                     });
 
                     sortedTgl.forEach(tgl => {
@@ -1492,6 +1964,7 @@
                             type: 'linear',
                             display: true,
                             position: 'left',
+                            suggestedMax: Math.max(0, ...pduSales, ...pduTarget) + 15000000,
                             ticks: {
                                 callback: function(value) { return 'Rp ' + new Intl.NumberFormat('id-ID', { notation: "compact" , compactDisplay: "short" }).format(value); }
                             }

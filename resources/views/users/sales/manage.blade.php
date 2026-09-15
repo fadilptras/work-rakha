@@ -130,37 +130,54 @@
         <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start" x-data="manageData()">
 
         <div class="w-full flex justify-start mb-3 md:mb-4">
-            <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0">
-                <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                Back to Sales Dashboard
-            </a>
+            <x-ui.back-button href="{{ route('sales.index') }}" label="Back to Sales Dashboard" />
         </div>
 
-        {{-- Header Page & Tab Navigation --}}
-        <div class="page-header flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-            <div class="header-content">
-                <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-1 text-white">Manage Sales Data</h1>
-                <p class="text-blue-100 text-xs md:text-sm opacity-90 max-w-2xl font-medium">One hub for all sales data. Manual input, import from Excel, and manage data history.</p>
+        <div class="hidden md:block">
+            <x-ui.page-header title="Manage Sales Data" subtitle="One hub for all sales data. Manual input, import from Excel, and manage data history." icon="fa-database">
+                <x-slot:controls>
+                    <div class="flex space-x-1 bg-white/10 p-1 rounded-full border border-white/20 backdrop-blur-md overflow-x-auto shrink-0 w-full xl:w-auto relative z-10">
+                        <button @click="activeTab = 'table'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'table', 'text-white hover:bg-white/20': activeTab !== 'table' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                            <i class="fas fa-table mr-2"></i> Data History
+                        </button>
+                        <button @click="activeTab = 'input'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'input', 'text-white hover:bg-white/20': activeTab !== 'input' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                            <i class="fas fa-keyboard mr-2"></i> Manual Input
+                        </button>
+                        <button @click="activeTab = 'import'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'import', 'text-white hover:bg-white/20': activeTab !== 'import' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                            <i class="fas fa-cloud-upload-alt mr-2"></i> Import Data
+                        </button>
+                    </div>
+                </x-slot:controls>
+            </x-ui.page-header>
+        </div>
+        <div class="md:hidden space-y-3">
+            <div class="mobile-page-header flex items-center justify-between gap-3">
+                <div class="relative z-10 min-w-0">
+                    <h2 class="text-sm font-black tracking-wider uppercase leading-snug truncate">Manage Sales Data</h2>
+                    <p class="text-xs text-blue-100 font-medium leading-normal truncate mt-0.5">Manual, import & history.</p>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white text-base shrink-0 shadow-inner relative z-10">
+                    <i class="fas fa-database"></i>
+                </div>
             </div>
-            
-            <div class="flex space-x-1 bg-white/10 p-1.5 rounded-full border border-white/20 backdrop-blur-md overflow-x-auto shrink-0 w-full xl:w-auto relative z-10 mt-2 xl:mt-0">
-                <button @click="activeTab = 'table'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'table', 'text-white hover:bg-white/20': activeTab !== 'table' }" class="px-4 py-2 text-xs md:text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
-                    <i class="fas fa-table mr-2"></i> Data History
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-1.5 flex items-stretch gap-1">
+                <button @click="activeTab = 'table'" :class="activeTab === 'table' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold">
+                    <i class="fas fa-table text-sm"></i><span class="text-[10px] uppercase">History</span>
                 </button>
-                <button @click="activeTab = 'input'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'input', 'text-white hover:bg-white/20': activeTab !== 'input' }" class="px-4 py-2 text-xs md:text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
-                    <i class="fas fa-keyboard mr-2"></i> Manual Input
+                <button @click="activeTab = 'input'" :class="activeTab === 'input' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold">
+                    <i class="fas fa-keyboard text-sm"></i><span class="text-[10px] uppercase">Input</span>
                 </button>
-                <button @click="activeTab = 'import'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'import', 'text-white hover:bg-white/20': activeTab !== 'import' }" class="px-4 py-2 text-xs md:text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
-                    <i class="fas fa-cloud-upload-alt mr-2"></i> Import Data
+                <button @click="activeTab = 'import'" :class="activeTab === 'import' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold">
+                    <i class="fas fa-cloud-upload-alt text-sm"></i><span class="text-[10px] uppercase">Import</span>
                 </button>
             </div>
         </div>
 
         {{-- [TAB 1] History Table --}}
-        <div x-show="activeTab === 'table'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-4 flex-1 flex flex-col">
+        <div x-show="activeTab === 'table'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-4 flex flex-col w-full">
             
-            {{-- Filter Form (MENGGUNAKAN UTILITY !py-2 AGAR LEBIH PENDEK) --}}
-            <div class="glass-card relative z-10">
+            {{-- Filter Form — glass-card konsisten --}}
+            <x-ui.glass-card padding="none" class="!p-6 relative z-10 w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-lg !rounded-3xl">
                 <form action="{{ route('sales.manage') }}" method="GET" id="filterForm">
                     <button type="submit" class="hidden" aria-hidden="true"></button>
                     
@@ -168,93 +185,56 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-2 md:gap-3 items-end">
                         
                         <div class="lg:col-span-4 md:col-span-1">
-                            {{-- Margin label dikurangi jadi mb-1 --}}
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">General Search</label>
-                            <div class="search-wrapper" x-data="{ search: '{{ request('search') }}' }">
-                                <div class="icon-left text-slate-400">
-                                    <i class="fas fa-search text-sm"></i>
-                                </div>
-                                {{-- Ditambah !py-2 !text-sm agar kolom lebih pendek --}}
-                                <input type="text" name="search" x-model="search" @input.debounce.1200ms="document.getElementById('filterForm').submit()" placeholder="Search Name" class="modern-input pl-icon pr-icon-search !py-2 !text-sm" autocomplete="off">
-                                <button type="button" x-cloak x-show="search.length > 0" @click="search = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-search text-slate-400 hover:text-slate-600 transition-colors">
-                                    <i class="fas fa-times-circle text-sm"></i>
-                                </button>
-                            </div>
+                            <x-ui.search-input name="search" placeholder="Search Name" value="{{ request('search') }}" autocomplete="off" class="w-full" x-data="{ search: '{!! request('search') !!}' }" x-model="search" @input.debounce.1200ms="document.getElementById('filterForm').submit()" />
                         </div>
 
                         <div class="lg:col-span-4 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Customer</label>
-                            <div class="search-wrapper" x-data="{ val: '{{ request('nama_customer') }}' }">
-                                <input list="customer-list-options" type="text" name="nama_customer" x-model="val" @change="document.getElementById('filterForm').submit()" placeholder="All Customers" class="modern-input pr-icon-datalist !py-2 !text-sm" autocomplete="off">
-                                <button type="button" x-cloak x-show="val.length > 0" @click="val = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-datalist text-slate-400 hover:text-slate-600 transition-colors">
-                                    <i class="fas fa-times-circle text-sm"></i>
-                                </button>
-                            </div>
+                            <x-ui.filter-combobox name="nama_customer" listId="customer-list-options" placeholder="All Customers" value="{{ request('nama_customer') }}" onchange="document.getElementById('filterForm').submit()" class="w-full" />
                         </div>
 
                         <div class="lg:col-span-4 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Product</label>
-                            <div class="search-wrapper" x-data="{ val: '{{ request('nama_produk') }}' }">
-                                <input list="produk-list-options" type="text" name="nama_produk" x-model="val" @change="document.getElementById('filterForm').submit()" placeholder="All Products" class="modern-input pr-icon-datalist !py-2 !text-sm" autocomplete="off">
-                                <button type="button" x-cloak x-show="val.length > 0" @click="val = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-datalist text-slate-400 hover:text-slate-600 transition-colors">
-                                    <i class="fas fa-times-circle text-sm"></i>
-                                </button>
-                            </div>
+                            <x-ui.filter-combobox name="nama_produk" listId="produk-list-options" placeholder="All Products" value="{{ request('nama_produk') }}" onchange="document.getElementById('filterForm').submit()" class="w-full" />
                         </div>
 
                         <div class="lg:col-span-3 md:col-span-1 mt-1 lg:mt-0">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">PS</label>
-                            <div class="search-wrapper" x-data="{ val: '{{ request('ps') }}' }">
-                                <input list="ps-list-options" type="text" name="ps" x-model="val" @change="document.getElementById('filterForm').submit()" placeholder="All PS" class="modern-input pr-icon-datalist !py-2 !text-sm" autocomplete="off">
-                                <button type="button" x-cloak x-show="val.length > 0" @click="val = ''; setTimeout(() => document.getElementById('filterForm').submit(), 50)" class="icon-clear-datalist text-slate-400 hover:text-slate-600 transition-colors">
-                                    <i class="fas fa-times-circle text-sm"></i>
-                                </button>
-                            </div>
+                            <x-ui.filter-combobox name="ps" listId="ps-list-options" placeholder="All PS" value="{{ request('ps') }}" onchange="document.getElementById('filterForm').submit()" class="w-full" />
                         </div>
                         
                         <div class="lg:col-span-3 md:col-span-1 mt-1 lg:mt-0">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date</label>
-                            <input type="date" name="tanggal" value="{{ request('tanggal') }}" class="modern-input !px-3 !py-2 !text-sm" onchange="document.getElementById('filterForm').submit()">
+                            <input type="date" name="tanggal" value="{{ request('tanggal') }}" class="w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm px-3 py-2 font-bold text-blue-700 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors" onchange="document.getElementById('filterForm').submit()">
                         </div>
 
                         <div class="lg:col-span-2 md:col-span-1 mt-1 lg:mt-0">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Month</label>
-                            <select name="bulan" class="modern-input !px-2 !py-2 !text-sm" onchange="document.getElementById('filterForm').submit()">
-                                <option value="">All</option>
-                                @foreach($listBulan as $bulan)
-                                    <option value="{{ $bulan }}" {{ request('bulan') == $bulan ? 'selected' : '' }}>{{ $bulan }}</option>
-                                @endforeach
-                            </select>
+                            <x-ui.filter-select name="bulan" onchange="document.getElementById('filterForm').submit()" value="{{ request('bulan') }}" placeholder="All" :options="$listBulan" class="w-full" />
                         </div>
                         
                         <div class="lg:col-span-2 md:col-span-1 mt-1 lg:mt-0">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Year</label>
-                            <select name="tahun" class="modern-input !px-2 !py-2 !text-sm" onchange="document.getElementById('filterForm').submit()">
-                                <option value="">All</option>
-                                @foreach($listTahun as $tahun)
-                                    <option value="{{ $tahun }}" {{ request('tahun') == $tahun ? 'selected' : '' }}>{{ $tahun }}</option>
-                                @endforeach
-                            </select>
+                            <x-ui.filter-select name="tahun" onchange="document.getElementById('filterForm').submit()" value="{{ request('tahun') }}" placeholder="All" :options="$listTahun" class="w-full" />
                         </div>
                         
                         <div class="lg:col-span-2 md:col-span-2 flex gap-2 mt-1 lg:mt-0">
                             @if(request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']))
-                                {{-- Tombol reset diperpendek ukurannya dengan py-2 --}}
-                                <a href="{{ route('sales.manage') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-2 rounded-xl text-xs transition-all flex items-center justify-center border-[1.5px] border-slate-200" title="Reset Filters">
+                                <a href="{{ route('sales.manage') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-3 rounded-lg text-sm transition-all flex items-center justify-center border border-slate-200 shadow-sm" title="Reset Filters">
                                     <i class="fas fa-undo mr-1.5"></i> Reset
                                 </a>
                             @endif
-                            {{-- Tombol export diperpendek ukurannya dengan py-2 --}}
-                            <button type="submit" formaction="{{ route('sales.export') }}" class="{{ request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'w-1/2' : 'w-full' }} bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-2 px-2 rounded-xl text-xs transition-all flex items-center justify-center border-[1.5px] border-emerald-200" title="Export Filtered Results to CSV">
+                            <button type="submit" formaction="{{ route('sales.export') }}" class="{{ request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'w-1/2' : 'w-full' }} bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg text-sm transition-all flex items-center justify-center shadow-sm" title="Export Filtered Results to CSV">
                                 <i class="fas fa-file-export mr-1.5"></i> Export
                             </button>
                         </div>
                     </div>
                 </form>
-            </div>
+            </x-ui.glass-card>
 
-            {{-- Data Table --}}
-            <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col">
+            {{-- Data Table — konsisten --}}
+            <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-lg !rounded-3xl">
                 <div class="px-6 py-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl"><i class="fas fa-table"></i></div>
@@ -311,15 +291,11 @@
                                 <td class="px-4 py-3 text-right whitespace-nowrap font-bold text-emerald-600">Rp {{ number_format($item->net_price, 0, ',', '.') }}</td>
                                 <td class="px-4 py-3 text-center whitespace-nowrap">
                                     <div class="flex items-center justify-center gap-2">
-                                        <button type="button" data-item="{{ json_encode($item) }}" @click="openEditModal(JSON.parse($el.dataset.item))" class="btn-edit" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
+                                        <x-ui.edit-button data-item="{{ json_encode($item) }}" @click="openEditModal(JSON.parse($el.dataset.item))" title="Edit" />
                                         <form action="{{ route('sales.destroy', $item->id) }}" method="POST" id="form-delete-{{ $item->id }}" class="inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="button" onclick="confirmDelete('{{ $item->id }}')" class="btn-danger" title="Delete">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
+                                            <x-ui.delete-button onclick="confirmDelete('{{ $item->id }}')" title="Delete" />
                                         </form>
                                     </div>
                                 </td>
@@ -344,12 +320,12 @@
                     {{ $sales->links() }}
                 </div>
                 @endif
-            </div>
+            </x-ui.glass-card>
         </div>
 
         {{-- [TAB 2] Manual Data Input --}}
-        <div x-show="activeTab === 'input'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-            <div class="glass-card">
+        <div x-show="activeTab === 'input'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="w-full">
+            <x-ui.glass-card class="w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-lg !rounded-3xl">
                 <h3 class="text-lg font-black text-slate-800 flex items-center mb-6">
                     <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg mr-3"><i class="fas fa-keyboard"></i></div>
                     Manual Data Input
@@ -410,13 +386,13 @@
                         </button>
                     </div>
                 </form>
-            </div>
+            </x-ui.glass-card>
         </div>
 
         {{-- [TAB 3] Import & Export --}}
-        <div x-show="activeTab === 'import'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div class="lg:col-span-7 glass-card border-t-4 border-t-emerald-500 flex flex-col h-full">
+        <div x-show="activeTab === 'import'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full max-w-full mx-auto">
+                <x-ui.glass-card class="lg:col-span-7 flex flex-col h-full border-t-4 border-t-emerald-500 shadow-lg !rounded-3xl w-full max-w-full mx-auto">
                     <h3 class="text-lg font-black text-slate-800 flex items-center mb-6">
                         <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg mr-3"><i class="fas fa-cloud-upload-alt"></i></div>
                         Import from Excel/CSV
@@ -437,18 +413,18 @@
                             <i class="fas fa-upload mr-2"></i> Upload Data
                         </button>
                     </form>
-                </div>
+                </x-ui.glass-card>
 
-                <div class="lg:col-span-5 flex flex-col gap-6">
-                    <div class="glass-card bg-slate-50 border-slate-200">
+                <div class="lg:col-span-5 flex flex-col gap-6 w-full">
+                    <x-ui.glass-card class="bg-slate-50 border-slate-200 w-full max-w-full mx-auto">
                         <h4 class="font-bold text-slate-800 mb-4 flex items-center text-sm"><i class="fas fa-file-download mr-2 text-blue-500"></i> Download Template</h4>
                         <p class="text-sm text-slate-600 mb-4">Download an empty CSV template with column formats adjusted to the system.</p>
                         <a href="{{ route('sales.download_template') }}" class="inline-flex items-center justify-center w-full bg-white border-2 border-blue-200 hover:border-blue-500 text-blue-600 font-bold py-3 px-4 rounded-xl transition-all shadow-sm">
                             <i class="fas fa-download mr-2"></i> Download CSV Template
                         </a>
-                    </div>
+                    </x-ui.glass-card>
 
-                    <div class="glass-card bg-blue-50 border-blue-200">
+                    <x-ui.glass-card class="bg-blue-50 border-blue-200 w-full max-w-full mx-auto">
                         <h4 class="font-bold text-blue-800 mb-3 flex items-center text-sm"><i class="fas fa-info-circle mr-2"></i> Import Instructions</h4>
                         <ul class="text-xs text-blue-700 space-y-2 list-disc list-inside font-medium leading-relaxed">
                             <li>Use the <b>latest CSV template</b> downloaded from the button above.</li>
@@ -457,7 +433,7 @@
                             <li>Number Columns (HNA, Discount, Net Price) now <b>support free text format</b> (Example: type `Rp 529.500` or `12.69%` directly). The system will clean it up automatically.</li>
                             <li><b class="text-red-600">Important (Auto-Sync):</b> The system detects the <b>Month</b> from the Date column, then will <b>delete & replace</b> all sales data for that month with the newly uploaded data.</li>
                         </ul>
-                    </div>
+                    </x-ui.glass-card>
                 </div>
             </div>
         </div>

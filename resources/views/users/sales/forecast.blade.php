@@ -169,24 +169,11 @@
         <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start">
             
             <div class="w-full flex justify-start">
-                <a href="{{ $backRoute }}" class="btn-back-modern shrink-0">
-                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                    {{ $backText }}
-                </a>
+                <x-ui.back-button :href="$backRoute" :label="$backText" />
             </div>  
 
-            <div class="hidden md:block page-header">
-                <div class="header-content flex flex-row items-center justify-between gap-6">
-                    <div>
-                        <h1 class="text-2xl font-bold tracking-tight text-white">Sales Forecast & Stock Estimation</h1>
-                        <p class="text-blue-100 text-sm mt-1.5 leading-relaxed">
-                            Estimating future stock requirements based on the average sales performance from the last <span class="font-bold text-white">{{ $activeRefMonths }} months</span> (<span class="font-semibold">@foreach($tigaBulanTerakhir as $index => $b){{ $monthTranslations[$b] ?? $b }}{{ !$loop->last ? ', ' : '' }}@endforeach</span>).
-                        </p>
-                    </div>
-                    <div>
-                        <i class="fas fa-chart-area text-4xl opacity-20"></i>
-                    </div>
-                </div>
+            <div class="hidden md:block">
+                <x-ui.page-header title="Sales Forecast & Stock Estimation" :subtitle="'Estimating future stock requirements based on the average sales performance from the last ' . $activeRefMonths . ' months (' . implode(', ', array_map(fn($b) => $monthTranslations[$b] ?? $b, $tigaBulanTerakhir)) . ').'" icon="fa-chart-area" />
             </div>
 
             <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
@@ -201,45 +188,17 @@
                 </div>
             </div>
 
-            <div class="glass-panel border-t-4 border-t-blue-500">
+            <x-ui.glass-card class="border-t-4 border-t-blue-500 shadow-lg !rounded-3xl !p-6">
                 <div class="flex flex-col md:flex-row md:items-center md:flex-nowrap justify-between gap-4 mb-6">
                     
                     <form method="GET" action="{{ route('sales.forecast') }}" id="filterForm" class="flex flex-col md:flex-row md:flex-nowrap items-stretch md:items-center gap-3 w-full md:w-auto">
-                        <div class="relative w-full md:w-72 shrink-0">
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                                <i class="fas fa-search text-sm"></i>
-                            </div>
-                            <input type="text" id="searchInput" onkeyup="handleSearchInput()" placeholder="Search Product Name" class="w-full pl-9 pr-9 py-2 text-sm font-semibold border border-slate-200 bg-white hover:bg-slate-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
-                            <button type="button" id="clearSearchBtn" onclick="clearSearch()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition-colors hidden">
-                                <i class="fas fa-times-circle text-base"></i>
-                            </button>
-                        </div>
+                        <x-ui.search-input id="searchInput" onkeyup="handleSearchInput()" placeholder="Search Product Name" class="w-full md:w-72 shrink-0" />
 
                         <div class="flex items-center gap-2 shrink-0">
-                            <div class="relative flex-1 md:w-36">
-                                <select name="bulan_akhir" onchange="this.form.submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
-                                    @foreach($bulanTersediaUrut as $bln)
-                                        <option value="{{ $bln }}" {{ (isset($bulanAktif) && $bulanAktif == $bln) ? 'selected' : '' }}>
-                                            {{ $monthTranslations[$bln] ?? $bln }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-blue-700">
-                                    <i class="fas fa-chevron-down text-xs"></i>
-                                </div>
+                            <x-ui.filter-select name="bulan_akhir" onchange="this.form.submit()" value="{{ $bulanAktif ?? '' }}" :options="collect($bulanTersediaUrut)->mapWithKeys(fn($b) => [$b => $monthTranslations[$b] ?? $b])->toArray()" class="flex-1 md:w-36" />
                                 <input type="hidden" name="tahun" value="{{ $tahun }}">
-                            </div>
 
-                            <div class="relative w-24 shrink-0">
-                                <select name="tahun" onchange="this.form.submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
-                                    @foreach($listTahun as $t)
-                                        <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-blue-700">
-                                    <i class="fas fa-chevron-down text-xs"></i>
-                                </div>
-                            </div>
+                            <x-ui.filter-select name="tahun" onchange="this.form.submit()" value="{{ $tahun }}" :options="$listTahun" class="w-24 shrink-0" />
                         </div>
                     </form>
 
@@ -255,12 +214,8 @@
                                 <i class="fas fa-clock"></i> Set DOI
                             </button>
                         @endif
-                        <a href="{{ route('sales.forecast.export.excel', ['tahun' => $tahun, 'bulan_akhir' => $bulanAktif]) }}" class="flex-1 md:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap">
-                            <i class="fas fa-file-excel"></i> Excel
-                        </a>
-                        <a href="{{ route('sales.forecast.export.pdf', ['tahun' => $tahun, 'bulan_akhir' => $bulanAktif]) }}" class="flex-1 md:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap">
-                            <i class="fas fa-file-pdf"></i> PDF
-                        </a>
+                        <x-ui.export-button variant="excel" :href="route('sales.forecast.export.excel', ['tahun' => $tahun, 'bulan_akhir' => $bulanAktif])" class="flex-1 md:flex-none justify-center" />
+                        <x-ui.export-button variant="pdf" :href="route('sales.forecast.export.pdf', ['tahun' => $tahun, 'bulan_akhir' => $bulanAktif])" class="flex-1 md:flex-none justify-center" />
                     </div>
                 </div>
 
@@ -533,7 +488,7 @@
                     <p class="text-xs mt-1 max-w-sm px-4 mx-auto">No sales data available for the selected period and filters. Try changing the month or year.</p>
                 </div>
                 @endif
-            </div>
+            </x-ui.glass-card>
         </div>
 
         @if(isset($hasFullAccess) && $hasFullAccess)

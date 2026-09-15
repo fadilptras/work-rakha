@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Illuminate\Support\Facades\Route;
 
@@ -186,6 +186,7 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
             Route::get('/monthly', 'monthly')->name('monthly');
             Route::get('/monitoring/data', 'monitoringData')->name('monitoring.data');
             Route::get('/monthly-detail', 'monthlyDetailData')->name('monthly.detail');
+            Route::post('/monthly/update-closing', 'updateOutletClosing')->name('monthly.update-closing');
             Route::get('/visualisasi/data', 'visualisasiData')->name('visualisasi.data');
         });
 
@@ -217,15 +218,15 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
             Route::get('/gudang/dashboard', 'dashboard')->name('gudang.dashboard');
 
             Route::get('/stock/barang', 'barangIndex')->name('stock.barang.index');
-            Route::post('/stock/barang', 'storeBarang')->name('stock.barang.store');
-            Route::post('/stock/barang/bulk-update', 'bulkUpdateBarang')->name('stock.barang.bulk_update');
             Route::get('/stock/barang/export', 'exportBarang')->name('stock.barang.export');
-            Route::put('/stock/barang/{barang}', 'updateBarang')->name('stock.barang.update');
-            Route::delete('/stock/barang/{barang}', 'destroyBarang')->name('stock.barang.destroy');
             Route::get('/stock/barang/packagings', 'barangPackagings')->name('stock.barang.packagings.index');
             Route::post('/stock/barang/packagings', 'storeBarangPackaging')->name('stock.barang.packagings.store');
             Route::put('/stock/barang/packagings/{packaging}', 'updateBarangPackaging')->name('stock.barang.packagings.update');
             Route::delete('/stock/barang/packagings/{packaging}', 'destroyBarangPackaging')->name('stock.barang.packagings.destroy');
+            Route::post('/stock/barang', 'storeBarang')->name('stock.barang.store');
+            Route::post('/stock/barang/bulk-update', 'bulkUpdateBarang')->name('stock.barang.bulk_update');
+            Route::put('/stock/barang/{barang}', 'updateBarang')->name('stock.barang.update');
+            Route::delete('/stock/barang/{barang}', 'destroyBarang')->name('stock.barang.destroy');
         });
 
         Route::controller(SalesDataController::class)->group(function () {
@@ -255,6 +256,7 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
 
         Route::controller(SalesSphController::class)->group(function () {
             Route::get('/sph', 'index')->name('sph.index');
+            Route::get('/sph/ps-list', 'psList')->name('sph.ps.list');
             Route::get('/sph/{sph}', 'show')->name('sph.show');
             Route::post('/sph', 'store')->name('sph.store');
             Route::put('/sph/{sph}', 'update')->name('sph.update');
@@ -263,6 +265,8 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
             Route::get('/sph/{sph}/export/excel', 'exportExcel')->name('sph.export.excel');
         });
     });
+
+    Route::get('/test-gap', fn() => view('test-gap'))->name('test.gap');
 
     // Aktivitas
     Route::resource('aktivitas', AktivitasController::class)->only(['index', 'store'])->middleware('auth');

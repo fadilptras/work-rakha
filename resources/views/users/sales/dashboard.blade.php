@@ -10,7 +10,6 @@
     <style>
         body {
             font-family: 'Outfit', sans-serif;
-            /* background-color dihapus agar layout ungu bawaan bisa tembus */
         }
 
         .mesh-bg { 
@@ -20,7 +19,6 @@
             right: 0;
             bottom: 0;
             z-index: 0;
-            /* Latar belakang dibuat transparan, hanya menyisakan aksen gradient */
             background-image: 
                 radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.6) 0px, transparent 50%),
                 radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
@@ -51,6 +49,13 @@
             backface-visibility: hidden;
         }
 
+        .card-content {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            width: 100%;
+        }
+
         /* Desktop Layout (Default Besar) */
         @media (min-width: 768px) {
             .glass-card, .module-card {
@@ -69,6 +74,10 @@
                 transform: translateY(-5px);
                 box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
                 background: rgba(255, 255, 255, 0.95);
+            }
+            /* FIX: Memaksa tinggi judul minimal 2 baris (64px) agar teks deskripsi merata */
+            .card-content h2 {
+                min-height: 4rem;
             }
         }
 
@@ -94,11 +103,6 @@
                 margin-bottom: 0 !important;
                 border-radius: 14px !important;
                 flex-shrink: 0;
-            }
-            .card-content {
-                display: flex;
-                flex-direction: column;
-                flex-grow: 1;
             }
             .card-action, .bg-decoration {
                 display: none !important;
@@ -179,10 +183,8 @@
     </style>
     @endpush
 
-    {{-- Class min-h-screen memastikan kontainer membentang hingga bawah layar --}}
     <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16">
         
-        {{-- Mesh BG dijadikan elemen terpisah di belakang --}}
         <div class="mesh-bg"></div>
         
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:px-12 lg:pb-8 flex-1 flex flex-col gap-4 md:gap-6 justify-center mt-2 md:mt-6">
@@ -199,7 +201,8 @@
 
             {{-- Kartu Utama --}}
             @if(isset($hasAnyAccess) && $hasAnyAccess)
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 relative z-10">
+            {{-- Mengatur lg:grid-cols berdasarkan akses --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 {{ (isset($hasFullAccess) && $hasFullAccess) ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-2 md:gap-6 relative z-10">
                 
                 @if(isset($hasFullAccess) && $hasFullAccess)
                 {{-- Kartu 1: Data Management --}}
@@ -284,33 +287,6 @@
                     </div>
                 </a>
 
-                {{-- Kartu 4: Stock Monitoring --}}
-                <a href="{{ route('sales.stock') }}" class="module-card card-orange group title-reveal stagger-1" style="animation-delay: 0.4s;">
-                    <div class="icon-box">
-                        <i class="fas fa-boxes-stacked"></i>
-                    </div>
-                    
-                    <div class="card-content">
-                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight group-hover:text-orange-600 transition-colors">Stock Monitoring</h2>
-                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
-                            Monitor item availability. Access structured inventory data, safe or low stock status.
-                        </p>
-                        
-                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-orange-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                            <span>Open Monitoring</span>
-                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
-                        </div>
-                    </div>
-
-                    <div class="mobile-chevron">
-                        <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
-                    </div>
-
-                    <div class="bg-decoration absolute -bottom-6 -right-6 text-orange-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
-                        <i class="fas fa-box-open"></i>
-                    </div>
-                </a>
-
                 {{-- Kartu 5: Incentive Scheme --}}
                 <a href="{{ route('sales.incentive') }}" class="module-card card-brown group title-reveal stagger-2" style="animation-delay: 0.5s;">
                     <div class="icon-box">
@@ -338,6 +314,34 @@
                     </div>
                 </a>
 
+                {{-- Kartu 4: Stock Monitoring --}}
+                <a href="{{ route('sales.stock') }}" class="module-card card-orange group title-reveal stagger-1" style="animation-delay: 0.4s;">
+                    <div class="icon-box">
+                        <i class="fas fa-boxes-stacked"></i>
+                    </div>
+                    
+                    <div class="card-content">
+                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight group-hover:text-orange-600 transition-colors">Stock Monitoring</h2>
+                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
+                            Monitor item availability. Access structured inventory data, safe or low stock status.
+                        </p>
+                        
+                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-orange-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                            <span>Open Monitoring</span>
+                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                        </div>
+                    </div>
+
+                    <div class="mobile-chevron">
+                        <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+
+                    <div class="bg-decoration absolute -bottom-6 -right-6 text-orange-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                </a>
+
+
                 {{-- Kartu 6: Sales Forecast --}}
                 <a href="{{ route('sales.forecast') }}" class="module-card card-slate group title-reveal stagger-3" style="animation-delay: 0.6s;">
                     <div class="icon-box">
@@ -345,7 +349,7 @@
                     </div>
                     
                     <div class="card-content">
-                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight transition-colors">Sales Forecast</h2>
+                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight transition-colors">Sales <br>Forecast</h2>
                         <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
                             Estimate and predict product stock requirements based on average sales movement over the last 3 months.
                         </p>

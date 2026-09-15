@@ -1,6 +1,7 @@
 @php
     $agent = new \Jenssegers\Agent\Agent();
     $isMobile = $agent->isMobile();
+    $psList = \App\Http\Controllers\Sales\SalesSphController::getPsUsers();
 @endphp
 <x-layout-users :title="$title ?? 'Product Price & SPH'">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -173,35 +174,27 @@
         <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start mobile-auto-h">
             
             <div class="w-full flex justify-start">
-                <a href="{{ route('sales.index') }}" class="btn-back-modern shrink-0">
-                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                    Back to Sales Dashboard
-                </a>
+                <x-ui.back-button href="{{ route('sales.index') }}" label="Back to Sales Dashboard" />
             </div>
 
-            <div class="desktop-flex page-header flex-col xl:flex-row justify-between items-start xl:items-center gap-5">
-                <div class="header-content">
-                    <h1 class="text-3xl font-extrabold tracking-tight mb-1.5 text-white">Product Price & <span class="text-blue-200">SPH Form</span></h1>
-                    <p class="text-blue-100 text-sm opacity-90 max-w-2xl font-medium">Manage official catalog pricing, create quotation forms, and inspect SPH history records.</p>
-                </div>
-                
-                <div class="tab-scroller-wrap w-full xl:w-auto shrink-0 mt-3 xl:mt-0">
-                    <div x-ref="tabScroller" @scroll="checkTabOverflow()" class="flex space-x-1 bg-white/10 p-1.5 rounded-full border border-white/20 backdrop-blur-md overflow-x-auto relative z-10 w-full">
-                        <button @click="activeTab = 'pricing'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'pricing', 'text-white hover:bg-white/20': activeTab !== 'pricing' }" class="px-5 py-2.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
-                            <i class="fas fa-tags mr-2"></i> Price List
-                        </button>
-                        <button x-show="hasFullAccess" x-cloak @click="activeTab = 'sph'; if(!isEditMode) resetForm();" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'sph', 'text-white hover:bg-white/20': activeTab !== 'sph' }" class="px-5 py-2.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
-                            <i class="fas fa-file-contract mr-2"></i> <span x-text="isEditMode ? 'Edit SPH' : 'SPH Form'"></span>
-                        </button>
-                        <button @click="activeTab = 'history'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'history', 'text-white hover:bg-white/20': activeTab !== 'history' }" class="px-5 py-2.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
-                            <i class="fas fa-history mr-2"></i> SPH Document
-                        </button>
-                    </div>
-                    <div x-show="showTabHint" x-cloak class="tab-hint-text xl:hidden text-right mt-1.5" x-transition.opacity.duration.300ms>
-                        <i class="fas fa-arrow-right mr-1"></i> swipe to view more tabs
-                    </div>
-                </div>
+            <div class="hidden md:block">
+                <x-ui.page-header title="Product Price & SPH Form" subtitle="Manage official catalog pricing, create quotation forms, and inspect SPH history records." icon="fa-tags">
+                    <x-slot:controls>
+                        <div x-ref="tabScroller" @scroll="checkTabOverflow()" class="flex space-x-1 bg-white/10 p-1 rounded-full border border-white/20 backdrop-blur-md overflow-x-auto relative z-10 w-full">
+                            <button @click="activeTab = 'pricing'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'pricing', 'text-white hover:bg-white/20': activeTab !== 'pricing' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                                <i class="fas fa-tags mr-2"></i> Price List
+                            </button>
+                            <button x-show="hasFullAccess" x-cloak @click="activeTab = 'sph'; if(!isEditMode) resetForm();" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'sph', 'text-white hover:bg-white/20': activeTab !== 'sph' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                                <i class="fas fa-file-contract mr-2"></i> <span x-text="isEditMode ? 'Edit SPH' : 'SPH Form'"></span>
+                            </button>
+                            <button @click="activeTab = 'history'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'history', 'text-white hover:bg-white/20': activeTab !== 'history' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                                <i class="fas fa-history mr-2"></i> SPH Document
+                            </button>
+                        </div>
+                    </x-slot:controls>
+                </x-ui.page-header>
             </div>
+
 
             {{-- MOBILE HEADER + TABS (independent from desktop header above) --}}
             <div class="md:hidden space-y-3">
@@ -232,8 +225,8 @@
             </div>
 
             {{-- TAB 1: PRODUCT PRICE LIST --}}
-            <div x-show="activeTab === 'pricing'" class="space-y-5 flex-1 flex flex-col mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-                <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col mobile-auto-h">
+            <div x-show="activeTab === 'pricing'" class="space-y-5 flex flex-col w-full mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto mobile-auto-h border-t-4 border-t-blue-500 shadow-lg">
                     
                     {{-- HEADER TABEL YANG SUDAH BERSIH DAN RAPI --}}
                     <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
@@ -247,15 +240,7 @@
                     
                     <div class="flex items-center justify-start xl:justify-end gap-2.5 w-full xl:flex-1 min-w-0 overflow-x-auto hide-scrollbar pb-2 xl:pb-0">
                         
-                        <!-- FIX: Hapus shrink-0, ganti dengan flex-1 dan batasan min/max width agar elastis -->
-                        <div class="relative flex-1 min-w-[140px] max-w-sm desktop-block">
-                            <div class="icon-left text-slate-400"><i class="fas fa-search text-sm"></i></div>
-                            <!-- FIX: Placeholder disingkat agar aman saat kolom menyusut -->
-                            <input type="text" x-model="searchQuery" placeholder="Search Product Name" class="w-full pl-10 pr-9 py-2 text-sm font-semibold border border-slate-200 bg-white hover:bg-slate-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors" autocomplete="off">
-                            <button type="button" x-cloak x-show="searchQuery.length > 0" @click="searchQuery = ''" class="icon-clear-search text-slate-400 hover:text-slate-600 transition-colors">
-                                <i class="fas fa-times-circle text-sm"></i>
-                            </button>
-                        </div>
+                        <x-ui.search-input x-model="searchQuery" placeholder="Search Product Name" autocomplete="off" class="flex-1 min-w-[140px] max-w-sm desktop-block" />
                         
                         <button x-show="hasFullAccess" x-cloak @click="openManageModal()" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);" class="shrink-0 inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-bold rounded-lg shadow-md hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap" title="Add a new product with its selling price to the price list catalog">
                             <i class="fas fa-plus"></i> Add to Pricing
@@ -266,25 +251,14 @@
                             <span class="text-sm font-black text-blue-600" x-text="filteredProducts.length"></span>
                         </div>
 
-                        <a href="{{ route('sales.pricing.export.pdf') }}" class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap" title="Download Price List (PDF)">
-                            <i class="fas fa-file-pdf"></i> PDF
-                        </a>
-
-                        <a href="{{ route('sales.pricing.export.excel') }}" class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap" title="Download Price List (Excel)">
-                            <i class="fas fa-file-excel"></i> Excel
-                        </a>
+                        <x-ui.export-button variant="pdf" href="{{ route('sales.pricing.export.pdf') }}" title="Download Price List (PDF)" class="shrink-0" />
+                        <x-ui.export-button variant="excel" href="{{ route('sales.pricing.export.excel') }}" title="Download Price List (Excel)" class="shrink-0" />
                     </div>
                 </div>
 
-                    {{-- MOBILE: Dedicated search bar --}}
+                    {{-- MOBILE: Dedicated search bar — konsisten dengan search-input component --}}
                     <div class="md:hidden px-3 pt-3">
-                        <div class="mobile-card-search">
-                            <i class="fas fa-search"></i>
-                            <input type="text" x-model="searchQuery" placeholder="Search Product Name">
-                            <button type="button" x-cloak x-show="searchQuery.length > 0" @click="searchQuery = ''">
-                                <i class="fas fa-times-circle text-slate-400 text-xs"></i>
-                            </button>
-                        </div>
+                        <x-ui.search-input placeholder="Search Product Name" x-model="searchQuery" />
                     </div>
                     
                     {{-- MOBILE: Pricing Card List --}}
@@ -297,8 +271,8 @@
                                         <span class="m-card-tag mt-1" x-text="item.presentation"></span>
                                     </div>
                                     <div class="flex items-center gap-1.5 shrink-0">
-                                        <button x-show="hasFullAccess" x-cloak @click="openEditProduct(item)" class="w-8 h-8 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center text-xs border border-amber-200"><i class="fas fa-edit"></i></button>
-                                        <button x-show="hasFullAccess" x-cloak @click="deleteProduct(item)" class="w-8 h-8 rounded-md bg-rose-50 text-rose-500 flex items-center justify-center text-xs border border-rose-200"><i class="fas fa-trash"></i></button>
+                                        <x-ui.edit-button x-show="hasFullAccess" x-cloak @click="openEditProduct(item)" />
+                                        <x-ui.delete-button x-show="hasFullAccess" x-cloak @click="deleteProduct(item)" />
                                     </div>
                                 </div>
                                 <div class="m-card-row">
@@ -341,12 +315,8 @@
                                         <td class="px-5 py-3 text-right font-semibold text-slate-700" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(item.unit_price)"></td>
                                         <td class="px-5 py-3 text-center">
                                             <div class="flex items-center justify-center gap-2">
-                                                <button x-show="hasFullAccess" x-cloak @click="openEditProduct(item)" title="Edit Product & Price" class="w-8 h-8 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-600 hover:text-amber-700 flex items-center justify-center transition-all text-xs border border-amber-200 hover:border-amber-300 hover:shadow-md hover:shadow-amber-100 hover:-translate-y-0.5 cursor-pointer">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button x-show="hasFullAccess" x-cloak @click="deleteProduct(item)" title="Remove Product from Catalog" class="w-8 h-8 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-500 hover:text-rose-600 flex items-center justify-center transition-all text-xs border border-rose-200 hover:border-rose-300 hover:shadow-md hover:shadow-rose-100 hover:-translate-y-0.5 cursor-pointer">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                                <x-ui.edit-button x-show="hasFullAccess" x-cloak @click="openEditProduct(item)" title="Edit Product & Price" />
+                                                <x-ui.delete-button x-show="hasFullAccess" x-cloak @click="deleteProduct(item)" title="Remove Product from Catalog" />
                                                 <span x-show="!hasFullAccess" x-cloak class="text-slate-300 text-xs font-bold">-</span>
                                             </div>
                                         </td>
@@ -365,11 +335,12 @@
                         </table>
                     </div>
                 </div>
+            </x-ui.glass-card>
             </div>
 
             {{-- TAB 2: SPH FORM GENERATOR / EDITOR --}}
-            <div x-show="activeTab === 'sph' && hasFullAccess" class="space-y-5 flex-1 flex flex-col mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-                <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col mobile-auto-h">
+            <div x-show="activeTab === 'sph' && hasFullAccess" class="space-y-5 flex flex-col w-full mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto mobile-auto-h border-t-4 border-t-blue-500 shadow-lg">
                     <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg"><i class="fas fa-file-contract"></i></div>
@@ -408,11 +379,11 @@
                                     <label class="modern-label">Contact Person (PS)</label>
                                     <div class="relative">
                                         <div class="icon-left text-slate-400"><i class="fas fa-id-badge text-sm"></i></div>
-                                        <select x-model="selectedPs" @change="updatePsPhone()" class="w-full appearance-none border border-slate-200 bg-white hover:bg-slate-50 shadow-sm rounded-lg text-sm pl-10 pr-10 py-2.5 font-bold text-slate-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
+                                        <select x-model="selectedPs" @change="updatePsPhone()" class="w-full appearance-none border border-slate-200 bg-white hover:bg-slate-50 shadow-sm rounded-lg text-sm pl-10 pr-10 py-2.5 font-bold text-slate-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors relative z-20">
                                             <option value="">-- Select PS --</option>
-                                            <template x-for="ps in psList" :key="ps.name">
-                                                <option :value="ps.name" x-text="ps.name"></option>
-                                            </template>
+                                            @foreach($psList as $ps)
+                                                <option value="{{ $ps['name'] }}">{{ $ps['name'] }}</option>
+                                            @endforeach
                                         </select>
                                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
                                             <i class="fas fa-chevron-down text-sm"></i>
@@ -580,15 +551,15 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </x-ui.glass-card>
             </div>
 
             {{-- TAB 3: SPH HISTORY SECTION --}}
-            <div x-show="activeTab === 'history'" class="space-y-5 flex-1 flex flex-col mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-                <div class="glass-card !p-0 overflow-hidden flex-1 flex flex-col mobile-auto-h">
+            <div x-show="activeTab === 'history'" class="space-y-5 flex flex-col w-full mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto mobile-auto-h border-t-4 border-t-blue-500 shadow-lg">
                     
-                    {{-- Header Table --}}
-                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                    {{-- Header Table — disamakan dengan pricelist (gap & search max-w-sm) --}}
+                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
                         <div class="flex items-center gap-3 shrink-0">
                             <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg"><i class="fas fa-history"></i></div>
                             <div>
@@ -597,30 +568,14 @@
                             </div>
                         </div>
                         
-                        <!-- Wrapper dikembalikan ke aslinya (lg:w-auto) -->
-                        <div class="desktop-flex items-center gap-2.5 w-full lg:w-auto overflow-x-auto hide-scrollbar shrink-0 pb-2 lg:pb-0 lg:mt-3 lg:translate-y-1">
-                            
-                            <!-- Pakai inline style width agar lebar fix tanpa nembus batas 100% container -->
-                            <div class="relative w-full sm:w-80" style="width: 480px; max-width: 100%;">
-                                <div class="icon-left text-slate-400"><i class="fas fa-search text-sm"></i></div>
-                                <input type="text" x-model="historySearchQuery" placeholder="Search Client, Company or SPH Number" class="w-full pl-10 pr-9 py-2 text-sm border border-slate-200 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm transition-colors" autocomplete="off">
-                                <button type="button" x-cloak x-show="historySearchQuery.length > 0" @click="historySearchQuery = ''" class="icon-clear-search text-slate-400 hover:text-slate-600 transition-colors">
-                                    <i class="fas fa-times-circle text-sm"></i>
-                                </button>
-                            </div>
-                            
+                        <div class="flex items-center justify-start xl:justify-end gap-2.5 w-full xl:flex-1 min-w-0 overflow-x-auto hide-scrollbar pb-2 xl:pb-0">
+                            <x-ui.search-input x-model="historySearchQuery" placeholder="Search Client, Company or SPH Number" autocomplete="off" class="flex-1 min-w-[140px] max-w-sm" />
                         </div>
                     </div>
 
-                    {{-- MOBILE: Dedicated search bar --}}
+                    {{-- MOBILE: Dedicated search bar — konsisten --}}
                     <div class="md:hidden px-3 pt-3">
-                        <div class="mobile-card-search">
-                            <i class="fas fa-search"></i>
-                            <input type="text" x-model="historySearchQuery" placeholder="Search Client, Company or SPH Number">
-                            <button type="button" x-cloak x-show="historySearchQuery.length > 0" @click="historySearchQuery = ''">
-                                <i class="fas fa-times-circle text-slate-400 text-xs"></i>
-                            </button>
-                        </div>
+                        <x-ui.search-input x-model="historySearchQuery" placeholder="Search Client, Company or SPH Number" />
                     </div>
 
                     {{-- MOBILE: History Card List --}}
@@ -715,18 +670,14 @@
                                         </td>
                                         <td class="py-3 px-5 text-center border-l border-slate-100 whitespace-nowrap">
                                             <div class="flex items-center justify-center gap-2">
-                                                <button x-show="hasFullAccess" x-cloak @click="editSph(history)" class="w-8 h-8 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-600 hover:text-amber-700 flex items-center justify-center transition-all text-xs border border-amber-200 hover:border-amber-300 hover:shadow-md hover:shadow-amber-100 hover:-translate-y-0.5 cursor-pointer" title="Edit SPH">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
+                                                <x-ui.edit-button x-show="hasFullAccess" x-cloak @click="editSph(history)" title="Edit SPH" />
                                                 <a :href="'/sales/sph/' + history.id + '/export/pdf'" class="w-8 h-8 rounded-md bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 flex items-center justify-center transition-all text-xs border border-red-200 hover:border-red-300 hover:shadow-md hover:shadow-red-100 hover:-translate-y-0.5 cursor-pointer" title="Export SPH PDF">
                                                     <i class="fas fa-file-pdf"></i>
                                                 </a>
                                                 <a :href="'/sales/sph/' + history.id + '/export/excel'" class="w-8 h-8 rounded-md bg-green-50 hover:bg-green-500 hover:text-white text-green-600 flex items-center justify-center transition-all text-xs border border-green-200 cursor-pointer" title="Export SPH Excel">
                                                     <i class="fas fa-file-excel"></i>
                                                 </a>
-                                                <button x-show="hasFullAccess" x-cloak @click="deleteHistory(history.id)" class="w-8 h-8 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-500 hover:text-rose-600 flex items-center justify-center transition-all text-xs border border-rose-200 hover:border-rose-300 hover:shadow-md hover:shadow-rose-100 hover:-translate-y-0.5 cursor-pointer" title="Delete Record">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                                <x-ui.delete-button x-show="hasFullAccess" x-cloak @click="deleteHistory(history.id)" title="Delete Record" />
                                             </div>
                                         </td>
                                     </tr>
@@ -743,7 +694,7 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
+                </x-ui.glass-card>
             </div>
 
             {{-- ========================================================= --}}
@@ -1085,17 +1036,34 @@
                 loadingHistory: false,
                 savingSph: false,
 
-                psList: [
-                    { name: 'Arief Natanael Haryanto', phone: '081298765432' },
-                    { name: 'Eko Sigit Nugroho', phone: '081388112233' },
-                    { name: 'Rusiman Hendra Dipraja', phone: '081877665544' },
-                    { name: 'Karsono Nu Haeman', phone: '085699221144' },
-                    { name: 'Surachman', phone: '081233445566' }
-                ],
+                psList: @json($psList),
+
+                fetchPsList() {
+                    fetch("{{ route('sales.sph.ps.list') }}")
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data && data.length) {
+                                this.psList = data;
+                            }
+                        })
+                        .catch(err => console.error('Gagal memuat daftar PS:', err));
+                },
+
+                normalizePhoneTo08(raw) {
+                    if (!raw || raw === '-') return '';
+                    let digits = String(raw).replace(/[^0-9]/g, '');
+                    if (!digits) return '';
+                    if (digits.startsWith('62')) {
+                        digits = '0' + digits.substring(2);
+                    } else if (digits.startsWith('8')) {
+                        digits = '0' + digits;
+                    }
+                    return digits;
+                },
 
                 updatePsPhone() {
                     let found = this.psList.find(p => p.name === this.selectedPs);
-                    this.psPhone = found ? found.phone : '';
+                    this.psPhone = found ? this.normalizePhoneTo08(found.phone) : '';
                 },
 
                 init() {
@@ -1109,6 +1077,7 @@
                         localStorage.setItem('pricing_active_tab', value);
                         this.$nextTick(() => this.checkTabOverflow());
                     });
+                    this.fetchPsList();
                     this.fetchHistory();
                     this.$nextTick(() => this.checkTabOverflow());
                     window.addEventListener('resize', () => this.checkTabOverflow());
@@ -1453,7 +1422,7 @@
                     this.customerName = history.customerName;
                     this.customerCompany = history.customerCompany;
                     this.selectedPs = history.selectedPs;
-                    this.psPhone = history.psPhone;
+                    this.psPhone = this.normalizePhoneTo08(history.psPhone);
                     this.ppnOption = (history.ppnOption !== null && history.ppnOption !== undefined) ? history.ppnOption : 11;
                     this.selectedItems = JSON.parse(JSON.stringify(history.items)).map(item => {
                         const prod = this.rawProducts.find(p => p.product_name === item.product_name);

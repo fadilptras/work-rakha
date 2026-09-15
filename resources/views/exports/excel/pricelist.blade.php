@@ -32,11 +32,11 @@
 
     {{-- Header Tabel --}}
     <tr>
-        <th style="font-weight: bold; border: 1px solid #000; background-color: #f3f4f6;">No</th>
-        <th style="font-weight: bold; border: 1px solid #000; background-color: #f3f4f6;">Nama Produk</th>
-        <th style="font-weight: bold; border: 1px solid #000; background-color: #f3f4f6;">Sediaan</th>
-        <th style="font-weight: bold; border: 1px solid #000; background-color: #f3f4f6;">HNA</th>
-        <th style="font-weight: bold; border: 1px solid #000; background-color: #f3f4f6;">HNA / PCS</th>
+        <th style="font-weight: bold; border: 1px solid #000; background-color: #f3f4f6; text-align: center; vertical-align: middle;">No</th>
+        <th style="font-weight: bold; border: 1px solid #000; background-color: #f3f4f6; text-align: center; vertical-align: middle;">Nama Produk</th>
+        <th style="font-weight: bold; border: 1px solid #000; background-color: #f3f4f6; text-align: center; vertical-align: middle;">Sediaan</th>
+        <th style="font-weight: bold; border: 1px solid #000; background-color: #f3f4f6; text-align: center; vertical-align: middle;">HNA</th>
+        <th style="font-weight: bold; border: 1px solid #000; background-color: #f3f4f6; text-align: center; vertical-align: middle;">HNA / PCS</th>
     </tr>
 
     {{-- Data Produk --}}
@@ -44,13 +44,9 @@
         <tr>
             <td style="border: 1px solid #000; text-align: center;">{{ $i + 1 }}</td>
             <td style="border: 1px solid #000;">{{ $item->product_name }}</td>
-            <td style="border: 1px solid #000;">{{ $item->presentation ?: 'General' }}</td>
-            <td style="border: 1px solid #000; text-align: right;">
-                {{ number_format($item->base_price ?? 0, 0, ',', '.') }}
-            </td>
-            <td style="border: 1px solid #000; text-align: right;">
-                {{ number_format($item->unit_price ?? 0, 0, ',', '.') }}
-            </td>
+            <td style="border: 1px solid #000; text-align: center;">{{ $item->presentation ?: 'General' }}</td>
+            <td style="border: 1px solid #000; text-align: center; mso-number-format:'\#\.\#\#0';">{{ (int) ($item->base_price ?? 0) }}</td>
+            <td style="border: 1px solid #000; text-align: center; mso-number-format:'\#\.\#\#0';">{{ (int) ($item->unit_price ?? 0) }}</td>
         </tr>
     @endforeach
 </table>

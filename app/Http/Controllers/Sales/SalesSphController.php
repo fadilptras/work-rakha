@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Sales;
 
 use App\Models\SphQuotation;
+use App\Models\User;
 use App\Exports\SphExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,6 +13,67 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class SalesSphController extends BaseSalesController
 {
+    /**
+     * Normalisasi nomor telepon ke format lokal 08...
+     * - "+62 813-xxx" -> "0813xxx"
+     * - "62813xxx"    -> "0813xxx"
+     * - "813xxx"      -> "0813xxx"
+     * - "08xxx"       -> tetap
+     */
+    public static function normalizePhoneTo08(?string $raw): string
+    {
+        if ($raw === null || trim($raw) === '' || trim($raw) === '-') {
+            return '-';
+        }
+        $digits = preg_replace('/[^0-9]/', '', $raw);
+        if ($digits === '' || $digits === null) {
+            return '-';
+        }
+        // 62... -> 0...
+        if (str_starts_with($digits, '62')) {
+            $digits = '0' . substr($digits, 2);
+        } elseif (str_starts_with($digits, '8')) {
+            // 8... (tanpa 0) -> 08...
+            $digits = '0' . $digits;
+        }
+        return $digits;
+    }
+
+    /**
+     * Ambil daftar Contact Person (PS) beserta nomor telepon (nomor_telepon)
+     * dinamis langsung dari tabel users.
+     * Filter: HANYA jabatan mengandung "marketing" (case-insensitive, trim)
+     * -> sebelumnya pakai OR divisi yang menyebabkan non-marketing ikut muncul
+     *    (Kepala Operasional, Ekspedisi, Tim IT, Direktur, Test = 6 false positive).
+     * Nomor dibersihkan ke format 08... via normalizePhoneTo08().
+     */
+    public static function getPsUsers(): array
+    {
+        return User::whereNotNull('name')
+            ->whereNotNull('jabatan')
+            ->whereRaw('LOWER(TRIM(jabatan)) LIKE ?', ['%marketing%'])
+            ->orderBy('name', 'asc')
+            ->get(['name', 'nomor_telepon'])
+            ->map(fn ($u) => [
+                'name'  => $u->name,
+                'phone' => static::normalizePhoneTo08($u->nomor_telepon),
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Return daftar Contact Person (PS) sebagai JSON response.
+     */
+    public function psList()
+    {
+        if (!$this->hasAnySalesAccess()) {
+            abort(403);
+        }
+
+        return response()->json(static::getPsUsers());
+    }
+
     /**
      * Daftar riwayat SPH (dipakai tab History, dimuat via fetch dari blade).
      *
@@ -39,7 +101,7 @@ class SalesSphController extends BaseSalesController
                 'customerName' => $q->customer_name,
                 'customerCompany' => $q->customer_company ?? '-',
                 'selectedPs' => $q->ps ?? '-',
-                'psPhone' => $q->ps_phone ?? '-',
+                'psPhone' => static::normalizePhoneTo08($q->ps_phone),
                 'ppnOption' => $q->vat_percent,
                 'items' => $q->items,
                 'grandTotal' => (float) $q->grand_total,
@@ -59,12 +121,13 @@ class SalesSphController extends BaseSalesController
 
         $validated = $this->validateSph($request);
 
+        $psPhoneClean = static::normalizePhoneTo08($validated['psPhone'] ?? null);
         $quotation = SphQuotation::createWithNumber([
             'date' => now()->toDateString(),
             'customer_name' => $validated['customerName'] ?? null,
             'customer_company' => $validated['customerCompany'] ?? null,
             'ps' => $validated['selectedPs'] ?? null,
-            'ps_phone' => $validated['psPhone'] ?? null,
+            'ps_phone' => $psPhoneClean === '-' ? null : $psPhoneClean,
             'vat_percent' => $validated['ppnOption'] ?? 11,
             'items' => $validated['items'],
             'grand_total' => $validated['grandTotal'],
@@ -91,11 +154,12 @@ class SalesSphController extends BaseSalesController
 
         $validated = $this->validateSph($request);
 
+        $psPhoneClean = static::normalizePhoneTo08($validated['psPhone'] ?? null);
         $sph->update([
             'customer_name' => $validated['customerName'] ?? null,
             'customer_company' => $validated['customerCompany'] ?? null,
             'ps' => $validated['selectedPs'] ?? null,
-            'ps_phone' => $validated['psPhone'] ?? null,
+            'ps_phone' => $psPhoneClean === '-' ? null : $psPhoneClean,
             'vat_percent' => $validated['ppnOption'] ?? 11,
             'items' => $validated['items'],
             'grand_total' => $validated['grandTotal'],
