@@ -379,6 +379,7 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
         Route::get('/events', 'getAdminAgendas')->name('getEvents');
         Route::put('/{agenda}', 'update')->name('update');
         Route::delete('/{agenda}', 'destroy')->name('destroy');
+        Route::post('/{agenda}/resend', 'resend')->name('resend');
     });
 
     Route::controller(AdminAktivitasController::class)->prefix('aktivitas')->name('aktivitas.')->group(function () {

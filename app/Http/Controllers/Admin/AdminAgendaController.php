@@ -161,6 +161,21 @@ class AdminAgendaController extends Controller
     }
 
     /**
+     * Kirim ulang notifikasi WA ke tamu agenda (tanpa tinker/terminal).
+     */
+    public function resend(Agenda $agenda)
+    {
+        $agenda->loadMissing(['guests', 'creator']);
+        $guests = $agenda->guests;
+        if ($guests->isEmpty()) {
+            return back()->with('error', 'Tidak ada tamu untuk dikirim ulang.');
+        }
+        $creatorName = $agenda->creator->name ?? Auth::user()->name ?? 'Sistem';
+        Notification::send($guests, new AgendaNotification($agenda, 'undangan_baru', $creatorName));
+        return back()->with('success', 'Notifikasi WA berhasil dikirim ulang ke ' . $guests->count() . ' tamu.');
+    }
+
+    /**
      * Menyediakan daftar semua user (karyawan) untuk form.
      */
     public function getAllUsers()
