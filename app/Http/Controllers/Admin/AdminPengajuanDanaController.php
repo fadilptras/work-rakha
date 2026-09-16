@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth; 
 use Illuminate\Support\Facades\Notification; 
 use App\Notifications\PengajuanDanaNotification;
+use App\Support\CrmLedger;
 
 class AdminPengajuanDanaController extends Controller
 {
@@ -323,6 +324,10 @@ class AdminPengajuanDanaController extends Controller
 
         // Lakukan update sekali jalan
         $pengajuanDana->update($updateData);
+        $pengajuanDana->refresh();
+
+        // Pencatatan otomatis ke Riwayat CRM jika berasal dari halaman Klien (satu pintu via CrmLedger)
+        CrmLedger::recordUsageFromPengajuan($pengajuanDana);
 
         // Kirim notifikasi bukti transfer ke pemohon
         Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'bukti_transfer'));

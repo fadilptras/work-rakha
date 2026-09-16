@@ -184,7 +184,12 @@
                                             <button class="open-edit-btn text-sky-400 hover:text-sky-300 mr-2.5" data-agenda-id="{{ $agenda->id }}" title="Edit Agenda">
                                                 <i class="fas fa-edit fa-lg"></i>
                                             </button>
-                                            
+                                            <form action="{{ route('admin.agenda.resend', $agenda->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Kirim ulang notifikasi WA ke {{ $agenda->guests->count() }} tamu?');">
+                                                @csrf
+                                                <button type="submit" class="text-amber-400 hover:text-amber-300 mr-2.5" title="Kirim Ulang WA">
+                                                    <i class="fas fa-paper-plane fa-lg"></i>
+                                                </button>
+                                            </form>
                                             <form action="{{ route('admin.agenda.destroy', $agenda->id) }}" method="POST" class="inline-block" onsubmit="confirmSubmit(event, 'Apakah Anda yakin ingin menghapus agenda ini?');">
                                                 @csrf
                                                 @method('DELETE')

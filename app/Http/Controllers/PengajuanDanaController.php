@@ -7,6 +7,7 @@ use App\Models\PengajuanDana;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\PengajuanDanaNotification;
+use App\Support\CrmLedger;
 use Illuminate\Support\Facades\Notification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -343,19 +344,8 @@ class PengajuanDanaController extends Controller
             }
             
             // Pencatatan otomatis ke Riwayat CRM jika berasal dari halaman Klien
-            $rincian = $pengajuanDana->rincian_dana;
-            if (is_array($rincian) && count($rincian) > 0 && isset($rincian[0]['client_id'])) {
-                \App\Models\Interaction::create([
-                    'user_id' => $pengajuanDana->user_id,
-                    'client_id' => $rincian[0]['client_id'],
-                    'jenis_transaksi' => 'OUT',
-                    'nama_produk' => 'USAGE : ' . $rincian[0]['deskripsi'],
-                    'tanggal_interaksi' => $rincian[0]['tanggal_interaksi'] ?? $pengajuanDana->created_at,
-                    'nilai_sales' => 0,
-                    'nilai_kontribusi' => $pengajuanDana->total_dana,
-                    'catatan' => $rincian[0]['catatan_crm'] ?? '',
-                ]);
-            }
+            // Didelegasikan ke CrmLedger (satu pintu) agar konsisten dengan markAsPaid admin
+            CrmLedger::recordUsageFromPengajuan($pengajuanDana);
         }
 
         return redirect()->route('pengajuan_dana.show', $pengajuanDana)->with('success', 'Pengajuan dana berhasil disetujui!');

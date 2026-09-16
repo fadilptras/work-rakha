@@ -64,9 +64,20 @@ class AgendaNotification extends Notification implements ShouldQueue
     {
         $nama = $notifiable->name;
         $title = $this->agenda->title;
-        $start = Carbon::parse($this->agenda->start_time)->translatedFormat('d F Y H:i');
-        $end = $this->agenda->end_time ? ' s/d ' . Carbon::parse($this->agenda->end_time)->translatedFormat('d F Y H:i') : '';
-        $waktu = $start . $end;
+        $startC = Carbon::parse($this->agenda->start_time);
+        $endC = $this->agenda->end_time ? Carbon::parse($this->agenda->end_time) : null;
+
+        // Format baru: "Kamis, 17 September 2026 - 12.00 s/d 13.00" (satu hari)
+        // Jika beda hari: "Kamis, 17 September 2026 12.00 s/d Jumat, 18 September 2026 13.00"
+        if ($endC) {
+            if ($startC->isSameDay($endC)) {
+                $waktu = $startC->translatedFormat('l, d F Y') . ' - ' . $startC->translatedFormat('H.i') . ' s/d ' . $endC->translatedFormat('H.i');
+            } else {
+                $waktu = $startC->translatedFormat('l, d F Y H.i') . ' s/d ' . $endC->translatedFormat('l, d F Y H.i');
+            }
+        } else {
+            $waktu = $startC->translatedFormat('l, d F Y - H.i');
+        }
         $location = $this->agenda->location ?? '-';
         $desc = $this->agenda->description ?? '-';
 
