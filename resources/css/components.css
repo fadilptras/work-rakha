@@ -32,36 +32,34 @@
     @apply bg-slate-800/70 backdrop-blur-[16px] border border-white/5 shadow-[0_2px_10px_rgba(0,0,0,0.12)];
   }
 
-  /* Export button — pdf rose, excel emerald (lebih ramping: py-1.5, text-xs) */
+  /* Export button — pdf rose, excel emerald (selaras filter: h-30, py-1.5 text-xs) */
   .ui-export {
-    @apply inline-flex items-center gap-2 px-3 py-1.5 text-white text-xs font-bold rounded-lg shadow-sm transition-colors whitespace-nowrap;
+    @apply inline-flex items-center justify-center gap-1.5 px-3 h-[30px] text-white text-xs font-bold rounded-lg shadow-sm transition-colors whitespace-nowrap leading-none;
   }
   .ui-export--pdf { @apply bg-rose-600 hover:bg-rose-700; }
   .ui-export--excel { @apply bg-emerald-600 hover:bg-emerald-700; }
 
-  /* Filter select — samakan tinggi export: ramping py-1.5 text-xs */
-  /* Element = blue-400 (warna placeholder) supaya konsisten dgn search/combobox;
-     opsi isi diberi blue-700 bold via .ui-filter option */
+  /* Filter select — selaras export: h-[30px] text-xs */
   .ui-filter {
-    @apply w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-medium text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none cursor-pointer outline-none transition-colors;
+    @apply w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 h-[30px] font-medium text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none cursor-pointer outline-none transition-colors leading-none;
   }
   .ui-filter option { @apply text-blue-700; }
 
-  /* Search input — samakan tinggi export (ramping) */
+  /* Search input — selaras export (h-[30px]) */
   .ui-search {
-    @apply w-full pl-8 pr-7 py-1.5 text-xs font-bold border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg focus:ring-0 focus:border-slate-200 focus:outline-none outline-none text-blue-700 placeholder:text-blue-400 placeholder:font-normal;
+    @apply w-full pl-8 pr-7 h-[30px] text-xs font-bold border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg focus:ring-0 focus:border-slate-200 focus:outline-none outline-none text-blue-700 placeholder:text-blue-400 placeholder:font-normal leading-none;
   }
-  /* Combobox — samakan tinggi export, hide native datalist arrow (ramping) */
+  /* Combobox — selaras export, hide native datalist arrow (h-[30px]) */
   .ui-combobox {
-    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-9 py-1.5 font-bold text-blue-700 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors placeholder:text-blue-400 placeholder:font-normal;
+    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-9 h-[30px] font-bold text-blue-700 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors placeholder:text-blue-400 placeholder:font-normal leading-none;
   }
   /* Hide native datalist/calendar dropdown arrow biar tidak double dengan custom chevron */
   input[list]::-webkit-calendar-picker-indicator { display: none !important; opacity: 0 !important; }
   input[list]::-webkit-list-button { display: none !important; }
 
-  /* Date filter — samakan tinggi export, icon kalender kiri, placeholder tidak bold & warna biru-400 (ramping) */
+  /* Date filter — selaras export (h-[30px]) */
   .ui-date {
-    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-9 pr-3 py-1.5 font-medium text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors;
+    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-9 pr-3 h-[30px] font-medium text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors leading-none;
   }
   .ui-date.is-filled {
     @apply text-blue-700;
@@ -112,4 +110,10 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
   .ui-tab--active:hover { background: #ffffff; color: #1e40af; }
+
+  /* Info total — selaras filter/export: h-[30px], bg biru muda, border biru */
+  .ui-info {
+    @apply inline-flex items-center justify-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold rounded-lg px-3 h-[30px] shadow-sm whitespace-nowrap leading-none;
+  }
+  .ui-info__value { @apply text-blue-900 font-black; }
 }

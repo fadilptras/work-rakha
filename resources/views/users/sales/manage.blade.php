@@ -222,20 +222,17 @@
                         </div>
 
                         <div class="lg:col-span-3 md:col-span-1 flex items-end">
-                            <div class="w-full inline-flex items-center justify-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold rounded-lg px-3 py-2.5 shadow-sm">
-                                <i class="fas fa-database"></i>
-                                <span>Total Records: <span class="text-blue-900">{{ number_format($sales->total(), 0, ',', '.') }}</span></span>
-                            </div>
+                            <x-ui.info class="w-full" icon="fa-database" label="Total Records:" :value="number_format($sales->total(), 0, ',', '.')" />
                         </div>
                         
-                        <div class="lg:col-span-2 md:col-span-1 flex gap-2">
+                        <div class="lg:col-span-2 md:col-span-1 flex gap-2 items-end">
                             @if(request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']))
-                                <a href="{{ route('sales.manage') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-3 rounded-lg text-sm transition-all flex items-center justify-center border border-slate-200 shadow-sm" title="Reset Filters">
-                                    <i class="fas fa-undo mr-1.5"></i> Reset
+                                <a href="{{ route('sales.manage') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold h-[30px] px-3 rounded-lg text-xs transition-all inline-flex items-center justify-center border border-slate-200 shadow-sm leading-none" title="Reset Filters">
+                                    <i class="fas fa-undo mr-1.5 text-[11px]"></i> Reset
                                 </a>
                             @endif
-                            <button type="submit" formaction="{{ route('sales.export') }}" class="{{ request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'w-1/2' : 'w-full' }} bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg text-sm transition-all flex items-center justify-center shadow-sm" title="Export Filtered Results to CSV">
-                                <i class="fas fa-file-export mr-1.5"></i> Export
+                            <button type="submit" formaction="{{ route('sales.export') }}" class="{{ request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']) ? 'w-1/2' : 'w-full' }} bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-[30px] px-3 rounded-lg text-xs transition-all inline-flex items-center justify-center shadow-sm leading-none" title="Export Filtered Results to CSV">
+                                <i class="fas fa-file-export mr-1.5 text-[11px]"></i> Export
                             </button>
                         </div>
                     </div>
