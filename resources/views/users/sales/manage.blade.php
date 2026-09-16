@@ -287,12 +287,8 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-12 text-center text-slate-400">
-                                    <div class="flex flex-col items-center justify-center">
-                                        <i class="fas fa-search text-5xl text-slate-200 mb-4"></i>
-                                        <p class="font-medium text-lg">No data found.</p>
-                                        <p class="text-sm mt-1">Try adjusting the search keywords or month/year filter.</p>
-                                    </div>
+                                <td colspan="9" class="p-0">
+                                    <x-ui.empty icon="fa-inbox" title="Tidak ada data" message="Coba ubah kata kunci pencarian, customer, produk, PS, atau filter tanggal/bulan/tahun." />
                                 </td>
                             </tr>
                             @endforelse
