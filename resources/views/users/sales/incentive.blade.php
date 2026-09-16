@@ -1,4 +1,4 @@
-﻿@php
+@php
     $agent = new \Jenssegers\Agent\Agent();
     $isMobile = $agent->isMobile();
 @endphp
@@ -222,10 +222,10 @@
             const current = sorted[idx];
             if (!current) return '';
             const fmt = (num) => new Intl.NumberFormat('id-ID').format(num);
-            if (basis !== 'nominal') return `Achievement ≥ ${current.min_achievement}%`;
+            if (basis !== 'nominal') return `Achievement = ${current.min_achievement}%`;
             if (idx === 0) {
                 if (current.min_achievement % 1000000 === 1) return `Actual Sales > Rp ${fmt(current.min_achievement - 1)}`;
-                return `Actual Sales ≥ Rp ${fmt(current.min_achievement)}`;
+                return `Actual Sales = Rp ${fmt(current.min_achievement)}`;
             } else {
                 const nextHigher = sorted[idx - 1];
                 const maxVal = nextHigher.min_achievement % 1000000 === 1 ? nextHigher.min_achievement - 1 : (nextHigher.min_achievement % 1000000 === 0 ? nextHigher.min_achievement - 1000000 : nextHigher.min_achievement - 1);
@@ -254,22 +254,22 @@
             <div class="hidden md:block">
                 <x-ui.page-header title="Sales Incentive Scheme" subtitle="Monitor sales performance incentive calculations based on official schemes and targets." icon="fa-hand-holding-dollar">
                     <x-slot:controls>
-                        <div x-ref="tabScroller" @scroll="checkTabOverflow()" class="flex space-x-1 bg-white/10 p-1 rounded-full border border-white/20 backdrop-blur-md overflow-x-auto relative z-10 w-full">
-                            <button @click="activeTab = 'monthly'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'monthly', 'text-white hover:bg-white/20': activeTab !== 'monthly' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
-                                <i class="fas fa-calendar-alt mr-2"></i> Monthly Scheme
-                            </button>
-                            <button @click="activeTab = 'quarterly'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'quarterly', 'text-white hover:bg-white/20': activeTab !== 'quarterly' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
-                                <i class="fas fa-calendar-days mr-2"></i> Quarterly Scheme
-                            </button>
-                            <button @click="activeTab = 'outlet'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'outlet', 'text-white hover:bg-white/20': activeTab !== 'outlet' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
-                                <i class="fas fa-store mr-2"></i> New Outlet Bonus
-                            </button>
+                        <x-ui.tabs x-ref="tabScroller" @scroll="checkTabOverflow()" class="relative z-10 w-full overflow-x-auto">
+                            <x-ui.tab @click="activeTab = 'monthly'" x-bind:class="activeTab === 'monthly' ? 'ui-tab--active' : ''">
+                                <i class="fas fa-calendar-alt"></i> Monthly
+                            </x-ui.tab>
+                            <x-ui.tab @click="activeTab = 'quarterly'" x-bind:class="activeTab === 'quarterly' ? 'ui-tab--active' : ''">
+                                <i class="fas fa-calendar-days"></i> Quarterly
+                            </x-ui.tab>
+                            <x-ui.tab @click="activeTab = 'outlet'" x-bind:class="activeTab === 'outlet' ? 'ui-tab--active' : ''">
+                                <i class="fas fa-store"></i> New Outlet
+                            </x-ui.tab>
                             @if($hasFullAccess)
-                            <button @click="activeTab = 'settings'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'settings', 'text-white hover:bg-white/20': activeTab !== 'settings' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
-                                <i class="fas fa-cog mr-2"></i> Rules Settings
-                            </button>
+                            <x-ui.tab @click="activeTab = 'settings'" x-bind:class="activeTab === 'settings' ? 'ui-tab--active' : ''">
+                                <i class="fas fa-cog"></i> Settings
+                            </x-ui.tab>
                             @endif
-                        </div>
+                        </x-ui.tabs>
                     </x-slot:controls>
                 </x-ui.page-header>
             </div>
@@ -284,13 +284,13 @@
                     </div>
                 </div>
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-1.5 flex items-stretch gap-1 overflow-x-auto">
-                    <button @click="activeTab = 'monthly'" :class="activeTab === 'monthly' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold whitespace-nowrap">
+                    <button @click="activeTab = 'monthly'" x-bind:class="activeTab === 'monthly' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold whitespace-nowrap">
                         <i class="fas fa-calendar-alt text-sm"></i><span class="text-[10px] uppercase">Monthly</span>
                     </button>
-                    <button @click="activeTab = 'quarterly'" :class="activeTab === 'quarterly' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold whitespace-nowrap">
+                    <button @click="activeTab = 'quarterly'" x-bind:class="activeTab === 'quarterly' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold whitespace-nowrap">
                         <i class="fas fa-calendar-days text-sm"></i><span class="text-[10px] uppercase">Quarterly</span>
                     </button>
-                    <button @click="activeTab = 'outlet'" :class="activeTab === 'outlet' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold whitespace-nowrap">
+                    <button @click="activeTab = 'outlet'" x-bind:class="activeTab === 'outlet' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold whitespace-nowrap">
                         <i class="fas fa-store text-sm"></i><span class="text-[10px] uppercase">Outlet</span>
                     </button>
                 </div>
@@ -315,41 +315,12 @@
                         <form method="GET" action="{{ route('sales.incentive') }}" id="filterMonthly" class="flex flex-wrap items-center justify-start md:justify-end gap-2 w-full md:w-auto">
                             <input type="hidden" name="tab" value="monthly">
                             
-                            <div class="relative w-[110px] shrink-0">
-                                <select name="bulan" onchange="document.getElementById('filterMonthly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
-                                    @foreach($listBulan as $b)
-                                        <option value="{{ $b }}" {{ $bulan == $b ? 'selected' : '' }}>{{ $b }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
-                            </div>
+                            <x-ui.filter-select name="bulan" onchange="document.getElementById('filterMonthly').submit()" value="{{ $bulan }}" :options="$listBulan" class="w-[140px] shrink-0" />
                             
-                            <div class="relative w-[90px] shrink-0">
-                                <select name="tahun" onchange="document.getElementById('filterMonthly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
-                                    @foreach($listTahun as $t)
-                                        <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
-                            </div>
+                            <x-ui.filter-select name="tahun" onchange="document.getElementById('filterMonthly').submit()" value="{{ $tahun }}" :options="$listTahun" class="w-[90px] shrink-0" />
                             
                             @if($hasFullAccess)
-                            <div class="relative w-[160px] shrink-0">
-                                <select name="ps" onchange="document.getElementById('filterMonthly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
-                                    <option value="">All PS</option>
-                                    <option value="Sales Team" {{ $psTerpilih == 'Sales Team' ? 'selected' : '' }}>Sales Team</option>
-                                    @foreach($listPs as $p)
-                                        <option value="{{ $p }}" {{ $psTerpilih == $p ? 'selected' : '' }}>{{ $p }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
-                            </div>
+                            <x-ui.filter-select name="ps" onchange="document.getElementById('filterMonthly').submit()" value="{{ $psTerpilih }}" placeholder="All PS" :options="array_merge(['Sales Team' => 'Sales Team'], array_combine($listPs, $listPs))" class="w-[160px] shrink-0" />
                             @endif
                             
                             <button type="button" @click="showInfoModal = true" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-1.5 px-3 rounded-lg text-xs transition-all border border-slate-200 flex items-center justify-center shrink-0 shadow-sm" title="View Scheme Rules">
@@ -397,21 +368,21 @@
                         <table class="w-full text-sm text-left text-slate-600">
                             <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
-                                    <th class="px-4 py-4 text-left whitespace-nowrap">Sales Person (PS)</th>
-                                    <th class="px-4 py-4 text-right whitespace-nowrap">Target</th>
-                                    <th class="px-4 py-4 text-right whitespace-nowrap">Actual Sales</th>
-                                    <th class="px-4 py-4 text-center whitespace-nowrap">Ach %</th>
-                                    <th class="px-4 py-4 text-center whitespace-nowrap">Rate</th>
-                                    <th class="px-4 py-4 text-right whitespace-nowrap">Est. Incentive</th>
+                                    <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Sales Person (PS)</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Target</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Actual Sales</th>
+                                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Ach %</th>
+                                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Rate</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Est. Incentive</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($payouts as $payout)
                                 <tr class="hover:bg-indigo-50/50 transition-colors">
-                                    <td class="px-4 py-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
-                                    <td class="px-4 py-3 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
-                                    <td class="px-4 py-3 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
-                                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                                    <td class="px-4 sm:px-6 py-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
+                                    <td class="px-4 sm:px-6 py-3 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
+                                    <td class="px-4 sm:px-6 py-3 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
+                                    <td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">
                                         <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-xs
                                             @if($payout['achievement_rate'] >= 200) bg-sky-50 text-sky-700
                                             @elseif($payout['achievement_rate'] >= 150) bg-indigo-50 text-indigo-700
@@ -422,10 +393,10 @@
                                             {{ number_format($payout['achievement_rate'], 1, ',', '.') }}%
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3 text-center font-bold text-slate-600 whitespace-nowrap">
+                                    <td class="px-4 sm:px-6 py-3 text-center font-bold text-slate-600 whitespace-nowrap">
                                         {{ number_format($payout['incentive_rate'], 1, ',', '.') }}%
                                     </td>
-                                    <td class="px-4 py-3 text-right font-black text-emerald-600 whitespace-nowrap">
+                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-600 whitespace-nowrap">
                                         Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -462,41 +433,12 @@
                         <form method="GET" action="{{ route('sales.incentive') }}" id="filterQuarterly" class="flex flex-wrap items-center justify-start md:justify-end gap-2 w-full md:w-auto">
                             <input type="hidden" name="tab" value="quarterly">
                             
-                            <div class="relative w-[110px] shrink-0">
-                                <select name="triwulan" onchange="document.getElementById('filterQuarterly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
-                                    @foreach(['Triwulan I', 'Triwulan II', 'Triwulan III', 'Triwulan IV'] as $q)
-                                        <option value="{{ $q }}" {{ $triwulan == $q ? 'selected' : '' }}>{{ $q }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
-                            </div>
+                            <x-ui.filter-select name="triwulan" onchange="document.getElementById('filterQuarterly').submit()" value="{{ $triwulan }}" :options="['Triwulan I', 'Triwulan II', 'Triwulan III', 'Triwulan IV']" class="w-[130px] shrink-0" />
                             
-                            <div class="relative w-[90px] shrink-0">
-                                <select name="tahun" onchange="document.getElementById('filterQuarterly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
-                                    @foreach($listTahun as $t)
-                                        <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
-                            </div>
+                            <x-ui.filter-select name="tahun" onchange="document.getElementById('filterQuarterly').submit()" value="{{ $tahun }}" :options="$listTahun" class="w-[90px] shrink-0" />
                             
                             @if($hasFullAccess)
-                            <div class="relative w-[160px] shrink-0">
-                                <select name="ps" onchange="document.getElementById('filterQuarterly').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
-                                    <option value="">All PS</option>
-                                    <option value="Sales Team" {{ $psTerpilih == 'Sales Team' ? 'selected' : '' }}>Sales Team</option>
-                                    @foreach($listPs as $p)
-                                        <option value="{{ $p }}" {{ $psTerpilih == $p ? 'selected' : '' }}>{{ $p }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
-                            </div>
+                            <x-ui.filter-select name="ps" onchange="document.getElementById('filterQuarterly').submit()" value="{{ $psTerpilih }}" placeholder="All PS" :options="array_merge(['Sales Team' => 'Sales Team'], array_combine($listPs, $listPs))" class="w-[160px] shrink-0" />
                             @endif
                             
                             <button type="button" @click="showInfoModalTriwulan = true" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-1.5 px-3 rounded-lg text-xs transition-all border border-slate-200 flex items-center justify-center shrink-0 shadow-sm" title="View Scheme Rules">
@@ -543,20 +485,20 @@
                         <table class="w-full text-sm text-left text-slate-600">
                             <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
-                                    <th class="px-4 py-4 text-left whitespace-nowrap">Sales Person (PS)</th>
-                                    <th class="px-4 py-4 text-right whitespace-nowrap">Quarterly Target</th>
-                                    <th class="px-4 py-4 text-right whitespace-nowrap">Actual Sales</th>
-                                    <th class="px-4 py-4 text-center whitespace-nowrap">Ach %</th>
-                                    <th class="px-4 py-4 text-right whitespace-nowrap">Est. Incentive</th>
+                                    <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Sales Person (PS)</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Quarterly Target</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Actual Sales</th>
+                                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Ach %</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Est. Incentive</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($payoutsTriwulan as $payout)
                                 <tr class="hover:bg-indigo-50/50 transition-colors">
-                                    <td class="px-4 py-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
-                                    <td class="px-4 py-3 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
-                                    <td class="px-4 py-3 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
-                                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                                    <td class="px-4 sm:px-6 py-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
+                                    <td class="px-4 sm:px-6 py-3 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
+                                    <td class="px-4 sm:px-6 py-3 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
+                                    <td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">
                                         <span class="inline-flex items-center justify-center font-bold px-2.5 py-1 rounded-full text-xs
                                             @if($payout['achievement_rate'] >= 200) bg-sky-50 text-sky-700
                                             @elseif($payout['achievement_rate'] >= 150) bg-indigo-50 text-indigo-700
@@ -567,7 +509,7 @@
                                             {{ number_format($payout['achievement_rate'], 1, ',', '.') }}%
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3 text-right font-black text-emerald-600 whitespace-nowrap">
+                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-600 whitespace-nowrap">
                                         Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -604,41 +546,12 @@
                         <form method="GET" action="{{ route('sales.incentive') }}" id="filterOutlet" class="flex flex-wrap items-center justify-start md:justify-end gap-2 w-full md:w-auto">
                             <input type="hidden" name="tab" value="outlet">
                             
-                            <div class="relative w-[110px] shrink-0">
-                                <select name="bulan" onchange="document.getElementById('filterOutlet').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
-                                    @foreach($listBulan as $b)
-                                        <option value="{{ $b }}" {{ $bulan == $b ? 'selected' : '' }}>{{ $b }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
-                            </div>
+                            <x-ui.filter-select name="bulan" onchange="document.getElementById('filterOutlet').submit()" value="{{ $bulan }}" :options="$listBulan" class="w-[140px] shrink-0" />
                             
-                            <div class="relative w-[90px] shrink-0">
-                                <select name="tahun" onchange="document.getElementById('filterOutlet').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
-                                    @foreach($listTahun as $t)
-                                        <option value="{{ $t }}" {{ $tahun == $t ? 'selected' : '' }}>{{ $t }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
-                            </div>
+                            <x-ui.filter-select name="tahun" onchange="document.getElementById('filterOutlet').submit()" value="{{ $tahun }}" :options="$listTahun" class="w-[90px] shrink-0" />
                             
                             @if($hasFullAccess)
-                            <div class="relative w-[160px] shrink-0">
-                                <select name="ps" onchange="document.getElementById('filterOutlet').submit()" class="w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-bold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
-                                    <option value="">All PS</option>
-                                    <option value="Sales Team" {{ $psTerpilih == 'Sales Team' ? 'selected' : '' }}>Sales Team</option>
-                                    @foreach($listPs as $p)
-                                        <option value="{{ $p }}" {{ $psTerpilih == $p ? 'selected' : '' }}>{{ $p }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-blue-700">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
-                            </div>
+                            <x-ui.filter-select name="ps" onchange="document.getElementById('filterOutlet').submit()" value="{{ $psTerpilih }}" placeholder="All PS" :options="array_merge(['Sales Team' => 'Sales Team'], array_combine($listPs, $listPs))" class="w-[160px] shrink-0" />
                             @endif
                             
                             <button type="button" @click="showInfoModalOutlet = true" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-1.5 px-3 rounded-lg text-xs transition-all border border-slate-200 flex items-center justify-center shrink-0 shadow-sm" title="View Scheme Rules">
@@ -687,17 +600,17 @@
                         <table class="w-full text-sm text-left text-slate-600">
                             <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
-                                    <th class="px-4 py-4 text-left whitespace-nowrap">Sales Person (PS)</th>
-                                    <th class="px-4 py-4 text-center whitespace-nowrap">New Outlets Count</th>
-                                    <th class="px-4 py-4 text-left whitespace-nowrap">New Outlets List</th>
-                                    <th class="px-4 py-4 text-right whitespace-nowrap">Est. Bonus</th>
+                                    <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Sales Person (PS)</th>
+                                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">New Outlets Count</th>
+                                    <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">New Outlets List</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Est. Bonus</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($payoutsOutlet as $payout)
                                 <tr class="hover:bg-indigo-50/50 transition-colors">
-                                    <td class="px-4 py-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
-                                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                                    <td class="px-4 sm:px-6 py-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
+                                    <td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">
                                         <span class="inline-flex items-center justify-center font-bold px-2.5 py-1 rounded-full text-xs
                                             @if($payout['new_outlets_count'] >= 21) bg-sky-50 text-sky-700
                                             @elseif($payout['new_outlets_count'] >= 16) bg-indigo-50 text-indigo-700
@@ -707,7 +620,7 @@
                                             {{ $payout['new_outlets_count'] }} Outlets
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 sm:px-6 py-3">
                                         <div class="flex flex-wrap gap-1 max-w-md">
                                             @foreach($payout['new_outlets_list'] as $outlet)
                                                 <span class="inline-block bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-md font-medium border border-slate-200/50">
@@ -716,7 +629,7 @@
                                             @endforeach
                                         </div>
                                     </td>
-                                    <td class="px-4 py-3 text-right font-black text-emerald-600 whitespace-nowrap">
+                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-600 whitespace-nowrap">
                                         Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -739,48 +652,38 @@
             <div x-show="activeTab === 'settings'" class="flex flex-col gap-4" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
                 
                 @if(session('success'))
-                    <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-3">
+                    <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 sm:px-6 py-3 rounded-xl flex items-center gap-3">
                         <i class="fas fa-circle-check text-xl"></i>
                         <span class="text-sm font-semibold">{{ session('success') }}</span>
                     </div>
                 @endif
 
-                <div class="flex flex-wrap items-center justify-end gap-3">
-                    <button type="button" @click="
-                        formTahun = '{{ $tahun }}';
-                        formBulan = '{{ $bulan }}';
-                        formBasisBulan = '{{ $activeBasis }}';
-                        showFormModalBulan = true;
-                    " class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]">
-                        <i class="fas fa-calendar-day"></i> Configure Monthly Rules
-                    </button>
-                    <button type="button" @click="
-                        formTahun = '{{ $tahun }}';
-                        formTriwulan = '{{ $triwulan }}';
-                        formBasisTriwulan = '{{ $activeBasisTriwulan }}';
-                        showFormModalTriwulan = true;
-                    " class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]">
-                        <i class="fas fa-calendar-minus"></i> Configure Quarterly Rules
-                    </button>
-                </div>
-
-                {{-- Global Filters for History --}}
-                <div class="glass-card border-t-4 border-t-blue-500 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                {{-- Global Filters + Configure — digabung dalam satu card --}}
+                <div class="glass-card border-t-4 border-t-blue-500 flex flex-col xl:flex-row xl:items-end justify-between gap-4">
                     <div>
                         <h3 class="text-base sm:text-lg font-bold text-slate-800">Incentive Rules History</h3>
                         <p class="text-slate-500 text-xs mt-0.5">List of all monthly and quarterly incentive rules saved in the system</p>
                     </div>
                     
                     <div class="flex flex-wrap items-center gap-2">
-                        <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1">
-                            <i class="fas fa-search text-slate-400 text-[10px]"></i>
-                            <input type="text" x-model="historySearchTahun" placeholder="Search Year..." class="bg-transparent text-xs font-semibold text-slate-700 outline-none w-20">
-                        </div>
-                        <select x-model="historyFilterBasis" class="border border-slate-200 bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 px-2 py-1 outline-none cursor-pointer">
-                            <option value="">All Scheme Models</option>
-                            <option value="nominal">Scheme 1 (Nominal Rp)</option>
-                            <option value="percentage">Scheme 2 (Percentage %)</option>
-                        </select>
+                        <button type="button" @click="
+                            formTahun = '{{ $tahun }}';
+                            formBulan = '{{ $bulan }}';
+                            formBasisBulan = '{{ $activeBasis }}';
+                            showFormModalBulan = true;
+                        " class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0">
+                            <i class="fas fa-calendar-day"></i> Configure Monthly Rules
+                        </button>
+                        <button type="button" @click="
+                            formTahun = '{{ $tahun }}';
+                            formTriwulan = '{{ $triwulan }}';
+                            formBasisTriwulan = '{{ $activeBasisTriwulan }}';
+                            showFormModalTriwulan = true;
+                        " class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0">
+                            <i class="fas fa-calendar-minus"></i> Configure Quarterly Rules
+                        </button>
+                        <x-ui.search-input x-model="historySearchTahun" placeholder="Search Year..." class="w-32 shrink-0" />
+                        <x-ui.filter-select x-model="historyFilterBasis" placeholder="All Scheme Models" :options="['nominal' => 'Scheme 1 (Nominal Rp)', 'percentage' => 'Scheme 2 (Percentage %)']" class="w-48 shrink-0" />
                     </div>
                 </div>
 

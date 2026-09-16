@@ -181,45 +181,54 @@
                 <form action="{{ route('sales.manage') }}" method="GET" id="filterForm">
                     <button type="submit" class="hidden" aria-hidden="true"></button>
                     
-                    {{-- Gap dikurangi menjadi gap-2 md:gap-3 --}}
-                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-2 md:gap-3 items-end">
-                        
-                        <div class="lg:col-span-4 md:col-span-1">
+                    {{-- Baris 1: 4 form (Search, Customer, Product, PS) --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-2 md:gap-3 items-end">
+                        <div class="lg:col-span-3 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">General Search</label>
                             <x-ui.search-input name="search" placeholder="Search Name" value="{{ request('search') }}" autocomplete="off" class="w-full" x-data="{ search: '{!! request('search') !!}' }" x-model="search" @input.debounce.1200ms="document.getElementById('filterForm').submit()" />
                         </div>
 
-                        <div class="lg:col-span-4 md:col-span-1">
+                        <div class="lg:col-span-3 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Customer</label>
                             <x-ui.filter-combobox name="nama_customer" listId="customer-list-options" placeholder="All Customers" value="{{ request('nama_customer') }}" onchange="document.getElementById('filterForm').submit()" class="w-full" />
                         </div>
 
-                        <div class="lg:col-span-4 md:col-span-1">
+                        <div class="lg:col-span-3 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Product</label>
                             <x-ui.filter-combobox name="nama_produk" listId="produk-list-options" placeholder="All Products" value="{{ request('nama_produk') }}" onchange="document.getElementById('filterForm').submit()" class="w-full" />
                         </div>
 
-                        <div class="lg:col-span-3 md:col-span-1 mt-1 lg:mt-0">
+                        <div class="lg:col-span-3 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">PS</label>
                             <x-ui.filter-combobox name="ps" listId="ps-list-options" placeholder="All PS" value="{{ request('ps') }}" onchange="document.getElementById('filterForm').submit()" class="w-full" />
                         </div>
-                        
-                        <div class="lg:col-span-3 md:col-span-1 mt-1 lg:mt-0">
+                    </div>
+
+                    {{-- Baris 2: Date, Month, Year, info total records & aksi --}}
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-2 md:gap-3 items-end mt-4">
+                        <div class="lg:col-span-3 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date</label>
-                            <input type="date" name="tanggal" value="{{ request('tanggal') }}" class="w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm px-3 py-2 font-bold text-blue-700 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors" onchange="document.getElementById('filterForm').submit()">
+                            <x-ui.filter-date name="tanggal" value="{{ request('tanggal') }}" onchange="document.getElementById('filterForm').submit()" class="w-full" />
                         </div>
 
-                        <div class="lg:col-span-2 md:col-span-1 mt-1 lg:mt-0">
+                        <div class="lg:col-span-2 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Month</label>
                             <x-ui.filter-select name="bulan" onchange="document.getElementById('filterForm').submit()" value="{{ request('bulan') }}" placeholder="All" :options="$listBulan" class="w-full" />
                         </div>
                         
-                        <div class="lg:col-span-2 md:col-span-1 mt-1 lg:mt-0">
+                        <div class="lg:col-span-2 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Year</label>
                             <x-ui.filter-select name="tahun" onchange="document.getElementById('filterForm').submit()" value="{{ request('tahun') }}" placeholder="All" :options="$listTahun" class="w-full" />
                         </div>
+
+                        <div class="lg:col-span-3 md:col-span-1 flex items-end">
+                            <div class="w-full inline-flex items-center justify-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold rounded-lg px-3 py-2.5 shadow-sm">
+                                <i class="fas fa-database"></i>
+                                <span>Total Records: <span class="text-blue-900">{{ number_format($sales->total(), 0, ',', '.') }}</span></span>
+                            </div>
+                        </div>
                         
-                        <div class="lg:col-span-2 md:col-span-2 flex gap-2 mt-1 lg:mt-0">
+                        <div class="lg:col-span-2 md:col-span-1 flex gap-2">
                             @if(request()->hasAny(['search', 'tanggal', 'bulan', 'tahun', 'nama_customer', 'nama_produk', 'ps']))
                                 <a href="{{ route('sales.manage') }}" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-3 rounded-lg text-sm transition-all flex items-center justify-center border border-slate-200 shadow-sm" title="Reset Filters">
                                     <i class="fas fa-undo mr-1.5"></i> Reset
@@ -234,31 +243,10 @@
             </x-ui.glass-card>
 
             {{-- Data Table — konsisten --}}
-            <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-lg !rounded-3xl">
-                <div class="px-6 py-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl"><i class="fas fa-table"></i></div>
-                        <div>
-                            <h3 class="text-lg font-black text-slate-800">Sales Data List</h3>
-                            <p class="text-xs text-slate-500 font-semibold mt-1">Total: {{ $sales->total() }} records found.</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button type="button" onclick="confirmBulkDelete()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow-sm hidden" id="btn-bulk-delete">
-                            <i class="fas fa-trash-alt mr-1"></i> Delete (<span id="selected-count">0</span>)
-                        </button>
-                        <select onchange="window.location.href=this.value" class="modern-input !py-1.5 !px-3 !w-auto text-xs font-semibold text-slate-600 bg-white border-slate-200 cursor-pointer shadow-sm rounded-lg hover:border-blue-400 transition-colors focus:ring-2 focus:ring-blue-100">
-                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'terbaru']) }}" {{ request('sort', 'terbaru') == 'terbaru' ? 'selected' : '' }}>Sort: Newest</option>
-                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'terlama']) }}" {{ request('sort') == 'terlama' ? 'selected' : '' }}>Sort: Oldest</option>
-                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'tertinggi']) }}" {{ request('sort') == 'tertinggi' ? 'selected' : '' }}>Highest Sales</option>
-                            <option value="{{ request()->fullUrlWithQuery(['sort' => 'terendah']) }}" {{ request('sort') == 'terendah' ? 'selected' : '' }}>Lowest Sales</option>
-                        </select>
-                    </div>
-                </div>
-                
+            <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto shadow-lg !rounded-3xl">
                 <div class="overflow-x-auto flex-1">
                         <table class="w-full text-sm text-left text-slate-600">
-                            <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
+                            <thead class="text-xs text-blue-700 uppercase bg-blue-50/80 border-b border-blue-100 font-bold tracking-wider">
                                 <tr>
                                     <th class="px-4 py-4 w-10 text-center">
                                         <input type="checkbox" id="check-all" class="rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer">
@@ -315,11 +303,14 @@
                     </table>
                 </div>
                 
-                @if($sales->hasPages())
-                <div class="px-6 py-4 border-t border-slate-100 bg-slate-50">
-                    {{ $sales->links() }}
+                <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <button type="button" onclick="confirmBulkDelete()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow-sm hidden" id="btn-bulk-delete">
+                        <i class="fas fa-trash-alt mr-1"></i> Delete (<span id="selected-count">0</span>)
+                    </button>
+                    @if($sales->hasPages())
+                    <div class="w-full sm:w-auto">{{ $sales->links() }}</div>
+                    @endif
                 </div>
-                @endif
             </x-ui.glass-card>
         </div>
 
