@@ -32,38 +32,36 @@
     @apply bg-slate-800/70 backdrop-blur-[16px] border border-white/5 shadow-[0_2px_10px_rgba(0,0,0,0.12)];
   }
 
-  /* Export button — pdf rose, excel emerald */
+  /* Export button — pdf rose, excel emerald (lebih ramping: py-1.5, text-xs) */
   .ui-export {
-    @apply inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-bold rounded-lg shadow-sm transition-colors whitespace-nowrap;
+    @apply inline-flex items-center gap-2 px-3 py-1.5 text-white text-xs font-bold rounded-lg shadow-sm transition-colors whitespace-nowrap;
   }
   .ui-export--pdf { @apply bg-rose-600 hover:bg-rose-700; }
   .ui-export--excel { @apply bg-emerald-600 hover:bg-emerald-700; }
 
-  /* Filter select — samakan tinggi export: py-2 text-sm, tanpa outline biru */
+  /* Filter select — samakan tinggi export: ramping py-1.5 text-xs */
   /* Element = blue-400 (warna placeholder) supaya konsisten dgn search/combobox;
      opsi isi diberi blue-700 bold via .ui-filter option */
   .ui-filter {
-    @apply w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-8 py-2 font-medium text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none cursor-pointer outline-none transition-colors;
+    @apply w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 py-1.5 font-medium text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none cursor-pointer outline-none transition-colors;
   }
   .ui-filter option { @apply text-blue-700; }
 
-  /* Search input — samakan tinggi export */
+  /* Search input — samakan tinggi export (ramping) */
   .ui-search {
-    @apply w-full pl-9 pr-8 py-2 text-sm font-bold border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg focus:ring-0 focus:border-slate-200 focus:outline-none outline-none text-blue-700 placeholder:text-blue-400 placeholder:font-normal;
+    @apply w-full pl-8 pr-7 py-1.5 text-xs font-bold border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg focus:ring-0 focus:border-slate-200 focus:outline-none outline-none text-blue-700 placeholder:text-blue-400 placeholder:font-normal;
   }
-  /* Combobox — samakan tinggi export, hide native datalist arrow */
+  /* Combobox — samakan tinggi export, hide native datalist arrow (ramping) */
   .ui-combobox {
-    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-3 pr-10 py-2 font-bold text-blue-700 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors placeholder:text-blue-400 placeholder:font-normal;
+    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-9 py-1.5 font-bold text-blue-700 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors placeholder:text-blue-400 placeholder:font-normal;
   }
   /* Hide native datalist/calendar dropdown arrow biar tidak double dengan custom chevron */
   input[list]::-webkit-calendar-picker-indicator { display: none !important; opacity: 0 !important; }
   input[list]::-webkit-list-button { display: none !important; }
 
-  /* Date filter — samakan tinggi export, icon kalender kiri, placeholder tidak bold & warna biru-400.
-     Chromium tidak mendukung ::placeholder/:placeholder-shown pada <input type="date">,
-     jadi warna empty-state dikontrol via class .is-filled oleh Alpine di filter-date.blade.php. */
+  /* Date filter — samakan tinggi export, icon kalender kiri, placeholder tidak bold & warna biru-400 (ramping) */
   .ui-date {
-    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-10 pr-3 py-2 font-medium text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors;
+    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-9 pr-3 py-1.5 font-medium text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors;
   }
   .ui-date.is-filled {
     @apply text-blue-700;
@@ -77,9 +75,9 @@
     cursor: pointer;
   }
 
-  /* Action buttons — kotak, warna jelas (referensi manage: btn-edit/btn-danger) */
+  /* Action buttons — kotak, warna jelas (ramping: w-7 h-7) */
   .ui-btn {
-    @apply inline-flex items-center justify-center w-8 h-8 rounded-lg text-white text-xs font-bold shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-1;
+    @apply inline-flex items-center justify-center w-7 h-7 rounded-md text-white text-[11px] font-bold shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-1;
   }
   .ui-btn--edit { @apply bg-amber-500 hover:bg-amber-600 focus:ring-amber-300; }
   .ui-btn--delete { @apply bg-red-500 hover:bg-red-600 focus:ring-red-300; }
