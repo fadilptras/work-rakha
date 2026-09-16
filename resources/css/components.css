@@ -9,9 +9,9 @@
   }
   .ui-back:hover .ui-back__icon { @apply -translate-x-0.5 bg-blue-50; }
 
-  /* Page header — monthly unified header */
+  /* Page header — monthly unified header (shadow tipis) */
   .ui-page-header {
-    @apply bg-gradient-to-br from-[#2563eb] to-[#1e40af] rounded-2xl p-5 text-white shadow-[0_2px_8px_rgba(37,99,235,0.18)] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4;
+    @apply bg-gradient-to-br from-[#2563eb] to-[#1e40af] rounded-2xl p-5 text-white shadow-[0_1px_6px_rgba(37,99,235,0.10)] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4;
   }
   .ui-page-header::before {
     content: '';
@@ -24,12 +24,12 @@
     pointer-events: none;
   }
 
-  /* Glass card — light default, dark variant untuk analytics */
+  /* Glass card — light default, dark variant untuk analytics (shadow tipis, tidak tebal) */
   .ui-glass {
-    @apply bg-white/90 backdrop-blur-[16px] border border-slate-200 rounded-2xl p-6 shadow-[0_10px_40px_rgba(0,0,0,0.04)];
+    @apply bg-white/90 backdrop-blur-[16px] border border-slate-200 rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.05)];
   }
   .ui-glass--dark {
-    @apply bg-slate-800/70 backdrop-blur-[16px] border border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.2)];
+    @apply bg-slate-800/70 backdrop-blur-[16px] border border-white/5 shadow-[0_2px_10px_rgba(0,0,0,0.12)];
   }
 
   /* Export button — pdf rose, excel emerald */
@@ -111,7 +111,7 @@
   .ui-tab--active {
     background: #ffffff;
     color: #1e40af;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
   .ui-tab--active:hover { background: #ffffff; color: #1e40af; }
 }
