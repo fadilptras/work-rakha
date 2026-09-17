@@ -72,7 +72,7 @@ $approvers[] = ['label' => 'Tahap Final', 'status' => $pengajuanBarang->status_a
         <tr>
             <td style="border: none; padding: 3px 0;">Tanggal</td>
             <td style="border: none; padding: 3px 0;">:</td>
-            <td style="border: none; padding: 3px 0;">{{ $pengajuanBarang->created_at->translatedFormat('d F Y') }}</td>
+            <td style="border: none; padding: 3px 0;">{{ $pengajuanBarang->created_at?->translatedFormat('d F Y') ?? '-' }}</td>
         </tr>
     </table>
     
@@ -93,7 +93,7 @@ $approvers[] = ['label' => 'Tahap Final', 'status' => $pengajuanBarang->status_a
         </tr>
     </thead>
     <tbody>
-        @forelse($pengajuanBarang->rincian_barang as $i => $item)
+        @forelse(($pengajuanBarang->rincian_barang ?? []) as $i => $item)
         <tr>
             <td class="text-center">{{ $i + 1 }}</td>
             <td>{{ $item['nama_barang'] ?? $item['deskripsi'] ?? '-' }}</td>

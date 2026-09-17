@@ -216,6 +216,84 @@ class AdminBarangController extends Controller
     }
 
     /**
+     * JSON endpoints Aturan Packaging (master product_packaging).
+     * Otorisasi ditangani middleware admin; tanpa guard sales ala StockController.
+     */
+    public function packagings()
+    {
+        $rows = ProductPackaging::orderBy('id')->get();
+        return response()->json([
+            'data' => $rows->map(fn ($r) => [
+                'id' => $r->id,
+                'packaging' => $r->packaging,
+                'type' => ProductPackaging::typeFromPack($r->pack),
+                'pack' => $r->pack,
+            ]),
+        ]);
+    }
+
+    public function storePackaging(Request $request)
+    {
+        $data = $this->validatePackagingData($request);
+        $row = ProductPackaging::create([
+            'packaging' => $data['packaging'],
+            'pack' => $data['pack'],
+            'type' => ProductPackaging::typeFromPack($data['pack']),
+        ]);
+        PackagingCatalog::flush();
+        return response()->json([
+            'message' => 'Aturan packaging "' . $row->packaging . '" ditambahkan.',
+            'data' => [
+                'id' => $row->id,
+                'packaging' => $row->packaging,
+                'type' => ProductPackaging::typeFromPack($row->pack),
+                'pack' => $row->pack,
+            ],
+        ], 201);
+    }
+
+    public function updatePackaging(Request $request, ProductPackaging $packaging)
+    {
+        $data = $this->validatePackagingData($request, $packaging);
+        $packaging->update([
+            'packaging' => $data['packaging'],
+            'pack' => $data['pack'],
+            'type' => ProductPackaging::typeFromPack($data['pack']),
+        ]);
+        PackagingCatalog::flush();
+        return response()->json([
+            'message' => 'Aturan packaging "' . $packaging->packaging . '" diperbarui.',
+            'data' => [
+                'id' => $packaging->id,
+                'packaging' => $packaging->packaging,
+                'type' => ProductPackaging::typeFromPack($packaging->pack),
+                'pack' => $packaging->pack,
+            ],
+        ]);
+    }
+
+    public function destroyPackaging(ProductPackaging $packaging)
+    {
+        $name = $packaging->packaging;
+        $packaging->delete();
+        PackagingCatalog::flush();
+        return response()->json(['message' => 'Aturan packaging "' . $name . '" dihapus.']);
+    }
+
+    private function validatePackagingData(Request $request, ?ProductPackaging $ignore = null): array
+    {
+        $validated = $request->validate([
+            'packaging' => ['required', 'string', 'max:100', Rule::unique('product_packaging', 'packaging')->ignore($ignore?->id)],
+            'pack' => ['present', 'array'],
+            'pack.*' => ['required', 'string', 'max:50'],
+        ]);
+        return [
+            'packaging' => trim($validated['packaging']),
+            'pack' => array_values(array_filter(array_map(fn ($u) => trim((string) $u), $validated['pack'] ?? []), fn ($u) => $u !== '')),
+        ];
+    }
+
+    /**
      * Aktifkan kembali tombstone (produk dengan is_deleted = 1) yang kodenya
      * cocok, lalu sinkronkan data dasarnya dengan barangs yang baru.
      *

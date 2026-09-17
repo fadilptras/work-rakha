@@ -280,14 +280,15 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
         Route::get('/', 'index')->name('index');
         Route::post('/', 'store')->name('store');
         Route::get('/history', 'history')->name('history');
+        Route::get('/cek-riwayat', 'checkRiwayat')->name('checkRiwayat');
         Route::get('/monitoring-all', 'monitoringAll')->name('monitoring_all');
-        Route::get('/{pengajuanBarang}', 'show')->name('show');
-        Route::get('/{pengajuanBarang}/download', 'download')->name('download');
-        Route::patch('/{pengajuanBarang}/status', 'updateStatus')->name('updateStatus');
-        Route::post('/{pengajuanBarang}/cancel', 'cancel')->name('cancel');
-        Route::post('/{pengajuanBarang}/update-monitoring', 'updateMonitoring')->name('updateMonitoring');
-        Route::post('/{pengajuanBarang}/konfirmasi-proses', 'konfirmasiProses')->name('konfirmasiProses');
-        Route::post('/{pengajuanBarang}/migrasi-termin-lama', 'migrasiTerminLama')->name('migrasiTerminLama');
+        Route::get('/{pengajuanBarang}', 'show')->name('show')->whereNumber('pengajuanBarang');
+        Route::get('/{pengajuanBarang}/download', 'download')->name('download')->whereNumber('pengajuanBarang');
+        Route::patch('/{pengajuanBarang}/status', 'updateStatus')->name('updateStatus')->whereNumber('pengajuanBarang');
+        Route::post('/{pengajuanBarang}/cancel', 'cancel')->name('cancel')->whereNumber('pengajuanBarang');
+        Route::post('/{pengajuanBarang}/update-monitoring', 'updateMonitoring')->name('updateMonitoring')->whereNumber('pengajuanBarang');
+        Route::post('/{pengajuanBarang}/konfirmasi-proses', 'konfirmasiProses')->name('konfirmasiProses')->whereNumber('pengajuanBarang');
+        Route::post('/{pengajuanBarang}/migrasi-termin-lama', 'migrasiTerminLama')->name('migrasiTerminLama')->whereNumber('pengajuanBarang');
     });
 
     Route::controller(AdminPengajuanBarangController::class)->prefix('pengajuan-barang')->name('pengajuan_barang.')->group(function () {
@@ -437,5 +438,12 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
 
     Route::resource('holidays', AdminHolidayController::class);
     Route::resource('suppliers', SupplierController::class);
+    // Packagings harus didaftar SEBELUM resource agar tidak ditangkap route show {barang}
+    Route::controller(AdminBarangController::class)->prefix('barangs')->name('barangs.')->group(function () {
+        Route::get('/packagings', 'packagings')->name('packagings.index');
+        Route::post('/packagings', 'storePackaging')->name('packagings.store');
+        Route::put('/packagings/{packaging}', 'updatePackaging')->name('packagings.update');
+        Route::delete('/packagings/{packaging}', 'destroyPackaging')->name('packagings.destroy');
+    });
     Route::resource('barangs', AdminBarangController::class);
 });

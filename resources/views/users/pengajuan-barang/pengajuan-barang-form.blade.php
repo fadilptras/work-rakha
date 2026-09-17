@@ -56,7 +56,7 @@
             grid-template-columns: 3fr 3fr 2fr 3fr 40px !important;
             gap: 12px !important;
             padding: 12px 16px !important;
-            align-items: center !important;
+            align-items: start !important;
             background: #ffffff !important;
         }
         .rincian-row-mobile {
@@ -75,6 +75,15 @@
             grid-template-columns: 1fr 1fr 40px !important;
             gap: 8px !important;
             align-items: center !important;
+        }
+        /* Hint riwayat: selalu reservasi 1 baris agar tidak menggeser layout */
+        .riwayat-hint {
+            min-height: 16px !important;
+            line-height: 16px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: block !important;
         }
 
         @media (max-width: 767.98px) {
@@ -162,7 +171,7 @@
                 </div>
                 @endif
 
-                <form action="{{ route('pengajuan_barang.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 md:space-y-6 m-0">
+                <form id="pengajuan-barang-form" action="{{ route('pengajuan_barang.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 md:space-y-6 m-0">
                     @csrf
 
                     {{-- 1. INFORMASI PEMOHON --}}
@@ -239,10 +248,11 @@
                             </div>
                         @endif
                         
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
                             <button id="tambah-baris-btn" type="button" class="bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 font-black py-2 px-4 rounded-xl text-xs flex items-center gap-1.5 transition">
                                 <i class="fas fa-plus"></i> Tambah Item Barang
                             </button>
+                            <span id="draft-status" class="text-[11px] font-bold text-slate-400">Draft tersimpan otomatis di perangkat ini</span>
                         </div>
 
                         {{-- Form Note / Catatan di bawah poin 2 --}}
@@ -268,6 +278,21 @@
                                 <option value="{{ $brg }}"></option>
                             @endforeach
                         @endisset
+                    </datalist>
+
+                    {{-- Datalist Satuan (saran, tetap bisa ketik bebas untuk tambah baru) --}}
+                    <datalist id="satuan-list-options">
+                        <option value="box"></option>
+                        <option value="botol"></option>
+                        <option value="galon"></option>
+                        <option value="jerigen"></option>
+                        <option value="karton"></option>
+                        <option value="pack"></option>
+                        <option value="paket"></option>
+                        <option value="pcs"></option>
+                        <option value="polybag"></option>
+                        <option value="pouches"></option>
+                        <option value="roll"></option>
                     </datalist>
 
                     {{-- 3. FILE PENDUKUNG --}}
@@ -319,43 +344,46 @@
         const tambahBarisBtn = document.getElementById('tambah-baris-btn');
         const rincianBarangBody = document.getElementById('rincian-barang-body');
 
-        const unitOptions = `<option value="box">box</option><option value="botol">botol</option><option value="galon">galon</option><option value="Jerigen">Jerigen</option><option value="karton">karton</option><option value="pack">pack</option><option value="paket">paket</option><option value="pcs">pcs</option><option value="polybag">polybag</option><option value="pouches">pouches</option><option value="roll">roll</option>`;
-
         const isMobile = @json($isMobile);
+
+        function escapeAttr(val = '') {
+            return String(val ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+        }
 
         function addRow(deskripsi = '', supplier = '', satuan = '', jumlah = '', keterangan = '') {
             const newRow = document.createElement('div');
-            
-            let localUnitOptions = unitOptions;
-            if (satuan !== '') {
-                localUnitOptions = localUnitOptions.replace(`value="${satuan}"`, `value="${satuan}" selected`);
-            }
+            const escDeskripsi = escapeAttr(deskripsi);
+            const escSupplier = escapeAttr(supplier);
+            const escSatuan = escapeAttr(satuan);
+            const escJumlah = escapeAttr(jumlah);
+            const escKeterangan = escapeAttr(keterangan);
 
             if (isMobile) {
                 newRow.className = 'rincian-row-mobile';
                 newRow.innerHTML = `
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 uppercase">Nama Barang</label>
-                        <input list="barang-list-options" type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Pilih / Ketik Nama Barang..." required autocomplete="off">
+                        <input list="barang-list-options" type="text" name="rincian_deskripsi[]" value="${escDeskripsi}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Pilih / Ketik Nama Barang..." required autocomplete="off">
+                        <div class="riwayat-hint text-[10px] font-semibold mt-0.5 text-slate-400 invisible truncate">&nbsp;</div>
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-500 uppercase">Supplier</label>
-                        <input list="supplier-list-options" name="rincian_supplier[]" value="${supplier}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Pilih / Ketik Supplier..." autocomplete="off">
+                        <input list="supplier-list-options" name="rincian_supplier[]" value="${escSupplier}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Pilih / Ketik Supplier..." autocomplete="off">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="text-[10px] font-bold text-slate-500 uppercase">Jumlah</label>
-                            <input type="number" name="rincian_jumlah[]" value="${jumlah}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Jumlah" min="1" required>
+                            <input type="number" name="rincian_jumlah[]" value="${escJumlah}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Jumlah" min="1" required>
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-slate-500 uppercase">Satuan</label>
-                            <select name="rincian_satuan[]" class="modern-select !py-1.5 !px-2.5 !rounded-lg !text-xs">${localUnitOptions}</select>
+                            <input list="satuan-list-options" type="text" name="rincian_satuan[]" value="${escSatuan}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Pilih / Ketik Satuan..." required autocomplete="off">
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="flex-1">
                             <label class="text-[10px] font-bold text-slate-500 uppercase">Keterangan Item</label>
-                            <input type="text" name="rincian_keterangan[]" value="${keterangan}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Keterangan item">
+                            <input type="text" name="rincian_keterangan[]" value="${escKeterangan}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Keterangan item">
                         </div>
                         <div class="pt-4">
                             <button type="button" class="delete-row-btn text-red-500 hover:text-red-700 p-1.5 text-base">
@@ -368,17 +396,18 @@
                 newRow.className = 'rincian-row-desktop';
                 newRow.innerHTML = `
                     <div>
-                        <input list="barang-list-options" type="text" name="rincian_deskripsi[]" value="${deskripsi}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Pilih / Ketik Nama Barang..." required autocomplete="off">
+                        <input list="barang-list-options" type="text" name="rincian_deskripsi[]" value="${escDeskripsi}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Pilih / Ketik Nama Barang..." required autocomplete="off">
+                        <div class="riwayat-hint text-[10px] font-semibold mt-0.5 text-slate-400 invisible truncate">&nbsp;</div>
                     </div>
                     <div>
-                        <input list="supplier-list-options" name="rincian_supplier[]" value="${supplier}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Pilih / Ketik Supplier..." autocomplete="off">
+                        <input list="supplier-list-options" name="rincian_supplier[]" value="${escSupplier}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Pilih / Ketik Supplier..." autocomplete="off">
                     </div>
                     <div class="flex gap-1.5">
-                        <input type="number" name="rincian_jumlah[]" value="${jumlah}" class="modern-input !py-2 !px-2.5 !rounded-xl !text-xs w-1/2" placeholder="0" min="1" required>
-                        <select name="rincian_satuan[]" class="modern-select !py-2 !px-2.5 !rounded-xl !text-xs w-1/2">${localUnitOptions}</select>
+                        <input type="number" name="rincian_jumlah[]" value="${escJumlah}" class="modern-input !py-2 !px-2.5 !rounded-xl !text-xs w-1/2" placeholder="0" min="1" required>
+                        <input list="satuan-list-options" type="text" name="rincian_satuan[]" value="${escSatuan}" class="modern-input !py-2 !px-2.5 !rounded-xl !text-xs w-1/2" placeholder="Satuan..." required autocomplete="off">
                     </div>
                     <div>
-                        <input type="text" name="rincian_keterangan[]" value="${keterangan}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Keterangan item">
+                        <input type="text" name="rincian_keterangan[]" value="${escKeterangan}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Keterangan item">
                     </div>
                     <div style="display: flex; justify-content: center; align-items: center;">
                         <button type="button" class="delete-row-btn text-slate-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-xl text-sm transition-all">
@@ -388,7 +417,141 @@
                 `;
             }
             rincianBarangBody.appendChild(newRow);
-            newRow.querySelector('.delete-row-btn').addEventListener('click', () => { newRow.remove(); });
+            newRow.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('input', savePengajuanDraft);
+                inp.addEventListener('change', savePengajuanDraft);
+            });
+            const namaInput = newRow.querySelector('input[name="rincian_deskripsi[]"]');
+            if (namaInput) {
+                namaInput.addEventListener('input', () => scheduleRiwayatCheck(namaInput));
+                namaInput.addEventListener('change', () => scheduleRiwayatCheck(namaInput));
+                if ((namaInput.value || '').trim().length >= 3) scheduleRiwayatCheck(namaInput);
+            }
+            newRow.querySelector('.delete-row-btn').addEventListener('click', () => { newRow.remove(); savePengajuanDraft(); });
+        }
+
+        // ===== Auto-save draft ala manage sales (localStorage, per-user) =====
+        const DRAFT_KEY = 'pengajuan_barang_draft_{{ Auth::id() }}';
+        // Bersihkan kunci global lama agar draft user A tidak bocor ke user B di perangkat yang sama
+        try {
+            if (DRAFT_KEY !== 'pengajuan_barang_draft') localStorage.removeItem('pengajuan_barang_draft');
+        } catch (e) {}
+        const mainForm = document.getElementById('pengajuan-barang-form');
+        const judulInput = document.getElementById('judul-pengajuan');
+        const catatanInput = document.getElementById('catatan_pemohon');
+        const draftStatus = document.getElementById('draft-status');
+        let isRestoring = false;
+
+        function updateDraftStatus(text) {
+            if (draftStatus) draftStatus.textContent = text;
+        }
+
+        function collectDraft() {
+            const items = [];
+            rincianBarangBody.querySelectorAll('.rincian-row-desktop, .rincian-row-mobile').forEach(row => {
+                const d = row.querySelector('input[name="rincian_deskripsi[]"]');
+                const s = row.querySelector('input[name="rincian_supplier[]"]');
+                const j = row.querySelector('input[name="rincian_jumlah[]"]');
+                const st = row.querySelector('input[name="rincian_satuan[]"]');
+                const k = row.querySelector('input[name="rincian_keterangan[]"]');
+                items.push({
+                    deskripsi: d ? d.value : '',
+                    supplier: s ? s.value : '',
+                    jumlah: j ? j.value : '',
+                    satuan: st ? st.value : '',
+                    keterangan: k ? k.value : '',
+                });
+            });
+            return {
+                judul_pengajuan: judulInput ? judulInput.value : '',
+                catatan_pemohon: catatanInput ? catatanInput.value : '',
+                items: items,
+                saved_at: new Date().toISOString(),
+            };
+        }
+
+        function savePengajuanDraft() {
+            if (!mainForm || isRestoring) return;
+            try {
+                localStorage.setItem(DRAFT_KEY, JSON.stringify(collectDraft()));
+                const t = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                updateDraftStatus('Draft tersimpan otomatis • ' + t);
+            } catch (e) { /* storage penuh / private mode, abaikan */ }
+        }
+
+        function readDraft() {
+            try {
+                const raw = localStorage.getItem(DRAFT_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!parsed || !Array.isArray(parsed.items)) return null;
+                return parsed;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function clearPengajuanDraft() {
+            try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+            updateDraftStatus('Draft tersimpan otomatis di perangkat ini');
+        }
+
+        // ===== Info riwayat 30 hari (milik sendiri, status aktif, info saja) =====
+        const checkRiwayatUrl = "{{ route('pengajuan_barang.checkRiwayat') }}";
+        const riwayatTimers = new WeakMap();
+
+        function setRiwayatHint(input, state, text, fullTitle) {
+            const row = input.closest('.rincian-row-desktop, .rincian-row-mobile') || input.parentElement;
+            const hint = row ? row.querySelector('.riwayat-hint') : null;
+            if (!hint) return;
+            const base = 'riwayat-hint text-[10px] font-semibold mt-0.5 truncate ';
+            if (!text) {
+                hint.textContent = '\u00A0';
+                hint.className = base + 'text-slate-400 invisible';
+                hint.removeAttribute('title');
+                return;
+            }
+            hint.textContent = text;
+            hint.className = base
+                + (state === 'found' ? 'text-amber-600 visible' : state === 'empty' ? 'text-emerald-600 visible' : 'text-slate-400 visible');
+            hint.setAttribute('title', fullTitle || 'Filter: milik sendiri • 30 hari • status aktif');
+        }
+
+        function checkRiwayatForInput(input) {
+            const nama = (input.value || '').trim();
+            if (nama.length < 3) {
+                setRiwayatHint(input, '', '');
+                return;
+            }
+            setRiwayatHint(input, 'checking', '••• mengecek...');
+            fetch(checkRiwayatUrl + '?nama=' + encodeURIComponent(nama), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.json())
+                .then(d => {
+                    if (d && d.found) {
+                        const tgl = (d.last && d.last.tanggal) ? d.last.tanggal : '';
+                        const st = (d.last && d.last.status) ? d.last.status : '';
+                        const short = '● Sudah pengajuan ' + d.count + 'x' + (tgl ? ' • ' + tgl : '') + (st ? ' (' + st + ')' : '');
+                        const full = 'Sudah pengajuan ' + d.count + 'x dalam 30 hari terakhir'
+                            + (tgl ? ' • terakhir ' + tgl : '') + (st ? ' (' + st + ')' : '')
+                            + ' • Filter: milik sendiri, status aktif';
+                        setRiwayatHint(input, 'found', short, full);
+                    } else {
+                        setRiwayatHint(input, 'empty', '○ Belum ada pengajuan (30 hari)', 'Belum ada pengajuan dalam 30 hari terakhir • milik sendiri • status aktif');
+                    }
+                })
+                .catch(() => setRiwayatHint(input, '', ''));
+        }
+
+        function scheduleRiwayatCheck(input) {
+            if (riwayatTimers.has(input)) clearTimeout(riwayatTimers.get(input));
+            riwayatTimers.set(input, setTimeout(() => checkRiwayatForInput(input), 400));
+        }
+
+        function checkAllRiwayat() {
+            if (!rincianBarangBody) return;
+            rincianBarangBody.querySelectorAll('input[name="rincian_deskripsi[]"]').forEach(inp => {
+                if ((inp.value || '').trim().length >= 3) scheduleRiwayatCheck(inp);
+            });
         }
 
         const oldRincianDeskripsi = @json(old('rincian_deskripsi', []));
@@ -396,25 +559,71 @@
         const oldRincianSatuan = @json(old('rincian_satuan', []));
         const oldRincianJumlah = @json(old('rincian_jumlah', []));
         const oldRincianKeterangan = @json(old('rincian_keterangan', []));
+        const hasOld = oldRincianDeskripsi && oldRincianDeskripsi.length > 0;
 
-        if (tambahBarisBtn) { 
-            if (oldRincianDeskripsi && oldRincianDeskripsi.length > 0) {
-                oldRincianDeskripsi.forEach((deskripsi, index) => {
-                    const supplier = oldRincianSupplier[index] !== undefined ? oldRincianSupplier[index] : '';
-                    const satuan = oldRincianSatuan[index] !== undefined ? oldRincianSatuan[index] : '';
-                    const jumlah = oldRincianJumlah[index] !== undefined ? oldRincianJumlah[index] : '';
-                    const keterangan = oldRincianKeterangan[index] !== undefined ? oldRincianKeterangan[index] : '';
-                    addRow(deskripsi, supplier, satuan, jumlah, keterangan);
-                });
+        function renderOld() {
+            oldRincianDeskripsi.forEach((deskripsi, index) => {
+                const supplier = oldRincianSupplier[index] !== undefined ? oldRincianSupplier[index] : '';
+                const satuan = oldRincianSatuan[index] !== undefined ? oldRincianSatuan[index] : '';
+                const jumlah = oldRincianJumlah[index] !== undefined ? oldRincianJumlah[index] : '';
+                const keterangan = oldRincianKeterangan[index] !== undefined ? oldRincianKeterangan[index] : '';
+                addRow(deskripsi, supplier, satuan, jumlah, keterangan);
+            });
+        }
+
+        if (tambahBarisBtn) {
+            isRestoring = true;
+            if (hasOld) {
+                // Prioritas 1: old() Laravel saat validasi gagal
+                renderOld();
             } else {
-                addRow(); 
+                // Prioritas 2: draft localStorage (tahan refresh / pindah halaman)
+                const draft = readDraft();
+                const hasDraftContent = draft && (
+                    (draft.judul_pengajuan && draft.judul_pengajuan.trim() !== '') ||
+                    (draft.catatan_pemohon && draft.catatan_pemohon.trim() !== '') ||
+                    draft.items.some(it => (it.deskripsi || it.supplier || it.jumlah || it.satuan || it.keterangan))
+                );
+                if (hasDraftContent) {
+                    if (judulInput && draft.judul_pengajuan) judulInput.value = draft.judul_pengajuan;
+                    if (catatanInput && draft.catatan_pemohon) catatanInput.value = draft.catatan_pemohon;
+                    if (draft.items.length > 0) {
+                        draft.items.forEach(it => addRow(it.deskripsi || '', it.supplier || '', it.satuan || '', it.jumlah || '', it.keterangan || ''));
+                    } else {
+                        addRow();
+                    }
+                    updateDraftStatus('Draft dipulihkan otomatis');
+                } else {
+                    addRow();
+                }
             }
-            tambahBarisBtn.addEventListener('click', () => addRow()); 
+            isRestoring = false;
+            savePengajuanDraft();
+            checkAllRiwayat();
+            tambahBarisBtn.addEventListener('click', () => { addRow(); savePengajuanDraft(); });
+        }
+
+        if (rincianBarangBody) {
+            rincianBarangBody.addEventListener('input', savePengajuanDraft);
+            rincianBarangBody.addEventListener('change', savePengajuanDraft);
+            rincianBarangBody.addEventListener('input', (e) => {
+                if (e.target && e.target.name === 'rincian_deskripsi[]') scheduleRiwayatCheck(e.target);
+            });
+            rincianBarangBody.addEventListener('change', (e) => {
+                if (e.target && e.target.name === 'rincian_deskripsi[]') scheduleRiwayatCheck(e.target);
+            });
+        }
+        if (judulInput) {
+            judulInput.addEventListener('input', savePengajuanDraft);
+            judulInput.addEventListener('change', savePengajuanDraft);
+        }
+        if (catatanInput) {
+            catatanInput.addEventListener('input', savePengajuanDraft);
+            catatanInput.addEventListener('change', savePengajuanDraft);
         }
 
         const tambahLampiranBtn = document.getElementById('tambah-lampiran-btn');
         const lampiranContainer = document.getElementById('file-pendukung-container');
-        const mainForm = document.querySelector('form');
         const submitButton = document.getElementById('submit-button');
 
         function updateLampiranButtonState() {
@@ -483,6 +692,8 @@
                     return false;
                 }
 
+                clearPengajuanDraft();
+
                 submitButton.disabled = true;
                 submitButton.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Mengirim...`;
                 submitButton.classList.add('inline-flex', 'items-center');
@@ -497,6 +708,7 @@
                 addRow();
                 if (lampiranContainer) lampiranContainer.innerHTML = '';
                 addLampiranInput();
+                clearPengajuanDraft();
             });
         }
     });

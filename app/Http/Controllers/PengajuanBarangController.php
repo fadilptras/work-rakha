@@ -31,10 +31,10 @@ class PengajuanBarangController extends Controller
             return [];
         });
 
-        // ambil daftar barang
+        // ambil daftar barang dari master products (pengganti barangs lama)
         $barangList = Cache::remember('barang_list_dropdown', 300, function () {
-            if (Schema::hasTable('barangs')) {
-                $dbBarangs = \App\Models\Barang::orderBy('nama_barang')->pluck('nama_barang')->toArray();
+            if (Schema::hasTable('products')) {
+                $dbBarangs = \App\Models\Product::where('is_deleted', 0)->orderBy('product_name')->pluck('product_name')->toArray();
                 if (!empty($dbBarangs)) {
                     return $dbBarangs;
                 }
@@ -61,6 +61,57 @@ class PengajuanBarangController extends Controller
             'title' => 'Riwayat Pengajuan Barang',
             'pengajuanBarangs' => $pengajuanBarangs,
         ]);
+    }
+
+    // Cek ringkas: apakah nama barang sudah pernah diajukan user ini 30 hari terakhir (info saja)
+    // Filter: milik sendiri + created_at >= 30 hari + status aktif (bukan ditolak/dibatalkan)
+    // Cocok longgar (contains, case-insensitive) agar "kardus" ketemu "Kardus Rakha Med+"
+    public function checkRiwayat(Request $request)
+    {
+        $nama = trim((string) $request->query('nama', ''));
+        if (mb_strlen($nama) < 3) {
+            return response()->json(['found' => false, 'count' => 0, 'last' => null]);
+        }
+        $key = mb_strtolower($nama);
+
+        $candidates = PengajuanBarang::where('user_id', Auth::id())
+            ->where('created_at', '>=', Carbon::now()->subDays(30))
+            ->whereIn('status', ['diajukan', 'diproses', 'disetujui', 'selesai', 'proses_finalisasi'])
+            ->latest()->limit(50)
+            ->get(['id', 'judul_pengajuan', 'status', 'created_at', 'rincian_barang']);
+
+        $count = 0;
+        $last = null;
+        foreach ($candidates as $p) {
+            $items = $p->rincian_barang ?? [];
+            if (!is_array($items)) continue;
+            foreach ($items as $it) {
+                if (!is_array($it)) continue;
+                $a = mb_strtolower(trim((string) ($it['deskripsi'] ?? '')));
+                $b = mb_strtolower(trim((string) ($it['nama_barang'] ?? '')));
+                if ($a === '' && $b === '') continue;
+                // exact ATAU contains dua arah (input "kardus" vs data "kardus rakha med+")
+                // reverse-match hanya untuk nama tersimpan >=3 char agar tidak false-positive
+                $match = $a === $key || $b === $key
+                    || ($a !== '' && str_contains($a, $key))
+                    || ($b !== '' && str_contains($b, $key))
+                    || (mb_strlen($a) >= 3 && str_contains($key, $a))
+                    || (mb_strlen($b) >= 3 && str_contains($key, $b));
+                if ($match) {
+                    $count++;
+                    if (!$last) {
+                        $last = [
+                            'judul' => $p->judul_pengajuan,
+                            'status' => $p->status,
+                            'tanggal' => $p->created_at ? $p->created_at->locale('id')->isoFormat('D MMM YYYY') : null,
+                        ];
+                    }
+                    break;
+                }
+            }
+        }
+
+        return response()->json(['found' => $count > 0, 'count' => $count, 'last' => $last]);
     }
 
     // tampilkan semua pengajuan barang untuk pemantauan (akses approver/admin)
@@ -92,12 +143,11 @@ class PengajuanBarangController extends Controller
             }
         }
         
-        // pencarian
+        // pencarian (judul + nama pemohon; nomor_surat adalah accessor, tidak bisa di-query)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('judul_pengajuan', 'like', "%{$search}%")
-                  ->orWhere('nomor_surat', 'like', "%{$search}%")
                   ->orWhereHas('user', function($uq) use ($search) {
                       $uq->where('name', 'like', "%{$search}%");
                   });
@@ -209,6 +259,17 @@ class PengajuanBarangController extends Controller
 
     public function show(PengajuanBarang $pengajuanBarang)
     {
+        $user = Auth::user();
+        $isOwner = $user->id === $pengajuanBarang->user_id;
+        $isApprover = in_array($user->id, [
+            $pengajuanBarang->approver_barang_1_id,
+            $pengajuanBarang->approver_barang_2_id,
+            $pengajuanBarang->approver_barang_3_id,
+            $pengajuanBarang->approver_barang_4_id,
+        ]);
+        if (!($isOwner || $isApprover || $user->role === 'admin')) {
+            abort(403, 'Anda tidak memiliki akses ke pengajuan ini.');
+        }
         // Load relasi agar view tidak error saat menampilkan detail approver
         $pengajuanBarang->load(['user', 'approver1', 'approver2', 'approver3', 'approver4']);
         return view('users.pengajuan-barang.pengajuan-barang-detail', compact('pengajuanBarang'));
@@ -311,6 +372,17 @@ class PengajuanBarangController extends Controller
      */
     public function download(PengajuanBarang $pengajuanBarang)
     {
+        $user = Auth::user();
+        $isOwner = $user->id === $pengajuanBarang->user_id;
+        $isApprover = in_array($user->id, [
+            $pengajuanBarang->approver_barang_1_id,
+            $pengajuanBarang->approver_barang_2_id,
+            $pengajuanBarang->approver_barang_3_id,
+            $pengajuanBarang->approver_barang_4_id,
+        ]);
+        if (!($isOwner || $isApprover || $user->role === 'admin')) {
+            abort(403, 'Anda tidak memiliki akses ke pengajuan ini.');
+        }
         $pengajuanBarang->load(['user', 'approver1', 'approver2', 'approver3', 'approver4']);
         $pdf = Pdf::loadView('pdf.documents.pengajuan-barang', [
             'pengajuanBarang' => $pengajuanBarang,
@@ -411,6 +483,7 @@ class PengajuanBarangController extends Controller
         $catatan = $request->catatan_monitoring;
         $nowFormatted = Carbon::now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm');
 
+        $updateData = [];
         $lampiranPath = null;
         if ($request->hasFile('lampiran_monitoring')) {
             // Simpan di folder lampiran_barang sesuai permintaan

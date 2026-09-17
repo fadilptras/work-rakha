@@ -20,6 +20,10 @@
                 <div style="margin-top: 2px; font-family: 'Times New Roman', Times, serif;">{{ $a['jabatan'] ?? '-' }}</div>
             @elseif($a['status'] === 'skipped')
                 <div style="color: #888; font-style: italic; margin: 25px 0; font-family: 'Times New Roman', Times, serif;">( Tidak Diperlukan )</div>
+            @elseif($a['status'] === 'dibatalkan')
+                <div style="font-weight: bold; color: #6c757d; margin-bottom: 25px; font-family: 'Times New Roman', Times, serif;">[ DIBATALKAN ]</div>
+                <div style="font-weight: bold; text-decoration: underline; color: #000; font-family: 'Times New Roman', Times, serif;">{{ $a['nama'] ?? '-' }}</div>
+                <div style="margin-top: 2px; font-family: 'Times New Roman', Times, serif;">{{ $a['jabatan'] ?? '-' }}</div>
             @else
                 <div style="color: #888; font-style: italic; margin: 25px 0; font-family: 'Times New Roman', Times, serif;">( Menunggu Persetujuan )</div>
             @endif
