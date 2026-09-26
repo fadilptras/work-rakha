@@ -13,7 +13,7 @@
                 </p>
             </div>
             <div class="flex items-center gap-3">
-                <a href="{{ route('admin.pengajuan_dana.index') }}" class="text-sm text-zinc-300 hover:text-white transition-colors duration-200 flex items-center bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-lg">
+                <a href="{{ $backUrl ?? route('admin.pengajuan_dana.index', ['tab' => request('tab', 'pending')]) }}" class="text-sm text-zinc-300 hover:text-white transition-colors duration-200 flex items-center bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-lg">
                     <i class="fas fa-arrow-left mr-2"></i> Kembali
                 </a>
             </div>
@@ -98,7 +98,7 @@
                         $status = $pengajuanDana->approver_1_status;
                         $catatan = $pengajuanDana->approver_1_catatan;
                         $tanggal = $pengajuanDana->approver_1_approved_at;
-                        $namaApprover = $pengajuanDana->approverDana1->name ?? 'Approver Dihapus';
+                        $namaApprover = $pengajuanDana->approverDana1->name ?? 'Approver 1 Dihapus';
                         
                         $statusClass = ''; $statusText = ''; $statusIcon = '';
                         switch ($status) {
@@ -144,7 +144,7 @@
                         $status = $pengajuanDana->approver_2_status;
                         $catatan = $pengajuanDana->approver_2_catatan;
                         $tanggal = $pengajuanDana->approver_2_approved_at;
-                        $namaApprover = $pengajuanDana->approverDana2->name ?? 'Approver Dihapus';
+                        $namaApprover = $pengajuanDana->approverDana2->name ?? 'Approver 2 Dihapus';
                         
                         $statusClass = ''; $statusText = ''; $statusIcon = '';
                         switch ($status) {
@@ -185,13 +185,13 @@
                 @endif
 
 
-                {{-- TAHAP 3: FINANCE --}}
+                {{-- TAHAP 3: APPROVER 3 --}}
                 @if ($pengajuanDana->approverDana3)
                     @php
                         $status = $pengajuanDana->approver_3_status;
                         $catatan = $pengajuanDana->approver_3_catatan;
                         $tanggal = $pengajuanDana->approver_3_approved_at; 
-                        $namaApprover = $pengajuanDana->approverDana3->name ?? 'Finance Dihapus';
+                        $namaApprover = $pengajuanDana->approverDana3->name ?? 'Approver 3 Dihapus';
                         
                         $statusClass = ''; $statusText = ''; $statusIcon = '';
                         switch ($status) {
@@ -223,7 +223,7 @@
                     @endphp
                     <div>
                         <label class="block text-sm font-medium text-zinc-400 mb-1">
-                            Manager Keuangan: <span class="text-zinc-300">{{ $namaApprover }}</span>
+                            Approver 3: <span class="text-zinc-300">{{ $namaApprover }}</span>
                         </label>
                         <p class="flex items-center font-medium {{ $statusClass }}"><i class="fas {{ $statusIcon }} mr-2 w-4 text-center"></i> {{ $statusText }}</p>
                         
@@ -243,18 +243,18 @@
                     </div>
                 @elseif ($pengajuanDana->approver_3_status === 'skipped')
                      <div>
-                        <label class="block text-sm font-medium text-zinc-400 mb-1">Finance</label>
+                        <label class="block text-sm font-medium text-zinc-400 mb-1">Approver 3</label>
                         <p class="flex items-center text-zinc-400"><i class="fas fa-minus-circle mr-2"></i> Dilewati</p>
                     </div>
                 @endif
                 
-                {{-- TAHAP 4: DIREKTUR / FINAL --}}
+                {{-- TAHAP 4: APPROVER 4 --}}
                 @if ($pengajuanDana->approverDana4)
                     @php
                         $status4 = $pengajuanDana->approver_4_status;
                         $catatan4 = $pengajuanDana->approver_4_catatan;
                         $tanggal4 = $pengajuanDana->approver_4_approved_at; 
-                        $namaApprover4 = $pengajuanDana->approverDana4->name ?? 'Direktur Dihapus';
+                        $namaApprover4 = $pengajuanDana->approverDana4->name ?? 'Approver 4 Dihapus';
                         
                         $statusClass4 = ''; $statusText4 = ''; $statusIcon4 = '';
                         switch ($status4) {
@@ -273,7 +273,7 @@
                     @endphp
                     <div>
                         <label class="block text-sm font-medium text-zinc-400 mb-1">
-                            Direktur (Final): <span class="text-zinc-300">{{ $namaApprover4 }}</span>
+                            Approver 4: <span class="text-zinc-300">{{ $namaApprover4 }}</span>
                         </label>
                         <p class="flex items-center font-medium {{ $statusClass4 }}"><i class="fas {{ $statusIcon4 }} mr-2 w-4 text-center"></i> {{ $statusText4 }}</p>
                         
@@ -293,7 +293,7 @@
                     </div>
                 @elseif ($pengajuanDana->approver_4_status === 'skipped')
                      <div>
-                        <label class="block text-sm font-medium text-zinc-400 mb-1">Direktur (Final)</label>
+                        <label class="block text-sm font-medium text-zinc-400 mb-1">Approver 4</label>
                         <p class="flex items-center text-zinc-400"><i class="fas fa-minus-circle mr-2"></i> Dilewati</p>
                     </div>
                 @endif
@@ -317,7 +317,7 @@
                      @if ($pengajuanDana->status == 'selesai')
                         <p class="text-xl font-bold flex items-center text-emerald-400"><i class="fas fa-check-circle mr-2"></i> SELESAI</p>
                     @elseif ($pengajuanDana->status == 'disetujui')
-                        <p class="text-xl font-bold flex items-center text-teal-400"><i class="fas fa-check-double mr-2"></i> MENUNGGU DIREKTUR</p>
+                        <p class="text-xl font-bold flex items-center text-teal-400"><i class="fas fa-check-double mr-2"></i> MENUNGGU APPROVER 4</p>
                     @elseif ($pengajuanDana->status == 'ditolak')
                         <p class="text-xl font-bold flex items-center text-red-400"><i class="fas fa-times-circle mr-2"></i> DITOLAK</p>
                     @elseif ($pengajuanDana->status == 'proses_pembayaran' || $pengajuanDana->status == 'diproses')

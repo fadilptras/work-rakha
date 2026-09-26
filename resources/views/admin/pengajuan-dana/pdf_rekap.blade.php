@@ -41,9 +41,11 @@
 
         <div class="filter-info">
             <strong>Filter Data:</strong><br>
+            - Status: <strong>{{ $statusLabel ?? 'Semua Data' }}</strong> <br>
             - Nama Karyawan: <strong>{{ $karyawanName }}</strong> <br>
             - Divisi: <strong>{{ $divisiName }}</strong> <br>
-            - Periode: <strong>{{ $startDate ? \Carbon\Carbon::parse($startDate)->translatedFormat('d F Y') : 'Awal' }}</strong> s/d <strong>{{ $endDate ? \Carbon\Carbon::parse($endDate)->translatedFormat('d F Y') : 'Akhir' }}</strong>
+            - Periode: <strong>{{ $startDate ? \Carbon\Carbon::parse($startDate)->translatedFormat('d F Y') : 'Awal' }}</strong> s/d <strong>{{ $endDate ? \Carbon\Carbon::parse($endDate)->translatedFormat('d F Y') : 'Akhir' }}</strong><br>
+            - Dicetak pada: <strong>{{ $printedAt ?? \Carbon\Carbon::now()->translatedFormat('d F Y H:i') }}</strong>
         </div>
 
         <table>
@@ -77,13 +79,13 @@
                             @elseif ($pengajuan->status == 'proses_pembayaran')
                                 <span class="status status-proses">Proses Bayar</span>
                             @elseif ($pengajuan->status == 'disetujui')
-                                <span class="status status-proses">Menunggu Final</span>
+                                <span class="status status-proses">Menunggu Approver 4</span>
                             @elseif ($pengajuan->status == 'diproses')
                                 <span class="status status-proses">Diproses</span>
                             @elseif ($pengajuan->status == 'dibatalkan')
                                 <span class="status status-dibatalkan">Dibatalkan</span>
                             @else
-                                <span class="status status-diajukan">Menunggu Appr 1</span>
+                                <span class="status status-diajukan">Menunggu Approver 1</span>
                             @endif
                         </td>
                         <td class="text-right">Rp {{ number_format($pengajuan->total_dana, 0, ',', '.') }}</td>

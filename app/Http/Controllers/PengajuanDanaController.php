@@ -104,7 +104,7 @@ class PengajuanDanaController extends Controller
         $userId = Auth::id();
         $user   = Auth::user();
 
-        // Hanya pemilik, approver yang ditugaskan, manager keuangan, atau admin yang boleh akses
+        // Hanya pemilik, approver yang ditugaskan (Approver 1-4), atau admin yang boleh akses
         $isOwner    = $pengajuanDana->user_id == $userId;
         $isApprover = in_array($userId, array_filter([
             $pengajuanDana->approver_dana_1_id,

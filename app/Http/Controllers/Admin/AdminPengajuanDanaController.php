@@ -60,12 +60,20 @@ class AdminPengajuanDanaController extends Controller
             });
         }
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            $startDate = Carbon::parse($request->start_date)->startOfDay();
-            $endDate = Carbon::parse($request->end_date)->endOfDay();
-            $query->whereBetween('created_at', [$startDate, $endDate]);
+            try {
+                $startDate = Carbon::parse($request->start_date)->startOfDay();
+                $endDate = Carbon::parse($request->end_date)->endOfDay();
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            } catch (\Exception $e) {
+                // Tanggal tidak valid (mis. query manual) -> abaikan filter tanggal
+            }
         }
         
         $pengajuanDanas = $query->paginate(10)->appends($request->query());
+
+        // Simpan URL index terakhir (tab + filter + page) agar tombol Kembali
+        // di halaman detail bisa balik ke posisi terakhir, bukan selalu ke tab Diproses
+        session(['pengajuan_dana_last_index_url' => $request->fullUrl()]);
 
         // Karyawan dan Divisi (Optimasi menggunakan Cache)
         $karyawanList = Cache::rememberForever('karyawan_list_dropdown', function () {
@@ -85,13 +93,20 @@ class AdminPengajuanDanaController extends Controller
     /**
      * Menampilkan detail pengajuan dana (untuk admin).
      */
-    public function show(PengajuanDana $pengajuanDana)
+    public function show(Request $request, PengajuanDana $pengajuanDana)
     {
         $pengajuanDana->load(['user', 'approverDana1', 'approverDana2', 'approverDana3', 'approverDana4']);
-        
+
+        // Kembali ke tab terakhir yang dikunjungi; fallback ke param tab / default pending
+        $backUrl = session(
+            'pengajuan_dana_last_index_url',
+            route('admin.pengajuan_dana.index', ['tab' => $request->query('tab', 'pending')])
+        );
+
         return view('admin.pengajuan-dana.show', [
             'title' => 'Detail Pengajuan Dana',
             'pengajuanDana' => $pengajuanDana,
+            'backUrl' => $backUrl,
         ]);
     }
 
@@ -147,9 +162,14 @@ class AdminPengajuanDanaController extends Controller
         $divisi = $request->input('divisi');
 
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            $startDate = Carbon::parse($request->start_date)->startOfDay();
-            $endDate = Carbon::parse($request->end_date)->endOfDay();
-            $query->whereBetween('created_at', [$startDate, $endDate]);
+            try {
+                $startDate = Carbon::parse($request->start_date)->startOfDay();
+                $endDate = Carbon::parse($request->end_date)->endOfDay();
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            } catch (\Exception $e) {
+                // Tanggal tidak valid -> abaikan filter (view menampilkan 'Awal' s/d 'Akhir')
+                $startDate = null; $endDate = null;
+            }
         }
         if ($karyawanId) {
             $query->where('user_id', $karyawanId);
@@ -170,8 +190,12 @@ class AdminPengajuanDanaController extends Controller
         }
         $divisiName = $divisi ?: 'Semua Divisi';
 
-        // [OPTIONAL] Ubah judul file agar admin tau ini rekap apa
-        $fileTag = strtoupper($activeTab); 
+        // [OPTIONAL] Ubah judul file agar admin tau ini rekap apa (allowlist agar aman)
+        $fileTagMap = [
+            'pending' => 'PENDING', 'approved' => 'APPROVED', 'rejected' => 'REJECTED',
+            'cancelled' => 'CANCELLED', 'all' => 'ALL',
+        ];
+        $fileTag = $fileTagMap[$activeTab] ?? 'ALL';
         
         $tabLabelMap = [
             'pending'   => 'Diproses (Aktif)',
@@ -243,6 +267,21 @@ class AdminPengajuanDanaController extends Controller
         $approver3Data = $request->input('approver_3');
         $approver4Data = $request->input('approver_4');
 
+        // Validasi tambahan: tiap karyawan tidak boleh punya orang yang sama
+        // di dua tahap berbeda (aturan different:* hanya mengecek pasangan tertentu)
+        foreach ($approver1Data as $userId => $approver1Id) {
+            $ids = array_filter([
+                $approver1Id,
+                $approver2Data[$userId] ?? null,
+                $approver3Data[$userId] ?? null,
+                $approver4Data[$userId] ?? null,
+            ]);
+            if (count($ids) !== count(array_unique($ids))) {
+                return redirect()->route('admin.pengajuan_dana.set_approvers.index')
+                    ->with('error', 'Gagal menyimpan: ada karyawan yang memiliki approver yang sama di lebih dari satu tahap. Setiap tahap harus orang yang berbeda.');
+            }
+        }
+
         // Load semua user yang relevan sekaligus (anti N+1 query)
         $userIds = array_keys($approver1Data);
         $users   = User::whereIn('id', $userIds)->get()->keyBy('id');
@@ -294,6 +333,9 @@ class AdminPengajuanDanaController extends Controller
             'catatan_admin' => 'nullable|string|max:255',
         ]);
 
+        // Satu timestamp untuk semua agar sesuai kapan admin menyelesaikan prosesnya
+        $now = Carbon::now();
+
         // Siapkan data update dasar - langsung ubah status utama ke selesai
         $updateData = [
             'status' => 'selesai',
@@ -303,18 +345,26 @@ class AdminPengajuanDanaController extends Controller
         for ($i = 1; $i <= 4; $i++) {
             if ($pengajuanDana->{"approver_dana_{$i}_id"} && $pengajuanDana->{"approver_{$i}_status"} === 'menunggu') {
                 $updateData["approver_{$i}_status"] = 'skipped';
-                $updateData["approver_{$i}_catatan"] = $request->catatan_admin ?? 'Dilewati oleh Admin Override';
-                $updateData["approver_{$i}_approved_at"] = Carbon::now();
+                $updateData["approver_{$i}_catatan"] = $request->catatan_admin ?: 'Dilewati oleh Admin Override';
+                $updateData["approver_{$i}_approved_at"] = $now;
             }
         }
 
-        // Khusus untuk Finance (biasanya Approver 3), jika dia yang diambil alih atau jika admin ingin menandainya disetujui
+        // Khusus untuk Approver 3, jika dia yang diambil alih atau jika admin ingin menandainya disetujui
         // agar data transfer tercatat, kita bisa set approver_dana_3_id ke admin yang login jika masih menunggu
         if ($pengajuanDana->approver_3_status === 'menunggu') {
             $updateData['approver_dana_3_id'] = Auth::id();
             $updateData['approver_3_status'] = 'disetujui';
-            $updateData['approver_3_approved_at'] = Carbon::now();
-            $updateData['approver_3_catatan'] = $request->catatan_admin ?? 'Diselesaikan oleh Admin';
+            $updateData['approver_3_approved_at'] = $now;
+            $updateData['approver_3_catatan'] = $request->catatan_admin ?: 'Diselesaikan oleh Admin';
+        }
+
+        // Approver 4 (final): jika masih menunggu saat admin menyelesaikan,
+        // tandai disetujui dengan waktu penyelesaian admin agar di PDF tampil selesai
+        if ($pengajuanDana->approver_dana_4_id && $pengajuanDana->approver_4_status === 'menunggu') {
+            $updateData['approver_4_status'] = 'disetujui';
+            $updateData['approver_4_approved_at'] = $now;
+            $updateData['approver_4_catatan'] = $request->catatan_admin ?: 'Diselesaikan oleh Admin';
         }
 
         if ($request->hasFile('bukti_transfer')) {
@@ -329,8 +379,10 @@ class AdminPengajuanDanaController extends Controller
         // Pencatatan otomatis ke Riwayat CRM jika berasal dari halaman Klien (satu pintu via CrmLedger)
         CrmLedger::recordUsageFromPengajuan($pengajuanDana);
 
-        // Kirim notifikasi bukti transfer ke pemohon
-        Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'bukti_transfer'));
+        // Kirim notifikasi bukti transfer ke pemohon (guard jika user pemohon sudah dihapus)
+        if ($pengajuanDana->user) {
+            Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, 'bukti_transfer'));
+        }
 
         return back()->with('success', 'Pembayaran berhasil diselesaikan oleh Admin.');
     }
@@ -356,8 +408,13 @@ class AdminPengajuanDanaController extends Controller
                 }
             }
         }
+
+        // 3. Hapus file Invoice Final jika ada
+        if ($pengajuan->invoice && \Illuminate\Support\Facades\Storage::disk('public')->exists($pengajuan->invoice)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($pengajuan->invoice);
+        }
     
-        // 3. Hapus Record Database
+        // 4. Hapus Record Database
         $pengajuan->delete();
     
         return back()->with('success', 'Data pengajuan dan file terkait berhasil dihapus.');

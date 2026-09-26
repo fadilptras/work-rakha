@@ -29,24 +29,32 @@
 
     // normalisasi ke format generic
     $approvers = [
-        ['label' => 'Tahap 1', 'status' => $pengajuanDana->approver_1_status,
+        ['label' => 'Approver 1', 'status' => $pengajuanDana->approver_1_status,
          'nama' => $pengajuanDana->approverDana1->name ?? null,
-         'jabatan' => $pengajuanDana->approverDana1->jabatan ?? 'Atasan',
+         'jabatan' => $pengajuanDana->approverDana1->jabatan ?? 'Approver 1',
          'tanggal' => $pengajuanDana->approver_1_approved_at?->translatedFormat('d F Y, H.i \W\I\B')],
-        ['label' => 'Tahap 2', 'status' => $pengajuanDana->approver_2_status,
+        ['label' => 'Approver 2', 'status' => $pengajuanDana->approver_2_status,
          'nama' => $pengajuanDana->approverDana2->name ?? null,
-         'jabatan' => $pengajuanDana->approverDana2->jabatan ?? 'Direktur',
+         'jabatan' => $pengajuanDana->approverDana2->jabatan ?? 'Approver 2',
          'tanggal' => $pengajuanDana->approver_2_approved_at?->translatedFormat('d F Y, H.i \W\I\B')],
-        ['label' => 'Tahap 3', 'status' => $pengajuanDana->approver_3_status,
+        ['label' => 'Approver 3', 'status' => $pengajuanDana->approver_3_status,
          'nama' => $pengajuanDana->approverDana3->name ?? null,
-         'jabatan' => $pengajuanDana->approverDana3->jabatan ?? 'Finance',
+         'jabatan' => $pengajuanDana->approverDana3->jabatan ?? 'Approver 3',
          'tanggal' => $pengajuanDana->approver_3_approved_at?->translatedFormat('d F Y, H.i \W\I\B')],
     ];
     if (!empty($pengajuanDana->approver_dana_4_id)) {
-        $approvers[] = ['label' => 'Tahap Final', 'status' => $pengajuanDana->approver_4_status,
+        // Jika diselesaikan admin (override), approver 4 tercatat 'skipped' tapi
+        // sebenarnya selesai mengikuti waktu penyelesaian admin
+        $status4 = $pengajuanDana->approver_4_status;
+        $tanggal4 = $pengajuanDana->approver_4_approved_at?->translatedFormat('d F Y, H.i \W\I\B');
+        if ($pengajuanDana->status === 'selesai' && $status4 === 'skipped' && $pengajuanDana->approver_4_approved_at) {
+            $status4 = 'disetujui';
+            $tanggal4 = ($pengajuanDana->approver_4_approved_at ?? $pengajuanDana->updated_at)?->translatedFormat('d F Y, H.i \W\I\B');
+        }
+        $approvers[] = ['label' => 'Approver 4', 'status' => $status4,
             'nama' => $pengajuanDana->approverDana4->name ?? null,
-            'jabatan' => $pengajuanDana->approverDana4->jabatan ?? 'Admin',
-            'tanggal' => $pengajuanDana->approver_4_approved_at?->translatedFormat('d F Y, H.i \W\I\B')];
+            'jabatan' => $pengajuanDana->approverDana4->jabatan ?? 'Approver 4',
+            'tanggal' => $tanggal4];
     }
 @endphp
 

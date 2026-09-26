@@ -139,7 +139,7 @@
                                 'proses_pembayaran' => 'Proses Pembayaran',
                                 'diproses' => 'Diproses',
                                 'dibatalkan' => 'Dibatalkan',
-                                'disetujui' => 'Menunggu Final',
+                                'disetujui' => 'Menunggu Approver 4',
                                 'diajukan' => 'Diajukan',
                                 default => 'Menunggu',
                             };
@@ -249,7 +249,7 @@
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Tahap 1</span>
+                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Approver 1</span>
                                                 @if($t1)
                                                     <span class="text-[9px] text-slate-400 font-semibold">• {{ $t1->translatedFormat('d M Y, H:i') }}</span>
                                                 @endif
@@ -287,7 +287,7 @@
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Tahap 2</span>
+                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Approver 2</span>
                                                 @if($t2)
                                                     <span class="text-[9px] text-slate-400 font-semibold">• {{ $t2->translatedFormat('d M Y, H:i') }}</span>
                                                 @endif
@@ -307,7 +307,7 @@
                                 </div>
                             @endif
 
-                            {{-- 3. FINANCE / KEUANGAN --}}
+                            {{-- 3. APPROVER 3 --}}
                             @if ($pengajuanDana->approver_dana_3_id)
                                 @php
                                     $sF = $pengajuanDana->approver_3_status; 
@@ -331,12 +331,12 @@
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Tahap 3 (Final)</span>
+                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Approver 3</span>
                                                 @if($tF)
                                                     <span class="text-[9px] text-slate-400 font-semibold">• {{ $tF->translatedFormat('d M Y, H:i') }}</span>
                                                 @endif
                                             </div>
-                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $pengajuanDana->approverDana3->name ?? 'Finance' }}</h4>
+                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $pengajuanDana->approverDana3->name ?? 'Approver 3' }}</h4>
                                         </div>
                                         <span class="px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border {{ $themeF['badge'] }}">
                                             {{ $textF }}
@@ -351,7 +351,7 @@
                                 </div>
                             @endif
 
-                            {{-- 4. DIREKTUR / FINAL --}}
+                            {{-- 4. APPROVER 4 --}}
                             @if ($pengajuanDana->approver_dana_4_id)
                                 @php
                                     $s4 = $pengajuanDana->approver_4_status; 
@@ -375,12 +375,12 @@
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Tahap 4 (Final)</span>
+                                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider">Approver 4</span>
                                                 @if($t4)
                                                     <span class="text-[9px] text-slate-400 font-semibold">• {{ $t4->translatedFormat('d M Y, H:i') }}</span>
                                                 @endif
                                             </div>
-                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $pengajuanDana->approverDana4->name ?? 'Direktur' }}</h4>
+                                            <h4 class="text-xs font-black text-slate-800 leading-tight mt-1">{{ $pengajuanDana->approverDana4->name ?? 'Approver 4' }}</h4>
                                         </div>
                                         <span class="px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border {{ $theme4['badge'] }}">
                                             {{ $text4 }}

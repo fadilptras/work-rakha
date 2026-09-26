@@ -98,7 +98,7 @@
                 <div class="mt-4 flex justify-end">
                     <div class="flex items-center gap-2">
                         <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition">Filter</button>
-                        <a href="{{ route('admin.pengajuan_dana.index') }}" class="bg-zinc-600 hover:bg-zinc-500 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition text-center">Reset</a>
+                        <a href="{{ route('admin.pengajuan_dana.index', ['tab' => $activeTab]) }}" class="bg-zinc-600 hover:bg-zinc-500 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition text-center">Reset</a>
                         <button type="submit" formaction="{{ route('admin.pengajuan_dana.downloadRekapPdf') }}" formmethod="GET" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition flex items-center justify-center gap-2" title="Download Rekap PDF">
                             <i class="fas fa-file-pdf"></i>
                             <span>Cetak Rekap</span>
@@ -117,7 +117,7 @@
                         <th scope="col" class="px-6 py-3 w-[200px]">Nama Karyawan</th> 
                         <th scope="col" class="px-6 py-3 w-auto">Judul Pengajuan</th> 
                         <th scope="col" class="px-6 py-3 w-[150px]">Total Dana</th> 
-                        <th scope="col" class="px-6 py-3 w-[180px]">Status Final</th> 
+                        <th scope="col" class="px-6 py-3 w-[200px] whitespace-nowrap">Status Final</th> 
                         <th scope="col" class="px-6 py-3 w-[120px] text-center">Aksi</th> 
                     </tr>
                 </thead>
@@ -128,8 +128,8 @@
                         
                         {{-- UBAH: Nama jadi Link --}}
                         <td class="px-6 py-4 font-medium">
-                            <a href="{{ route('admin.pengajuan_dana.show', $pengajuan) }}" class="text-white hover:text-sky-400 hover:underline transition flex flex-col">
-                                <span class="text-base truncate">{{ $pengajuan->user->name }}</span>
+                            <a href="{{ route('admin.pengajuan_dana.show', [$pengajuan, 'tab' => $activeTab]) }}" class="text-white hover:text-sky-400 hover:underline transition flex flex-col">
+                                <span class="text-base truncate">{{ $pengajuan->user->name ?? '-' }}</span>
                                 <span class="text-xs text-zinc-500 font-normal mt-0.5 group-hover:text-sky-500/70">Klik untuk melihat detail</span>
                             </a>
                         </td>
@@ -137,21 +137,21 @@
                         <td class="px-6 py-4 truncate">{{ $pengajuan->judul_pengajuan }}</td> 
                         <td class="px-6 py-4 font-mono">Rp {{ number_format($pengajuan->total_dana, 0, ',', '.') }}</td>
                         
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4 whitespace-nowrap">
                             @if ($pengajuan->status == 'selesai')
-                                <span class="font-bold bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full text-xs">Selesai</span>
+                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full text-xs">Selesai</span>
                             @elseif ($pengajuan->status == 'ditolak')
-                                <span class="font-bold bg-red-500/10 text-red-400 px-2 py-1 rounded-full text-xs">Ditolak</span>
+                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-red-500/10 text-red-400 px-2 py-1 rounded-full text-xs">Ditolak</span>
                             @elseif ($pengajuan->status == 'proses_pembayaran')
-                                <span class="font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-xs">Proses Bayar</span>
+                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-xs">Proses Bayar</span>
                             @elseif ($pengajuan->status == 'disetujui')
-                                <span class="font-bold bg-teal-500/10 text-teal-400 px-2 py-1 rounded-full text-xs">Menunggu Final</span>
+                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-teal-500/10 text-teal-400 px-2 py-1 rounded-full text-xs">Menunggu Approver 4</span>
                             @elseif ($pengajuan->status == 'diproses')
-                                <span class="font-bold bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded-full text-xs">Diproses</span>
+                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded-full text-xs">Diproses</span>
                             @elseif ($pengajuan->status == 'dibatalkan')
-                                <span class="font-bold bg-zinc-500/10 text-zinc-400 px-2 py-1 rounded-full text-xs">Dibatalkan</span>
+                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-zinc-500/10 text-zinc-400 px-2 py-1 rounded-full text-xs">Dibatalkan</span>
                             @else
-                                <span class="font-bold bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-full text-xs">Diajukan</span>
+                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-full text-xs">Diajukan</span>
                             @endif
                         </td>
 

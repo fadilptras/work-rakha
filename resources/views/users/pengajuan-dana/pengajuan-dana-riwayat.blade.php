@@ -144,10 +144,10 @@
                         <label class="text-[11px] font-black text-slate-500 uppercase tracking-wider mt-0.5 whitespace-nowrap">Status Filter:</label>
                         <select name="status" class="modern-select" onchange="this.form.submit()">
                             <option value="semua" {{ request('status') == 'semua' || !request('status') ? 'selected' : '' }}>Semua Status</option>
-                            <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Appr 1</option>
+                            <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Approver 1</option>
                             <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
                             <option value="proses_pembayaran" {{ request('status') == 'proses_pembayaran' ? 'selected' : '' }}>Proses Pembayaran</option>
-                            <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Menunggu Final</option>
+                            <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Menunggu Approver 4</option>
                             <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
                             <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                             <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
@@ -183,7 +183,7 @@
                                     $statusLabel = match($pengajuan->status) {
                                         'diajukan' => 'Diajukan',
                                         'diproses' => 'Diproses',
-                                        'disetujui' => 'Menunggu Final',
+                                        'disetujui' => 'Menunggu Approver 4',
                                         'proses_pembayaran' => 'Proses Pembayaran',
                                         'selesai' => 'Selesai',
                                         'ditolak' => 'Ditolak',
@@ -237,7 +237,7 @@
                             $statusLabel = match($pengajuan->status) {
                                 'diajukan' => 'Diajukan',
                                 'diproses' => 'Diproses',
-                                'disetujui' => 'Menunggu Final',
+                                'disetujui' => 'Menunggu Approver 4',
                                 'proses_pembayaran' => 'Pembayaran',
                                 'selesai' => 'Selesai',
                                 'ditolak' => 'Ditolak',
