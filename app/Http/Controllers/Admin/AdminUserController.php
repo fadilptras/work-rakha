@@ -39,7 +39,8 @@ class AdminUserController extends Controller
 
         $usersByDivision = User::query()
                         ->where('role', 'user')
-                        ->with(['riwayatPendidikan', 'riwayatPekerjaan']) 
+                        ->where('email', '!=', 'test@gmail.com')
+                        ->with(['riwayatPendidikan', 'riwayatPekerjaan'])
                         ->orderBy('divisi')
                         ->orderByDesc('is_kepala_divisi')
                         ->orderBy('name')

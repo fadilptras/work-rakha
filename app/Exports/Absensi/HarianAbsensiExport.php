@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Exports;
+namespace App\Exports\Absensi;
 
+use App\Exports\Concerns\LaporanSheet;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -15,15 +16,20 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use Carbon\Carbon;
 
-class AbsensiHarianExport implements FromCollection, WithHeadings, WithMapping, WithColumnWidths, WithStyles, WithEvents
+class HarianAbsensiExport implements FromCollection, WithHeadings, WithMapping, WithColumnWidths, WithStyles, WithEvents
 {
+    use LaporanSheet;
+
     protected $records;
     protected $dateForPage;
+    // Slot nomor kontrol dokumen (diisi saat user memberikan nomornya).
+    protected $nomorDokumen = null;
 
-    public function __construct($records, $dateForPage)
+    public function __construct($records, $dateForPage, $nomorDokumen = null)
     {
         $this->records = collect($records);
         $this->dateForPage = Carbon::parse($dateForPage);
+        $this->nomorDokumen = $nomorDokumen;
     }
 
     public function collection()
@@ -35,7 +41,7 @@ class AbsensiHarianExport implements FromCollection, WithHeadings, WithMapping, 
     {
         static $no = 1;
 
-        $isLembur = ($record->record_type === 'lembur');
+        // Halaman harian sudah absensi saja (data lembur ada di Rekap Lembur).
         $nama = $record->user->name ?? 'User Dihapus';
         $divisi = $record->user->divisi ?? '-';
 
@@ -43,34 +49,20 @@ class AbsensiHarianExport implements FromCollection, WithHeadings, WithMapping, 
         $waktuKeluar = '-';
         $durasi = '-';
 
-        if ($isLembur) {
-            $status = 'Lembur';
-            $jamMasuk = $record->jam_masuk_lembur ? Carbon::parse($record->jam_masuk_lembur) : null;
-            $jamKeluar = $record->jam_keluar_lembur ? Carbon::parse($record->jam_keluar_lembur) : null;
-            
-            if ($jamMasuk) $waktuMasuk = $jamMasuk->format('H:i') . ' WIB';
-            if ($jamKeluar) $waktuKeluar = $jamKeluar->format('H:i') . ' WIB';
-            
-            if ($jamMasuk && $jamKeluar) {
-                $totalMenit = $jamMasuk->diffInMinutes($jamKeluar);
-                $durasi = floor($totalMenit / 60) . ' Jam ' . ($totalMenit % 60) . ' Menit';
-            }
-        } else {
-            $jamMasuk = $record->jam_masuk ? Carbon::parse($record->jam_masuk) : null;
-            $jamKeluar = $record->jam_keluar ? Carbon::parse($record->jam_keluar) : null;
-            
-            if ($jamMasuk) $waktuMasuk = $jamMasuk->format('H:i') . ' WIB';
-            if ($jamKeluar) $waktuKeluar = $jamKeluar->format('H:i') . ' WIB';
-            $durasi = $record->durasi_teks ?? '-';
+        $jamMasuk = $record->jam_masuk ? Carbon::parse($record->jam_masuk) : null;
+        $jamKeluar = $record->jam_keluar ? Carbon::parse($record->jam_keluar) : null;
 
-            if (strtolower($record->status) == 'hadir') {
-                $batasWaktuMasuk = Carbon::createFromTimeString('08:00:00', 'Asia/Jakarta');
-                $waktuMasukKaryawan = $jamMasuk ? Carbon::parse($jamMasuk, 'Asia/Jakarta') : null;
-                $isLate = $waktuMasukKaryawan && $waktuMasukKaryawan->gt($batasWaktuMasuk);
-                $status = $isLate ? 'Hadir (Terlambat)' : 'Hadir';
-            } else {
-                $status = ucfirst($record->status);
-            }
+        if ($jamMasuk) $waktuMasuk = $jamMasuk->format('H:i') . ' WIB';
+        if ($jamKeluar) $waktuKeluar = $jamKeluar->format('H:i') . ' WIB';
+        $durasi = $record->durasi_teks ?? '-';
+
+        if (strtolower($record->status) == 'hadir') {
+            $batasWaktuMasuk = Carbon::createFromTimeString('08:00:00', 'Asia/Jakarta');
+            $waktuMasukKaryawan = $jamMasuk ? Carbon::parse($jamMasuk, 'Asia/Jakarta') : null;
+            $isLate = $waktuMasukKaryawan && $waktuMasukKaryawan->gt($batasWaktuMasuk);
+            $status = $isLate ? 'Hadir (Terlambat)' : 'Hadir';
+        } else {
+            $status = ucfirst($record->status);
         }
 
         return [
@@ -88,7 +80,7 @@ class AbsensiHarianExport implements FromCollection, WithHeadings, WithMapping, 
     public function headings(): array
     {
         $companyName = "PT RAKHA NUSANTARA MEDIKA";
-        $title = "DATA ABSENSI DAN LEMBUR HARIAN";
+        $title = "DATA ABSENSI HARIAN";
         $period = "Tanggal: " . $this->dateForPage->isoFormat('dddd, D MMMM YYYY');
 
         return [
@@ -132,10 +124,7 @@ class AbsensiHarianExport implements FromCollection, WithHeadings, WithMapping, 
                 $lastRow = $sheet->getHighestRow();
 
                 // Merge & Align Header
-                $sheet->mergeCells("A1:H1");
-                $sheet->mergeCells("A2:H2");
-                $sheet->mergeCells("A3:H3");
-                $sheet->getStyle('A1:A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $this->terapkanKop($sheet, 8);
 
                 // Styling Table Header (Row 5)
                 $sheet->getStyle('A5:H5')->getFill()
@@ -156,6 +145,11 @@ class AbsensiHarianExport implements FromCollection, WithHeadings, WithMapping, 
                     'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
                 ];
                 
+                $sheet->freezePane('A6');
+                $sheet->setAutoFilter("A5:H{$lastRow}");
+                $this->setupCetak($sheet, 5, 5, $this->nomorDokumen);
+                $this->tulisNomorDokumen($sheet, 'H', $lastRow + 2, $this->nomorDokumen);
+
                 if ($lastRow >= 5) {
                     $sheet->getStyle("A5:H{$lastRow}")->applyFromArray($styleBorder);
                     // Center align No, Waktu Masuk, Waktu Keluar, Durasi, Status
