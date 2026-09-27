@@ -17,7 +17,12 @@ class ClientController extends BaseCrmController
     public function index(Request $request)
     {
         $year = $request->input('year', 'all');
-        $query = Client::active()->with('interactions')->orderBy('client_name', 'asc');
+        // Urut PIC (ps) dulu supaya klien dengan PIC sama berderet,
+        // lalu nama RS dan nama user di dalam tiap grup PIC.
+        $query = Client::active()->with('interactions')
+            ->orderByRaw("COALESCE(NULLIF(TRIM(ps), ''), 'zzz') ASC")
+            ->orderBy('customer_name', 'asc')
+            ->orderBy('client_name', 'asc');
 
         if (!$this->hasFullAccess()) {
             $query->where('user_id', Auth::id());

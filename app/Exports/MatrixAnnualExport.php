@@ -57,8 +57,10 @@ class MatrixAnnualExport implements FromView, WithStyles, WithColumnWidths
 
     public function styles(Worksheet $sheet)
     {
-        $startRow = 4;
-        $dataRow = 6;
+        // Baris kop perusahaan disisip di blade paling atas: header & data ikut geser +1
+        $startRow = 5;
+        $subRow = 6;
+        $dataRow = 7;
         
         // HITUNG JUMLAH BARIS DINAMIS
         $dataRowsCount = 0;
@@ -76,18 +78,19 @@ class MatrixAnnualExport implements FromView, WithStyles, WithColumnWidths
         return [
             // HEADER
             1 => ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]],
-            2 => ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]],
+            2 => ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]],
+            3 => ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]],
 
-            "A{$startRow}:{$lastCol}5" => [
+            "A{$startRow}:{$lastCol}{$subRow}" => [
                 'font' => ['bold' => true, 'size' => 10], 
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
             ],
 
-            // Warna Header (Range Geser +1)
-            "G{$startRow}:I5" => ['fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'DBEAFE']]], // Income Blue
-            "J{$startRow}:V5" => ['fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FEE2E2']]], // Usage Red
-            "W{$startRow}:W5" => ['fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'D1FAE5']]], // Remain Green
+            // Warna Header
+            "G{$startRow}:I{$subRow}" => ['fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'DBEAFE']]], // Income Blue
+            "J{$startRow}:V{$subRow}" => ['fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FEE2E2']]], // Usage Red
+            "W{$startRow}:W{$subRow}" => ['fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'D1FAE5']]], // Remain Green
 
             // BODY
             "A{$dataRow}:{$lastCol}{$totalRow}" => [

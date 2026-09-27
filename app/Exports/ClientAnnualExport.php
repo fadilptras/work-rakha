@@ -54,23 +54,22 @@ class ClientAnnualExport implements FromView, ShouldAutoSize, WithColumnFormatti
     public function styles(Worksheet $sheet)
     {
         return [
-            // --- FIX KHUSUS NO REKENING (SEL E6) ---
-            // Di layout baru, No. Rekening ada di baris ke-6 (sama seperti sebelumnya),
-            // jadi E6 tetap benar.
-            'E6' => ['numberFormat' => ['formatCode' => NumberFormat::FORMAT_TEXT]],
+            // --- FIX KHUSUS NO REKENING ---
+            // Baris kop perusahaan disisip paling atas: No. Rekening geser E6 -> E7.
+            'E7' => ['numberFormat' => ['formatCode' => NumberFormat::FORMAT_TEXT]],
 
             // --- STYLE LAINNYA ---
-            
-            // Baris 1-2 (Judul Utama)
+
+            // Baris 1-3 (Kop + Judul Utama)
             1 => ['font' => ['bold' => true, 'size' => 14]],
-            2 => ['font' => ['bold' => true, 'size' => 12]],
-            
-            // Baris 4 (Header Section Info: DATA KLIEN & DATA BANK)
-            4 => ['font' => ['bold' => true, 'color' => ['rgb' => '0000FF']]], 
-            
-            // [UPDATE] Baris 14 (Header Tabel Data: BULAN, SALES, dll)
-            // Sebelumnya 13, sekarang jadi 14 karena ada tambahan baris Jabatan & Hobby.
-            14 => [
+            2 => ['font' => ['bold' => true, 'size' => 14]],
+            3 => ['font' => ['bold' => true, 'size' => 12]],
+
+            // Baris 5 (Header Section Info: DATA KLIEN & DATA BANK)
+            5 => ['font' => ['bold' => true, 'color' => ['rgb' => '0000FF']]],
+
+            // Baris 15 (Header Tabel Data: BULAN, SALES, dll)
+            15 => [
                 'font' => ['bold' => true],
                 'fill' => [
                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,

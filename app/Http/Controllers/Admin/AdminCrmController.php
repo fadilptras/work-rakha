@@ -46,28 +46,25 @@ class AdminCrmController extends BaseCrmController
         
         $allClients = $statsQuery->get();
 
-        $totalOmset = 0; 
-        $totalNet   = 0; 
+        $totalUsage = 0;
+        $totalNet   = 0;
 
         foreach($allClients as $c) {
-            $c_gross_total = 0;
-            $c_net_total   = 0; 
-            $c_usage_total = 0; 
+            $c_net_total   = 0;
+            $c_usage_total = 0;
 
             foreach($c->interactions as $item) {
                 if($item->transaction_type == 'IN') {
                     $gross = $item->sales_amount > 0 ? $item->sales_amount : $item->amount;
                     $rate = (float) ($item->commission_rate ?? 0);
-                    $value = $gross * ($rate / 100);
-                    $c_gross_total += $gross;
-                    $c_net_total   += $value;
+                    $c_net_total   += $gross * ($rate / 100);
                 } elseif ($item->transaction_type == 'OUT') {
                     $c_usage_total += $item->amount;
                 }
             }
-            
+
             $saldo_klien = ($c->opening_balance ?? 0) + $c_net_total - $c_usage_total;
-            $totalOmset += $c_gross_total;
+            $totalUsage += $c_usage_total;
             $totalNet   += $saldo_klien;
         }
 
@@ -79,7 +76,7 @@ class AdminCrmController extends BaseCrmController
             'title'      => 'Monitoring Sales & CRM',
             'clients'    => $clients,
             'users'      => $users,
-            'totalOmset' => $totalOmset,
+            'totalUsage' => $totalUsage,
             'totalNet'   => $totalNet,
             'filterUser' => $userId
         ]);
@@ -105,6 +102,10 @@ class AdminCrmController extends BaseCrmController
      */
     public function store(Request $request)
     {
+        $request->merge([
+            'commission_rate' => $request->filled('commission_rate') ? str_replace(',', '.', $request->commission_rate) : null,
+        ]);
+
         $validator = Validator::make($request->all(), [
             'user_id'               => 'required|exists:users,id',
             'client_name'          => 'required|string|max:255',
@@ -144,6 +145,7 @@ class AdminCrmController extends BaseCrmController
     {
         $year = $request->input('year', date('Y'));
         $historyYear = $request->input('history_year');
+        $client->loadMissing(['user', 'interactions']);
         $queryInteractions = $client->interactions()->orderBy('interaction_date', 'desc');
         if ($historyYear) $queryInteractions->whereYear('interaction_date', $historyYear);
         $interactions = $queryInteractions->paginate(15)->withQueryString(); 
@@ -151,9 +153,14 @@ class AdminCrmController extends BaseCrmController
         $calc = $this->calculateRecapData($client, $year);
         $currentBalance = $this->calculateRealTimeBalance($client);
 
+        $users = Cache::rememberForever('karyawan_list_dropdown', function () {
+            return User::where('role', 'user')->orderBy('name', 'asc')->get(['id', 'name', 'divisi']);
+        });
+
         return view('admin.crm.show', [
             'title'        => 'Detail Admin: ' . $client->client_name,
             'client'       => $client,
+            'users'        => $users,
             'interactions' => $interactions,
             'recap'        => $calc['recap'],
             'year'         => $year,
@@ -174,7 +181,12 @@ class AdminCrmController extends BaseCrmController
 
     public function update(Request $request, Client $client)
     {
+        $request->merge([
+            'commission_rate' => $request->filled('commission_rate') ? str_replace(',', '.', $request->commission_rate) : null,
+        ]);
+
         $validated = $request->validate([
+            'user_id'               => 'required|exists:users,id',
             'client_name'           => 'required|string|max:255',
             'customer_name'         => 'required|string|max:255',
             'sales_customer_name'   => 'nullable|string|max:255',
@@ -196,13 +208,19 @@ class AdminCrmController extends BaseCrmController
             'company_founded_date'  => 'nullable|date',
             'contact_birth_date'    => 'nullable|date',
         ]);
+
+        // Sinkronkan snapshot nama PIC (ps) dengan user PIC yang dipilih,
+        // karena rekap sales mengunci berdasarkan ps
+        $pic = User::find($validated['user_id']);
+        $validated['ps'] = $pic ? $pic->name : $client->ps;
+
         $client->update($validated);
         return redirect()->back()->with('success', 'Data klien berhasil diperbarui!');
     }
 
     public function storeInteraction(Request $request)
     {
-        $request->merge(['sales_amount' => str_replace('.', '', $request->sales_amount), 'commission_rate' => str_replace(',', '.', $request->commission_rate)]);
+        $request->merge(['sales_amount' => str_replace('.', '', (string) $request->sales_amount), 'commission_rate' => str_replace(',', '.', (string) $request->commission_rate)]);
         $request->validate(['client_id' => 'required|exists:clients,id', 'product_name' => 'required|string|max:255', 'sales_amount' => 'required|numeric|min:0', 'commission_rate' => 'required|numeric|min:0|max:100', 'interaction_date' => 'required|date', 'notes' => 'nullable|string']);
         ClientInteraction::create(['client_id' => $request->client_id, 'transaction_type' => 'IN', 'product_name' => $request->product_name, 'interaction_date' => $request->interaction_date, 'sales_amount' => $request->sales_amount, 'amount' => $request->sales_amount, 'commission_rate' => $request->commission_rate, 'notes' => $request->notes]);
         return redirect()->back()->with('success', 'Transaksi sales berhasil ditambahkan!');
@@ -210,7 +228,7 @@ class AdminCrmController extends BaseCrmController
 
     public function storeSupport(Request $request)
     {
-        $request->merge(['amount' => str_replace('.', '', $request->amount)]);
+        $request->merge(['amount' => str_replace('.', '', (string) $request->amount)]);
         $request->validate(['client_id' => 'required|exists:clients,id', 'purpose' => 'required|string|max:255', 'amount' => 'required|numeric|min:0', 'interaction_date' => 'required|date', 'notes' => 'nullable|string']);
         $outClient = Client::active()->findOrFail($request->client_id);
         ClientInteraction::create(['client_id' => $request->client_id, 'transaction_type' => 'OUT', 'product_name' => 'USAGE : ' . $outClient->client_name . ' - ' . $outClient->customer_name . ' (' . $request->purpose . ')', 'interaction_date' => $request->interaction_date, 'sales_amount' => 0, 'amount' => $request->amount, 'notes' => $request->notes]);
@@ -219,7 +237,7 @@ class AdminCrmController extends BaseCrmController
 
     public function storeEntertain(Request $request)
     {
-        $request->merge(['amount' => str_replace('.', '', $request->amount)]);
+        $request->merge(['amount' => str_replace('.', '', (string) $request->amount)]);
         $request->validate(['client_id' => 'required|exists:clients,id', 'interaction_date' => 'required|date', 'notes' => 'required|string|max:2000', 'amount' => 'required|numeric|min:0']);
         ClientInteraction::create(['client_id' => $request->client_id, 'transaction_type' => 'ENTERTAIN', 'product_name' => 'ENTERTAIN : ' . \Illuminate\Support\Str::limit(trim((string) $request->notes), 200, ''), 'interaction_date' => $request->interaction_date, 'sales_amount' => 0, 'amount' => $request->amount, 'notes' => $request->notes]);
         return redirect()->back()->with('success', 'Aktivitas berhasil dicatat.');
@@ -240,7 +258,7 @@ class AdminCrmController extends BaseCrmController
     public function updateInteraction(Request $request, ClientInteraction $interaction)
     {
         $inputNominal = $request->input('sales_amount') ?? $request->input('amount');
-        $cleanNominal = str_replace('.', '', $inputNominal);
+        $cleanNominal = str_replace('.', '', (string) $inputNominal);
         if ($interaction->transaction_type == 'IN') {
             $request->merge(['sales_amount' => $cleanNominal, 'commission_rate' => str_replace(',', '.', $request->input('commission_rate'))]);
             $request->validate(['product_name' => 'required|string|max:255', 'sales_amount' => 'required|numeric|min:0', 'commission_rate' => 'required|numeric|min:0|max:100', 'interaction_date' => 'required|date', 'notes' => 'nullable|string']);

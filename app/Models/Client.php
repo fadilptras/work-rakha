@@ -71,7 +71,7 @@ class Client extends Model
 
         $pemasukan = $this->interactions
                           ->where('transaction_type', 'IN')
-                          ->sum('amount');
+                          ->sum(fn ($item) => $item->sales_amount > 0 ? $item->sales_amount : $item->amount);
 
         $pengeluaran = $this->interactions
                             ->where('transaction_type', 'OUT')

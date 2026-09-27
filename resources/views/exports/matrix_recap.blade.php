@@ -1,6 +1,10 @@
 <table>
     <thead>
-    {{-- BARIS 1-3: JUDUL --}}
+    {{-- BARIS 1: KOP PERUSAHAAN --}}
+    <tr>
+        <th colspan="23" align="center" style="font-weight: bold; font-size: 16px;">PT RAKHA NUSANTARA MEDIKA</th>
+    </tr>
+    {{-- BARIS 2-4: JUDUL --}}
     <tr>
         <th colspan="23" align="center" style="font-weight: bold; font-size: 16px;">LAPORAN SIS CONTRIBUTION {{ $year }}</th>
     </tr>

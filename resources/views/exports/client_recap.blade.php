@@ -1,6 +1,9 @@
 <table>
     <thead>
     <tr>
+        <th colspan="6" align="center">PT RAKHA NUSANTARA MEDIKA</th>
+    </tr>
+    <tr>
         <th colspan="6" align="center">REKAPITULASI SALES TAHUN {{ $year }}</th>
     </tr>
     <tr>

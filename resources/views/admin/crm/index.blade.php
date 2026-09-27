@@ -63,13 +63,13 @@
 
         <div class="bg-zinc-800 p-6 rounded-xl shadow-lg border border-zinc-700/50 flex flex-col justify-between h-full">
             <div>
-                <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Total Nilai Sales (Gross)</p>
+                <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Total Realisasi</p>
                 <h3 class="text-3xl font-extrabold text-emerald-500 truncate">
-                    <span class="text-lg text-zinc-500 mr-1">Rp</span>{{ number_format($totalOmset, 0, ',', '.') }}
+                    <span class="text-lg text-zinc-500 mr-1">Rp</span>{{ number_format($totalUsage, 0, ',', '.') }}
                 </h3>
             </div>
             <div class="mt-4 flex items-center text-xs text-emerald-500 font-bold">
-                <i class="fas fa-chart-line mr-1"></i> Akumulasi Transaksi
+                <i class="fas fa-chart-line mr-1"></i> Akumulasi Usage (Out)
             </div>
         </div>
 
@@ -103,24 +103,22 @@
             <table class="w-full text-sm text-left whitespace-nowrap text-zinc-300">
                 <thead class="bg-zinc-900/50 text-zinc-400 uppercase text-xs font-bold tracking-wider border-b border-zinc-700">
                     <tr>
-                        <th class="px-6 py-4">Nama Perusahaan / Klien</th>
-                        <th class="px-6 py-4">Sales (PIC)</th>
-                        <th class="px-6 py-4 text-right">Nilai Sales (Gross)</th>
-                        <th class="px-6 py-4 text-right">Saldo (Net)</th>
+                        <th class="px-6 py-4">Profil Instansi & User</th>
+                        <th class="px-6 py-4">Area & PIC</th>
+                        <th class="px-6 py-4">Kontak</th>
+                        <th class="px-6 py-4 text-right">Total Saldo</th>
                         <th class="px-6 py-4 text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-700" id="adminClientTableBody">
                     @forelse($clients as $client)
                     @php
-                        $row_sales = 0;
                         $row_net_val = 0;
                         $row_usage = 0;
 
                         foreach($client->interactions as $i) {
                             if($i->transaction_type == 'IN') {
                                 $gross = ($i->sales_amount > 0) ? $i->sales_amount : $i->amount;
-                                $row_sales += $gross;
                                 $r = (float)($i->commission_rate ?? 0);
                                 $row_net_val += $gross * ($r/100);
                             } elseif ($i->transaction_type == 'OUT') {
@@ -133,27 +131,42 @@
 
                     <tr class="hover:bg-zinc-700/30 transition duration-150">
                         <td class="px-6 py-4">
-                            <div class="font-bold text-white text-base">{{ $client->client_name }}</div>
-                            <div class="text-xs text-blue-400 font-medium mb-0.5">{{ $client->contact_position ?? '-' }}</div>
-                            <div class="text-xs text-zinc-400 font-medium">{{ $client->customer_name }}</div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-amber-500 font-bold text-xs border border-zinc-600">
-                                    {{ substr($client->user->name ?? '?', 0, 2) }}
-                                </div>
-                                <div>
-                                    <div class="font-bold text-zinc-300 text-xs">{{ $client->user->name ?? 'Deleted User' }}</div>
-                                    <div class="text-[10px] text-zinc-500 uppercase tracking-wide">Sales Representative</div>
-                                </div>
+                            <div class="font-bold text-white text-base">{{ $client->customer_name }}</div>
+                            <div class="text-xs text-zinc-400 font-medium flex items-center gap-1 mt-0.5">
+                                <i class="fas fa-user-md text-blue-400"></i> {{ $client->client_name }}
                             </div>
                         </td>
-                        
-                        <td class="px-6 py-4 text-right font-mono text-emerald-500 font-semibold">
-                            Rp {{ number_format($row_sales, 0, ',', '.') }}
+                        <td class="px-6 py-4">
+                            <div class="flex flex-col items-start gap-1.5">
+                                <span class="bg-zinc-700 text-zinc-300 text-xs font-medium px-2.5 py-0.5 rounded border border-zinc-600">
+                                    {{ $client->area ?? 'Non-Area' }}
+                                </span>
+                                <span class="text-[10px] text-zinc-500 uppercase tracking-wide font-semibold">
+                                    PIC: {{ $client->ps ?? $client->user->name ?? '-' }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="space-y-1">
+                                @if($client->contact_phone)
+                                    <div class="flex items-center gap-2 text-xs text-zinc-300">
+                                        <i class="fab fa-whatsapp text-emerald-500 w-4 text-center"></i>
+                                        <span>{{ $client->contact_phone }}</span>
+                                    </div>
+                                @endif
+                                @if($client->email)
+                                    <div class="flex items-center gap-2 text-xs text-zinc-300">
+                                        <i class="fas fa-envelope text-blue-400 w-4 text-center"></i>
+                                        <span>{{ \Illuminate\Support\Str::limit($client->email, 25) }}</span>
+                                    </div>
+                                @endif
+                                @if(!$client->contact_phone && !$client->email)
+                                    <span class="text-xs text-zinc-600">-</span>
+                                @endif
+                            </div>
                         </td>
 
-                        <td class="px-6 py-4 text-right font-mono font-bold bg-blue-900/10 rounded {{ $row_saldo < 0 ? 'text-red-400' : 'text-blue-400' }}">
+                        <td class="px-6 py-4 text-right font-mono font-bold {{ $row_saldo < 0 ? 'text-red-400' : 'text-blue-400' }}">
                             Rp {{ number_format($row_saldo, 0, ',', '.') }}
                         </td>
 
@@ -282,6 +295,16 @@
                                 <div class="flex-grow">
                                     <label class="block text-[11px] font-bold text-zinc-500 mb-1 uppercase">Alamat Perusahaan</label>
                                     <textarea name="company_address" rows="5" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 resize-none focus:ring-amber-500 focus:border-amber-500" placeholder="Lokasi kantor...">{{ old('company_address') }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-zinc-500 mb-1 uppercase">Apoteker</label>
+                                    <div class="space-y-2">
+                                        <input type="text" name="pharmacist_name" value="{{ old('pharmacist_name') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Nama Apoteker">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input type="text" name="pharmacist_license_no" value="{{ old('pharmacist_license_no') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Nomor SIPA">
+                                            <input type="text" name="pharmacist_phone" value="{{ old('pharmacist_phone') }}" class="w-full bg-zinc-900 border border-zinc-600 rounded text-sm text-white px-3 py-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Telp Apoteker">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
