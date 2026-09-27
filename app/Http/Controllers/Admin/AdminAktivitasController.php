@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Aktivitas;
 use App\Models\User;
+use App\Exports\Aktivitas\RekapAktivitasExport;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -104,7 +105,7 @@ class AdminAktivitasController extends Controller
             $filterInfo = 'Divisi ' . $divisi;
         }
 
-        $pdf = Pdf::loadView('admin.exports.pdf.aktivitas', compact('aktivitas', 'filterInfo', 'startDate', 'endDate'));
+        $pdf = Pdf::loadView('admin.exports.pdf.aktivitas.rekap', compact('aktivitas', 'filterInfo', 'startDate', 'endDate'));
         return $pdf->download('Laporan_Aktivitas_Karyawan_' . now()->format('Ymd') . '.pdf');
     }
 
@@ -146,6 +147,6 @@ class AdminAktivitasController extends Controller
         }
 
         $fileName = 'Laporan_Aktivitas_Karyawan_' . now()->format('Ymd') . '.xlsx';
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AktivitasExport($aktivitas, $filterInfo, $startDate, $endDate), $fileName);
+        return \Maatwebsite\Excel\Facades\Excel::download(new RekapAktivitasExport($aktivitas, $filterInfo, $startDate, $endDate), $fileName);
     }
 }
