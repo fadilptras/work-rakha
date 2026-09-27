@@ -173,7 +173,7 @@
             </div>  
 
             <div class="hidden md:block">
-                <x-ui.page-header title="Sales Forecast & Stock Estimation" :subtitle="'Estimating future stock requirements based on the average sales performance from the last ' . $activeRefMonths . ' months (' . implode(', ', array_map(fn($b) => $monthTranslations[$b] ?? $b, $tigaBulanTerakhir)) . ').'" icon="fa-chart-area" />
+                <x-ui.page-header title="Sales Forecast & Stock Estimation" :subtitle="'Estimating future stock requirements based on the average sales performance from the last ' . $activeRefMonths . ' months (' . implode(', ', array_map(fn($b) => $monthTranslations[$b] ?? $b, $bulanReferensi)) . ').'" icon="fa-chart-area" />
             </div>
 
             <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
@@ -204,13 +204,13 @@
 
                     <div class="flex items-center gap-2 shrink-0 w-full md:w-auto md:flex-nowrap mt-2 md:mt-0">
                         @if(isset($hasFullAccess) && $hasFullAccess)
-                            <button type="button" @click="showForecastModal = true" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);" class="flex-1 md:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-bold rounded-lg shadow-md hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap">
+                            <button type="button" @click="showForecastModal = true" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);" class="flex-1 md:flex-none justify-center inline-flex items-center gap-1.5 px-3 h-[30px] text-white text-xs font-bold rounded-lg shadow-sm hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap leading-none">
                                 <i class="fas fa-sliders-h"></i> Set Persentase
                             </button>
-                            <button type="button" @click="showRefMonthsModal = true" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);" class="flex-1 md:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-bold rounded-lg shadow-md hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap">
+                            <button type="button" @click="showRefMonthsModal = true" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);" class="flex-1 md:flex-none justify-center inline-flex items-center gap-1.5 px-3 h-[30px] text-white text-xs font-bold rounded-lg shadow-sm hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap leading-none">
                                 <i class="fas fa-calendar-week"></i> Ref Bulan
                             </button>
-                            <button type="button" @click="showDoiModal = true" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);" class="flex-1 md:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-bold rounded-lg shadow-md hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap">
+                            <button type="button" @click="showDoiModal = true" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);" class="flex-1 md:flex-none justify-center inline-flex items-center gap-1.5 px-3 h-[30px] text-white text-xs font-bold rounded-lg shadow-sm hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap leading-none">
                                 <i class="fas fa-clock"></i> Set DOI
                             </button>
                         @endif
@@ -227,8 +227,8 @@
                         <div class="overflow-x-auto rounded-xl">
                         <table class="forecast-table w-full text-left border-collapse whitespace-nowrap table-fixed">
                             <colgroup>
-                                <col style="width: 26%; min-width: 170px;">
-                                <col style="width: 50px;">
+                                <col style="width: 24%; min-width: 160px;">
+                                <col style="width: 72px;">
                                 <col style="width: 150px;">
                                 <col style="width: 68px;">
                                 <col style="width: 70px;">
@@ -269,9 +269,9 @@
                                         </div>
                                     </th>
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-orange-600 leading-tight bg-orange-50/60 col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
-                                        <span class="inline-flex items-center justify-center gap-1 cursor-help">End Stock</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">({{ $teksStokAkhir }})</span>
+                                        <span class="inline-flex items-center justify-center gap-1 cursor-help">End Stock</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">({{ $labelStokRealtime }})</span>
                                         <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="col-tooltip-popup">
-                                            <span class="font-bold text-orange-200">End Stock</span> - stock on {{ $teksStokAkhir }}.@if($realEx)<br><span class="text-orange-100">Real: {{ number_format($realEx['stok_tersedia'],0,',','.') }} {{ $realEx['satuan_stok'] }}</span>@endif<br><span class="opacity-80">Source: latest daily snapshot <= end of last reference month.</span>
+                                            <span class="font-bold text-orange-200">End Stock</span> - stock on {{ $labelStokRealtime }}.@if($realEx)<br><span class="text-orange-100">Real: {{ number_format($realEx['stok_tersedia'],0,',','.') }} {{ $realEx['satuan_stok'] }}</span>@endif<br><span class="opacity-80">Source: latest daily snapshot as of today (real-time).</span>
                                         </div>
                                     </th>
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-rose-600 leading-tight bg-rose-50/60 col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
@@ -305,8 +305,8 @@
                                             </div>
                                         </td>
 
-                                        <td class="py-4 px-2 border-l border-slate-100 align-middle">
-                                            <div class="flex items-center justify-center relative w-[64px] mx-auto">
+                                        <td class="py-4 px-2 border-l border-slate-100 align-middle text-center">
+                                            <div class="flex items-center justify-center w-full max-w-[56px] mx-auto">
                                                 <input type="text" inputmode="decimal" placeholder="1" 
                                                     value="{{ $item['moq'] > 0 ? number_format($item['moq'], 0, ',', '.') : '' }}" 
                                                     @if($isRestrictedViewOnly) disabled @else oninput="formatNumberInput(this, true)" @endif 
@@ -316,7 +316,7 @@
 
                                         <td class="py-4 px-3 border-l border-slate-100 align-middle">
                                             <div class="grid grid-cols-3 gap-2 min-w-[150px]">
-                                                @foreach($tigaBulanTerakhir as $bulan)
+                                                @foreach($bulanReferensi as $bulan)
                                                     @php
                                                         $shortBulan = strtoupper(substr($monthTranslations[$bulan] ?? $bulan, 0, 3));
                                                         $qtyBulan = $item['detail_bulan'][$bulan] ?? 0;
@@ -399,7 +399,7 @@
                                 <div class="grid grid-cols-3 gap-1.5 pb-1.5 border-b border-slate-200/60 text-center">
                                     @foreach($item['detail_bulan'] as $qty)
                                         @php 
-                                            $bulanKey = $tigaBulanTerakhir[$loop->index]; 
+                                            $bulanKey = $bulanReferensi[$loop->index]; 
                                             $shortBulan = strtoupper(substr($monthTranslations[$bulanKey] ?? $bulanKey, 0, 3));
                                         @endphp
                                         <div class="flex flex-col min-w-0">

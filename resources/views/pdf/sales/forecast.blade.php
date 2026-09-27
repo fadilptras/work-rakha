@@ -5,7 +5,7 @@
 @section('page-orientation', 'landscape')
 
 @section('subtitle')
-    Periode {{ $monthTranslations[$bulanAktif] ?? $bulanAktif }} {{ $tahun }} | Reference {{ $activeRefMonths }} months ({{ implode(', ', array_map(fn($b) => $monthTranslations[$b] ?? $b, $tigaBulanTerakhir)) }}) | Forecast +{{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}% | Target DOI {{ $activeDoi }} days
+    Periode {{ $monthTranslations[$bulanAktif] ?? $bulanAktif }} {{ $tahun }} | Reference {{ $activeRefMonths }} months ({{ implode(', ', array_map(fn($b) => $monthTranslations[$b] ?? $b, $bulanReferensi)) }}) | Forecast +{{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}% | Target DOI {{ $activeDoi }} days
 @endsection
 
 @section('meta')
@@ -16,7 +16,7 @@
             <td style="width: 30%;">{{ \Carbon\Carbon::now()->translatedFormat('d F Y, H:i') }} WIB</td>
             <td style="width: 20%; font-weight: bold; text-align: right;">End Stock as of</td>
             <td style="width: 2%;">:</td>
-            <td style="width: 21%;">{{ $teksStokAkhir }} {{ $tahun }}</td>
+            <td style="width: 21%;">{{ $labelStokRealtime }} {{ $tahun }}</td>
         </tr>
         <tr>
             <td style="font-weight: bold;">Total Produk</td>
@@ -46,7 +46,7 @@
             <th>Average<br><span style="font-weight: normal; font-size: 6pt;">/month</span></th>
             <th style="background-color: #1e40af !important;">Forecast<br><span style="font-weight: normal; font-size: 6pt;">+{{ rtrim(rtrim(number_format($activePercentage, 2, '.', ''), '0'), '.') }}%</span></th>
             <th>Buffer<br><span style="font-weight: normal; font-size: 6pt;">DOI {{ $activeDoi }}d</span></th>
-            <th>End Stock<br><span style="font-weight: normal; font-size: 6pt;">{{ $teksStokAkhir }}</span></th>
+            <th>End Stock<br><span style="font-weight: normal; font-size: 6pt;">{{ $labelStokRealtime }}</span></th>
             <th>DOI<br><span style="font-weight: normal; font-size: 6pt;">days</span></th>
             <th>MOQ</th>
             <th style="background-color: #3730a3 !important;">Order</th>
@@ -59,7 +59,7 @@
                 <td style="text-align: left; font-weight: bold;">{{ $item['nama_produk'] }}</td>
                 <td style="padding: 2px; background-color: #f8fafc;">
                     <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #94a3b8;">
-                        @foreach(array_chunk($tigaBulanTerakhir, 3) as $chunk)
+                        @foreach(array_chunk($bulanReferensi, 3) as $chunk)
                             <tr>
                                 @foreach($chunk as $bulan)
                                     <td style="border: 1px solid #94a3b8; text-align: center; padding: 2px 1px; background-color: #ffffff;">

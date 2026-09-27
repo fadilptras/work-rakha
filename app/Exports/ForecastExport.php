@@ -7,19 +7,21 @@ use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
-class ForecastExport implements FromView, WithStyles, WithColumnWidths, WithTitle
+class ForecastExport implements FromView, WithStyles, WithColumnWidths, WithTitle, WithEvents
 {
     protected $stockForecast;
-    protected $tigaBulanTerakhir;
+    protected $bulanReferensi;
     protected $bulanAktif;
     protected $tahun;
-    protected $teksStokAkhir;
+    protected $labelStokRealtime;
     protected $activePercentage;
     protected $activeRefMonths;
     protected $activeDoi;
@@ -27,20 +29,20 @@ class ForecastExport implements FromView, WithStyles, WithColumnWidths, WithTitl
 
     public function __construct(
         $stockForecast,
-        $tigaBulanTerakhir,
+        $bulanReferensi,
         $bulanAktif,
         $tahun,
-        $teksStokAkhir,
+        $labelStokRealtime,
         $activePercentage,
         $activeRefMonths,
         $activeDoi,
         $monthTranslations
     ) {
         $this->stockForecast = $stockForecast;
-        $this->tigaBulanTerakhir = $tigaBulanTerakhir;
+        $this->bulanReferensi = $bulanReferensi;
         $this->bulanAktif = $bulanAktif;
         $this->tahun = $tahun;
-        $this->teksStokAkhir = $teksStokAkhir;
+        $this->labelStokRealtime = $labelStokRealtime;
         $this->activePercentage = $activePercentage;
         $this->activeRefMonths = $activeRefMonths;
         $this->activeDoi = $activeDoi;
@@ -51,10 +53,10 @@ class ForecastExport implements FromView, WithStyles, WithColumnWidths, WithTitl
     {
         return view('exports.excel.forecast', [
             'stockForecast' => $this->stockForecast,
-            'tigaBulanTerakhir' => $this->tigaBulanTerakhir,
+            'bulanReferensi' => $this->bulanReferensi,
             'bulanAktif' => $this->bulanAktif,
             'tahun' => $this->tahun,
-            'teksStokAkhir' => $this->teksStokAkhir,
+            'labelStokRealtime' => $this->labelStokRealtime,
             'activePercentage' => $this->activePercentage,
             'activeRefMonths' => $this->activeRefMonths,
             'activeDoi' => $this->activeDoi,
@@ -69,7 +71,7 @@ class ForecastExport implements FromView, WithStyles, WithColumnWidths, WithTitl
 
     public function columnWidths(): array
     {
-        $n = count($this->tigaBulanTerakhir);
+        $n = count($this->bulanReferensi);
         $widths = [
             'A' => 5,
             'B' => 42,
@@ -98,14 +100,17 @@ class ForecastExport implements FromView, WithStyles, WithColumnWidths, WithTitl
 
     public function styles(Worksheet $sheet)
     {
-        $n = count($this->tigaBulanTerakhir);
+        $n = count($this->bulanReferensi);
         $lastColIndex = 2 + $n + 8;
         $lastCol = Coordinate::stringFromColumnIndex($lastColIndex);
-        // New simple layout: header at row 7, data at row 8
-        $headerRow = 7;
-        $dataStart = 8;
+        // Layout: baris 7 = header grup, baris 8 = header kolom, data mulai baris 9
+        $groupRow = 7;
+        $headerRow = 8;
+        $dataStart = 9;
         $dataEnd = $dataStart + count($this->stockForecast) - 1;
         if ($dataEnd < $dataStart) $dataEnd = $dataStart;
+        $hasData = count($this->stockForecast) > 0;
+        $totalRow = $dataEnd + 1;
 
         $styles = [
             1 => [
@@ -155,6 +160,23 @@ class ForecastExport implements FromView, WithStyles, WithColumnWidths, WithTitl
         $styles["{$colMoq}{$headerRow}"] = ['fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => '475569']]];
         $styles["{$colOrder}{$headerRow}"] = ['fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => '3730A3']]];
 
+        // Baris header grup
+        $styles[$groupRow] = [
+            'font' => ['bold' => true, 'size' => 8, 'color' => ['argb' => 'FFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '64748B']]],
+        ];
+        $sheet->getRowDimension($groupRow)->setRowHeight(20);
+
+        // Baris TOTAL (tebal + format angka ikut)
+        if ($hasData) {
+            $styles["A{$totalRow}:{$lastCol}{$totalRow}"] = [
+                'font' => ['bold' => true, 'size' => 8],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '94A3B8']]],
+            ];
+            $sheet->getRowDimension($totalRow)->setRowHeight(22);
+        }
+
         // Data area - simple, no per-column background except Order
         $styles["A{$dataStart}:{$lastCol}{$dataEnd}"] = [
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'E2E8F0']]],
@@ -165,17 +187,19 @@ class ForecastExport implements FromView, WithStyles, WithColumnWidths, WithTitl
         if ($n > 0) {
             $styles["{$c1}{$dataStart}:{$c2}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
         }
-        $styles["{$colTotal}{$dataStart}:{$colTotal}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
-        $styles["{$colAvg}{$dataStart}:{$colAvg}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0.00']];
-        $styles["{$colForecast}{$dataStart}:{$colForecast}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0'], 'font' => ['bold' => true, 'color' => ['argb' => '1E40AF']]];
-        $styles["{$colBuffer}{$dataStart}:{$colBuffer}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
-        $styles["{$colStock}{$dataStart}:{$colStock}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
-        $styles["{$colDoi}{$dataStart}:{$colDoi}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
-        $styles["{$colMoq}{$dataStart}:{$colMoq}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
-        $styles["{$colOrder}{$dataStart}:{$colOrder}{$dataEnd}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0'], 'font' => ['bold' => true, 'color' => ['argb' => '3730A3']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'EEF2FF']]];
+        // Rentang format angka mencakup baris TOTAL bila ada data
+        $rowLast = $hasData ? $totalRow : $dataEnd;
+        $styles["{$colTotal}{$dataStart}:{$colTotal}{$rowLast}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
+        $styles["{$colAvg}{$dataStart}:{$colAvg}{$rowLast}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0.00']];
+        $styles["{$colForecast}{$dataStart}:{$colForecast}{$rowLast}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0'], 'font' => ['bold' => true, 'color' => ['argb' => '1E40AF']]];
+        $styles["{$colBuffer}{$dataStart}:{$colBuffer}{$rowLast}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
+        $styles["{$colStock}{$dataStart}:{$colStock}{$rowLast}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
+        $styles["{$colDoi}{$dataStart}:{$colDoi}{$rowLast}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
+        $styles["{$colMoq}{$dataStart}:{$colMoq}{$rowLast}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0']];
+        $styles["{$colOrder}{$dataStart}:{$colOrder}{$rowLast}"] = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'numberFormat' => ['formatCode' => '#,##0'], 'font' => ['bold' => true, 'color' => ['argb' => '3730A3']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'EEF2FF']]];
 
         // Freeze and filter
-        $sheet->freezePane('A8');
+        $sheet->freezePane('A9');
         $sheet->setAutoFilter("A{$headerRow}:{$lastCol}{$dataEnd}");
         $sheet->getRowDimension($headerRow)->setRowHeight(36);
         for ($r = $dataStart; $r <= $dataEnd; $r++) {
@@ -183,6 +207,46 @@ class ForecastExport implements FromView, WithStyles, WithColumnWidths, WithTitl
         }
 
         return $styles;
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $n = count($this->bulanReferensi);
+                $sheet = $event->sheet->getDelegate();
+
+                // Merge sel header grup (cadangan bila colspan HTML belum merge otomatis)
+                $sheet->mergeCells('A7:B7');
+                if ($n > 0) {
+                    $c1 = Coordinate::stringFromColumnIndex(3);
+                    $c2 = Coordinate::stringFromColumnIndex(2 + $n);
+                    $sheet->mergeCells("{$c1}7:{$c2}7");
+                }
+                $colTotal = Coordinate::stringFromColumnIndex(3 + $n);
+                $colAvg = Coordinate::stringFromColumnIndex(4 + $n);
+                $colOrder = Coordinate::stringFromColumnIndex(10 + $n);
+                $sheet->mergeCells("{$colTotal}7:{$colAvg}7");
+                $colCalcStart = Coordinate::stringFromColumnIndex(5 + $n);
+                $sheet->mergeCells("{$colCalcStart}7:{$colOrder}7");
+
+                // Merge label TOTAL
+                $count = count($this->stockForecast);
+                if ($count > 0 && $n > 0) {
+                    $totalRow = 9 + $count;
+                    $cBulanAkhir = Coordinate::stringFromColumnIndex(2 + $n);
+                    $sheet->mergeCells("A{$totalRow}:{$cBulanAkhir}{$totalRow}");
+                }
+
+                // Belang-belang baris data (abu sangat muda di baris genap)
+                for ($r = 9; $r < 9 + $count; $r += 2) {
+                    $lastCol = Coordinate::stringFromColumnIndex(2 + $n + 8);
+                    $sheet->getStyle("A{$r}:{$lastCol}{$r}")->getFill()
+                        ->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()->setARGB('FFF8FAFC');
+                }
+            },
+        ];
     }
 }
 

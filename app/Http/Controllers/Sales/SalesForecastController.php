@@ -19,7 +19,7 @@ class SalesForecastController extends BaseSalesController
     /**
      * Build forecast data (used by view and exports).
      *
-     * @return array [$stockForecast, $tigaBulanTerakhir, $bulanAktif, $teksStokAkhir, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi]
+     * @return array [$stockForecast, $bulanReferensi, $bulanAktif, $labelStokRealtime, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi]
      */
     protected function buildForecastData($tahun, $bulanAktif = null)
     {
@@ -42,11 +42,11 @@ class SalesForecastController extends BaseSalesController
 
         $indexAktif = array_search($bulanAktif, $bulanTersediaUrut);
         if ($indexAktif !== false && $indexAktif >= $activeRefMonths) {
-            $tigaBulanTerakhir = array_slice($bulanTersediaUrut, $indexAktif - $activeRefMonths, $activeRefMonths);
+            $bulanReferensi = array_slice($bulanTersediaUrut, $indexAktif - $activeRefMonths, $activeRefMonths);
         } elseif ($indexAktif !== false && $indexAktif > 0) {
-            $tigaBulanTerakhir = array_slice($bulanTersediaUrut, 0, $indexAktif);
+            $bulanReferensi = array_slice($bulanTersediaUrut, 0, $indexAktif);
         } else {
-            $tigaBulanTerakhir = array_slice($bulanTersediaUrut, 0, $activeRefMonths);
+            $bulanReferensi = array_slice($bulanTersediaUrut, 0, $activeRefMonths);
         }
 
         // DOI target
@@ -56,7 +56,7 @@ class SalesForecastController extends BaseSalesController
 
         // Sales data
         $salesRaw = Sales::whereYear('date', $tahun)
-            ->whereIn('month', $tigaBulanTerakhir)
+            ->whereIn('month', $bulanReferensi)
             ->whereNotNull('product_name')->where('product_name', '!=', '')
             ->select('product_name', 'ps', 'month', DB::raw('SUM(qty) as total_qty'), DB::raw('MAX(unit) as satuan'))
             ->groupBy('product_name', 'ps', 'month')
@@ -74,14 +74,8 @@ class SalesForecastController extends BaseSalesController
         $satuanStok = [];
         $namaProdukArray = $groupedByProduk->keys()->toArray();
 
-        $namaBulanIdx = [
-            'January' => 1, 'February' => 2, 'March' => 3, 'April' => 4, 'May' => 5, 'June' => 6,
-            'July' => 7, 'August' => 8, 'September' => 9, 'October' => 10, 'November' => 11, 'December' => 12,
-        ];
-        $bulanReferensiTerakhir = end($tigaBulanTerakhir);
-        $bulanAkhirTanggal = ($tahun && isset($namaBulanIdx[$bulanReferensiTerakhir]))
-            ? Carbon::create((int)$tahun, $namaBulanIdx[$bulanReferensiTerakhir], 1)->endOfMonth()->format('Y-m-d')
-            : date('Y-m-d');
+        // Stock snapshot real-time: stok terakhir per hari ini (bukan akhir bulan referensi).
+        $bulanAkhirTanggal = date('Y-m-d');
 
         $products = \App\Models\Product::active()->whereIn('product_name', $namaProdukArray)->get();
 
@@ -115,10 +109,10 @@ class SalesForecastController extends BaseSalesController
         // Calculate
         $stockForecast = [];
         foreach ($groupedByProduk as $produk => $rows) {
-            $total3Bulan = $rows->sum('total_qty');
-            $jumlahBulanTerpakai = count($tigaBulanTerakhir);
+            $totalRefBulan = $rows->sum('total_qty');
+            $jumlahBulanTerpakai = count($bulanReferensi);
             
-            $avg = $jumlahBulanTerpakai > 0 ? $total3Bulan / $jumlahBulanTerpakai : 0;
+            $avg = $jumlahBulanTerpakai > 0 ? $totalRefBulan / $jumlahBulanTerpakai : 0;
             $forecast = (int) ceil($avg * $multiplier);
 
             $psBreakdown = [];
@@ -128,7 +122,7 @@ class SalesForecastController extends BaseSalesController
             arsort($psBreakdown);
 
             $detailBulan = [];
-            foreach ($tigaBulanTerakhir as $b) {
+            foreach ($bulanReferensi as $b) {
                 $detailBulan[$b] = $rows->where('month', $b)->sum('total_qty');
             }
 
@@ -151,18 +145,18 @@ class SalesForecastController extends BaseSalesController
                 }
 
                 // DOI = (End Stock / Average) * 30
-                $doiHari = $avg > 0 ? ceil(($endstock / $avg) * 30) : 0;
-                $doiHari = max(0, (int)$doiHari);
+                $doiHasil = $avg > 0 ? ceil(($endstock / $avg) * 30) : 0;
+                $doiHasil = max(0, (int)$doiHasil);
 
                 $stockForecast[] = [
                     'nama_produk'    => $produk,
                     'satuan_sales'   => $satuanSales,
                     'satuan_stok'    => $satuanStok[$produk] ?? 'Pcs',
-                    'total_qty'      => (int) $total3Bulan,
+                    'total_qty'      => (int) $totalRefBulan,
                     'avg_qty'        => round($avg, 2),
                     'forecast_qty'   => $forecast,
                     'buffer_qty'     => (int) $bufferQty,
-                    'doi_qty'        => $doiHari,
+                    'doi_qty'        => $doiHasil,
                     'moq'            => $moq,
                     'order_qty'      => $orderQty,
                     'detail_bulan'   => $detailBulan,
@@ -175,19 +169,8 @@ class SalesForecastController extends BaseSalesController
         
         usort($stockForecast, fn($a, $b) => $b['forecast_qty'] <=> $a['forecast_qty']);
 
-        // Stock date label
-        $bulanTerakhirTampil = end($tigaBulanTerakhir);
-        $indeksBulanAkhirTampil = array_search($bulanTerakhirTampil, $this->urutanBulan);
-        $bulanEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        
-        if ($indeksBulanAkhirTampil !== false) {
-            $mappingAngka = ['January' => 1, 'February' => 2, 'March' => 3, 'April' => 4, 'May' => 5, 'June' => 6, 'July' => 7, 'August' => 8, 'September' => 9, 'October' => 10, 'November' => 11, 'December' => 12];
-            $angkaBln = $mappingAngka[$bulanTerakhirTampil] ?? 8;
-            $tanggalAkhir = Carbon::create($tahun, $angkaBln, 1)->endOfMonth();
-            $teksStokAkhir = $bulanEn[$angkaBln - 1] . ' ' . $tanggalAkhir->format('d');
-        } else {
-            $teksStokAkhir = 'August 31';
-        }
+        // Stock date label: hari ini (real-time)
+        $labelStokRealtime = now()->format('F d');
 
         $monthTranslations = [
             'January' => 'January', 'February' => 'February', 'March' => 'March',
@@ -196,7 +179,7 @@ class SalesForecastController extends BaseSalesController
             'October' => 'October', 'November' => 'November', 'December' => 'December'
         ];
 
-        return [$stockForecast, $tigaBulanTerakhir, $bulanAktif, $teksStokAkhir, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi];
+        return [$stockForecast, $bulanReferensi, $bulanAktif, $labelStokRealtime, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi];
     }
 
     public function forecast(Request $request)
@@ -208,18 +191,18 @@ class SalesForecastController extends BaseSalesController
         $tahun = $request->input('tahun', date('Y'));
         $bulanTersediaUrut = $this->urutanBulan;
 
-        [$stockForecast, $tigaBulanTerakhir, $bulanAktif, $teksStokAkhir, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi] =
+        [$stockForecast, $bulanReferensi, $bulanAktif, $labelStokRealtime, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi] =
             $this->buildForecastData($tahun, $request->input('bulan_akhir'));
 
         return view('users.sales.forecast', [
             'title' => 'Sales Forecast & Stock Estimation',
             'stockForecast' => $stockForecast,
-            'tigaBulanTerakhir' => $tigaBulanTerakhir,
+            'bulanReferensi' => $bulanReferensi,
             'bulanTersediaUrut' => $bulanTersediaUrut,
             'bulanAktif' => $bulanAktif,
             'monthTranslations' => $monthTranslations,
             'tahun' => $tahun,
-            'teksStokAkhir' => $teksStokAkhir,
+            'labelStokRealtime' => $labelStokRealtime,
             'activePercentage' => $activePercentage, 
             'activeRefMonths' => $activeRefMonths,
             'activeDoi' => $activeDoi,
@@ -236,13 +219,13 @@ class SalesForecastController extends BaseSalesController
 
         $tahun = $request->input('tahun', date('Y'));
 
-        [$stockForecast, $tigaBulanTerakhir, $bulanAktif, $teksStokAkhir, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi] =
+        [$stockForecast, $bulanReferensi, $bulanAktif, $labelStokRealtime, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi] =
             $this->buildForecastData($tahun, $request->input('bulan_akhir'));
 
         $filename = 'Sales_Forecast_' . $bulanAktif . '_' . $tahun . '.xlsx';
 
         return Excel::download(
-            new ForecastExport($stockForecast, $tigaBulanTerakhir, $bulanAktif, $tahun, $teksStokAkhir, $activePercentage, $activeRefMonths, $activeDoi, $monthTranslations),
+            new ForecastExport($stockForecast, $bulanReferensi, $bulanAktif, $tahun, $labelStokRealtime, $activePercentage, $activeRefMonths, $activeDoi, $monthTranslations),
             $filename
         );
     }
@@ -255,15 +238,15 @@ class SalesForecastController extends BaseSalesController
 
         $tahun = $request->input('tahun', date('Y'));
 
-        [$stockForecast, $tigaBulanTerakhir, $bulanAktif, $teksStokAkhir, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi] =
+        [$stockForecast, $bulanReferensi, $bulanAktif, $labelStokRealtime, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi] =
             $this->buildForecastData($tahun, $request->input('bulan_akhir'));
 
         $pdf = Pdf::loadView('pdf.sales.forecast', [
             'stockForecast' => $stockForecast,
-            'tigaBulanTerakhir' => $tigaBulanTerakhir,
+            'bulanReferensi' => $bulanReferensi,
             'bulanAktif' => $bulanAktif,
             'tahun' => $tahun,
-            'teksStokAkhir' => $teksStokAkhir,
+            'labelStokRealtime' => $labelStokRealtime,
             'activePercentage' => $activePercentage,
             'activeRefMonths' => $activeRefMonths,
             'activeDoi' => $activeDoi,
