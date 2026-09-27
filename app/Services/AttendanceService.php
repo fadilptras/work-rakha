@@ -7,6 +7,58 @@ use Carbon\Carbon;
 class AttendanceService
 {
     /**
+     * Kelompokkan tanggal sebulan ke minggu-minggu kalender ISO (Senin-Minggu),
+     * dipotong mengikuti batas bulan. Dipakai matriks rekap agar muat 1 layar.
+     */
+    public static function monthWeeks($allDates): array
+    {
+        $groups = [];
+        foreach ($allDates as $date) {
+            $key = $date->format('o-\WW');
+            if (!isset($groups[$key])) {
+                $groups[$key] = [];
+            }
+            $groups[$key][] = $date;
+        }
+
+        $weeks = [];
+        $nomor = 0;
+        foreach ($groups as $dates) {
+            $nomor++;
+            $first = $dates[0];
+            $last = $dates[count($dates) - 1];
+            $weeks[] = [
+                'label' => 'Minggu ' . $nomor . ' (' . $first->isoFormat('D MMM') . ' - ' . $last->isoFormat('D MMM YYYY') . ')',
+                'short' => $first->isoFormat('D') . '-' . $last->isoFormat('D MMM'),
+                'dates' => $dates,
+            ];
+        }
+
+        return $weeks;
+    }
+
+    /**
+     * Samakan daftar tanggal seminggu menjadi 7 kolom (Senin-Minggu).
+     * Hari di luar bulan diisi null agar tampil kosong tanpa angka.
+     */
+    public static function padWeekToSeven(array $dates): array
+    {
+        $count = count($dates);
+        if ($count === 0 || $count >= 7) {
+            return array_slice(array_values($dates), 0, 7);
+        }
+
+        $leading = $dates[0]->isoWeekday() - 1; // Senin = 1
+        $trailing = 7 - $count - $leading;
+
+        return array_merge(
+            array_fill(0, max(0, $leading), null),
+            array_values($dates),
+            array_fill(0, max(0, $trailing), null)
+        );
+    }
+
+    /**
      * Menghitung status harian absensi secara sentral.
      */
     public static function calculateDailyStatus(Carbon $date, $recordAbsensi, $recordLembur, $holidayString = null, $user = null)
