@@ -4,15 +4,15 @@
     {{-- HEADER --}}
     <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
         <h1 class="text-2xl font-bold text-white">Lembur Harian Karyawan</h1>
-        {{-- Tab Navigasi (Absensi / Lembur) --}}
+        {{-- Tab Navigasi (Lembur Harian / Rekap Bulanan) --}}
         <div class="bg-zinc-800 p-1 rounded-lg inline-flex shadow-sm border border-zinc-700">
-            <a href="{{ route('admin.absensi.index') }}" 
-               class="px-4 py-2 rounded-md text-sm font-bold transition-all {{ Route::is('admin.absensi.index') ? 'bg-indigo-600 text-white shadow' : 'text-zinc-400 hover:text-white hover:bg-zinc-700' }}">
-                <i class="fas fa-calendar-check mr-2"></i> Absensi
-            </a>
-            <a href="{{ route('admin.lembur.index') }}" 
+            <a href="{{ route('admin.lembur.index') }}"
                class="px-4 py-2 rounded-md text-sm font-bold transition-all {{ Route::is('admin.lembur.index') ? 'bg-indigo-600 text-white shadow' : 'text-zinc-400 hover:text-white hover:bg-zinc-700' }}">
-                <i class="fas fa-clock mr-2"></i> Lembur
+                <i class="fas fa-clock mr-2"></i> Lembur Harian
+            </a>
+            <a href="{{ route('admin.lembur.rekap', ['tab' => 'rekap']) }}"
+               class="px-4 py-2 rounded-md text-sm font-bold transition-all {{ Route::is('admin.lembur.rekap') ? 'bg-indigo-600 text-white shadow' : 'text-zinc-400 hover:text-white hover:bg-zinc-700' }}">
+                <i class="fas fa-calendar-alt mr-2"></i> Rekap Bulanan
             </a>
         </div>
     </div>
@@ -114,6 +114,9 @@
                     <td class="px-4 py-3">
                         @if ($record->jam_masuk_lembur && $record->jam_keluar_lembur)
                             <span class="font-semibold text-white">{{ \Carbon\Carbon::parse($record->jam_masuk_lembur)->format('H:i') }} - {{ \Carbon\Carbon::parse($record->jam_keluar_lembur)->format('H:i') }}</span>
+                        @elseif ($record->jam_masuk_lembur && !$record->jam_keluar_lembur)
+                            <span class="font-semibold text-white">{{ \Carbon\Carbon::parse($record->jam_masuk_lembur)->format('H:i') }} - ?</span>
+                            <span class="ml-1 inline-block px-2 py-0.5 rounded bg-amber-100 text-amber-700 text-[11px] font-bold">Tidak Absen Keluar</span>
                         @else
                             <span class="font-semibold text-zinc-400">--:--</span>
                         @endif
