@@ -104,10 +104,10 @@
                         <div x-show="open" x-collapse>
                             <ul class="ml-12 mt-2 space-y-1">
                                 <li>
-                                    <a href="{{ route('admin.absensi.index') }}" 
+                                    <a href="{{ route('admin.absensi.index') }}"
                                         class="flex items-center p-2 rounded-lg transition-colors duration-200 text-sm
-                                        {{ request()->routeIs('admin.absensi.index', 'admin.lembur.index') ? 'text-sky-400 font-bold' : 'hover:bg-zinc-700' }}">
-                                        Absensi & Lembur
+                                        {{ request()->routeIs('admin.absensi.index', 'admin.absensi.rekap') ? 'text-sky-400 font-bold' : 'hover:bg-zinc-700' }}">
+                                        Absensi
                                     </a>
                                 </li>
                                 <li>
@@ -118,10 +118,10 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="{{ route('admin.absensi.rekap') }}" 
+                                    <a href="{{ route('admin.lembur.rekap') }}"
                                         class="flex items-center p-2 rounded-lg transition-colors duration-200 text-sm
-                                        {{ request()->routeIs('admin.absensi.rekap') ? 'text-sky-400 font-bold' : 'hover:bg-zinc-700' }}">
-                                        Rekap Absensi
+                                        {{ request()->routeIs('admin.lembur.rekap') ? 'text-sky-400 font-bold' : 'hover:bg-zinc-700' }}">
+                                        Lembur
                                     </a>
                                 </li>
                             </ul>

@@ -43,7 +43,15 @@
 
                 {{-- Tabel Karyawan per Divisi --}}
                 <div id="divisi-{{ Str::slug($divisi) }}" class="overflow-x-auto transition-all duration-300">
-                    <table class="min-w-full divide-y divide-zinc-700">
+                    {{-- Lebar kolom dikunci via colgroup agar selaras di semua tabel divisi --}}
+                    <table class="w-full table-fixed divide-y divide-zinc-700" style="table-layout: fixed;">
+                        <colgroup>
+                            <col style="width: 25%;">
+                            <col style="width: 28%;">
+                            <col style="width: 22%;">
+                            <col style="width: 10%;">
+                            <col style="width: 15%;">
+                        </colgroup>
                         <thead class="bg-zinc-800/50">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Profil</th>
@@ -56,7 +64,7 @@
                         <tbody class="bg-zinc-800 divide-y divide-zinc-700">
                             @foreach ($karyawanList as $user)
                                 <tr class="hover:bg-zinc-700/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                    <td class="px-6 py-4 whitespace-nowrap overflow-hidden">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0 h-10 w-10">
                                                 @if($user->profile_picture)
@@ -73,12 +81,29 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-300"><i class="fas fa-envelope mr-1 text-gray-500"></i> {{ $user->email }}</div>
-                                        <div class="text-sm text-gray-400 mt-1"><i class="fas fa-phone mr-1 text-gray-500"></i> {{ $user->nomor_telepon ?? '-' }}</div>
+                                    <td class="px-6 py-4 whitespace-nowrap overflow-hidden">
+                                        <div class="flex items-center text-sm text-gray-300" style="gap: 6px;">
+                                            <i class="fas fa-envelope text-gray-500" style="width: 15px; text-align: center; flex: none;"></i>
+                                            <span class="truncate">{{ $user->email }}</span>
+                                        </div>
+                                        @php
+                                            $waNumber = preg_replace('/[^0-9]/', '', (string) ($user->nomor_telepon ?? ''));
+                                            if ($waNumber !== '' && str_starts_with($waNumber, '0')) {
+                                                $waNumber = '62' . substr($waNumber, 1);
+                                            }
+                                        @endphp
+                                        <div class="flex items-center text-sm text-gray-400 mt-1" style="gap: 6px;">
+                                            <i class="fas fa-phone text-gray-500" style="width: 15px; text-align: center; flex: none;"></i>
+                                            @if($waNumber !== '')
+                                                <a href="https://wa.me/{{ $waNumber }}" target="_blank" rel="noopener" title="Chat WhatsApp {{ $user->name }}"
+                                                   class="hover:text-green-400 transition-colors truncate">{{ $user->nomor_telepon }}<i class="fab fa-whatsapp ml-1 text-green-500"></i></a>
+                                            @else
+                                                <span>-</span>
+                                            @endif
+                                        </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-white font-semibold">{{ $user->jabatan ?? 'Staff' }}</div>
+                                    <td class="px-6 py-4 whitespace-nowrap overflow-hidden">
+                                        <div class="text-sm text-white font-semibold truncate">{{ $user->jabatan ?? 'Staff' }}</div>
                                         @if($user->is_kepala_divisi)
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">
                                                 Kepala Divisi
@@ -311,6 +336,12 @@
 
                         document.getElementById('btn-download-pdf').href = `/admin/employees/${user.id}/download-pdf`;
                         
+                        let waNum = (user.nomor_telepon || '').replace(/[^0-9]/g, '');
+                        if (waNum.startsWith('0')) waNum = '62' + waNum.slice(1);
+                        let phoneHTML = waNum
+                            ? `<span style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-phone text-gray-500" style="width: 15px; text-align: center; flex: none;"></i><a href="https://wa.me/${waNum}" target="_blank" rel="noopener" class="hover:text-green-400 transition-colors">${user.nomor_telepon} <i class="fab fa-whatsapp ml-1 text-green-500"></i></a></span>`
+                            : `<span style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-phone text-gray-500" style="width: 15px; text-align: center; flex: none;"></i><span>${user.nomor_telepon ?? '-'}</span></span>`;
+
                         let profileImg = user.profile_picture ? `${baseUrl}/${user.profile_picture}` : null;
                         let initial = user.name.charAt(0).toUpperCase();
                         let imgHTML = profileImg 
@@ -352,11 +383,11 @@
                                     <div class="w-full space-y-3">
                                         <div class="bg-zinc-800/80 p-2.5 rounded border border-zinc-700/50">
                                             <p class="text-[10px] text-gray-400 uppercase tracking-wider">Email Utama</p>
-                                            <p class="text-white text-xs break-all"><i class="fas fa-envelope text-gray-500 mr-1.5"></i>${user.email}</p>
+                                             <p class="text-white text-xs break-all" style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-envelope text-gray-500" style="width: 15px; text-align: center; flex: none;"></i><span>${user.email}</span></p>
                                         </div>
                                         <div class="bg-zinc-800/80 p-2.5 rounded border border-zinc-700/50">
                                             <p class="text-[10px] text-gray-400 uppercase tracking-wider">No. Telepon / WA</p>
-                                            <p class="text-white text-xs"><i class="fas fa-phone text-gray-500 mr-1.5"></i>${user.nomor_telepon ?? '-'}</p>
+                                            <p class="text-white text-xs">${phoneHTML}</p>
                                         </div>
                                         <div class="bg-zinc-800/80 p-2.5 rounded border border-zinc-700/50">
                                             <p class="text-[10px] text-gray-400 uppercase tracking-wider">Status / Tgl Gabung</p>
