@@ -69,7 +69,7 @@ class DeductCutiBersamaCommand extends Command
                                 'tanggal_selesai'   => $holiday->tanggal,
                                 'total_hari'        => 1,
                                 'alasan'            => 'Potong Otomatis: ' . $holiday->keterangan,
-                                'status'            => 'disetujui',
+                                'status'            => 'selesai',
                                 'status_approver_1' => 'skipped',
                                 'status_approver_2' => 'skipped',
                                 'status_approver_3' => 'skipped',

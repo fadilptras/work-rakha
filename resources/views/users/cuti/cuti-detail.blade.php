@@ -184,18 +184,27 @@
                         <div class="w-full flex justify-end sm:w-auto">
                             @php
                             $statusBg = match($cuti->status) {
-                                'disetujui'  => 'bg-green-100 text-green-700 border-green-200',
+                                'selesai'    => 'bg-green-100 text-green-700 border-green-200',
+                                'disetujui'  => 'bg-blue-100 text-blue-700 border-blue-200',
                                 'ditolak'    => 'bg-red-100 text-red-700 border-red-200',
                                 'dibatalkan' => 'bg-slate-100 text-slate-700 border-slate-200',
                                 default      => 'bg-amber-100 text-amber-700 border-amber-200',
                             };
                             $statusIcon = match($cuti->status) {
-                                'disetujui'  => 'fas fa-check-circle',
+                                'selesai'    => 'fas fa-check-circle',
+                                'disetujui'  => 'fas fa-spinner fa-spin',
                                 'ditolak'    => 'fas fa-times-circle',
                                 'dibatalkan' => 'fas fa-ban',
                                 default      => 'fas fa-spinner fa-spin',
                             };
-                            $label = str_replace('_', ' ', $cuti->status);
+                            $label = match($cuti->status) {
+                                'selesai'    => 'Selesai',
+                                'disetujui'  => 'Diproses',
+                                'ditolak'    => 'Ditolak',
+                                'dibatalkan' => 'Dibatalkan',
+                                'diajukan'   => 'Diajukan',
+                                default      => str_replace('_', ' ', $cuti->status),
+                            };
                             @endphp
                             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/90 border border-white {{ $statusBg }} shadow-sm">
                                 <i class="{{ $statusIcon }}"></i>
@@ -355,7 +364,7 @@
             @endif
 
             {{-- 5. BATALKAN (JIKA PEMILIK) --}}
-            @if(Auth::id() == $cuti->user_id && in_array($cuti->status, ['diajukan', 'proses_finalisasi']))
+            @if(Auth::id() == $cuti->user_id && in_array($cuti->status, ['diajukan', 'disetujui']))
             <div class="text-center mb-10 mt-6 px-0 md:px-4">
                 <form action="{{ route('cuti.cancel', $cuti) }}" method="POST" onsubmit="confirmSubmit(event, 'Yakin ingin membatalkan pengajuan cuti ini?');" class="inline-block w-auto">
                     @csrf

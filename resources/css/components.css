@@ -39,10 +39,11 @@
   .ui-export--pdf { @apply bg-rose-600 hover:bg-rose-700; }
   .ui-export--excel { @apply bg-emerald-600 hover:bg-emerald-700; }
 
-  /* Filter select — selaras export: h-[30px] text-xs */
+  /* Filter select — selaras export: h-[30px] text-xs. Base placeholder font-normal, is-filled jadi bold (kayak search/combo) */
   .ui-filter {
-    @apply w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 h-[30px] font-medium text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none cursor-pointer outline-none transition-colors leading-none;
+    @apply w-full appearance-none border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-3 pr-8 h-[30px] font-normal text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none cursor-pointer outline-none transition-colors leading-none;
   }
+  .ui-filter.is-filled { @apply font-bold text-blue-700; }
   .ui-filter option { @apply text-blue-700; }
 
   /* Search input — selaras export (h-[30px]) */
@@ -57,12 +58,12 @@
   input[list]::-webkit-calendar-picker-indicator { display: none !important; opacity: 0 !important; }
   input[list]::-webkit-list-button { display: none !important; }
 
-  /* Date filter — selaras export (h-[30px]) */
+  /* Date filter — selaras export (h-[30px]), pr-8 biar muat tombol X kanan. Base placeholder font-normal, is-filled bold */
   .ui-date {
-    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-9 pr-3 h-[30px] font-medium text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors leading-none;
+    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs pl-9 pr-8 h-[30px] font-normal text-blue-400 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors leading-none;
   }
   .ui-date.is-filled {
-    @apply text-blue-700;
+    @apply font-bold text-blue-700;
   }
   .ui-date::-webkit-calendar-picker-indicator {
     opacity: 0;
@@ -73,13 +74,13 @@
     cursor: pointer;
   }
 
-  /* Action buttons — kotak, warna jelas (ramping: w-7 h-7) */
+  /* Action buttons — kotak solid menyala, shadow biasa (tidak tebal) */
   .ui-btn {
-    @apply inline-flex items-center justify-center w-7 h-7 rounded-md text-white text-[11px] font-bold shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-1;
+    @apply inline-flex items-center justify-center w-7 h-7 rounded-lg border border-transparent text-white text-[11px] font-bold shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-1;
   }
-  .ui-btn--edit { @apply bg-amber-500 hover:bg-amber-600 focus:ring-amber-300; }
-  .ui-btn--delete { @apply bg-red-500 hover:bg-red-600 focus:ring-red-300; }
-  .ui-btn--view { @apply bg-sky-500 hover:bg-sky-600 focus:ring-sky-300; }
+  .ui-btn--edit { @apply bg-orange-500 hover:bg-orange-600 focus:ring-orange-300 border-orange-500; }
+  .ui-btn--delete { @apply bg-red-600 hover:bg-red-700 focus:ring-red-300 border-red-600; }
+  .ui-btn--view { @apply bg-sky-500 hover:bg-sky-600 focus:ring-sky-300 border-sky-500; }
 
   /* Header tabs — patokan monthly.blade.php (desktop): pill glass transparan di atas header biru.
      Aktif = pill putih teks #1e40af; non-aktif = #e2e8f0 transparan. */
@@ -90,19 +91,19 @@
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.25);
     box-shadow: none;
-    padding: 0.35rem;
-    gap: 0.35rem;
+    padding: 0.2rem;
+    gap: 0.2rem;
   }
   /* optional: biar bisa scroll saat penuh */
   .ui-tabs--scrollable { @apply w-full overflow-x-auto; }
   .ui-tab {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-extrabold whitespace-nowrap transition-all duration-200 cursor-pointer;
+    @apply inline-flex items-center justify-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold whitespace-nowrap transition-all duration-200 cursor-pointer;
     color: #e2e8f0;
     background: transparent;
     border: none;
-    line-height: 1.25;
+    line-height: 1.2;
   }
-  .ui-tab i { font-size: 13px; }
+  .ui-tab i { font-size: 10px; }
   .ui-tab:hover { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
   .ui-tab--active {
     background: #ffffff;
@@ -116,4 +117,21 @@
     @apply inline-flex items-center justify-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold rounded-lg px-3 h-[30px] shadow-sm whitespace-nowrap leading-none;
   }
   .ui-info__value { @apply text-blue-900 font-black; }
+
+  /* Manual input form — selaras filter/search (bg biru-50, h 38 untuk form utama, 30 untuk row kecil) */
+  .ui-label {
+    @apply block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1;
+  }
+  .ui-input {
+    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs h-[38px] px-3 font-bold text-blue-700 placeholder:text-blue-400 placeholder:font-normal focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors leading-none;
+  }
+  .ui-input--sm {
+    @apply h-[30px] px-2.5 text-xs;
+  }
+  .ui-input.is-filled { @apply text-blue-700; }
+  /* Date khusus manual — tanpa icon kiri besar, tetap selaras ui-date tapi tinggi 38 */
+  .ui-input-date {
+    @apply w-full border border-slate-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-xs h-[38px] pl-3 pr-3 font-bold text-blue-700 focus:ring-0 focus:border-slate-200 focus:outline-none outline-none transition-colors leading-none;
+  }
+  .ui-input-date:invalid { @apply font-normal text-blue-400; }
 }

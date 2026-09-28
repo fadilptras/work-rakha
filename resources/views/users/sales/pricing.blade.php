@@ -9,7 +9,6 @@
     @push('styles')
     <style>
         [x-cloak] { display: none !important; }
-        body { font-family: 'Outfit', sans-serif; background-color: #ede9fe; }
 
         /* == Background == */
         .mesh-bg { 
@@ -23,105 +22,15 @@
             pointer-events: none;
         }
 
-        /* == Header Style == */
-        .page-header {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            border-radius: 1.25rem; padding: 1.25rem 1.75rem; color: white;
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3); position: relative; overflow: hidden;
-        }
-        .page-header::before {
-            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
-            transform: rotate(30deg); pointer-events: none;
-        }
-        .header-content { position: relative; z-index: 1; }
-
-        /* == Back Button == */
-        .btn-back-modern {
-            display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 18px 8px 8px;
-            background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 9999px;
-            color: #1e293b; font-size: 0.9rem; font-weight: 700;
-            text-decoration: none; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            margin-bottom: 0; width: fit-content;
-        }
-        .btn-back-modern:hover { 
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
-            transform: translateY(-2px); color: #1d4ed8;
-        }
-        .btn-back-modern .icon-circle {
-            width: 32px; height: 32px; background: #fff; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: #3b82f6; font-size: 0.9rem; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-            transition: transform 0.3s ease;
-        }
-        .btn-back-modern:hover .icon-circle { transform: translateX(-3px); background: #EFF6FF; }
-
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
-
-        .modern-label { display: block; font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-
-        /* == Cards == */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.9);
-            border-radius: 1rem; padding: 1.25rem 1.5rem;
-            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
-        }
 
         /* == Hide Scrollbar for Single Row Action Bar == */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* == Icon Position Fix == */
-        .icon-left { 
-            position: absolute; left: 14px; top: 50%; transform: translateY(-50%); 
-            pointer-events: none; z-index: 5; display: flex; align-items: center; justify-content: center;
-        }
-        .icon-clear-search { 
-            position: absolute; right: 14px; top: 50%; transform: translateY(-50%); 
-            background: transparent; border: none; padding: 0; cursor: pointer; 
-            z-index: 5; display: flex; align-items: center; justify-content: center;
-        }
-        /* Untuk input ber-datalist: geser tombol x ke kiri agar tidak
-           menabrak panah dropdown native browser di pojok kanan. */
-        .icon-clear-search--datalist {
-            right: 26px;
-        }
-        .input-with-clear { padding-right: 3.5rem; }
-        
-        /* == SPH Sections == */
-        .modern-section { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
-        .modern-section .sec-icon {
-            width: 2.25rem; height: 2.25rem; border-radius: 0.5rem;
-            display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;
-        }
-        .modern-section h4 { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; color: #334155; margin: 0; line-height: 1.2; }
-        .modern-section p { font-size: 0.75rem; font-weight: 600; color: #94a3b8; margin: 0; mt-0.5; }
-
-        /* == Tab Scroller == */
-
-        .tab-scroller-wrap { position: relative; }
-        @keyframes swipeHint { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
-        .tab-hint-text { animation: swipeHint 1.4s ease-in-out infinite; font-size: 0.7rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
-
-        /* == Mobile Responsive tweaks (max-width 767px only; desktop untouched) == */
-        @media (max-width: 767px) {
-            .glass-card { padding: 0.9rem; border-radius: 1.1rem; }
-            .btn-back-modern { padding: 6px 14px 6px 6px; font-size: 0.8rem; }
-            .btn-back-modern .icon-circle { width: 26px; height: 26px; font-size: 0.75rem; }
-            .modern-section h4 { font-size: 0.78rem; }
-            .modern-section p { font-size: 0.68rem; }
-            .mobile-auto-h { flex: 0 1 auto !important; min-height: 0 !important; }
-        }
-
-        /* == Explicit desktop/mobile display switches (does NOT rely on Tailwind's
-           "hidden md:flex" combo, which was found to be unreliable in this build) == */
+        /* == Explicit desktop/mobile display switches == */
         .desktop-flex, .desktop-block { display: none; }
         @media (min-width: 768px) {
             .desktop-flex { display: flex !important; }
@@ -170,8 +79,8 @@
     <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16" x-data="pricingManager({{ ($hasFullAccess ?? false) ? 'true' : 'false' }})">
         <div class="mesh-bg"></div>
 
-        {{-- MAIN WRAPPER: Di sini z-index utama untuk layout dijaga --}}
-        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start mobile-auto-h">
+        {{-- MAIN WRAPPER: selaras manage (p-4 sm:p-6 lg:px-8) --}}
+        <div class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8 space-y-4 flex-1 flex flex-col justify-start">
             
             <div class="w-full flex justify-start">
                 <x-ui.back-button href="{{ route('sales.index') }}" label="Back to Sales Dashboard" />
@@ -224,31 +133,30 @@
                 </div>
             </div>
 
-            {{-- TAB 1: PRODUCT PRICE LIST --}}
-            <div x-show="activeTab === 'pricing'" class="space-y-5 flex flex-col w-full mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto mobile-auto-h border-t-4 border-t-blue-500 shadow-lg">
+            {{-- TAB 1: PRODUCT PRICE LIST — compact selaras --}}
+            <div x-show="activeTab === 'pricing'" class="space-y-4 flex flex-col w-full" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !bg-white">
                     
-                    {{-- HEADER TABEL YANG SUDAH BERSIH DAN RAPI --}}
-                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
-                    <div class="flex items-center gap-3 shrink-0">
-                        <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg"><i class="fas fa-tags"></i></div>
-                        <div>
-                            <h3 class="text-lg font-black text-slate-800">Official Catalogue Pricing</h3>
-                            <p class="text-xs text-slate-500 font-semibold mt-0.5">Manage active pricing & SPH forms.</p>
+                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm shrink-0"><i class="fas fa-tags"></i></span>
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-bold text-slate-800 leading-tight">Official Catalogue Pricing</h3>
+                            <p class="text-[11px] text-slate-500 font-medium leading-tight">Manage active pricing & SPH forms.</p>
                         </div>
                     </div>
                     
-                    <div class="flex items-center justify-start xl:justify-end gap-2.5 w-full xl:flex-1 min-w-0 overflow-x-auto hide-scrollbar pb-2 xl:pb-0">
+                    <div class="flex items-center gap-2.5 w-full sm:w-auto sm:flex-1 sm:justify-end min-w-0">
                         
                         <x-ui.search-input x-model="searchQuery" placeholder="Search Product Name" autocomplete="off" class="flex-1 min-w-[140px] max-w-sm desktop-block" />
                         
-                        <button x-show="hasFullAccess" x-cloak @click="openManageModal()" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);" class="shrink-0 inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-bold rounded-lg shadow-md hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap" title="Add a new product with its selling price to the price list catalog">
-                            <i class="fas fa-plus"></i> Add to Pricing
+                        <button x-show="hasFullAccess" x-cloak @click="openManageModal()" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);" class="shrink-0 inline-flex items-center gap-1.5 h-[32px] px-3 text-white text-xs font-bold rounded-lg shadow-sm hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap" title="Add a new product with its selling price to the price list catalog">
+                            <i class="fas fa-plus text-[11px]"></i> Add to Pricing
                         </button>
 
-                        <div class="shrink-0 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1.5" title="Total Products">
+                        <div class="shrink-0 bg-white h-[32px] px-3 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1.5" title="Total Products">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total:</span>
-                            <span class="text-sm font-black text-blue-600" x-text="filteredProducts.length"></span>
+                            <span class="text-xs font-black text-blue-600" x-text="filteredProducts.length"></span>
                         </div>
 
                         <x-ui.export-button variant="pdf" href="{{ route('sales.pricing.export.pdf') }}" title="Download Price List (PDF)" class="shrink-0" />
@@ -338,99 +246,94 @@
             </x-ui.glass-card>
             </div>
 
-            {{-- TAB 2: SPH FORM GENERATOR / EDITOR --}}
-            <div x-show="activeTab === 'sph' && hasFullAccess" class="space-y-5 flex flex-col w-full mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto mobile-auto-h border-t-4 border-t-blue-500 shadow-lg">
-                    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg"><i class="fas fa-file-contract"></i></div>
-                            <div>
-                                <h3 class="text-lg font-black text-slate-800" x-text="isEditMode ? 'Edit Price Quotation' : 'SPH Form'"></h3>
-                                <p class="text-xs text-slate-500 font-semibold">Configure client details, PS, and items.</p>
+            {{-- TAB 2: SPH FORM GENERATOR / EDITOR — compact selaras Tab1 & manage --}}
+            <div x-show="activeTab === 'sph' && hasFullAccess" class="space-y-4 flex flex-col w-full" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !bg-white">
+                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm shrink-0"><i class="fas fa-file-contract"></i></span>
+                            <div class="min-w-0">
+                                <h3 class="text-sm font-bold text-slate-800 leading-tight" x-text="isEditMode ? 'Edit Price Quotation' : 'SPH Form'"></h3>
+                                <p class="text-[11px] text-slate-500 font-medium leading-tight">Configure client details, PS, and items.</p>
                             </div>
                         </div>
                         <template x-if="isEditMode">
-                            <button @click="resetForm()" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm rounded-lg transition-colors cursor-pointer">
-                                <i class="fas fa-times"></i> Cancel Edit
+                            <button @click="resetForm()" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 h-[32px] px-3 rounded-lg text-xs font-bold transition-colors cursor-pointer shrink-0">
+                                <i class="fas fa-times text-[11px]"></i> Cancel Edit
                             </button>
                         </template>
                     </div>
 
-                    <div class="p-3 md:p-6 space-y-6 bg-white">
+                    <div class="p-5 space-y-5 bg-white">
                         {{-- 1 & 2. Client & Sales Representative Data --}}
                         <div>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
                                 <div class="lg:col-span-1">
-                                    <label class="modern-label">Company / Institution <span class="text-red-500">*</span></label>
+                                    <label class="ui-label">Company / Institution <span class="text-red-500">*</span></label>
                                     <div class="relative">
-                                        <div class="icon-left text-slate-400"><i class="fas fa-building text-sm"></i></div>
-                                        <input type="text" x-model="customerCompany" placeholder="Company / Institution" class="w-full pl-10 pr-4 py-2.5 text-sm font-semibold border border-slate-200 bg-white hover:bg-slate-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
+                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-400"><i class="fas fa-building text-[11px]"></i></span>
+                                        <input type="text" x-model="customerCompany" placeholder="Company / Institution" class="ui-input pl-8 !bg-white hover:!bg-slate-50">
                                     </div>
                                 </div>
                                 <div class="lg:col-span-1">
-                                    <label class="modern-label">Customer Name</label>
+                                    <label class="ui-label">Customer Name</label>
                                     <div class="relative">
-                                        <div class="icon-left text-slate-400"><i class="fas fa-user text-sm"></i></div>
-                                        <input type="text" x-model="customerName" placeholder="Customer Name (UP)" class="w-full pl-10 pr-4 py-2.5 text-sm font-semibold border border-slate-200 bg-white hover:bg-slate-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none text-slate-700 shadow-sm transition-colors">
+                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-400"><i class="fas fa-user text-[11px]"></i></span>
+                                        <input type="text" x-model="customerName" placeholder="Customer Name (UP)" class="ui-input pl-8 !bg-white hover:!bg-slate-50">
                                     </div>
                                 </div>
                                 <div class="lg:col-span-1">
-                                    <label class="modern-label">Contact Person (PS)</label>
+                                    <label class="ui-label">Contact Person (PS)</label>
                                     <div class="relative">
-                                        <div class="icon-left text-slate-400"><i class="fas fa-id-badge text-sm"></i></div>
-                                        <select x-model="selectedPs" @change="updatePsPhone()" class="w-full appearance-none border border-slate-200 bg-white hover:bg-slate-50 shadow-sm rounded-lg text-sm pl-10 pr-10 py-2.5 font-bold text-slate-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors relative z-20">
+                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-8 text-blue-400"><i class="fas fa-id-badge text-[11px]"></i></span>
+                                        <select x-model="selectedPs" @change="updatePsPhone()" class="w-full appearance-none border border-slate-200 bg-white hover:bg-slate-50 shadow-sm rounded-lg text-xs pl-8 pr-8 h-[38px] font-bold text-blue-700 focus:ring-0 focus:border-slate-200 outline-none cursor-pointer">
                                             <option value="">-- Select PS --</option>
                                             @foreach($psList as $ps)
                                                 <option value="{{ $ps['name'] }}">{{ $ps['name'] }}</option>
                                             @endforeach
                                         </select>
-                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                                            <i class="fas fa-chevron-down text-sm"></i>
-                                        </div>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-blue-700"><i class="fas fa-chevron-down text-[10px]"></i></span>
                                     </div>
                                 </div>
                                 <div class="lg:col-span-1">
-                                    <label class="modern-label">Phone Number</label>
+                                    <label class="ui-label">Phone Number</label>
                                     <div class="relative">
-                                        <div class="icon-left text-slate-400"><i class="fas fa-phone text-sm"></i></div>
-                                        <input type="text" x-model="psPhone" placeholder="Auto-populated" class="w-full pl-10 pr-4 py-2.5 text-sm font-semibold border border-slate-200 bg-slate-100 rounded-lg outline-none text-slate-500 cursor-not-allowed" readonly>
+                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fas fa-phone text-[11px]"></i></span>
+                                        <input type="text" x-model="psPhone" placeholder="Auto-populated" class="w-full pl-8 pr-3 h-[38px] text-xs font-bold border border-slate-200 bg-slate-100 rounded-lg outline-none text-slate-500 cursor-not-allowed" readonly>
                                     </div>
                                 </div>
                                 <div class="lg:col-span-1">
-                                    <label class="modern-label">Tax / PPN Setting</label>
+                                    <label class="ui-label">Tax / PPN Setting</label>
                                     <div class="relative">
-                                        <div class="icon-left text-slate-400"><i class="fas fa-percent text-sm"></i></div>
-                                        <select x-model.number="ppnOption" class="w-full appearance-none border border-slate-200 bg-white hover:bg-slate-50 shadow-sm rounded-lg text-sm pl-10 pr-10 py-2.5 font-bold text-slate-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors">
+                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-8 text-blue-400"><i class="fas fa-percent text-[11px]"></i></span>
+                                        <select x-model.number="ppnOption" class="w-full appearance-none border border-slate-200 bg-white hover:bg-slate-50 shadow-sm rounded-lg text-xs pl-8 pr-8 h-[38px] font-bold text-blue-700 focus:ring-0 focus:border-slate-200 outline-none cursor-pointer">
                                             <option value="11">PPN 11%</option>
                                             <option value="0">Non-PPN (0%)</option>
                                         </select>
-                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                                            <i class="fas fa-chevron-down text-sm"></i>
-                                        </div>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-blue-700"><i class="fas fa-chevron-down text-[10px]"></i></span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {{-- 3. Quotation Items --}}
+                        {{-- 3. Quotation Items — compact --}}
                         <div>
-                            <div class="modern-section mb-3 flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-4">
-                                <div class="flex gap-3">
-                                    <div class="sec-icon bg-pink-100 text-pink-600 shrink-0"><i class="fas fa-boxes text-base"></i></div>
+                            <div class="mb-3 flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-3">
+                                <div class="flex gap-2.5 items-center">
+                                    <span class="w-8 h-8 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-sm shrink-0"><i class="fas fa-boxes"></i></span>
                                     <div>
-                                        <h4>Quotation Items</h4>
-                                        <p>HNA and HNA/Pcs from catalog; net after discount &amp; PPN per pack and per Pcs.</p>
+                                        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wide leading-tight">Quotation Items</h4>
+                                        <p class="text-[11px] text-slate-500 font-medium leading-tight">HNA and HNA/Pcs from catalog; net after discount & PPN per pack and per Pcs.</p>
                                     </div>
                                 </div>
                                 
-                                <!-- Bungkus kedua tombol dalam flex row agar sejajar -->
-                                <div class="flex items-center gap-2.5 shrink-0 w-full md:w-auto">
-                                    <button type="button" @click="showProductModal = true; modalSearch = ''" class="flex-1 md:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 text-indigo-600 bg-indigo-50 border border-indigo-200 text-sm font-bold rounded-lg shadow-sm hover:bg-indigo-100 transition-colors cursor-pointer">
-                                        <i class="fas fa-plus"></i> Add Product
+                                <div class="flex items-center gap-2 shrink-0 w-full md:w-auto">
+                                    <button type="button" @click="showProductModal = true; modalSearch = ''" class="flex-1 md:flex-none justify-center inline-flex items-center gap-1.5 h-[32px] px-3 text-indigo-600 bg-indigo-50 border border-indigo-200 text-xs font-bold rounded-lg shadow-sm hover:bg-indigo-100 transition-colors cursor-pointer">
+                                        <i class="fas fa-plus text-[10px]"></i> Add Product
                                     </button>
-                                    <button type="button" @click="saveAndGenerateSph()" :disabled="selectedItems.length === 0 || savingSph" class="flex-1 md:flex-none justify-center inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold shadow-md shadow-blue-500/30 transition-all cursor-pointer">
-                                        <i class="fas text-sm" :class="savingSph ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                                    <button type="button" @click="saveAndGenerateSph()" :disabled="selectedItems.length === 0 || savingSph" class="flex-1 md:flex-none justify-center inline-flex items-center gap-1.5 h-[32px] px-4 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold shadow-sm transition-all cursor-pointer">
+                                        <i class="fas text-[11px]" :class="savingSph ? 'fa-spinner fa-spin' : 'fa-save'"></i>
                                         <span x-text="savingSph ? 'Saving...' : (isEditMode ? 'Update SPH' : 'Save & Create SPH')"></span>
                                     </button>
                                 </div>
@@ -484,19 +387,32 @@
                                 </div>
                             </div>
 
-                            <div class="desktop-block rounded-xl border border-slate-200 overflow-x-auto bg-white">
-                                <table class="w-full text-left border-collapse whitespace-nowrap">
+                        </div>
+                    </div>
+                    <div class="desktop-block overflow-x-auto flex-1 bg-white border-t border-slate-200">
+                        <table class="w-full min-w-[1172px] text-left border-collapse whitespace-nowrap table-fixed">
+                                    <colgroup>
+                                        <col style="width:56px">
+                                        <col style="width:260px">
+                                        <col style="width:160px">
+                                        <col style="width:130px">
+                                        <col style="width:120px">
+                                        <col style="width:110px">
+                                        <col style="width:130px">
+                                        <col style="width:150px">
+                                        <col style="width:56px">
+                                    </colgroup>
                                     <thead>
                                         <tr class="bg-slate-50 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-                                            <th class="py-3 px-4 text-center w-10 text-slate-500">No</th>
+                                            <th class="py-3 px-4 text-center text-slate-500">No</th>
                                             <th class="py-3 px-3 text-slate-500">Product Name</th>
                                             <th class="py-3 px-3 text-slate-500">Presentation</th>
                                             <th class="py-3 px-3 text-right text-blue-600">HNA Price</th>
                                             <th class="py-3 px-3 text-right text-slate-600">HNA/Pcs</th>
-                                            <th class="py-3 px-3 text-center w-24 text-amber-600">Discount</th>
+                                            <th class="py-3 px-3 text-center text-amber-600">Discount</th>
                                             <th class="py-3 px-3 text-right text-slate-600">Net+PPN</th>
                                             <th class="py-3 px-3 text-right bg-blue-50/60 text-blue-600">Net+PPN / Pcs</th>
-                                            <th class="py-3 px-3 text-center w-12 text-slate-500"></th>
+                                            <th class="py-3 px-3 text-center text-slate-500"></th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
@@ -533,10 +449,10 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
 
+                        <div class="p-5 bg-white border-t border-slate-100">
                         {{-- 4. Ringkasan --}}
-                        <div x-show="selectedItems.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
+                        <div x-show="selectedItems.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 text-center">
                                 <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Items</div>
                                 <div class="text-xl font-black text-slate-700" x-text="selectedItems.length"></div>
@@ -554,22 +470,21 @@
                 </x-ui.glass-card>
             </div>
 
-            {{-- TAB 3: SPH HISTORY SECTION --}}
-            <div x-show="activeTab === 'history'" class="space-y-5 flex flex-col w-full mobile-auto-h" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto mobile-auto-h border-t-4 border-t-blue-500 shadow-lg">
+            {{-- TAB 3: SPH HISTORY SECTION — compact selaras Tab1 --}}
+            <div x-show="activeTab === 'history'" class="space-y-4 flex flex-col w-full" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !bg-white">
                     
-                    {{-- Header Table — disamakan dengan pricelist (gap & search max-w-sm) --}}
-                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
-                        <div class="flex items-center gap-3 shrink-0">
-                            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg"><i class="fas fa-history"></i></div>
-                            <div>
-                                <h3 class="text-lg font-black text-slate-800">Saved SPH History</h3>
-                                <p class="text-xs text-slate-500 font-semibold mt-0.5">Total <span class="text-blue-600 font-bold" x-text="filteredHistory.length"></span> records.</p>
+                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm shrink-0"><i class="fas fa-history"></i></span>
+                            <div class="min-w-0">
+                                <h3 class="text-sm font-bold text-slate-800 leading-tight">Saved SPH History</h3>
+                                <p class="text-[11px] text-slate-500 font-medium leading-tight">Total <span class="text-blue-600 font-bold" x-text="filteredHistory.length"></span> records.</p>
                             </div>
                         </div>
                         
-                        <div class="flex items-center justify-start xl:justify-end gap-2.5 w-full xl:flex-1 min-w-0 overflow-x-auto hide-scrollbar pb-2 xl:pb-0">
-                            <x-ui.search-input x-model="historySearchQuery" placeholder="Search Client, Company or SPH Number" autocomplete="off" class="flex-1 min-w-[140px] max-w-sm" />
+                        <div class="flex items-center gap-2.5 w-full sm:w-auto sm:flex-1 sm:justify-end min-w-0">
+                            <x-ui.search-input x-model="historySearchQuery" placeholder="Search Client, Company or SPH Number" autocomplete="off" class="flex-1 min-w-[140px] max-w-sm w-full sm:w-auto" />
                         </div>
                     </div>
 
@@ -624,7 +539,15 @@
 
                     {{-- FIX: Hapus whitespace-nowrap pada tag table utama agar nama panjang bisa wrap --}}
                     <div class="desktop-block overflow-x-auto flex-1 bg-white">
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full text-left border-collapse table-fixed min-w-[900px]">
+                            <colgroup>
+                                <col class="w-[16%]">
+                                <col class="w-[12%]">
+                                <col class="w-[26%]">
+                                <col class="w-[18%]">
+                                <col class="w-[10%]">
+                                <col class="w-[18%]">
+                            </colgroup>
                             <thead>
                                 <tr class="bg-slate-50 text-xs font-bold uppercase tracking-wider border-b border-slate-200 whitespace-nowrap">
                                     <th class="py-3 px-5 text-slate-500">SPH Number</th>

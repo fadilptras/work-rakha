@@ -4,7 +4,7 @@
     <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div>
             <h1 class="text-2xl font-bold text-white">Manajemen Pengajuan Cuti Karyawan</h1>
-            <p class="text-sm text-zinc-400 mt-1">Pantau cuti yang masuk, disetujui, dan ditolak.</p>
+            <p class="text-sm text-zinc-400 mt-1">Pantau cuti yang masuk, selesai, dan ditolak.</p>
         </div>
     </div>
 
@@ -22,7 +22,7 @@
             </a>
             <a href="{{ route('admin.cuti.index', array_merge(request()->query(), ['tab' => 'approved', 'page' => 1])) }}" 
                class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'approved' ? 'border-emerald-500 text-emerald-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
-               <i class="fas fa-check-circle mr-2"></i> Disetujui
+                <i class="fas fa-check-circle mr-2"></i> Selesai
             </a>
             <a href="{{ route('admin.cuti.index', array_merge(request()->query(), ['tab' => 'rejected', 'page' => 1])) }}" 
                class="px-4 py-3 text-sm font-medium transition-colors border-b-2 {{ $activeTab == 'rejected' ? 'border-red-500 text-red-500' : 'border-transparent text-zinc-400 hover:text-zinc-200' }}">
@@ -65,6 +65,20 @@
                         <label for="tanggal_akhir" class="block text-sm font-medium text-zinc-400 mb-1">Tanggal Akhir</label>
                         <input type="date" name="tanggal_akhir" id="tanggal_akhir" value="{{ request('tanggal_akhir') }}" class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 text-white shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm [color-scheme:dark]">
                     </div>
+                    <div class="flex-1 min-w-[130px] max-w-[200px]">
+                        <label for="jenis" class="block text-sm font-medium text-zinc-400 mb-1">Jenis Pengajuan</label>
+                        <div class="relative">
+                            <select name="jenis" id="jenis" class="w-full appearance-none bg-zinc-700 border border-zinc-600 rounded-lg pl-3 pr-8 py-2 text-white shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm cursor-pointer">
+                                <option value="semua" @selected(($activeJenis ?? 'semua') == 'semua')>Semua Jenis</option>
+                                <option value="tahunan" @selected(($activeJenis ?? '') == 'tahunan')>Cuti Tahunan</option>
+                                <option value="sakit" @selected(($activeJenis ?? '') == 'sakit')>Sakit</option>
+                                <option value="izin" @selected(($activeJenis ?? '') == 'izin')>Izin</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400">
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex flex-wrap items-end gap-2 flex-none ml-auto">
                         <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition">Filter</button>
                         <a href="{{ route('admin.cuti.index') }}" class="bg-zinc-600 hover:bg-zinc-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition text-center">Reset</a>
@@ -96,7 +110,7 @@
                         {{-- UBAH: Nama Karyawan jadi Link ke Detail --}}
                         <td class="px-6 py-4 font-medium">
                             <a href="{{ route('admin.cuti.show', $cuti) }}" class="text-white hover:text-amber-400 hover:underline transition flex flex-col">
-                                <span class="text-base">{{ $cuti->user->name }}</span>
+                                <span class="text-base">{{ $cuti->user->name ?? '-' }}</span>
                                 <span class="text-xs text-zinc-500 font-normal mt-0.5 group-hover:text-amber-500/70">Klik untuk melihat detail</span>
                             </a>
                         </td>
@@ -112,11 +126,17 @@
                             </span>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="px-2 py-1 font-semibold leading-tight rounded-full text-xs capitalize
-                                @if($cuti->status == 'disetujui' || $cuti->status == 'diterima') bg-green-500/10 text-green-400
+                            <span class="px-2 py-1 font-semibold leading-tight rounded-full text-xs
+                                @if($cuti->status == 'selesai') bg-green-500/10 text-green-400
                                 @elseif($cuti->status == 'ditolak') bg-red-500/10 text-red-400
+                                @elseif($cuti->status == 'dibatalkan') bg-zinc-500/10 text-zinc-400
+                                @elseif($cuti->status == 'disetujui') bg-blue-500/10 text-blue-400
                                 @else bg-yellow-500/10 text-yellow-400 @endif">
-                                {{ $cuti->status }}
+                                @if($cuti->status == 'selesai') Selesai
+                                @elseif($cuti->status == 'ditolak') Ditolak
+                                @elseif($cuti->status == 'dibatalkan') Dibatalkan
+                                @elseif($cuti->status == 'disetujui') Diproses
+                                @else Diajukan @endif
                             </span>
                         </td>
                         
@@ -147,7 +167,7 @@
                              @if($activeTab == 'pending')
                                 Tidak ada pengajuan cuti yang perlu disetujui.
                             @elseif($activeTab == 'approved')
-                                Belum ada pengajuan cuti yang disetujui.
+                                Belum ada pengajuan cuti yang selesai.
                             @elseif($activeTab == 'rejected')
                                 Belum ada pengajuan cuti yang ditolak.
                             @elseif($activeTab == 'cancelled')

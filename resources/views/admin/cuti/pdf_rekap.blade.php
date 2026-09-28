@@ -47,6 +47,7 @@
         <div class="filter-info">
             <strong>Filter Data:</strong><br>
             - Status Tab: <strong>{{ strtoupper($activeTab == 'all' ? 'Semua Data' : $activeTab) }}</strong> <br>
+            - Jenis: <strong>{{ $jenisLabel ?? 'Semua Jenis' }}</strong> <br>
             - Karyawan: <strong>{{ $userName }}</strong> <br>
             - Periode: <strong>{{ $startDate ? \Carbon\Carbon::parse($startDate)->translatedFormat('d F Y') : 'Awal' }}</strong> 
             s/d <strong>{{ $endDate ? \Carbon\Carbon::parse($endDate)->translatedFormat('d F Y') : 'Akhir' }}</strong>
@@ -70,7 +71,7 @@
                         <td class="text-center">{{ $loop->iteration }}</td>
                         <td>{{ $cuti->created_at->format('d M Y') }}</td>
                         <td>
-                            <strong>{{ $cuti->user->name }}</strong><br>
+                            <strong>{{ $cuti->user->name ?? '-' }}</strong><br>
                             <span style="font-size: 9px; color: #666;">{{ $cuti->user->divisi ?? '-' }}</span>
                         </td>
                         <td style="text-transform: capitalize;">{{ $cuti->jenis_cuti }}</td>
@@ -83,14 +84,16 @@
                         </td>
                         <td>
                             {{-- Mapping Status Cuti ke Class Style Dana --}}
-                            @if(in_array($cuti->status, ['disetujui', 'diterima']))
-                                <span class="status status-selesai">Disetujui</span>
+                            @if($cuti->status == 'selesai')
+                                <span class="status status-selesai">Selesai</span>
+                            @elseif($cuti->status == 'disetujui')
+                                <span class="status status-proses">Diproses</span>
                             @elseif($cuti->status == 'ditolak')
                                 <span class="status status-ditolak">Ditolak</span>
                             @elseif($cuti->status == 'dibatalkan')
                                 <span class="status status-dibatalkan">Dibatalkan</span>
                             @else
-                                <span class="status status-diajukan">Menunggu Persetujuan</span>
+                                <span class="status status-diajukan">Diajukan</span>
                             @endif
                         </td>
                     </tr>

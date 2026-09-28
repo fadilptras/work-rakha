@@ -69,13 +69,15 @@ class SalesForecastController extends BaseSalesController
 
         $groupedByProduk = $salesRaw->groupBy('product_name');
         
-        // Stock snapshot (as of last reference month)
+        // Stock snapshot: pakai data TERAKHIR stok diupdate (bukan realtime hari ini).
         $stokSaatIni = [];
         $satuanStok = [];
         $namaProdukArray = $groupedByProduk->keys()->toArray();
 
-        // Stock snapshot real-time: stok terakhir per hari ini (bukan akhir bulan referensi).
-        $bulanAkhirTanggal = date('Y-m-d');
+        // Tanggal terakhir stok diupdate (global, dari daily_stock_histories).
+        $tanggalStokTerakhir = DB::table('daily_stock_histories')
+            ->whereNotNull('product_id')
+            ->max('tanggal');
 
         $products = \App\Models\Product::active()->whereIn('product_name', $namaProdukArray)->get();
 
@@ -83,7 +85,7 @@ class SalesForecastController extends BaseSalesController
             $snapshots = DB::table('daily_stock_histories')
                 ->whereIn('product_id', $products->pluck('id'))
                 ->whereNotNull('product_id')
-                ->where('tanggal', '<=', $bulanAkhirTanggal)
+                ->when($tanggalStokTerakhir, fn($q) => $q->where('tanggal', '<=', $tanggalStokTerakhir))
                 ->select('product_id', 'tanggal', 'stok')
                 ->orderBy('product_id')->orderByDesc('tanggal')
                 ->get();
@@ -169,8 +171,10 @@ class SalesForecastController extends BaseSalesController
         
         usort($stockForecast, fn($a, $b) => $b['forecast_qty'] <=> $a['forecast_qty']);
 
-        // Stock date label: hari ini (real-time)
-        $labelStokRealtime = now()->format('F d');
+        // Stock date label: menyesuaikan tanggal terakhir stok diupdate (cth: 23 Sep, 2026).
+        $labelStokRealtime = $tanggalStokTerakhir
+            ? Carbon::parse($tanggalStokTerakhir)->format('d M, Y')
+            : now()->format('d M, Y');
 
         $monthTranslations = [
             'January' => 'January', 'February' => 'February', 'March' => 'March',

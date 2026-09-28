@@ -36,6 +36,7 @@ use App\Http\Controllers\Sales\SalesDashboardController;
 use App\Http\Controllers\Sales\SalesIncentiveController;
 use App\Http\Controllers\Sales\SalesDataController;
 use App\Http\Controllers\Sales\SalesAnalyticsController;
+use App\Http\Controllers\Sales\SalesClosingController;
 use App\Http\Controllers\Sales\SalesTargetController;
 use App\Http\Controllers\Sales\SalesForecastController;
 use App\Http\Controllers\Sales\SalesPricingController;
@@ -98,11 +99,6 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
         Route::put('/{cuti}/status', 'updateStatus')->name('updateStatus');
         Route::post('/{cuti}/cancel', 'cancel')->name('cancel');
         Route::get('/{cuti}/download', 'downloadPdf')->name('download');
-    });
-
-    Route::controller(AdminCutiController::class)->group(function () {
-        Route::post('/cuti/{cuti}/approve', 'approve')->name('cuti.approve');
-        Route::post('/cuti/{cuti}/reject', 'reject')->name('cuti.reject');
     });
 
     // Notifikasi
@@ -186,8 +182,14 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
             Route::get('/monthly', 'monthly')->name('monthly');
             Route::get('/monitoring/data', 'monitoringData')->name('monitoring.data');
             Route::get('/monthly-detail', 'monthlyDetailData')->name('monthly.detail');
-            Route::post('/monthly/update-closing', 'updateOutletClosing')->name('monthly.update-closing');
             Route::get('/visualisasi/data', 'visualisasiData')->name('visualisasi.data');
+        });
+
+        Route::controller(SalesClosingController::class)->group(function () {
+            Route::get('/monthly/closings', 'index')->name('monthly.closings.index');
+            Route::post('/monthly/closings', 'store')->name('monthly.closings.store');
+            Route::put('/monthly/closings', 'update')->name('monthly.closings.update');
+            Route::delete('/monthly/closings', 'destroy')->name('monthly.closings.destroy');
         });
 
         Route::controller(SalesIncentiveController::class)->group(function () {
@@ -346,10 +348,14 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
     Route::controller(AdminLemburController::class)->prefix('lembur')->name('lembur.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/pdf', 'downloadPdf')->name('downloadPdf');
+        Route::get('/rekap', 'rekap')->name('rekap');
+        Route::get('/rekap/pdf', 'downloadRekapPdf')->name('rekap.downloadPdf');
+        Route::get('/rekap/excel', 'downloadRekapExcel')->name('rekap.downloadExcel');
     });
 
     Route::controller(AdminCutiController::class)->prefix('cuti')->name('cuti.')->group(function () {
         Route::get('/', 'index')->name('index');
+        Route::get('/bersama', 'rekapBersama')->name('bersama');
         Route::get('/rekap-pdf', 'downloadRekapPDF')->name('downloadRekapPdf');
         Route::get('/set-approvers', 'setApprovers')->name('set_approvers');
         Route::post('/set-approvers', 'saveApprovers')->name('set_approvers.save');
@@ -360,6 +366,7 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
         Route::delete('/{cuti}', 'destroy')->name('destroy');
         Route::get('/{cuti}/download', 'download')->name('download');
         Route::post('/{cuti}/force-approve', 'forceApprove')->name('forceApprove');
+        Route::put('/{cuti}/status', 'updateStatus')->name('updateStatus');
     });
 
     Route::controller(AdminPengajuanDanaController::class)->prefix('pengajuan-dana')->name('pengajuan_dana.')->group(function () {

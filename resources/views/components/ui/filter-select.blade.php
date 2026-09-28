@@ -8,8 +8,8 @@
   $wrapperClass = $attributes->get('class');
   $selectAttrs = $attributes->except('class');
 @endphp
-<div class="relative {{ $wrapperClass }}">
-  <select {{ $selectAttrs->merge(array_merge(['class' => 'ui-filter'], $attrs)) }}>
+<div class="relative {{ $wrapperClass }}" x-data="{ filled: @js(($value ?? '') !== '') }">
+  <select @change="filled = $el.value !== ''" {{ $selectAttrs->merge(array_merge(['class' => 'ui-filter', ':class' => "filled ? 'is-filled' : ''"], $attrs)) }}>
     @if($placeholder !== null)
       <option value="" class="text-blue-400 font-normal">{{ $placeholder }}</option>
     @endif

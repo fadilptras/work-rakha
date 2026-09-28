@@ -12,71 +12,164 @@ use Illuminate\Support\Str;
 class AktivitasController extends Controller
 {
     /**
+     * Batas jumlah aktivitas yang diambil (pribadi & tim).
+     */
+    private const MONITOR_LIMIT = 120;
+
+    /**
+     * Email exact Sales Supervisor (Arief Natanael).
+     * DB MySQL sedang offline saat pengecekan, jadi deteksi juga via
+     * jabatan & nama sebagai fallback. Isi email exact di sini kalau sudah tahu.
+     * Contoh: ['arief.natanael@rakha.com']
+     */
+    private const SALES_SUPERVISOR_EMAILS = ['Paladin_arief@yahoo.com'];
+
+    /**
+     * Divisi yang dipantau oleh Sales Supervisor.
+     */
+    private const SALES_SUPERVISOR_DIVISI = 'Marketing dan Operasional';
+
+    /**
+     * Cek apakah user adalah Direktur.
+     */
+    private function isDirektur($user): bool
+    {
+        return Str::contains(strtolower($user->jabatan ?? ''), 'direktur');
+    }
+
+    /**
+     * Cek apakah user adalah Kepala Divisi.
+     */
+    private function isKepalaDivisi($user): bool
+    {
+        return ($user->is_kepala_divisi == 1)
+            || Str::contains(strtolower($user->jabatan ?? ''), 'kepala');
+    }
+
+    /**
+     * Cek apakah user adalah Sales Supervisor (Arief Natanael).
+     * Deteksi 3 lapis agar konsisten:
+     * 1. jabatan mengandung "sales supervisor" (utama, future-proof)
+     * 2. email exact di SALES_SUPERVISOR_EMAILS
+     * 3. fallback nama "arief natanael" / "arief natanel" (ejaan varian)
+     */
+    private function isSalesSupervisor($user): bool
+    {
+        $jabatan = strtolower($user->jabatan ?? '');
+        $email = strtolower($user->email ?? '');
+        $nama = strtolower($user->name ?? '');
+
+        if (Str::contains($jabatan, 'sales supervisor')) {
+            return true;
+        }
+
+        if (in_array($email, array_map('strtolower', self::SALES_SUPERVISOR_EMAILS), true)) {
+            return true;
+        }
+
+        // Fallback khusus Arief (toleransi typo natanel/natanael)
+        if (Str::contains($nama, 'arief natanael haryanto') || Str::contains($nama, 'arief natanel haryanto')) {
+            return true;
+        }
+
+        // Fallback via email mengandung "arief" + nama mengandung "arief"
+        // (dipakai selama email exact belum diisi di konstanta di atas)
+        if (Str::contains($email, 'arief') && Str::contains($nama, 'arief')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Ambil daftar user_id yang boleh dipantau oleh user login.
+     * Prioritas: Direktur > Sales Supervisor > Kepala Divisi.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    private function getTargetUserIds($user)
+    {
+        if ($this->isDirektur($user)) {
+            return User::where('id', '!=', $user->id)
+                ->where('role', 'user')
+                ->pluck('id');
+        }
+
+        if ($this->isSalesSupervisor($user)) {
+            return User::where('id', '!=', $user->id)
+                ->where('role', 'user')
+                ->whereRaw('LOWER(divisi) = ?', [strtolower(self::SALES_SUPERVISOR_DIVISI)])
+                ->pluck('id');
+        }
+
+        if ($this->isKepalaDivisi($user) && $user->divisi) {
+            return User::where('id', '!=', $user->id)
+                ->where('divisi', $user->divisi)
+                ->where('role', 'user')
+                ->pluck('id');
+        }
+
+        return collect();
+    }
+
+    /**
      * Menampilkan halaman utama Aktivitas.
      */
     public function index()
     {
-        $user = Auth::user(); //
-        $tanggal = now()->toDateString(); //
+        $user = Auth::user();
 
-        // 1. Ambil Aktivitas Pribadi
+        // 1. Ambil Aktivitas Pribadi (limit konsisten via konstanta)
         $aktivitasDataPribadi = Aktivitas::where('user_id', $user->id)
-                        ->orderBy('created_at', 'desc')
-                        ->take(50)
-                        ->get();
+            ->orderBy('created_at', 'desc')
+            ->take(self::MONITOR_LIMIT)
+            ->get();
 
         $aktivitasHariIni = $aktivitasDataPribadi->map(function ($item) {
             $photo_url = $item->lampiran ? asset('storage/' . $item->lampiran) : null;
             return (object) [
-                'created_at' => $item->created_at, 
-                'keterangan' => $item->keterangan, 
+                'id' => $item->id,
+                'title' => $item->title,
+                'created_at' => $item->created_at,
+                'keterangan' => $item->keterangan,
                 'photo_url' => $photo_url,
-                'latitude' => $item->latitude, 
-                'longitude' => $item->longitude, 
+                'latitude' => $item->latitude,
+                'longitude' => $item->longitude,
             ];
         });
 
-        $timYangDipantau = collect();
-        $targetUserIds = [];
+        // 2. Tentukan role pemantau (terpusat di helper agar konsisten)
+        $isDirektur = $this->isDirektur($user);
+        $isKepalaDivisi = $this->isKepalaDivisi($user);
+        $isSalesSupervisor = $this->isSalesSupervisor($user);
+        $canPantauTim = $isDirektur || $isKepalaDivisi || $isSalesSupervisor;
 
-        $isDirektur = Str::contains(strtolower($user->jabatan ?? ''), 'direktur');
-        $isKepalaDivisi = ($user->is_kepala_divisi == 1) || Str::contains(strtolower($user->jabatan ?? ''), 'kepala');
- 
-        if ($isDirektur) {
-            $targetUserIds = User::where('id', '!=', $user->id)
-                                 ->where('role', 'user') 
-                                 ->pluck('id');
-        } elseif ($isKepalaDivisi && $user->divisi) {
-            $targetUserIds = User::where('id', '!=', $user->id)
-                                 ->where('divisi', $user->divisi)
-                                 ->where('role', 'user') 
-                                 ->pluck('id');
-        }
+        $targetUserIds = $this->getTargetUserIds($user);
 
         $aktivitasTim = collect();
 
         // 3. Ambil data aktivitas dari tim yang dipantau
-        if (!empty($targetUserIds) && count($targetUserIds) > 0) {
+        if ($targetUserIds->isNotEmpty()) {
             $aktivitasTim = Aktivitas::with('user:id,name,jabatan,profile_picture,divisi')
-                                ->whereIn('user_id', $targetUserIds)
-                                ->orderBy('created_at', 'desc')
-                                ->take(50)
-                                ->get()
-                                ->map(function ($item) {
-                                    $photo_url = $item->lampiran ? asset('storage/' . $item->lampiran) : null;
-                                    return (object) [
-                                        'id' => $item->id,
-                                        'user_name' => $item->user->name ?? 'User Dihapus',
-                                        'user_divisi' => $item->user->divisi ?? '-',
-                                        'user_photo' => $item->user->profile_picture ? asset('storage/' . $item->user->profile_picture) : null,
-                                        'title' => $item->title,
-                                        'keterangan' => $item->keterangan,
-                                        'created_at' => $item->created_at,
-                                        'photo_url' => $photo_url,
-                                        'latitude' => $item->latitude,
-                                        'longitude' => $item->longitude,
-                                    ];
-                                });
+                ->whereIn('user_id', $targetUserIds)
+                ->orderBy('created_at', 'desc')
+                ->take(self::MONITOR_LIMIT)
+                ->get()
+                ->map(function ($item) {
+                    $photo_url = $item->lampiran ? asset('storage/' . $item->lampiran) : null;
+                    return (object) [
+                        'id' => $item->id,
+                        'user_name' => $item->user->name ?? 'User Dihapus',
+                        'user_divisi' => $item->user->divisi ?? '-',
+                        'user_photo' => $item->user->profile_picture ? asset('storage/' . $item->user->profile_picture) : null,
+                        'title' => $item->title,
+                        'keterangan' => $item->keterangan,
+                        'created_at' => $item->created_at,
+                        'photo_url' => $photo_url,
+                        'latitude' => $item->latitude,
+                        'longitude' => $item->longitude,
+                    ];
+                });
         }
 
         // 4. Kirim semua data ke view
@@ -84,12 +177,14 @@ class AktivitasController extends Controller
         $viewSuffix = $agent->isMobile() ? 'mobile' : 'desktop';
 
         return view("users.aktivitas.aktivitas_{$viewSuffix}", [
-            'title' => 'Catat Aktivitas', //
+            'title' => 'Catat Aktivitas',
             'user' => $user,
-            'aktivitasHariIni' => $aktivitasHariIni, //
+            'aktivitasHariIni' => $aktivitasHariIni,
             'aktivitasTim' => $aktivitasTim, // Data aktivitas rekan kerja
             'isDirektur' => $isDirektur,
-            'isKepalaDivisi' => $isKepalaDivisi
+            'isKepalaDivisi' => $isKepalaDivisi,
+            'isSalesSupervisor' => $isSalesSupervisor,
+            'canPantauTim' => $canPantauTim,
         ]);
     }
 
@@ -138,24 +233,8 @@ class AktivitasController extends Controller
 
         // Jika user meminta data orang lain
         if ($targetUserId && $targetUserId != $user->id) {
-            
-            $allowedUserIds = [];
-
-            $isDirektur = Str::contains(strtolower($user->jabatan ?? ''), 'direktur');
-            $isKepalaDivisi = ($user->is_kepala_divisi == 1) || Str::contains(strtolower($user->jabatan ?? ''), 'kepala');
- 
-            if ($isDirektur) {
-                $allowedUserIds = User::where('id', '!=', $user->id)
-                              ->where('role', 'user')
-                              ->pluck('id')
-                              ->toArray();
-            } elseif ($isKepalaDivisi && $user->divisi) {
-                $allowedUserIds = User::where('id', '!=', $user->id)
-                              ->where('divisi', $user->divisi)
-                              ->where('role', 'user')
-                              ->pluck('id')
-                              ->toArray();
-            }
+            // Daftar ID yang boleh dilihat = daftar tim yang dipantau (konsisten dengan index())
+            $allowedUserIds = $this->getTargetUserIds($user)->toArray();
 
             // Cek apakah ID yang diminta ada di dalam daftar yang diizinkan
             if (in_array($targetUserId, $allowedUserIds)) {

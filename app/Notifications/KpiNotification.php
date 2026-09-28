@@ -29,7 +29,7 @@ class KpiNotification extends Notification
 
     public function toWhatsApp(object $notifiable): array
     {
-        $karyawan = $this->evaluation->user->name;
+        $karyawan = $this->evaluation->user->name ?? 'Karyawan';
         $periode = $this->evaluation->period;
         $link = $notifiable->role === 'admin'
             ? route('admin.kpi.index')
@@ -60,7 +60,7 @@ class KpiNotification extends Notification
 
     public function toArray(object $notifiable): array
     {
-        $karyawan = $this->evaluation->user->name;
+        $karyawan = $this->evaluation->user->name ?? 'Karyawan';
         $periode = $this->evaluation->period;
         $isSelf = $this->evaluation->user_id === $notifiable->id;
 

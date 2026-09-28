@@ -239,11 +239,11 @@
                 </form>
             </x-ui.glass-card>
 
-            {{-- Data Table — konsisten --}}
-            <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto shadow-lg !rounded-3xl">
-                <div class="overflow-x-auto flex-1">
-                        <table class="w-full text-sm text-left text-slate-600">
-                            <thead class="text-xs text-blue-700 uppercase bg-blue-50/80 border-b border-blue-100 font-bold tracking-wider">
+            {{-- Data Table — putih solid 100% (fix gelap: ui-glass default bg-white/90 tembus ungu #ede9fe) --}}
+            <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto !rounded-3xl !bg-white border border-slate-200 shadow-sm" style="background:#ffffff;">
+                <div class="overflow-x-auto flex-1 bg-white">
+                        <table class="w-full text-sm text-left text-slate-600 bg-white">
+                            <thead class="text-xs text-slate-500 uppercase bg-white border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
                                     <th class="px-4 py-4 w-10 text-center">
                                         <input type="checkbox" id="check-all" class="rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer">
@@ -254,7 +254,7 @@
                                     <th class="px-4 py-4 text-center">PS</th>
                                     <th class="px-4 py-4">Product</th>
                                     <th class="px-4 py-4">Qty</th>
-                                    <th class="px-4 py-4 text-right">Net Price</th>
+                                    <th class="px-4 py-4 text-right bg-emerald-50/60 border-l border-emerald-100 text-emerald-700">Net Price</th>
                                     <th class="px-4 py-4 text-center">Action</th>
                                 </tr>
                             </thead>
@@ -273,7 +273,7 @@
                                     <div class="text-xs text-slate-400 mt-0.5">HNA: Rp {{ number_format($item->base_price, 0, ',', '.') }} | Discount: {{ $item->discount == floor($item->discount) ? number_format($item->discount, 0) : $item->discount }}%</div>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap"><span class="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">{{ $item->qty ?? 0 }} {{ $item->unit }}</span></td>
-                                <td class="px-4 py-3 text-right whitespace-nowrap font-bold text-emerald-600">Rp {{ number_format($item->net_price, 0, ',', '.') }}</td>
+                                <td class="px-4 py-3 text-right whitespace-nowrap font-bold text-emerald-700 bg-emerald-50/60 border-l border-emerald-100">Rp {{ number_format($item->net_price, 0, ',', '.') }}</td>
                                 <td class="px-4 py-3 text-center whitespace-nowrap">
                                     <div class="flex items-center justify-center gap-2">
                                         <x-ui.edit-button data-item="{{ json_encode($item) }}" @click="openEditModal(JSON.parse($el.dataset.item))" title="Edit" />
@@ -296,7 +296,7 @@
                     </table>
                 </div>
                 
-                <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="px-6 py-4 border-t border-slate-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
                     <button type="button" onclick="confirmBulkDelete()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow-sm hidden" id="btn-bulk-delete">
                         <i class="fas fa-trash-alt mr-1"></i> Delete (<span id="selected-count">0</span>)
                     </button>
@@ -307,39 +307,44 @@
             </x-ui.glass-card>
         </div>
 
-        {{-- [TAB 2] Manual Data Input --}}
+        {{-- [TAB 2] Manual Data Input — selaras components/ui (ui-label, ui-input, ui-glass) --}}
         <div x-show="activeTab === 'input'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="w-full">
-            <x-ui.glass-card class="w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-lg !rounded-3xl">
-                <h3 class="text-lg font-black text-slate-800 flex items-center mb-6">
-                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg mr-3"><i class="fas fa-keyboard"></i></div>
-                    Manual Data Input
-                </h3>
+            <x-ui.glass-card class="w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-lg !rounded-3xl !p-6">
                 <form action="{{ route('sales.store_manual') }}" method="POST" id="manual-sales-form" onsubmit="confirmSubmit(event, 'Save this sales data?')">
                     @csrf
-                    <div class="grid grid-cols-1 gap-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-5">
+                        {{-- Baris 1: Date / PS / Customer — selaras filter (gap-3, label 10px) --}}
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div>
-                                <label class="modern-label">Date <span class="text-red-500">*</span></label>
-                                <input type="date" name="tanggal" required class="modern-input">
+                                <label class="ui-label">Date <span class="text-red-500">*</span></label>
+                                <div class="relative">
+                                    <input type="date" name="tanggal" required class="ui-input-date">
+                                </div>
                             </div>
                             <div>
-                                <label class="modern-label">PS Name</label>
-                                <input list="ps-input-options" type="text" name="ps" placeholder="e.g. John Doe" class="modern-input" autocomplete="off">
+                                <label class="ui-label">Customer Name <span class="text-red-500">*</span></label>
+                                <div class="relative">
+                                    <input list="customer-list-options" type="text" name="nama_customer" required placeholder="Customer Name (e.g. Clinic ABC)" class="ui-input pr-9" autocomplete="off">
+                                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-blue-700"><i class="fas fa-chevron-down text-[10px]"></i></span>
+                                </div>
                             </div>
                             <div>
-                                <label class="modern-label">Customer Name <span class="text-red-500">*</span></label>
-                                <input list="customer-list-options" type="text" name="nama_customer" required placeholder="Customer Name (e.g. Clinic ABC)" class="modern-input bg-white shadow-sm" autocomplete="off">
+                                <label class="ui-label">PS Name</label>
+                                <div class="relative">
+                                    <input list="ps-input-options" type="text" name="ps" placeholder="e.g. John Doe" class="ui-input pr-9" autocomplete="off">
+                                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-blue-700"><i class="fas fa-chevron-down text-[10px]"></i></span>
+                                </div>
                             </div>
                         </div>
 
-                        <div>
-                            <div class="flex justify-between items-center mb-4 mt-1 border-t border-slate-200 pt-4">
-                                <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide flex items-center">
-                                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-box-open"></i></div>
+                        <div class="border-t-2 border-slate-300 pt-5 space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <h4 class="font-bold text-slate-800 text-sm flex items-center">
+                                    <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-2.5 shrink-0"><i class="fas fa-box-open text-xs"></i></span>
                                     Product Details
                                 </h4>
-                                <button type="button" id="tambah-produk-btn" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-bold py-2 px-4 rounded-xl transition-all shadow-sm flex items-center">
-                                    <i class="fas fa-plus mr-2"></i> Add Product Row
+                                <button type="button" id="tambah-produk-btn" class="inline-flex items-center justify-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 h-[30px] px-3 rounded-lg text-xs font-bold shadow-sm transition-colors whitespace-nowrap">
+                                    <i class="fas fa-plus text-[10px]"></i> Add Product Row
                                 </button>
                             </div>
                             
@@ -347,75 +352,76 @@
                                 <!-- Vanilla JS goes here -->
                             </div>
                             
-                            <div class="mt-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-4 flex flex-col md:flex-row justify-between items-center shadow-sm gap-3">
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-indigo-500 mr-3 text-lg">
-                                        <i class="fas fa-coins"></i>
-                                    </div>
+                            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-3 shadow-sm">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-10 h-10 rounded-lg bg-white border border-blue-100 flex items-center justify-center text-blue-600 shadow-sm"><i class="fas fa-coins text-sm"></i></span>
                                     <div>
-                                        <h4 class="font-black text-indigo-900 text-sm">Grand Total</h4>
-                                        <p class="text-[10px] text-indigo-600 font-medium mt-0.5 uppercase tracking-wider">Total Sales Amount</p>
+                                        <h4 class="font-black text-slate-800 text-sm leading-none">Grand Total</h4>
+                                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Total Sales Amount</p>
                                     </div>
                                 </div>
-                                <div class="text-right bg-white py-2 px-4 rounded-lg shadow-sm border border-indigo-50 w-full md:w-auto">
-                                    <span class="text-xl font-black text-indigo-700 tracking-tight" id="grand-total-text">Rp 0</span>
+                                <div class="bg-white border border-slate-200 rounded-lg px-4 h-[38px] inline-flex items-center shadow-sm w-full sm:w-auto justify-center sm:justify-end">
+                                    <span class="text-base font-black text-blue-700 tracking-tight" id="grand-total-text">Rp 0</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="mt-8 flex justify-end">
-                        <button type="submit" class="btn-primary flex items-center">
-                            <i class="fas fa-save mr-2"></i> Save Manual Data
+                    <div class="mt-6 flex justify-end">
+                        <button type="submit" class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold h-[38px] px-5 rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+                            <i class="fas fa-save text-[11px]"></i> Save Manual Data
                         </button>
                     </div>
                 </form>
             </x-ui.glass-card>
         </div>
 
-        {{-- [TAB 3] Import & Export --}}
+        {{-- [TAB 3] Import & Export — compact & seimbang (2 col sama tinggi) --}}
         <div x-show="activeTab === 'import'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="w-full">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full max-w-full mx-auto">
-                <x-ui.glass-card class="lg:col-span-7 flex flex-col h-full border-t-4 border-t-emerald-500 shadow-lg !rounded-3xl w-full max-w-full mx-auto">
-                    <h3 class="text-lg font-black text-slate-800 flex items-center mb-6">
-                        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg mr-3"><i class="fas fa-cloud-upload-alt"></i></div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full max-w-full mx-auto items-stretch">
+                {{-- Kiri: Upload — stretch penuh, dropzone flex-1 biar tinggi ngisi --}}
+                <x-ui.glass-card class="flex flex-col border-t-4 border-t-emerald-500 shadow-lg !rounded-3xl w-full !p-5 h-full">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center mb-3 shrink-0">
+                        <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm mr-2.5 shrink-0"><i class="fas fa-cloud-upload-alt"></i></span>
                         Import from Excel/CSV
                     </h3>
-                    <form action="{{ route('sales.import_excel') }}" method="POST" enctype="multipart/form-data" class="flex-1 flex flex-col" onsubmit="confirmSubmit(event, 'Are you sure you want to import data from this file?')">
+                    <form action="{{ route('sales.import_excel') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-3 flex-1" onsubmit="confirmSubmit(event, 'Are you sure you want to import data from this file?')">
                         @csrf
-                        <div class="mb-6 flex-1 flex flex-col">
-                            <label class="modern-label mb-2">Choose File (.xlsx, .csv)</label>
-                            <div class="flex-1 relative border-2 border-dashed border-emerald-200 rounded-2xl bg-emerald-50/50 hover:bg-emerald-50 transition-colors py-12 px-6 flex flex-col items-center justify-center text-center cursor-pointer overflow-hidden min-h-[200px]">
+                        <div class="flex-1 flex flex-col">
+                            <label class="ui-label mb-1">Choose File (.xlsx, .csv)</label>
+                            <label class="flex-1 relative border border-dashed border-emerald-200 rounded-xl bg-emerald-50/40 hover:bg-emerald-50 transition-colors px-4 flex flex-col items-center justify-center text-center cursor-pointer overflow-hidden min-h-[148px] py-5 group">
                                 <input type="file" name="file" accept=".xlsx, .xls, .csv" required
                                     class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-                                    onchange="document.getElementById('fileName').textContent = this.files[0] ? this.files[0].name : 'No file chosen';">
-                                <i class="fas fa-file-excel text-4xl text-emerald-400 mb-3"></i>
-                                <p id="fileName" class="text-sm font-bold text-slate-600 truncate px-2">Click or Drop file here</p>
-                            </div>
+                                    onchange="document.getElementById('fileName').textContent = this.files[0] ? this.files[0].name : 'Click or Drop file here';">
+                                <span class="w-10 h-10 rounded-xl bg-white border border-emerald-100 flex items-center justify-center text-emerald-500 mb-2.5 shadow-sm group-hover:scale-105 transition-transform"><i class="fas fa-file-excel text-base"></i></span>
+                                <p id="fileName" class="text-xs font-bold text-slate-700 truncate max-w-full px-2">Click or Drop file here</p>
+                                <p class="text-[10px] text-slate-400 font-medium mt-1">.xlsx, .xls, .csv — max 10MB</p>
+                            </label>
                         </div>
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg hover:shadow-emerald-500/40 flex justify-center items-center">
-                            <i class="fas fa-upload mr-2"></i> Upload Data
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-[38px] px-4 rounded-lg text-xs transition-all shadow-sm hover:shadow-md inline-flex justify-center items-center gap-2 shrink-0">
+                            <i class="fas fa-upload text-[11px]"></i> Upload Data
                         </button>
                     </form>
                 </x-ui.glass-card>
 
-                <div class="lg:col-span-5 flex flex-col gap-6 w-full">
-                    <x-ui.glass-card class="bg-slate-50 border-slate-200 w-full max-w-full mx-auto">
-                        <h4 class="font-bold text-slate-800 mb-4 flex items-center text-sm"><i class="fas fa-file-download mr-2 text-blue-500"></i> Download Template</h4>
-                        <p class="text-sm text-slate-600 mb-4">Download an empty CSV template with column formats adjusted to the system.</p>
-                        <a href="{{ route('sales.download_template') }}" class="inline-flex items-center justify-center w-full bg-white border-2 border-blue-200 hover:border-blue-500 text-blue-600 font-bold py-3 px-4 rounded-xl transition-all shadow-sm">
-                            <i class="fas fa-download mr-2"></i> Download CSV Template
+                {{-- Kanan: 2 card ditumpuk, tinggi total = kiri (flex-1 biar seimbang) --}}
+                <div class="flex flex-col gap-4 h-full">
+                    <x-ui.glass-card class="bg-slate-50 border-slate-200 w-full !p-4 shrink-0">
+                        <h4 class="font-bold text-slate-800 mb-2 flex items-center text-xs"><i class="fas fa-file-download mr-2 text-blue-500 text-[11px]"></i> Download Template</h4>
+                        <p class="text-xs text-slate-500 mb-3 leading-relaxed">Download empty CSV template with column formats adjusted to the system.</p>
+                        <a href="{{ route('sales.download_template') }}" class="inline-flex items-center justify-center w-full bg-white border border-blue-200 hover:border-blue-400 hover:bg-blue-50 text-blue-600 font-bold h-[36px] px-3 rounded-lg text-xs transition-all shadow-sm gap-1.5">
+                            <i class="fas fa-download text-[11px]"></i> Download CSV Template
                         </a>
                     </x-ui.glass-card>
 
-                    <x-ui.glass-card class="bg-blue-50 border-blue-200 w-full max-w-full mx-auto">
-                        <h4 class="font-bold text-blue-800 mb-3 flex items-center text-sm"><i class="fas fa-info-circle mr-2"></i> Import Instructions</h4>
-                        <ul class="text-xs text-blue-700 space-y-2 list-disc list-inside font-medium leading-relaxed">
-                            <li>Use the <b>latest CSV template</b> downloaded from the button above.</li>
-                            <li><b>Start inputting data from Row 3 (Cell A3) downwards.</b> Row 1 (Header) and Row 2 (Format Instructions) will be <b>automatically ignored</b> by the system. You are free to overwrite/delete row 3.</li>
-                            <li><b class="text-blue-800">CORRECT WAY TO PASTE:</b> When copy-pasting from an Export file, right-click on the destination cell in the template, then select <b>Paste Values & Number Formatting (V & %)</b> in Excel.</li>
-                            <li>Number Columns (HNA, Discount, Net Price) now <b>support free text format</b> (Example: type `Rp 529.500` or `12.69%` directly). The system will clean it up automatically.</li>
-                            <li><b class="text-red-600">Important (Auto-Sync):</b> The system detects the <b>Month</b> from the Date column, then will <b>delete & replace</b> all sales data for that month with the newly uploaded data.</li>
+                    <x-ui.glass-card class="bg-blue-50 border-blue-200 w-full !p-4 flex-1 flex flex-col">
+                        <h4 class="font-bold text-blue-800 mb-2.5 flex items-center text-xs shrink-0"><i class="fas fa-info-circle mr-2 text-[11px]"></i> Import Instructions</h4>
+                        <ul class="text-[11px] text-blue-700 space-y-2 list-disc list-inside font-medium leading-relaxed">
+                            <li>Use the <b>latest CSV template</b> from the button above.</li>
+                            <li>Start from <b>Row 3 (Cell A3)</b> — Row 1 & 2 <b>auto-ignored</b>.</li>
+                            <li><b class="text-blue-800">PASTE:</b> Right-click → <b>Paste Values & Number Formatting</b> in Excel.</li>
+                            <li>Numbers support <b>free format</b> e.g. <code class="bg-white px-1 py-0.5 rounded border border-blue-100 text-[10px]">Rp 529.500</code> / <code class="bg-white px-1 py-0.5 rounded border border-blue-100 text-[10px]">12.69%</code>.</li>
+                            <li class="bg-white/70 -mx-1 px-2 py-1.5 rounded-lg border border-blue-100"><b class="text-red-600">Auto-Sync:</b> Month detected from Date → <b>delete & replace</b> that month's data.</li>
                         </ul>
                     </x-ui.glass-card>
                 </div>
@@ -724,50 +730,56 @@
                 productCounter++;
                 const rowId = 'product-row-' + Date.now() + Math.random().toString(36).substr(2, 9);
                 const row = document.createElement('div');
-                row.className = 'p-3 bg-blue-50/30 border border-blue-200/60 rounded-xl relative shadow-sm hover:border-blue-300 transition-colors animate-[fadeIn_0.3s_ease-in-out]';
+                row.className = 'p-3 bg-white border border-slate-200 rounded-xl relative shadow-sm hover:border-blue-200 transition-colors animate-[fadeIn_0.3s_ease-in-out]';
                 row.id = rowId;
                 
                 row.innerHTML = `
-                    <div class="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
+                    <div class="flex justify-between items-center mb-2.5 border-b border-slate-100 pb-2.5">
                         <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-blue-600 bg-blue-100/70 px-2 py-1 rounded-md product-number-badge">Product #${productCounter}</span>
-                            <div class="flex items-center gap-1.5 bg-white border border-slate-200/60 px-2 py-0.5 rounded-md text-[10px] shadow-sm">
-                                <span class="font-bold text-slate-400 uppercase tracking-wider">Subtotal:</span>
-                                <span class="text-indigo-600 font-black subtotal-text">Rp 0</span>
+                            <span class="text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded-md product-number-badge">Product #${productCounter}</span>
+                            <div class="flex items-center gap-1.5 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-md text-[10px] shadow-sm">
+                                <span class="font-bold text-slate-500 uppercase tracking-wider">Subtotal:</span>
+                                <span class="text-blue-700 font-black subtotal-text">Rp 0</span>
                                 <input type="hidden" name="harga_nett[]" value="0" class="input-harga-nett">
                             </div>
                         </div>
-                        <button type="button" class="btn-remove-product text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition-colors flex items-center shadow-sm border border-red-100" title="Delete this product">
-                            <i class="fas fa-trash-alt mr-1"></i> Delete
+                        <button type="button" class="btn-remove-product inline-flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 h-[26px] rounded-lg transition-colors shadow-sm" title="Delete this product">
+                            <i class="fas fa-trash-alt text-[10px]"></i> Delete
                         </button>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
                         <div>
-                            <label class="modern-label !text-[10px] !mb-1">Product Name <span class="text-red-500">*</span></label>
-                            <input list="produk-list-options" type="text" name="nama_produk[]" required placeholder="Product Name" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100" autocomplete="off">
+                            <label class="ui-label">Product Name <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <input list="produk-list-options" type="text" name="nama_produk[]" required placeholder="Product Name" class="ui-input ui-input--sm pr-8" autocomplete="off">
+                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-blue-700"><i class="fas fa-chevron-down text-[10px]"></i></span>
+                            </div>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="modern-label !text-[10px] !mb-1">Qty <span class="text-red-500">*</span></label>
-                                <input type="number" name="qty[]" min="1" required placeholder="0" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100 input-qty">
+                                <label class="ui-label">Qty <span class="text-red-500">*</span></label>
+                                <input type="number" name="qty[]" min="1" required placeholder="0" class="ui-input ui-input--sm input-qty">
                             </div>
                             <div>
-                                <label class="modern-label !text-[10px] !mb-1">Unit</label>
-                                <input list="satuan-list-options" type="text" name="satuan[]" placeholder="Pcs/Box" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100" autocomplete="off">
+                                <label class="ui-label">Unit</label>
+                                <div class="relative">
+                                    <input list="satuan-list-options" type="text" name="satuan[]" placeholder="Pcs/Box" class="ui-input ui-input--sm pr-8" autocomplete="off">
+                                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-blue-700"><i class="fas fa-chevron-down text-[10px]"></i></span>
+                                </div>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="modern-label !text-[10px] !mb-1">HNA (Rp)</label>
-                                <input type="text" placeholder="0" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100 input-hna-display" autocomplete="off">
+                                <label class="ui-label">HNA (Rp)</label>
+                                <input type="text" placeholder="0" class="ui-input ui-input--sm input-hna-display" autocomplete="off">
                                 <input type="hidden" name="hna[]" class="input-hna-raw" value="0">
                             </div>
                             <div>
-                                <label class="modern-label !text-[10px] !mb-1">Discount (%)</label>
-                                <input type="number" name="diskon[]" step="0.01" min="0" placeholder="0" class="modern-input !py-1.5 !px-3 !text-xs focus:ring-2 focus:ring-blue-100 input-diskon">
+                                <label class="ui-label">Discount (%)</label>
+                                <input type="number" name="diskon[]" step="0.01" min="0" placeholder="0" class="ui-input ui-input--sm input-diskon">
                             </div>
                         </div>
                     </div>

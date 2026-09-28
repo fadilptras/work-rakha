@@ -128,7 +128,24 @@
     <script>
         function confirmSubmit(event, message) {
             event.preventDefault();
-            const form = event.target;
+            // event.currentTarget = form saat dipanggil via onsubmit;
+            // event.target bisa berupa tombol saat dipanggil via onclick — cari form terdekat.
+            var el = event.currentTarget || event.target;
+            var form = (el && el.tagName === 'FORM')
+                ? el
+                : (el && el.closest ? el.closest('form') : null);
+            if (!form || typeof form.submit !== 'function') {
+                return;
+            }
+
+            // Fallback jika CDN SweetAlert2 gagal dimuat: pakai confirm() bawaan browser
+            // agar form tetap bisa tersubmit (sebelumnya macet total karena preventDefault jalan duluan).
+            if (typeof Swal === 'undefined') {
+                if (confirm(message)) {
+                    form.submit();
+                }
+                return;
+            }
             
             Swal.fire({
                 position: 'center',

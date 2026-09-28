@@ -1,7 +1,7 @@
 @extends('pdf.layouts.approval-document')
 
-@section('title', 'Formulir Pengajuan Cuti - ' . $cuti->nomor_surat)
-@section('form-title', 'SURAT PENGAJUAN CUTI')
+@section('title', 'Form Pengajuan Izin / Cuti - ' . $cuti->nomor_surat)
+@section('form-title', 'Form Pengajuan Izin / Cuti')
 
 @section('extra-style')
     p.doc-title, p.doc-number {
@@ -22,31 +22,31 @@
     table.items-table th {
         background-color: transparent !important;
     }
+    table.items-table td {
+        text-align: center !important;
+        vertical-align: middle !important;
+    }
 @endsection
 
 @php
     $nomorDokumen = $cuti->nomor_surat;
 
-    // normalisasi ke format generic
-    $approvers = [
-        ['label' => 'Tahap 1', 'status' => $cuti->status_approver_1,
-         'nama' => $cuti->approver1->name ?? null,
-         'jabatan' => $cuti->approver1->jabatan ?? 'Atasan',
-         'tanggal' => $cuti->tanggal_approve_1 ? \Carbon\Carbon::parse($cuti->tanggal_approve_1)->translatedFormat('d F Y, H.i \W\I\B') : null],
-        ['label' => 'Tahap 2', 'status' => $cuti->status_approver_2,
-         'nama' => $cuti->approver2->name ?? null,
-         'jabatan' => $cuti->approver2->jabatan ?? 'Manajer',
-         'tanggal' => $cuti->tanggal_approve_2 ? \Carbon\Carbon::parse($cuti->tanggal_approve_2)->translatedFormat('d F Y, H.i \W\I\B') : null],
-        ['label' => 'Tahap 3', 'status' => $cuti->status_approver_3,
-         'nama' => $cuti->approver3->name ?? null,
-         'jabatan' => $cuti->approver3->jabatan ?? 'HRD / Keuangan',
-         'tanggal' => $cuti->tanggal_approve_3 ? \Carbon\Carbon::parse($cuti->tanggal_approve_3)->translatedFormat('d F Y, H.i \W\I\B') : null],
-    ];
-    if (!empty($cuti->approver_cuti_4_id)) {
-        $approvers[] = ['label' => 'Tahap Final', 'status' => $cuti->status_approver_4,
-            'nama' => $cuti->approver4->name ?? null,
-            'jabatan' => $cuti->approver4->jabatan ?? 'Admin / Direktur',
-            'tanggal' => $cuti->tanggal_approve_4 ? \Carbon\Carbon::parse($cuti->tanggal_approve_4)->translatedFormat('d F Y, H.i \W\I\B') : null];
+    // Hanya slot approver yang terisi yang tampil (fleksibel 1-4 kolom).
+    // Label jabatan menempel ke slot approver, bukan posisi kolom:
+    // mis. slot 3 selalu "HRD" walau tampil di kolom 2 karena slot 2 kosong.
+    $slotJabatan = [1 => 'Atasan Langsung', 2 => 'Manager Divisi', 3 => 'HRD', 4 => 'Admin'];
+    $approvers = [];
+    foreach ([1, 2, 3, 4] as $n) {
+        if (empty($cuti->{'approver_cuti_' . $n . '_id'})) continue;
+        $relasi = $cuti->{'approver' . $n};
+        $tanggal = $cuti->{'tanggal_approve_' . $n} ?? null;
+        $approvers[] = [
+            'label' => $n === 4 ? 'Tahap Final' : 'Tahap ' . (count($approvers) + 1),
+            'status' => $cuti->{'status_approver_' . $n},
+            'nama' => $relasi->name ?? null,
+            'jabatan' => $slotJabatan[$n],
+            'tanggal' => $tanggal ? \Carbon\Carbon::parse($tanggal)->translatedFormat('d F Y, H.i \W\I\B') : null,
+        ];
     }
 @endphp
 
@@ -91,7 +91,7 @@
         <tr>
             <th width="25%">Tanggal Mulai</th>
             <th width="25%">Tanggal Selesai</th>
-            <th width="20%">Lama Cuti</th>
+            <th width="20%">Lama Izin / Cuti</th>
             <th width="30%">Alasan Cuti</th>
         </tr>
     </thead>
@@ -105,7 +105,13 @@
     </tbody>
 </table>
 
-@include('pdf.partials.signature-block', ['approvers' => $approvers])
+@if(count($approvers))
+    @include('pdf.partials.signature-block', ['approvers' => $approvers])
+@endif
+
+<div style="text-align: right; font-size: 10px; margin-top: 20px; font-family: 'Times New Roman', Times, serif;">
+    FORM-HR-04-001
+</div>
 
 @php
     $statusFinal = strtolower($cuti->status ?? 'diajukan');

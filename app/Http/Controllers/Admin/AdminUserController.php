@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Http\Response;
@@ -195,19 +197,170 @@ class AdminUserController extends Controller
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
-        // Hapus file foto dari storage sebelum delete records
-        if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-            Storage::disk('public')->delete($user->profile_picture);
+        $nama = $user->name;
+
+        try {
+            DB::transaction(function () use ($user) {
+                // Bersihkan referensi ke user ini di kolom-kolom FK yang masih
+                // memakai RESTRICT (skema lama) agar DELETE tidak kena error 1451.
+                // Kolom dengan nullOnDelete/set null/cascade aman tanpa ini,
+                // tapi pengecekan Schema::hasColumn membuatnya aman di semua versi skema.
+                $this->nullifyUserReferences($user->id);
+
+                // Hapus file foto dari storage sebelum delete records
+                $fresh = User::find($user->id);
+                if ($fresh && $fresh->profile_picture && Storage::disk('public')->exists($fresh->profile_picture)) {
+                    Storage::disk('public')->delete($fresh->profile_picture);
+                }
+
+                User::where('id', $user->id)->delete();
+            });
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Gagal hapus akun karyawan', [
+                'user_id' => $user->id,
+                'sql' => $e->getSql(),
+                'bindings' => $e->getBindings(),
+                'db_message' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', "Gagal menghapus akun a.n. {$nama} (kode: {$e->getCode()}){$this->describeConstraintError($e->getMessage())}");
         }
 
-        $nama = $user->name;
-        $user->delete();
-
         Cache::forget('karyawan_list_dropdown');
+        Cache::forget('karyawan_list_dropdown_v2');
         Cache::forget('admin_list_dropdown');
         Cache::forget('approvers_list_dropdown');
 
         return back()->with('success', "Akun a.n. {$nama} berhasil dihapus permanen.");
+    }
+
+    /**
+     * Set NULL semua kolom FK nullable yang merujuk ke user tertentu.
+     * Menggabungkan daftar statis dengan penemuan otomatis dari INFORMATION_SCHEMA
+     * agar FK hasil drift production (nama custom) ikut dibersihkan.
+     */
+    protected function nullifyUserReferences(int $userId): void
+    {
+        $map = [
+            // [tabel => [kolom...]]
+            'users' => [
+                'approver_dana_1_id', 'approver_dana_2_id', 'approver_dana_3_id', 'approver_dana_4_id',
+                'approver_barang_1_id', 'approver_barang_2_id', 'approver_barang_3_id', 'approver_barang_4_id',
+                'approver_cuti_1_id', 'approver_cuti_2_id', 'approver_cuti_3_id', 'approver_cuti_4_id',
+                'approver_1_id', 'approver_2_id', 'manager_keuangan_id',
+                'kpi_evaluator_id', 'kpi_approver_1_id', 'kpi_approver_2_id',
+                'atasan_id',
+            ],
+            'cutis' => [
+                'approver_id',
+                'approver_cuti_1_id', 'approver_cuti_2_id', 'approver_cuti_3_id', 'approver_cuti_4_id',
+            ],
+            'pengajuan_dana' => [
+                'finance_id', 'approver_1_id', 'approver_2_id',
+                'approver_dana_1_id', 'approver_dana_2_id', 'approver_dana_3_id', 'approver_dana_4_id',
+                'atasan_id', 'direktur_id',
+            ],
+            'pengajuan_barang' => [
+                'approver_barang_1_id', 'approver_barang_2_id', 'approver_barang_3_id', 'approver_barang_4_id',
+            ],
+            'kpi_evaluations' => ['evaluator_id'],
+            'sph_quotations' => ['user_id', 'created_by'],
+            'stock_logs' => ['user_id'],
+            'sales_forecast_orders' => ['user_id'],
+            'interactions' => ['user_id'],
+            'client_interactions' => ['user_id'],
+        ];
+
+        // Tambahan otomatis: FK apa pun (termasuk nama custom hasil edit manual)
+        // yang menunjuk ke users.id dan kolomnya nullable.
+        foreach ($this->discoverNullableUserReferences() as $table => $columns) {
+            $map[$table] = array_values(array_unique(array_merge($map[$table] ?? [], $columns)));
+        }
+
+        foreach ($map as $table => $columns) {
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+            foreach (array_unique($columns) as $column) {
+                if (! Schema::hasColumn($table, $column)) {
+                    continue;
+                }
+                DB::table($table)->where($column, $userId)->update([$column => null]);
+            }
+        }
+    }
+
+    /**
+     * Menemukan semua kolom nullable yang punya FK ke users.id,
+     * langsung dari INFORMATION_SCHEMA database yang sedang dipakai.
+     * Mengembalikan [tabel => [kolom...]]. Aman di non-MySQL (return []).
+     *
+     * @return array<string, array<int, string>>
+     */
+    protected function discoverNullableUserReferences(): array
+    {
+        try {
+            $rows = DB::select("
+                SELECT kcu.TABLE_NAME AS t, kcu.COLUMN_NAME AS c
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
+                JOIN INFORMATION_SCHEMA.COLUMNS col
+                  ON col.TABLE_SCHEMA = kcu.TABLE_SCHEMA
+                 AND col.TABLE_NAME = kcu.TABLE_NAME
+                 AND col.COLUMN_NAME = kcu.COLUMN_NAME
+                WHERE kcu.TABLE_SCHEMA = DATABASE()
+                  AND kcu.REFERENCED_TABLE_NAME = 'users'
+                  AND kcu.REFERENCED_COLUMN_NAME = 'id'
+                  AND col.IS_NULLABLE = 'YES'
+            ");
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[$row->t][] = $row->c;
+        }
+
+        return $map;
+    }
+
+    /**
+     * Mengubah pesan QueryException menjadi petunjuk tabel.kolom + nama constraint,
+     * supaya kegagalan hapus bisa didiagnosis dalam sekali lihat.
+     */
+    protected function describeConstraintError(string $message): string
+    {
+        if (! preg_match('/CONSTRAINT `([^`]+)`/', $message, $m)) {
+            return '.';
+        }
+
+        $constraint = $m[1];
+        $column = '';
+        if (preg_match('/FOREIGN KEY \(`([^`]+)`\)/', $message, $mc)) {
+            $column = $mc[1];
+        }
+
+        $table = '';
+        try {
+            $row = DB::selectOne(
+                'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND CONSTRAINT_NAME = ? LIMIT 1',
+                [$constraint]
+            );
+            if ($row) {
+                $table = $row->TABLE_NAME;
+            }
+        } catch (\Throwable $e) {
+            // abaikan: tetap kembalikan nama constraint saja
+        }
+
+        $location = $table !== '' && $column !== ''
+            ? "{$table}.{$column}"
+            : ($table !== '' ? $table : $column);
+        if ($location !== '') {
+            return " — terkendala di {$location} (constraint {$constraint}).";
+        }
+
+        return " — constraint {$constraint}.";
     }
 
     /**

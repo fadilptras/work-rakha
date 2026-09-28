@@ -327,9 +327,9 @@
                                 @endphp
                                 <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white/50 transition-all duration-300 hover:bg-gradient-to-r hover:from-white hover:to-blue-50/50 hover:border-blue-200 hover:shadow-md hover:shadow-blue-500/5">
                                     <div class="flex items-center gap-3">
-                                        <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
+                                        <img src="{{ $rekan->user?->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
                                              alt="{{ $rekan->user->name ?? '' }}" class="w-9 h-9 rounded-full object-cover border border-slate-100 flex-shrink-0">
-                                        <span class="text-xs font-bold text-slate-700 truncate max-w-[120px]">{{ $rekan->user->name }}</span>
+                                        <span class="text-xs font-bold text-slate-700 truncate max-w-[120px]">{{ $rekan->user->name ?? 'User Dihapus' }}</span>
                                     </div>
                                     <span class="text-[9px] font-extrabold px-2.5 py-1 rounded-full border {{ $badgeClass }} uppercase">
                                         {{ str_replace('_', ' ', $rekan->status) }}
@@ -423,9 +423,9 @@
                                     @endphp
                                     <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white/50 transition-all duration-300 hover:bg-gradient-to-r hover:from-white hover:to-blue-50/50 hover:border-blue-200 hover:shadow-md hover:shadow-blue-500/5">
                                         <div class="flex items-center gap-3">
-                                            <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
+                                            <img src="{{ $rekan->user?->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
                                                  alt="{{ $rekan->user->name ?? '' }}" class="w-9 h-9 rounded-full object-cover border border-slate-100 flex-shrink-0">
-                                            <span class="text-xs font-bold text-slate-700 truncate max-w-[120px]">{{ $rekan->user->name }}</span>
+                                            <span class="text-xs font-bold text-slate-700 truncate max-w-[120px]">{{ $rekan->user->name ?? 'User Dihapus' }}</span>
                                         </div>
                                         <span class="text-[9px] font-extrabold px-2.5 py-1 rounded-full border {{ $badgeClass }} uppercase">
                                             {{ str_replace('_', ' ', $rekan->status) }}
@@ -685,9 +685,9 @@
                                         @endphp
                                         <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-white/50 transition-all duration-300 hover:bg-gradient-to-r hover:from-white hover:to-blue-50/50 hover:border-blue-200 hover:shadow-md hover:shadow-blue-500/5">
                                             <div class="flex items-center gap-3">
-                                                <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
+                                                <img src="{{ $rekan->user?->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
                                                      alt="{{ $rekan->user->name ?? '' }}" class="w-9 h-9 rounded-full object-cover border border-slate-100 flex-shrink-0">
-                                                <span class="text-xs font-bold text-slate-700 truncate max-w-[120px]">{{ $rekan->user->name }}</span>
+                                                <span class="text-xs font-bold text-slate-700 truncate max-w-[120px]">{{ $rekan->user->name ?? 'User Dihapus' }}</span>
                                             </div>
                                             <span class="text-[9px] font-extrabold px-2.5 py-1 rounded-full border {{ $badgeClass }} uppercase">
                                                 {{ str_replace('_', ' ', $rekan->status) }}

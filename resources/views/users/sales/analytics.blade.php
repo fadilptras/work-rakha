@@ -144,6 +144,54 @@
         table.data-table tr:hover td { background: rgba(59, 130, 246, 0.1); }
         .sticky-col { position: sticky; left: 0; background: #1e293b !important; z-index: 10; border-right: 2px solid rgba(255,255,255,0.05); font-weight: 700; color: #60a5fa !important; box-shadow: 2px 0 5px rgba(0,0,0,0.1); min-width: 280px; max-width: 320px; white-space: normal !important; word-break: break-word; }
         table.data-table th.sticky-col { z-index: 30 !important; background: #0f172a !important; }
+
+        /* ============ MOBILE TIDY (maks. 767px) — pola monthly: kompak & stack ============
+           Seluruh aturan di bawah ini HANYA berlaku di HP. Tampilan desktop (md ke atas)
+           tidak tersentuh sama sekali. */
+        @media (max-width: 767px) {
+            /* Panel lebih ramping agar konten lega */
+            .glass-panel { padding: 14px; border-radius: 14px; }
+
+            /* Tab utama 2x2, tidak lagi berdesakan sebaris */
+            .main-tabs-wrap { flex-wrap: wrap; }
+            .main-tab-btn { flex: 1 1 calc(50% - 4px); padding: 10px 6px; font-size: 0.75rem; text-align: center; }
+            .main-tab-btn i { margin-right: 4px; }
+
+            /* Angka KPI panjang (Rp ...) tidak kepotong */
+            .pbi-kpi { padding: 14px; }
+            .pbi-kpi h3 { font-size: 1.1rem !important; line-height: 1.35; overflow-wrap: anywhere; }
+            #tab-mon .glass-panel h3 { font-size: 1.3rem !important; overflow-wrap: anywhere; }
+            #tab-tgt .glass-panel h3 { overflow-wrap: anywhere; }
+
+            /* Chart sedikit lebih pendek agar tidak makan layar */
+            #tab-pbi .relative.h-\[350px\] { height: 260px !important; }
+            #tab-pbi .relative.h-\[300px\] { height: 240px !important; }
+
+            /* Tabel Power BI lebih rapat */
+            table.pbi-table { font-size: 0.72rem; }
+            table.pbi-table th, table.pbi-table td { padding: 8px 10px; }
+
+            /* Tabel Matrix lebih rapat + kolom sticky menyempit */
+            table.data-table th { padding: 10px 12px; font-size: 0.68rem; }
+            table.data-table td { padding: 10px 12px; font-size: 0.78rem; }
+            .sticky-col { min-width: 150px; max-width: 190px; }
+            .sticky-ps-col { min-width: 110px !important; width: 110px !important; max-width: 110px !important; }
+
+            /* Bar sub-tab Matrix tidak renggang */
+            #tab-mon .glass-panel .flex-wrap { gap: 0.5rem !important; }
+            .mon-tab { font-size: 0.72rem; padding: 8px 12px; }
+
+            /* Tabel Target: padding sel dipadatkan */
+            #tab-tgt table td, #tab-tgt table th { padding-left: 0.65rem !important; padding-right: 0.65rem !important; }
+
+            /* History: angka tahun & sel semester dipadatkan */
+            #tab-history td[rowspan] { font-size: 1.15rem !important; padding: 0.75rem !important; }
+            #tab-history td.w-32 { width: 6.5rem !important; padding: 0.65rem !important; }
+
+            /* Modal lebih pas di layar kecil */
+            #modal-kpi-content-box { padding: 1rem !important; }
+            #modal-target .relative { padding: 1rem !important; }
+        }
     </style>
     @endpush
 
@@ -168,7 +216,7 @@
                 </div>
                 
                 {{-- Main Tabs --}}
-                <div class="flex gap-2 bg-slate-900/50 p-1.5 rounded-2xl border border-slate-700/50">
+                <div class="main-tabs-wrap flex gap-2 bg-slate-900/50 p-1.5 rounded-2xl border border-slate-700/50">
                     @php $activeTab = session('active_tab', 'tab-pbi'); @endphp
                     <div class="main-tab-btn {{ $activeTab == 'tab-pbi' ? 'active' : '' }}" data-target="tab-pbi" onclick="switchMainTab('tab-pbi', this)">
                         <i class="fas fa-chart-pie mr-2 text-sky-400"></i> Visualisasi
@@ -1125,7 +1173,6 @@
                         
                         let rankHtml = '';
                         const psAvatars = @json($psAvatars ?? []);
-                        console.log('[avatar-engine psavatar-v2] keys:', Object.keys(psAvatars));
 
                         rankData.forEach((item, index) => {
                             let pct = totalSalesAll > 0 ? ((item.sales / totalSalesAll) * 100).toFixed(1) : 0;
@@ -1137,7 +1184,7 @@
                                 <div class="flex justify-between items-center bg-slate-800/30 p-2.5 rounded-xl border border-slate-700/50 hover:bg-slate-700/30 transition">
                                     <div class="flex items-center gap-3 overflow-hidden">
                                         <div class="font-black text-slate-500 w-4 text-right text-xs">${index + 1}.</div>
-                                        <img src="${avatarUrl}" alt="${item.name}" onerror="this.onerror=null;this.src=`https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=0ea5e9&color=fff&rounded=true&bold=true`;" class="w-8 h-8 shrink-0 aspect-square rounded-full object-cover border border-slate-600 shadow-sm">
+                                        <img src="${avatarUrl}" alt="${item.name}" class="w-8 h-8 shrink-0 aspect-square rounded-full object-cover border border-slate-600 shadow-sm">
                                         <span class="truncate font-bold text-slate-200 text-sm">${item.name}</span>
                                     </div>
                                     <span class="font-black text-sm sm:text-base ${color} ml-2">${pct}%</span>

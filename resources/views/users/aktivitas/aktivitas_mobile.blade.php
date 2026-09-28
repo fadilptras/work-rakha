@@ -340,7 +340,7 @@
 
         /* Balanced Empty State */
         .empty-log-state {
-            min-height: 380px;
+            min-height: 560px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -479,7 +479,7 @@
                                 <button type="button" id="tab-riwayat-btn" class="tab-btn active">
                                     Riwayat Saya ({{ isset($aktivitasHariIni) ? $aktivitasHariIni->count() : 0 }})
                                 </button>
-                                @if($isDirektur || $isKepalaDivisi)
+                                @if($canPantauTim ?? (($isDirektur ?? false) || ($isKepalaDivisi ?? false) || ($isSalesSupervisor ?? false)))
                                 <button type="button" id="tab-rekan-btn" class="tab-btn">
                                     Rekan Kerja ({{ isset($aktivitasTim) ? $aktivitasTim->count() : 0 }})
                                 </button>
@@ -487,7 +487,7 @@
                             </div>
 
                             {{-- VIEW 1: RIWAYAT SAYA --}}
-                            <div id="view-riwayat" class="space-y-3 overflow-y-auto max-h-[380px] pr-1 scrollbar-thin">
+                            <div id="view-riwayat" class="space-y-3 overflow-y-auto max-h-[560px] pr-1 scrollbar-thin">
                                 @forelse($aktivitasHariIni as $event)
                                     <div class="log-item-card">
                                         <p class="log-item-desc">{{ $event->keterangan ?? '' }}</p>
@@ -522,7 +522,7 @@
                             </div>
 
                             {{-- VIEW 2: AKTIVITAS REKAN --}}
-                            <div id="view-rekan" class="hidden space-y-3 overflow-y-auto max-h-[380px] pr-1 scrollbar-thin">
+                            <div id="view-rekan" class="hidden space-y-3 overflow-y-auto max-h-[560px] pr-1 scrollbar-thin">
                                 @if(isset($aktivitasTim) && $aktivitasTim->count() > 0)
                                     @foreach($aktivitasTim as $event)
                                         <div class="log-item-card">

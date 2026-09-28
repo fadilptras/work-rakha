@@ -16,7 +16,7 @@
             <td style="width: 30%;">{{ \Carbon\Carbon::now()->translatedFormat('d F Y, H:i') }} WIB</td>
             <td style="width: 20%; font-weight: bold; text-align: right;">End Stock as of</td>
             <td style="width: 2%;">:</td>
-            <td style="width: 21%;">{{ $labelStokRealtime }} {{ $tahun }}</td>
+            <td style="width: 21%;">{{ $labelStokRealtime }}</td>
         </tr>
         <tr>
             <td style="font-weight: bold;">Total Produk</td>

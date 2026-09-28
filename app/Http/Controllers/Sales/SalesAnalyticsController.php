@@ -5,8 +5,9 @@ namespace App\Http\Controllers\Sales;
 use App\Models\Sales;
 use App\Models\SalesTarget;
 use App\Models\SalesIncentiveSetting;
-use App\Models\SalesOutletClosing;
+use App\Models\SalesClosing;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -39,8 +40,11 @@ class SalesAnalyticsController extends BaseSalesController
             array_unshift($listTahun, date('Y'));
         }
 
-        // data target sales
+        // data target sales (sanitasi: hanya tahun wajar yang diterima)
         $tahun = $request->input('tahun', date('Y'));
+        if (!is_numeric($tahun) || (int) $tahun < 2000 || (int) $tahun > ((int) date('Y') + 5)) {
+            $tahun = date('Y');
+        }
         $tahunLalu = (int)$tahun - 1;
 
         $targets = SalesTarget::where('year', $tahun)->get();
@@ -76,7 +80,12 @@ class SalesAnalyticsController extends BaseSalesController
             $salesPrev = $salesLastYear[$bulan] ?? 0;
 
             $achievementRate = $targetAll > 0 ? round(($salesAll / $targetAll) * 100, 2) : 0;
-            $growthRate = $salesPrev > 0 ? round((($salesAll - $salesPrev) / $salesPrev) * 100, 2) : 0;
+            $growthRate = 0;
+            if ($salesPrev > 0) {
+                $growthRate = round((($salesAll - $salesPrev) / $salesPrev) * 100, 2);
+            } elseif ($salesPrev == 0 && $salesAll > 0) {
+                $growthRate = 100; // penjualan baru, belum ada pembanding tahun lalu
+            }
 
             $monthlyAll[$bulan] = [
                 'target' => $targetAll,
@@ -86,7 +95,9 @@ class SalesAnalyticsController extends BaseSalesController
                 'sales_last_year' => $salesPrev
             ];
 
-            $monthlyPerPs[$bulan] = ['All' => $achievementRate];
+            $monthlyPerPs[$bulan] = [
+                'All' => ['rate' => $achievementRate, 'target' => $targetAll, 'sales' => $salesAll],
+            ];
             foreach ($listPs as $ps) {
                 $targetPs = $targets->where('month', $bulan)->where('ps', $ps)->sum('target_amount');
                 $salesPs = $salesCurrent->where('month', $bulan)->where('ps', $ps)->sum('total_sales');
@@ -179,7 +190,18 @@ class SalesAnalyticsController extends BaseSalesController
             array_unshift($listTahun, date('Y'));
         }
 
-        return view('users.sales.monthly', compact('tahun', 'hasFullAccess', 'listTahun', 'currentMonth'));
+        // Saran global (seluruh data, tidak terbatas bulan/filter) untuk baris Tambah Rencana Closing
+        $listAllPs = Cache::remember('monthly_all_ps', 600, function () {
+            return Sales::whereNotNull('ps')->where('ps', '!=', '')->distinct()->orderBy('ps')->pluck('ps')->toArray();
+        });
+        $listAllCustomer = Cache::remember('monthly_all_customer', 600, function () {
+            return Sales::whereNotNull('customer_name')->where('customer_name', '!=', '')->distinct()->orderBy('customer_name')->pluck('customer_name')->toArray();
+        });
+        $listAllProduct = Cache::remember('monthly_all_product', 600, function () {
+            return Sales::whereNotNull('product_name')->where('product_name', '!=', '')->distinct()->orderBy('product_name')->pluck('product_name')->toArray();
+        });
+
+        return view('users.sales.monthly', compact('tahun', 'hasFullAccess', 'listTahun', 'currentMonth', 'listAllPs', 'listAllCustomer', 'listAllProduct'));
     }
 
     public function stock(Request $request)
@@ -224,8 +246,8 @@ class SalesAnalyticsController extends BaseSalesController
         $summaryQuery = clone $baseQuery;
         $totalNett = (clone $summaryQuery)->sum('net_price');
         $totalQty  = (clone $summaryQuery)->sum('qty');
-        $totalCustomer = (clone $summaryQuery)->whereNotNull('customer_name')->where('customer_name', '!=', '')->distinct('customer_name')->count('customer_name');
-        $totalProduk = (clone $summaryQuery)->whereNotNull('product_name')->where('product_name', '!=', '')->distinct('product_name')->count('product_name');
+        $totalCustomer = (clone $summaryQuery)->whereNotNull('customer_name')->where('customer_name', '!=', '')->count(DB::raw('DISTINCT customer_name'));
+        $totalProduk = (clone $summaryQuery)->whereNotNull('product_name')->where('product_name', '!=', '')->count(DB::raw('DISTINCT product_name'));
 
         // trend sales per bulan
         $trendRawDb = (clone $baseQuery)
@@ -416,7 +438,15 @@ class SalesAnalyticsController extends BaseSalesController
             $sfQuery->whereYear('date', $tahun);
         }
         if (!empty($psFilter)) {
-            $sfQuery->whereIn('ps', $psFilter);
+            if (in_array('Sales Team', $psFilter) && in_array('Office', $psFilter)) {
+                // ALL, do nothing
+            } elseif (in_array('Sales Team', $psFilter)) {
+                $sfQuery->where('ps', '!=', 'Office');
+            } elseif (in_array('Office', $psFilter)) {
+                $sfQuery->where('ps', 'Office');
+            } else {
+                $sfQuery->whereIn('ps', $psFilter);
+            }
         }
         if (!empty($customerFilter)) {
             $sfQuery->whereIn('customer_name', $customerFilter);
@@ -626,38 +656,65 @@ class SalesAnalyticsController extends BaseSalesController
             $outlet[$ps]['total_nett'] += $row->total_nett;
         }
 
-        // Ambil data closing rate & count untuk outlet jika tabel tersedia
-        $outletClosings = Schema::hasTable('sales_outlet_closings')
-            ? SalesOutletClosing::where('year', $tahun)->whereRaw('LOWER(month) = ?', [strtolower($bulan)])->get()
+        // Merge closing dari tabel sales_closings (type=sales):
+        // - customer yang sudah ada sales -> tempel nominal sebagai Est. Closing
+        // - customer rencana tanpa sales -> buat entri nett 0 agar ikut total
+        // - non-full-access: tetap sembunyikan closing milik Office seperti datanya
+        $isFullAccess = $this->hasFullSalesAccess();
+        $closings = Schema::hasTable('sales_closings')
+            ? SalesClosing::where('type', SalesClosing::TYPE_SALES)
+                ->where('year', $tahun)->whereRaw('LOWER(month) = ?', [strtolower($bulan)])
+                ->when(!$isFullAccess, fn ($q) => $q->where(function ($qq) {
+                    $qq->whereRaw("LOWER(ps) != 'office'")->orWhereNull('ps');
+                }))
+                ->get()
             : collect();
-        $closingMap = [];
-        foreach ($outletClosings as $oc) {
-            $keyWithPs = strtolower(trim($oc->ps ?? '')) . '|' . strtolower(trim($oc->customer_name));
-            $keyOnlyCust = strtolower(trim($oc->customer_name));
-            $closingMap[$keyWithPs] = $oc;
-            if (!isset($closingMap[$keyOnlyCust])) {
-                $closingMap[$keyOnlyCust] = $oc;
+        // Jumlahkan SELURUH baris closing per pasangan ps|customer (1 customer bisa
+        // banyak produk = banyak baris). Fallback lintas-PS dimatikan: hanya pakai
+        // baris tanpa PS untuk customer yg PS-nya tidak punya closing sendiri.
+        $sumByPsCust = [];
+        $sumByCustNullPs = [];
+        $idByPsCust = [];
+        foreach ($closings as $oc) {
+            $psKey = strtolower(trim($oc->ps ?? ''));
+            $custKey = strtolower(trim($oc->customer_name ?? ''));
+            $amt = (float) ($oc->amount ?? 0);
+            if ($psKey === '') {
+                $sumByCustNullPs[$custKey] = ($sumByCustNullPs[$custKey] ?? 0) + $amt;
+            } else {
+                $k = $psKey.'|'.$custKey;
+                $sumByPsCust[$k] = ($sumByPsCust[$k] ?? 0) + $amt;
+                if (!isset($idByPsCust[$k])) {
+                    $idByPsCust[$k] = $oc->id;
+                }
             }
         }
+        // Attach nominal closing ke customer yang ADA sales-nya.
+        // Entri manual (customer tanpa sales) TIDAK di-merge ke data sales;
+        // ditampilkan terpisah dari endpoint index (only_manual=1).
 
         foreach ($outlet as $psName => &$psData) {
             foreach ($psData['customer'] as $custName => &$cData) {
-                $k1 = strtolower(trim($psName)) . '|' . strtolower(trim($custName));
+                $k1 = strtolower(trim($psName)).'|'.strtolower(trim($custName));
                 $k2 = strtolower(trim($custName));
-                $ocRecord = $closingMap[$k1] ?? $closingMap[$k2] ?? null;
+                if (array_key_exists($k1, $sumByPsCust)) {
+                    $addSales = (float) $sumByPsCust[$k1];
+                    $closingId = $idByPsCust[$k1] ?? null;
+                } elseif (array_key_exists($k2, $sumByCustNullPs)) {
+                    $addSales = (float) $sumByCustNullPs[$k2];
+                    $closingId = null;
+                } else {
+                    $addSales = null;
+                    $closingId = null;
+                }
 
-                // closing_count dipakai sebagai Add. Closing Sales (input outlet), closing_rate legacy
-                $addClosing = $ocRecord ? (float) $ocRecord->closing_rate : null;
-                $addSales = $ocRecord ? (float) $ocRecord->closing_count : null;
-                // prioritas Add. Closing Sales (closing_count) sebagai add utama
-                $addForTotal = $addSales ?? $addClosing;
-
-                $cData['closing_rate'] = $addClosing;
+                $cData['closing_rate'] = null;
                 $cData['closing_count'] = $addSales;
                 // alias baru untuk Tab Closing
-                $cData['add_closing'] = $addClosing;
+                $cData['add_closing'] = null;
                 $cData['add_closing_sales'] = $addSales;
-                $cData['total_akhir'] = ($cData['nett'] ?? 0) + (float) ($addForTotal ?? 0);
+                $cData['closing_id'] = $closingId;
+                $cData['total_akhir'] = ($cData['nett'] ?? 0) + (float) ($addSales ?? 0);
             }
             $psData['customer'] = array_values($psData['customer']);
             usort($psData['customer'], fn($a, $b) => $b['nett'] <=> $a['nett']);
@@ -691,57 +748,12 @@ class SalesAnalyticsController extends BaseSalesController
         ]);
     }
 
-    public function updateOutletClosing(Request $request)
-    {
-        if (!$this->hasFullSalesAccess()) {
-            return response()->json(['error' => 'Unauthorized. Hanya pengguna dengan akses penuh yang dapat mengubah data closing.'], 403);
-        }
-
-        $validated = $request->validate([
-            'year' => 'required|integer',
-            'month' => 'required|string',
-            'ps' => 'nullable|string',
-            'customer_name' => 'required|string',
-            // Add. Closing (Rp) = dulu closing_rate % -> sekarang amount tanpa max 100
-            'closing_rate' => 'nullable|numeric|min:0',
-            // Add. Closing Sales = dulu closing_count
-            'closing_count' => 'nullable|integer|min:0',
-            // alias baru untuk Tab Closing (opsional, fallback)
-            'add_closing' => 'nullable|numeric|min:0',
-            'add_closing_sales' => 'nullable|integer|min:0',
-        ]);
-
-        // normalisasi alias -> simpan tetap ke kolom closing_rate / closing_count
-        if (isset($validated['add_closing']) && $validated['add_closing'] !== null) {
-            $validated['closing_rate'] = $validated['add_closing'];
-        }
-        if (isset($validated['add_closing_sales']) && $validated['add_closing_sales'] !== null) {
-            $validated['closing_count'] = $validated['add_closing_sales'];
-        }
-
-        $closing = SalesOutletClosing::updateOrCreate(
-            [
-                'year' => $validated['year'],
-                'month' => $validated['month'],
-                'ps' => $validated['ps'] ?? null,
-                'customer_name' => $validated['customer_name'],
-            ],
-            [
-                'closing_rate' => $validated['closing_rate'],
-                'closing_count' => $validated['closing_count'],
-            ]
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Data closing outlet berhasil disimpan.',
-            'data' => $closing
-        ]);
-    }
-
     public function visualisasiData(Request $request)
     {
         $tahun = $request->input('tahun', date('Y'));
+        if (!is_numeric($tahun) || (int) $tahun < 2000 || (int) $tahun > ((int) date('Y') + 5)) {
+            $tahun = date('Y');
+        }
         $bulanTerpilih = $request->input('bulan', '');
         $psTerpilih = $request->input('ps', '');
         $triwulanTerpilih = $request->input('triwulan', '');
@@ -795,9 +807,6 @@ class SalesAnalyticsController extends BaseSalesController
         $this->applyPsFilter($targetsQuery, $psTerpilih);
         $this->applyTriwulanFilter($targetsQuery, $triwulanTerpilih);
         $targets = $targetsQuery->get();
-
-        // Target tahun lalu
-        $targetsLastYear = SalesTarget::where('year', $tahunLalu)->get();
 
         // 2. Sales tahun ini
         $salesCurrentQuery = Sales::whereYear('date', $tahun);
@@ -860,7 +869,12 @@ class SalesAnalyticsController extends BaseSalesController
             $sPrevVal = $sPrevValActual;
 
             $achRate = $tVal > 0 ? round(($sVal / $tVal) * 100, 1) : 0;
-            $growthRate = $sPrevVal > 0 ? round((($sVal - $sPrevVal) / $sPrevVal) * 100, 1) : 0;
+            $growthRate = 0;
+            if ($sPrevVal > 0) {
+                $growthRate = round((($sVal - $sPrevVal) / $sPrevVal) * 100, 1);
+            } elseif ($sPrevVal == 0 && $sVal > 0) {
+                $growthRate = 100; // penjualan baru, belum ada pembanding tahun lalu
+            }
 
             $monthlyOverview[$b] = [
                 'target'           => (float)$tVal,
@@ -876,25 +890,17 @@ class SalesAnalyticsController extends BaseSalesController
         }
         $targetBulan = $bulanTerpilih;
         if (!$targetBulan) {
-            $lastSalesMonth = $salesCurrent->pluck('month')->last();
-            $targetBulan = $lastSalesMonth ?: 'July';
+            // Bulan terakhir yang ada penjualannya (ikut urutan kalender, bukan urutan DB)
+            $monthsWithSales = array_values(array_intersect(
+                $this->urutanBulan,
+                $salesCurrent->pluck('month')->unique()->toArray()
+            ));
+            $targetBulan = end($monthsWithSales) ?: $this->urutanBulan[date('n') - 1];
         }
-
-        $psPerformance = [];
-        foreach ($listPs as $ps) {
-            $tPs = $targets->where('ps', $ps)->sum('target_amount');
-            $sPs = $salesCurrent->where('ps', $ps)->sum('total_sales');
-
-            $achPs = $tPs > 0 ? round(($sPs / $tPs) * 100, 1) : 0;
-
-            $psPerformance[$ps] = [
-                'target'            => (float)$tPs,
-                'sales'             => (float)$sPs,
-                'achievement_rate'  => $achPs,
-                'sales_last_month'  => 0,
-                'growth_last_month' => 0,
-            ];
-        }
+        $targetBulanIndex = array_search($targetBulan, $this->urutanBulan);
+        $targetBulanPrevName = ($targetBulanIndex !== false && $targetBulanIndex > 0)
+            ? $this->urutanBulan[$targetBulanIndex - 1]
+            : null;
 
         // New Dataset: PS Performance per Month for local filtering
         $allPsPerformanceByMonth = [];
@@ -908,7 +914,13 @@ class SalesAnalyticsController extends BaseSalesController
                 $sPrevTotal = $bulanPrevName ? $salesCurrent->where('month', $bulanPrevName)->where('ps', $ps)->sum('total_sales') : 0;
 
                 $achPsM = $tPsM > 0 ? round(($sPsM / $tPsM) * 100, 1) : 0;
-                $yoyGrowthM = $sPrevTotal > 0 ? round((($sPsM - $sPrevTotal) / $sPrevTotal) * 100, 1) : 0;
+                $yoyGrowthM = 0;
+                if ($sPrevTotal > 0) {
+                    $yoyGrowthM = round((($sPsM - $sPrevTotal) / $sPrevTotal) * 100, 1);
+                } elseif ($bulanPrevName && $sPsM > 0) {
+                    // Ada bulan pembanding tapi penjualannya nol -> penjualan baru
+                    $yoyGrowthM = 100;
+                }
 
                 $allPsPerformanceByMonth[$b][$ps] = [
                     'target'            => (float)$tPsM,
@@ -917,6 +929,31 @@ class SalesAnalyticsController extends BaseSalesController
                     'growth_rate'       => $yoyGrowthM,
                 ];
             }
+        }
+
+        // Tabel "Per PS (Bulan Aktif)": target/sales bulan aktif + penjualan bulan lalu
+        // & growth MoM-nya. Dibangun dari $allPsPerformanceByMonth agar satu sumber data.
+        $psPerformance = [];
+        foreach ($listPs as $ps) {
+            $cur = $allPsPerformanceByMonth[$targetBulan][$ps] ?? ['target' => 0, 'sales' => 0, 'achievement_rate' => 0];
+            $prevSales = ($targetBulanPrevName && isset($allPsPerformanceByMonth[$targetBulanPrevName][$ps]))
+                ? (float) $allPsPerformanceByMonth[$targetBulanPrevName][$ps]['sales']
+                : 0;
+
+            $growthLM = 0;
+            if ($prevSales > 0) {
+                $growthLM = round((($cur['sales'] - $prevSales) / $prevSales) * 100, 1);
+            } elseif ($prevSales == 0 && $cur['sales'] > 0) {
+                $growthLM = 100; // PS baru ada penjualan (konsisten dengan monthlyDetailData)
+            }
+
+            $psPerformance[$ps] = [
+                'target'            => (float) $cur['target'],
+                'sales'             => (float) $cur['sales'],
+                'achievement_rate'  => $cur['achievement_rate'],
+                'sales_last_month'  => $prevSales,
+                'growth_last_month' => $growthLM,
+            ];
         }
 
         // C. Cumulative Achievement Rate per PS
@@ -932,7 +969,12 @@ class SalesAnalyticsController extends BaseSalesController
             $cumSalesLastYear = $cumSalesLastYearActual;
 
             $cumAchRate = $cumTarget > 0 ? round(($cumSales / $cumTarget) * 100, 1) : 0;
-            $cumGrowthRate = $cumSalesLastYear > 0 ? round((($cumSales - $cumSalesLastYear) / $cumSalesLastYear) * 100, 1) : 0;
+            $cumGrowthRate = 0;
+            if ($cumSalesLastYear > 0) {
+                $cumGrowthRate = round((($cumSales - $cumSalesLastYear) / $cumSalesLastYear) * 100, 1);
+            } elseif ($cumSalesLastYear == 0 && $cumSales > 0) {
+                $cumGrowthRate = 100; // penjualan baru, belum ada pembanding tahun lalu
+            }
 
             $monthlySalesPs = [];
             foreach ($this->urutanBulan as $b) {

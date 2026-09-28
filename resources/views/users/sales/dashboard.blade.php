@@ -29,10 +29,18 @@
         .glass-card {
             background: rgba(255, 255, 255, 0.92);
             border: 1px solid rgba(255, 255, 255, 1);
-            border-radius: 24px;
+            border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
             padding: 28px;
             transform: translate3d(0, 0, 0);
+        }
+        .header-card {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
         }
 
         .module-card {
@@ -65,19 +73,50 @@
             }
             .module-card {
                 flex-direction: column;
-                justify-content: space-between;
-                min-height: 340px;
-                padding: 40px;
-                border-radius: 24px;
+                align-items: flex-start;
+                text-align: left;
+                justify-content: flex-start;
+                min-height: 290px;
+                padding: 28px 28px 24px;
+                border-radius: 20px;
+                gap: 20px;
             }
             .module-card:hover {
                 transform: translateY(-5px);
                 box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
                 background: rgba(255, 255, 255, 0.95);
             }
-            /* FIX: Memaksa tinggi judul minimal 2 baris (64px) agar teks deskripsi merata */
+            .icon-box {
+                margin-top: 6px;
+            }
+            .card-content {
+                gap: 10px;
+                align-items: flex-start;
+                text-align: left;
+                flex-grow: 1;
+                justify-content: flex-start;
+                width: 100%;
+                padding-top: 14px;
+            }
             .card-content h2 {
-                min-height: 4rem;
+                line-height: 1.25;
+                margin-bottom: 0;
+                text-align: left;
+                width: 100%;
+            }
+            .card-content p {
+                line-height: 1.6;
+                font-size: 15px;
+                margin-top: 0;
+                text-align: left;
+                max-width: 100%;
+            }
+            .card-action {
+                margin-top: auto;
+                padding-top: 18px !important;
+                border-top: 1px solid rgba(226, 232, 240, 0.8);
+                width: 100%;
+                justify-content: flex-start;
             }
         }
 
@@ -87,10 +126,21 @@
                 flex-direction: row;
                 align-items: center;
                 gap: 16px;
-                padding: 16px 20px;
+                padding: 20px 18px;
                 min-height: auto;
                 height: auto;
-                border-radius: 20px;
+                border-radius: 18px;
+            }
+            .card-content {
+                gap: 6px;
+            }
+            .card-content h2 {
+                line-height: 1.3;
+            }
+            .card-content p {
+                line-height: 1.5;
+                margin-top: 2px;
+                font-size: 13px !important;
             }
             .module-card:active {
                 transform: scale(0.98);
@@ -127,17 +177,18 @@
 
         /* Icon Container */
         .icon-box {
-            width: 72px;
-            height: 72px;
-            border-radius: 20px;
+            width: 62px;
+            height: 62px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            margin-bottom: 24px;
+            font-size: 1.55rem;
+            margin-bottom: 0;
             position: relative;
             z-index: 2;
             transition: all 0.4s ease;
+            flex-shrink: 0;
         }
 
         .card-green .icon-box { background: #ecfdf5; color: #10b981; border: 1px solid #d1fae5; }
@@ -189,12 +240,12 @@
         
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:px-12 lg:pb-8 flex-1 flex flex-col gap-4 md:gap-6 justify-center mt-2 md:mt-6">
 
-            {{-- Bagian Header --}}
-            <div class="text-center w-full title-reveal glass-card shadow-sm px-4 md:px-8 py-4 md:py-5">
-                <h1 class="text-2xl md:text-4xl font-black tracking-tight text-slate-800 mb-1 leading-tight">
+            {{-- Bagian Header - balikin ukuran teks awal, card tetap compact --}}
+            <div class="w-full title-reveal glass-card header-card shadow-sm !p-2.5 md:!py-2.5 md:!px-6" style="padding-top:10px !important; padding-bottom:10px !important;">
+                <h1 class="text-2xl md:text-4xl font-black tracking-tight text-slate-800 leading-tight">
                     Sales <span class="text-blue-600">Command Center</span>
                 </h1>
-                <p class="text-slate-500 text-xs md:text-lg font-medium leading-relaxed max-w-none mx-auto">
+                <p class="text-slate-500 text-xs md:text-lg font-medium leading-relaxed max-w-none w-full">
                     Centralized access to manage, analyze, and comprehensively monitor company sales performance.
                 </p>
             </div>
@@ -202,7 +253,7 @@
             {{-- Kartu Utama --}}
             @if(isset($hasAnyAccess) && $hasAnyAccess)
             {{-- Mengatur lg:grid-cols berdasarkan akses --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 {{ (isset($hasFullAccess) && $hasFullAccess) ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-2 md:gap-6 relative z-10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 {{ (isset($hasFullAccess) && $hasFullAccess) ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-3 md:gap-5 relative z-10">
                 
                 @if(isset($hasFullAccess) && $hasFullAccess)
                 {{-- Kartu 1: Data Management --}}
@@ -212,14 +263,14 @@
                     </div>
                     
                     <div class="card-content">
-                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight group-hover:text-emerald-600 transition-colors">Data Management</h2>
-                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
-                            Data control center. Input new sales data, upload batch files, or adjust existing data history.
+                        <h2 class="text-lg md:text-[19px] font-bold text-slate-800 tracking-tight group-hover:text-emerald-600 transition-colors leading-tight">Data Management</h2>
+                        <p class="text-slate-500 text-[13px] md:text-[15px] leading-relaxed font-medium line-clamp-2">
+                            Input, upload, and manage sales data in one place.
                         </p>
                         
-                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-emerald-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                        <div class="card-action mt-auto flex items-center gap-2 text-xs md:text-[13px] font-bold text-emerald-600 opacity-80 group-hover:opacity-100 transition-all duration-300">
                             <span>Manage Data</span>
-                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                            <i class="fas fa-arrow-right text-[11px] transition-transform group-hover:translate-x-1.5"></i>
                         </div>
                     </div>
 
@@ -239,14 +290,14 @@
                     </div>
                     
                     <div class="card-content">
-                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight group-hover:text-blue-600 transition-colors">Analytics & Insights</h2>
-                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
-                            Monitor performance. Access interactive dashboards, evaluate target achievements, and identify sales trends.
+                        <h2 class="text-lg md:text-[19px] font-bold text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors leading-tight">Analytics & Insights</h2>
+                        <p class="text-slate-500 text-[13px] md:text-[15px] leading-relaxed font-medium line-clamp-2">
+                            Track targets and trends via interactive dashboards.
                         </p>
-                        
-                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-blue-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                         
+                        <div class="card-action mt-auto flex items-center gap-2 text-xs md:text-[13px] font-bold text-blue-600 opacity-80 group-hover:opacity-100 transition-all duration-300">
                             <span>Open Analytics</span>
-                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                            <i class="fas fa-arrow-right text-[11px] transition-transform group-hover:translate-x-1.5"></i>
                         </div>
                     </div>
 
@@ -267,14 +318,14 @@
                     </div>
                     
                     <div class="card-content">
-                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight group-hover:text-purple-600 transition-colors">Monthly Monitoring</h2>
-                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
-                            Detailed monthly sales performance monitoring. Access drill-down data to product and outlet levels.
+                        <h2 class="text-lg md:text-[19px] font-bold text-slate-800 tracking-tight group-hover:text-purple-600 transition-colors leading-tight">Monthly Monitoring</h2>
+                        <p class="text-slate-500 text-[13px] md:text-[15px] leading-relaxed font-medium line-clamp-2">
+                            Drill-down monthly sales by product and outlet.
                         </p>
                         
-                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-purple-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                        <div class="card-action mt-auto flex items-center gap-2 text-xs md:text-[13px] font-bold text-purple-600 opacity-80 group-hover:opacity-100 transition-all duration-300">
                             <span>Open Monitoring</span>
-                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                            <i class="fas fa-arrow-right text-[11px] transition-transform group-hover:translate-x-1.5"></i>
                         </div>
                     </div>
 
@@ -294,14 +345,14 @@
                     </div>
                     
                     <div class="card-content">
-                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight transition-colors">Incentive Scheme</h2>
-                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
-                            Sales incentive schemes and calculations. View target achievements, incentive percentages, and payout simulations.
+                        <h2 class="text-lg md:text-[19px] font-bold text-slate-800 tracking-tight transition-colors leading-tight">Incentive Scheme</h2>
+                        <p class="text-slate-500 text-[13px] md:text-[15px] leading-relaxed font-medium line-clamp-2">
+                            Check achievements and simulate incentive payouts.
                         </p>
                         
-                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300" style="color: #7c2d12;">
-                            <span>Open Incentive Scheme</span>
-                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                        <div class="card-action mt-auto flex items-center gap-2 text-xs md:text-[13px] font-bold opacity-80 group-hover:opacity-100 transition-all duration-300" style="color: #7c2d12;">
+                            <span>Open Scheme</span>
+                            <i class="fas fa-arrow-right text-[11px] transition-transform group-hover:translate-x-1.5"></i>
                         </div>
                     </div>
 
@@ -321,14 +372,14 @@
                     </div>
                     
                     <div class="card-content">
-                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight group-hover:text-orange-600 transition-colors">Stock Monitoring</h2>
-                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
-                            Monitor item availability. Access structured inventory data, safe or low stock status.
+                        <h2 class="text-lg md:text-[19px] font-bold text-slate-800 tracking-tight group-hover:text-orange-600 transition-colors leading-tight">Stock Monitoring</h2>
+                        <p class="text-slate-500 text-[13px] md:text-[15px] leading-relaxed font-medium line-clamp-2">
+                            Track inventory and low-stock alerts.
                         </p>
                         
-                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-orange-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                        <div class="card-action mt-auto flex items-center gap-2 text-xs md:text-[13px] font-bold text-orange-600 opacity-80 group-hover:opacity-100 transition-all duration-300">
                             <span>Open Monitoring</span>
-                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                            <i class="fas fa-arrow-right text-[11px] transition-transform group-hover:translate-x-1.5"></i>
                         </div>
                     </div>
 
@@ -349,14 +400,14 @@
                     </div>
                     
                     <div class="card-content">
-                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight transition-colors">Sales <br>Forecast</h2>
-                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
-                            Estimate and predict product stock requirements based on average sales movement over the last 3 months.
+                        <h2 class="text-lg md:text-[19px] font-bold text-slate-800 tracking-tight transition-colors leading-tight">Sales Forecast</h2>
+                        <p class="text-slate-500 text-[13px] md:text-[15px] leading-relaxed font-medium line-clamp-2">
+                            Forecast stock needs from 3-month sales average.
                         </p>
-                        
-                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-slate-600 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                         
+                        <div class="card-action mt-auto flex items-center gap-2 text-xs md:text-[13px] font-bold text-slate-600 opacity-80 group-hover:opacity-100 transition-all duration-300">
                             <span>Open Forecast</span>
-                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                            <i class="fas fa-arrow-right text-[11px] transition-transform group-hover:translate-x-1.5"></i>
                         </div>
                     </div>
 
@@ -376,14 +427,14 @@
                     </div>
                     
                     <div class="card-content">
-                        <h2 class="text-lg md:text-2xl font-bold text-slate-800 mb-0.5 md:mb-3 tracking-tight transition-colors">Product Price & SPH</h2>
-                        <p class="text-slate-500 text-[11px] md:text-base leading-snug md:leading-relaxed font-medium line-clamp-2 md:line-clamp-none">
-                            Manage official product pricing lists and generate professional Sales Price Quotation (SPH) documents seamlessly.
+                        <h2 class="text-lg md:text-[19px] font-bold text-slate-800 tracking-tight transition-colors leading-tight">Product Price & SPH</h2>
+                        <p class="text-slate-500 text-[13px] md:text-[15px] leading-relaxed font-medium line-clamp-2">
+                            Manage price lists and generate SPH documents.
                         </p>
-                        
-                        <div class="card-action mt-auto pt-8 flex items-center gap-2 text-sm font-bold text-sky-500 opacity-80 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                         
+                        <div class="card-action mt-auto flex items-center gap-2 text-xs md:text-[13px] font-bold text-sky-500 opacity-80 group-hover:opacity-100 transition-all duration-300">
                             <span>Open Price & SPH</span>
-                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-2"></i>
+                            <i class="fas fa-arrow-right text-[11px] transition-transform group-hover:translate-x-1.5"></i>
                         </div>
                     </div>
 

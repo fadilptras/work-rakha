@@ -172,10 +172,10 @@
                         <i class="fas fa-info-circle text-2xl"></i>
                     </div>
                     <div>
-                        <h4 class="text-sm font-bold text-sky-300 cursor-pointer" onclick="alert('INFORMASI PASSWORD:\n\n1. Karyawan yang ditambahkan tidak perlu membuat password.\n2. Untuk buat akun baru default passwordnya yaitu: #rakhA2022\n3. Karyawan dapat langsung login menggunakan Email dan Password default tersebut.')">
+                        <h4 class="text-sm font-bold text-sky-300 cursor-pointer" onclick="alert('INFORMASI PASSWORD:\n\n1. Karyawan yang ditambahkan tidak perlu membuat password.\n2. Untuk buat akun baru default passwordnya yaitu: #rakhA2022!\n3. Karyawan dapat langsung login menggunakan Email dan Password default tersebut.')">
                             Sistem Password Otomatis
                         </h4>
-                        <p class="text-xs text-gray-300 mt-1">Karyawan baru tidak perlu diisikan password. Sistem otomatis memberikan password default: <span class="text-amber-400 font-mono font-bold">#rakhA2022</span>.</p>
+                        <p class="text-xs text-gray-300 mt-1">Karyawan baru tidak perlu diisikan password. Sistem otomatis memberikan password default: <span class="text-amber-400 font-mono font-bold">#rakhA2022!</span>.</p>
                     </div>
                 </div>
 

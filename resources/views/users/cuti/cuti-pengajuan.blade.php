@@ -358,22 +358,32 @@
                             @php
                                 $status = $cuti->status;
                                 $iconClass = match($status) {
-                                    'disetujui'  => 'fas fa-check',
+                                    'selesai'    => 'fas fa-check',
+                                    'disetujui'  => 'fas fa-hourglass-half',
                                     'ditolak'    => 'fas fa-times',
                                     'dibatalkan' => 'fas fa-ban',
                                     default      => 'fas fa-clock',
                                 };
                                 $iconBox = match($status) {
-                                    'disetujui'  => 'bg-green-100 text-green-600',
+                                    'selesai'    => 'bg-green-100 text-green-600',
+                                    'disetujui'  => 'bg-blue-100 text-blue-600',
                                     'ditolak'    => 'bg-red-100 text-red-600',
                                     'dibatalkan' => 'bg-slate-100 text-slate-600',
                                     default      => 'bg-amber-100 text-amber-600',
                                 };
                                 $badgeStyle = match($status) {
-                                    'disetujui'  => 'bg-green-100 text-green-700 border border-green-200',
+                                    'selesai'    => 'bg-green-100 text-green-700 border border-green-200',
+                                    'disetujui'  => 'bg-blue-100 text-blue-700 border border-blue-200',
                                     'ditolak'    => 'bg-red-100 text-red-700 border-red-200',
                                     'dibatalkan' => 'bg-slate-100 text-slate-700 border-slate-200',
                                     default      => 'bg-amber-100 text-amber-700 border-amber-200',
+                                };
+                                $statusLabel = match($status) {
+                                    'selesai'    => 'Selesai',
+                                    'disetujui'  => 'Diproses',
+                                    'ditolak'    => 'Ditolak',
+                                    'dibatalkan' => 'Dibatalkan',
+                                    default      => 'Diajukan',
                                 };
                             @endphp
                             <a href="{{ route('cuti.show', $cuti) }}" class="riwayat-item" style="flex-direction:column; gap:10px; padding:14px; margin-bottom:12px; background:rgba(255,255,255,0.8); border:1.5px solid #e2e8f0; border-radius:16px; display:flex; text-decoration:none;">
@@ -388,7 +398,7 @@
                                         <p class="text-[10px] text-slate-400 mt-0.5 truncate">Diajukan: {{ \Carbon\Carbon::parse($cuti->created_at)->format('d M Y') }}</p>
                                     </div>
                                 </div>
-                                <span class="riwayat-badge {{ $badgeStyle }} w-full text-center mt-2 font-bold px-3 py-1.5 rounded-full text-[10px] border" style="display:inline-block;">{{ ucfirst($status) }}</span>
+                                <span class="riwayat-badge {{ $badgeStyle }} w-full text-center mt-2 font-bold px-3 py-1.5 rounded-full text-[10px] border" style="display:inline-block;">{{ $statusLabel }}</span>
                             </a>
                         @empty
                             <div class="p-6 text-center border-2 border-dashed border-slate-200 rounded-2xl">
@@ -564,7 +574,7 @@
                                             <p class="text-xs text-slate-400 mt-0.5 truncate">Diajukan: {{ \Carbon\Carbon::parse($cuti->created_at)->format('d M Y') }}</p>
                                         </div>
                                     </div>
-                                    <span class="riwayat-badge {{ $badgeStyle }} w-full sm:w-auto text-center">{{ ucfirst($status) }}</span>
+                                    <span class="riwayat-badge {{ $badgeStyle }} w-full sm:w-auto text-center">{{ $statusLabel }}</span>
                                 </a>
                             @empty
                                 <div class="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl">

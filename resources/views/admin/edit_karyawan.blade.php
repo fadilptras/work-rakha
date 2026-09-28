@@ -226,7 +226,7 @@
     <div class="mt-8 bg-zinc-800 p-6 rounded-xl border border-red-900/40 shadow-lg">
         <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
             <div class="text-amber-500 bg-amber-500/10 p-4 rounded-full cursor-pointer hover:scale-110 transition-transform hidden md:block"
-                 onclick="alert('MEKANISME RESET PASSWORD:\n\n1. Jika karyawan lupa password atau tidak bisa login, klik tombol \'Reset ke Password Default\'.\n2. Password karyawan tersebut akan langsung diubah paksa ke default sistem yaitu: #rakhA2022\n3. Beritahu karyawan untuk login menggunakan password tersebut.')">
+                 onclick="alert('MEKANISME RESET PASSWORD:\n\n1. Jika karyawan lupa password atau tidak bisa login, klik tombol \'Reset ke Password Default\'.\n2. Password karyawan tersebut akan langsung diubah paksa ke default sistem yaitu: #rakhA2022!\n3. Beritahu karyawan untuk login menggunakan password tersebut.')">
                 <i class="fas fa-exclamation-triangle text-3xl"></i>
             </div>
             <div class="flex-1">
@@ -237,8 +237,8 @@
                     Gunakan fitur ini jika karyawan lupa password atau tidak bisa mengakses akunnya.
                 </p>
                 <div class="text-xs text-gray-400 flex items-center gap-2 mb-4">
-                    <i class="fas fa-info-circle text-sky-400 cursor-pointer" onclick="alert('MEKANISME RESET PASSWORD:\n\n1. Jika karyawan lupa password atau tidak bisa login, klik tombol \'Reset ke Password Default\'.\n2. Password karyawan tersebut akan langsung diubah paksa ke default sistem yaitu: #rakhA2022\n3. Beritahu karyawan untuk login menggunakan password tersebut.')"></i>
-                    Sistem akan mengatur ulang password karyawan ke default: <code class="bg-zinc-900 px-2 py-1 rounded text-amber-400 font-mono font-bold">#rakhA2022</code>
+                    <i class="fas fa-info-circle text-sky-400 cursor-pointer" onclick="alert('MEKANISME RESET PASSWORD:\n\n1. Jika karyawan lupa password atau tidak bisa login, klik tombol \'Reset ke Password Default\'.\n2. Password karyawan tersebut akan langsung diubah paksa ke default sistem yaitu: #rakhA2022!\n3. Beritahu karyawan untuk login menggunakan password tersebut.')"></i>
+                    Sistem akan mengatur ulang password karyawan ke default: <code class="bg-zinc-900 px-2 py-1 rounded text-amber-400 font-mono font-bold">#rakhA2022!</code>
                 </div>
             </div>
             <div>

@@ -24,15 +24,23 @@
                     <span class="text-sm font-medium text-zinc-400">Status Akhir:</span>
                     @php
                         $statusClass = match($cuti->status) {
-                            'selesai', 'disetujui' => 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                            'selesai' => 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                            'disetujui' => 'bg-blue-500/20 text-blue-400 border-blue-500/30',
                             'ditolak' => 'bg-red-500/20 text-red-400 border-red-500/30',
-                            'proses_finalisasi' => 'bg-blue-500/20 text-blue-400 border-blue-500/30',
                             'dibatalkan' => 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
                             default => 'bg-amber-500/20 text-amber-400 border-amber-500/30',
                         };
+                        $statusLabel = match($cuti->status) {
+                            'selesai' => 'Selesai',
+                            'disetujui' => 'Diproses',
+                            'ditolak' => 'Ditolak',
+                            'dibatalkan' => 'Dibatalkan',
+                            'diajukan' => 'Diajukan',
+                            default => str_replace('_', ' ', $cuti->status),
+                        };
                     @endphp
                     <span class="px-4 py-1.5 font-semibold rounded-full text-sm uppercase tracking-wider border {{ $statusClass }}">
-                        {{ str_replace('_', ' ', $cuti->status) }}
+                        {{ $statusLabel }}
                     </span>
                 </div>
             </div>
@@ -188,7 +196,7 @@
             @endif
 
             {{-- [BARU] BUTTON TRIGGER MODAL AMBIL ALIH (Hanya muncul jika belum final & sudah disetujui approver 1) --}}
-            @if (!in_array($cuti->status, ['disetujui', 'ditolak', 'dibatalkan']) && $cuti->status_approver_1 !== 'menunggu')
+            @if (!in_array($cuti->status, ['selesai', 'ditolak', 'dibatalkan']) && $cuti->status_approver_1 !== 'menunggu')
             <div class="mt-6 bg-zinc-900/50 p-4 rounded-xl border border-zinc-700">
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
                     <div>
@@ -231,7 +239,7 @@
                             </h3>
                             <div class="mt-2">
                                 <p class="text-sm text-zinc-400 mb-4">
-                                    Anda akan mengambil alih persetujuan cuti ini. Semua sisa persetujuan akan dilewati dan status pengajuan akan langsung berubah menjadi <b>DISETUJUI</b>. Jatah cuti karyawan juga akan langsung dipotong.
+                                    Anda akan mengambil alih persetujuan cuti ini. Semua sisa persetujuan akan dilewati dan status pengajuan akan langsung berubah menjadi <b>SELESAI</b>. Jatah cuti karyawan juga akan langsung dipotong.
                                 </p>
 
                                 <form id="formOverride" action="{{ route('admin.cuti.forceApprove', $cuti->id) }}" method="POST" class="space-y-4">

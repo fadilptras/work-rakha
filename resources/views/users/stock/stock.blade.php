@@ -48,7 +48,6 @@
     <style>
         [x-cloak] { display: none !important; }
         .swal2-container { z-index: 100000 !important; }
-        body { background-color: #ede9fe; }
 
         .mesh-bg { 
             position: fixed;
@@ -65,68 +64,9 @@
             pointer-events: none;
         }
         
-        .page-header {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            border-radius: 1.25rem; padding: 1rem 1.5rem; color: white;
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3); position: relative; overflow: hidden;
-        }
-        .page-header::before {
-            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
-            transform: rotate(30deg); pointer-events: none;
-        }
-        .header-content { position: relative; z-index: 1; }
-        .btn-back-modern {
-            display: inline-flex; align-items: center; gap: 10px;
-            padding: 6px 16px 6px 6px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            border-radius: 9999px;
-            color: #1e293b;
-            font-size: 0.85rem; font-weight: 700;
-            text-decoration: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            width: fit-content;
-        }
-        .btn-back-modern:hover { 
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
-            transform: translateY(-2px);
-            color: #1d4ed8;
-        }
-        .btn-back-modern .icon-circle {
-            width: 28px; height: 28px;
-            background: #fff;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: #3b82f6;
-            font-size: 0.8rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-            transition: transform 0.3s ease;
-        }
-        .btn-back-modern:hover .icon-circle {
-            transform: translateX(-3px);
-            background: #EFF6FF;
-        }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 1.5rem;
-            padding: 1rem 1.5rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
-        }
         .table-header { background: #f8fafc; color: #475569; font-weight: 800; }
         .row-item { background: #ffffff; color: #1e293b; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
         .row-item:hover { background: #f1f5f9; }
-
-        /* == Mobile Responsive == */
-        @media (max-width: 640px) {
-            .page-header { padding: 0.9rem 1rem; border-radius: 1rem; }
-            .page-header h1 { font-size: 1.6rem; }
-            .glass-panel { padding: 0.9rem; border-radius: 1.1rem; }
-        }
 
         /* Mobile Card Search */
         .mobile-card-search { display: none; }
@@ -166,16 +106,13 @@
             .sync-collapsible { display: none; }
             .sync-collapsible.sync-open { display: block; }
         }
-        @media (max-width: 767px) {
-            .mobile-auto-h { flex: 0 1 auto !important; min-height: 0 !important; }
-        }
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16 mobile-auto-h" x-data="stockManager()">
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16" x-data="stockManager()">
         <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start mobile-auto-h">
+        <div class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8 space-y-4 flex-1 flex flex-col justify-start">
             
             <!-- Alert Messages -->
             @if (session('success'))
@@ -192,25 +129,12 @@
 
             <!-- Back Button -->
             <div class="w-full flex justify-start">
-                <a href="{{ $backRoute }}" class="btn-back-modern shrink-0">
-                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                    {{ $backText }}
-                </a>
+                <x-ui.back-button :href="$backRoute" :label="$backText" />
             </div>
 
             <!-- Page Title Card (Desktop Style) -->
-            <div class="hidden md:block page-header">
-                <div class="header-content flex flex-row items-center justify-between gap-6">
-                    <div>
-                        <h1 class="text-2xl font-bold tracking-tight text-white">Stock Monitoring</h1>
-                        <p class="text-blue-100 text-sm mt-1">
-                            Monitor physical stock levels, adjust quantities and units, and synchronize data with Accurate reports.
-                        </p>
-                    </div>
-                    <div>
-                        <i class="fas fa-boxes text-5xl opacity-20"></i>
-                    </div>
-                </div>
+            <div class="hidden md:block">
+                <x-ui.page-header title="Stock Monitoring" subtitle="Monitor physical stock levels, adjust quantities and units, and synchronize data with Accurate reports." icon="fa-boxes-stacked" />
             </div>
 
             <!-- Page Title Card (Mobile Style - Icon Moved to Right) -->
@@ -228,13 +152,14 @@
 
             @if($canManageStock)
             <!-- Sync Center -->
-            <div class="glass-panel border-t-4 border-t-blue-500 shadow-md">
+            <x-ui.glass-card class="border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !bg-white">
                 <!-- Header -->
                 <div class="flex items-center gap-3">
-                    <i class="fas fa-cloud-upload-alt text-blue-500 text-lg shrink-0"></i>
-                    <h3 class="text-base font-black text-slate-700 uppercase tracking-wide">
-                        Update Stock via Excel (Daily Upload)
-                    </h3>
+                    <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm shrink-0"><i class="fas fa-cloud-upload-alt"></i></span>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-slate-800 leading-tight">Update Stock via Excel <span class="font-medium text-slate-400">(Daily Upload)</span></h3>
+                        <p class="text-[11px] text-slate-500 font-medium leading-tight">Synchronize stock with Accurate reports.</p>
+                    </div>
                 </div>
                 <button type="button" class="sync-mobile-toggle" onclick="this.nextElementSibling.classList.toggle('sync-open'); this.querySelector('span').textContent = this.nextElementSibling.classList.contains('sync-open') ? 'Sembunyikan' : 'Lihat Detail'; this.querySelector('i').classList.toggle('fa-chevron-up');">
                     <i class="fas fa-chevron-down"></i> <span>Lihat Detail</span>
@@ -247,25 +172,26 @@
                         <!-- Drag & Drop Zone Form -->
                         <form @submit.prevent="uploadExcelForPreview($event)" class="flex flex-col h-full">
                             @csrf
-                            <div class="flex-1 relative border-2 border-dashed border-emerald-200 rounded-2xl bg-emerald-50/50 hover:bg-emerald-50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer min-h-[110px] py-3">
+                            <div class="flex-1 relative border border-dashed border-emerald-200 rounded-xl bg-emerald-50/40 hover:bg-emerald-50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer min-h-[110px] py-4 px-4">
                                 <input type="file" name="file" accept=".xlsx, .xls, .csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required onchange="document.getElementById('fileNameStock').textContent = this.files[0] ? this.files[0].name : 'No file chosen';">
-                                <i class="fas fa-file-excel text-3xl text-emerald-400 mb-1.5"></i>
-                                <p id="fileNameStock" class="text-sm font-bold text-slate-600 truncate px-2">Choose or drag Excel file here</p>
+                                <span class="w-10 h-10 rounded-xl bg-white border border-emerald-100 flex items-center justify-center text-emerald-500 mb-2 shadow-sm"><i class="fas fa-file-excel text-base"></i></span>
+                                <p id="fileNameStock" class="text-xs font-bold text-slate-600 truncate max-w-full px-2">Choose or drag Excel file here</p>
+                                <p class="text-[10px] text-slate-400 font-medium mt-1">.xlsx, .xls, .csv</p>
                             </div>
-                            <button type="submit" :disabled="isParsing" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md hover:shadow-emerald-500/40 flex justify-center items-center">
+                            <button type="submit" :disabled="isParsing" class="w-full mt-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold h-[38px] px-4 rounded-lg text-xs transition-all shadow-sm hover:shadow-md flex justify-center items-center gap-2">
                                 <template x-if="!isParsing">
-                                    <span><i class="fas fa-upload mr-2"></i> Upload Excel File</span>
+                                    <span><i class="fas fa-upload text-[11px] mr-1.5"></i> Upload Excel File</span>
                                 </template>
                                 <template x-if="isParsing">
-                                    <span><i class="fas fa-spinner fa-spin mr-2"></i> Processing Excel...</span>
+                                    <span><i class="fas fa-spinner fa-spin text-[11px] mr-1.5"></i> Processing Excel...</span>
                                 </template>
                             </button>
                             <div class="flex items-center gap-2 mt-3 w-full">
-                                <button type="button" @click="openAddBarangModal()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-md hover:shadow-blue-500/40 flex justify-center items-center text-sm">
-                                    <i class="fas fa-plus mr-2 text-xs"></i> Add Item Data
+                                <button type="button" @click="openAddBarangModal()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold h-[32px] px-3 rounded-lg text-xs transition-all shadow-sm flex justify-center items-center gap-1.5">
+                                    <i class="fas fa-plus text-[10px]"></i> Add Item Data
                                 </button>
-                                <button type="button" @click="showInfoAccurateImport()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-600 transition-all duration-200 shrink-0 shadow-sm" title="Usage Information">
-                                    <i class="fas fa-info text-xs"></i>
+                                <button type="button" @click="showInfoAccurateImport()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-600 transition-colors shrink-0 shadow-sm" title="Usage Information">
+                                    <i class="fas fa-info text-[11px]"></i>
                                 </button>
                             </div>
                         </form>
@@ -274,10 +200,10 @@
                         <!-- Log History -->
                         <div class="{{ $canManageStock ? 'lg:col-span-2' : '' }} flex flex-col">
                             <div class="flex justify-between items-center mb-3">
-                                <h3 class="font-bold text-slate-700 text-sm flex items-center">Recent Upload History</h3>
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center text-xs shrink-0"><i class="fas fa-history"></i></span> Recent Upload History</h3>
                                 <a href="{{ route('sales.stock.history_index') }}" class="text-xs text-blue-600 font-bold hover:underline">All History &rarr;</a>
                             </div>
-                            <div class="overflow-x-auto overflow-y-hidden border border-slate-100 rounded-xl bg-white shadow-sm flex flex-col">
+                            <div class="overflow-x-auto overflow-y-hidden border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col">
                                 <table class="w-full text-left text-sm whitespace-nowrap min-w-[500px]">
                                     <thead class="bg-slate-50">
                                         <tr class="text-[10px] text-slate-500 border-b border-slate-200 tracking-wider">
@@ -326,46 +252,34 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </x-ui.glass-card>
             @endif
 
             <!-- Content -->
-            <div class="glass-panel border-t-4 border-t-blue-500">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                    <div>
-                        <h2 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-list text-blue-500"></i> Product List</h2>
-                        <p class="text-[11px] text-slate-500 font-medium mt-0.5">Last updated: @if($logs->first()) {{ $logs->first()->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i') }} @else - @endif</p>
-                    </div>
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                        <!-- Search Box (Desktop) -->
-                        <div class="relative w-72 hidden sm:block">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-search text-slate-400 text-sm"></i>
-                            </div>
-                            <input type="text" x-model="searchQuery" placeholder="Search Product Name" class="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 pr-8 !py-2 shadow-sm transition-colors">
-                            <button type="button" x-show="searchQuery.length > 0" @click="searchQuery = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
-                                <i class="fas fa-times-circle text-xs"></i>
-                            </button>
+            <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !bg-white">
+                <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm shrink-0"><i class="fas fa-list"></i></span>
+                        <div class="min-w-0">
+                            <h2 class="text-sm font-bold text-slate-800 leading-tight">Product List</h2>
+                            <p class="text-[11px] text-slate-500 font-medium leading-tight">Last updated: @if($logs->first()) {{ $logs->first()->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i') }} @else - @endif</p>
                         </div>
+                    </div>
+                    <div class="flex items-center gap-2.5 w-full sm:w-auto sm:flex-1 sm:justify-end min-w-0">
+                        <x-ui.search-input x-model="searchQuery" placeholder="Search Product Name" autocomplete="off" class="flex-1 min-w-[140px] max-w-sm hidden sm:flex" />
                         @if($canManageStock)
-                        <a href="{{ route('sales.stock.export') }}" class="bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm flex justify-center items-center gap-2 whitespace-nowrap">
-                            <i class="fas fa-file-export"></i> <span class="sm:hidden">Export Excel</span><span class="hidden sm:inline">Export Excel</span>
-                        </a>
+                        <x-ui.export-button variant="excel" label="Export Excel" href="{{ route('sales.stock.export') }}" title="Export Stock to Excel" class="shrink-0" />
                         @endif
                     </div>
                 </div>
 
                 <!-- Mobile Card Search -->
-                <div class="mobile-card-search">
-                    <i class="fas fa-search"></i>
-                    <input type="text" x-model="searchQuery" placeholder="Cari produk..." class="">
-                    <button type="button" x-show="searchQuery.length > 0" @click="searchQuery = ''" x-cloak>
-                        <i class="fas fa-times-circle text-slate-400 text-xs"></i>
-                    </button>
+                <div class="sm:hidden px-3 pt-3">
+                    <x-ui.search-input x-model="searchQuery" placeholder="Cari produk..." />
                 </div>
 
                 <!-- Mobile Product Cards -->
-                <div class="md:hidden space-y-2 max-h-[70vh] overflow-y-auto pb-4" @scroll.passive="mobileScrollHandler($event)">
+                <div class="md:hidden px-3 pt-2 pb-3 space-y-2 max-h-[70vh] overflow-y-auto" @scroll.passive="mobileScrollHandler($event)">
                     <template x-for="item in displayedItems" :key="'m-' + item.id">
                         <div class="mobile-product-card" :class="{'mpc-zero': item.stokSistem === 0}">
                             <div class="flex items-start gap-2.5">
@@ -399,7 +313,7 @@
                 </div>
 
                 <!-- Desktop Table -->
-                <div class="hidden md:block overflow-auto max-h-[800px] border border-slate-200 rounded-xl shadow-sm" @scroll.passive="scrollHandler($event)">
+                <div class="hidden md:block overflow-auto max-h-[800px] flex-1 bg-white" @scroll.passive="scrollHandler($event)">
                     <table class="w-full text-sm text-left">
                         <thead class="table-header sticky top-0 z-10 shadow-sm bg-slate-50/80 backdrop-blur-sm">
                             <tr>
@@ -449,7 +363,7 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </x-ui.glass-card>
         </div>
 
         <!-- Add Item Modal -->
@@ -470,16 +384,16 @@
                  <!-- Modal Body -->
                 <form @submit.prevent="saveNewBarang()" class="p-6 space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Item Name</label>
-                        <input type="text" x-model="addNama" required placeholder="Enter item name..." class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-3 py-2 shadow-sm transition-colors">
+                        <label class="ui-label">Item Name <span class="text-red-500">*</span></label>
+                        <input type="text" x-model="addNama" required placeholder="Enter item name..." class="ui-input !bg-white">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Item Code</label>
-                        <input type="text" x-model="addKode" required placeholder="Enter item code (Accurate)..." class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-3 py-2 shadow-sm transition-colors">
+                        <label class="ui-label">Item Code <span class="text-red-500">*</span></label>
+                        <input type="text" x-model="addKode" required placeholder="Enter item code (Accurate)..." class="ui-input !bg-white">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Unit</label>
-                        <select x-model="addSatuan" required class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-3 py-2 shadow-sm transition-colors">
+                        <label class="ui-label">Unit <span class="text-red-500">*</span></label>
+                        <select x-model="addSatuan" required class="ui-input !bg-white">
                             <option value="" disabled selected>-- Select Unit --</option>
                             <option value="pcs">pcs</option>
                             <option value="box">box</option>
@@ -526,15 +440,7 @@
                 <!-- Modal Body (Scrollable) -->
                 <div class="p-6 overflow-y-auto space-y-4 flex-1" @scroll.passive="previewScrollHandler($event)">
                     <!-- Search inside modal -->
-                    <div class="relative w-full max-w-md">
-                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-slate-400 text-sm"></i>
-                        </div>
-                        <input type="text" x-model="previewSearchQuery" placeholder="Search items in details..." class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 pr-8 px-3 py-2 shadow-sm transition-colors">
-                        <button type="button" x-show="previewSearchQuery.length > 0" @click="previewSearchQuery = ''" class="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
-                            <i class="fas fa-times-circle"></i>
-                        </button>
-                    </div>
+                    <x-ui.search-input x-model="previewSearchQuery" placeholder="Search items in details..." class="w-full max-w-md" />
 
                     <div class="overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-x-auto">
                         <table class="w-full text-sm text-left table-fixed min-w-[600px]">
@@ -641,15 +547,7 @@
 
                     <!-- Search Box -->
                     <div class="flex items-center">
-                        <div class="relative w-full sm:w-64">
-                            <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                <i class="fas fa-search text-slate-400 text-xs"></i>
-                            </div>
-                            <input type="text" x-model="logDetailsSearchQuery" placeholder="Search items in details..." class="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 pr-8 py-1.5 shadow-sm transition-colors">
-                            <button type="button" x-show="logDetailsSearchQuery.length > 0" @click="logDetailsSearchQuery = ''" class="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
-                                <i class="fas fa-times-circle text-xs"></i>
-                            </button>
-                        </div>
+                        <x-ui.search-input x-model="logDetailsSearchQuery" placeholder="Search items in details..." class="w-full sm:w-64" />
                     </div>
 
                     <!-- Items Updated Table -->

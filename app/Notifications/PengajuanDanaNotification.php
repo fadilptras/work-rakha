@@ -31,7 +31,7 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
     public function toWhatsApp(object $notifiable): array
     {
         $judul = $this->pengajuanDana->judul_pengajuan;
-        $pemohon = $this->pengajuanDana->user->name;
+        $pemohon = $this->pengajuanDana->user->name ?? 'Karyawan';
         $nominal = "Rp " . number_format($this->pengajuanDana->total_dana, 0, ',', '.');
         $link = $notifiable->role === 'admin' 
             ? route('admin.pengajuan_dana.show', $this->pengajuanDana->id) 
@@ -76,7 +76,7 @@ class PengajuanDanaNotification extends Notification implements ShouldQueue
         $message = '';
         $icon = 'fas fa-coins';
         $color = 'text-blue-600';
-        $pemohon = $this->pengajuanDana->user->name;
+        $pemohon = $this->pengajuanDana->user->name ?? 'Karyawan';
         $judulPengajuan = \Illuminate\Support\Str::limit($this->pengajuanDana->judul_pengajuan, 30);
 
         switch ($this->tipe) {

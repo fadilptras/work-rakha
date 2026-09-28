@@ -49,7 +49,7 @@
         </tr>
         <tr>
             <th>Nama</th>
-            <td>{{ $evaluation->user->name }}</td>
+            <td>{{ $evaluation->user->name ?? '-' }}</td>
         </tr>
     </table>
 
@@ -182,7 +182,7 @@
                 <strong>MENGETAHUI</strong><br>
                 (Karyawan Ybs)<br><br><br>
                 <span class="signature-line"></span><br>
-                {{ $evaluation->user->name }}
+                {{ $evaluation->user->name ?? '-' }}
             </td>
         </tr>
     </table>

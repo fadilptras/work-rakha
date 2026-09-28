@@ -1,4 +1,8 @@
 <table>
+    <!-- Kop Perusahaan -->
+    <tr>
+        <td colspan="20" style="font-weight: bold; font-size: 16px; text-align: center; vertical-align: middle;">PT RAKHA NUSANTARA MEDIKA</td>
+    </tr>
     <!-- Judul Header Atas -->
     <tr>
         <td colspan="20" style="font-weight: bold; font-size: 16px; text-align: center; vertical-align: middle;">REKAPITULASI PURCHASE ORDER</td>

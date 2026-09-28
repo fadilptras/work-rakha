@@ -8,7 +8,6 @@
     @push('styles')
     <style>
         [x-cloak] { display: none !important; }
-        body { font-family: 'Outfit', sans-serif; background-color: #ede9fe; }
 
         /* == Background == */
         .mesh-bg { 
@@ -20,72 +19,6 @@
                 radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
             background-attachment: fixed;
             pointer-events: none;
-        }
-
-        /* == Header Style == */
-        .page-header {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            border-radius: 1.25rem; 
-            padding: 1rem 1.5rem; 
-            color: white;
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3); 
-            position: relative; 
-            overflow: hidden;
-        }
-        .page-header::before {
-            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
-            transform: rotate(30deg); pointer-events: none;
-        }
-        .header-content { position: relative; z-index: 1; }
-
-        /* == Cards & Tabs == */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            border-radius: 1.5rem;
-            padding: 1rem 1.5rem;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
-        }
-        
-        /* == Modern Back Button == */
-        .btn-back-modern {
-            display: inline-flex; align-items: center; gap: 10px;
-            padding: 6px 16px 6px 6px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            border-radius: 9999px;
-            color: #1e293b;
-            font-size: 0.85rem; font-weight: 700;
-            text-decoration: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            margin-bottom: 0;
-            width: fit-content;
-        }
-        .btn-back-modern:hover { 
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
-            transform: translateY(-2px);
-            color: #1d4ed8;
-        }
-        .btn-back-modern .icon-circle {
-            width: 28px; height: 28px;
-            background: #fff;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: #3b82f6;
-            font-size: 0.8rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-            transition: transform 0.3s ease;
-        }
-        .btn-back-modern:hover .icon-circle {
-            transform: translateX(-3px);
-            background: #EFF6FF;
         }
 
         /* Tier Styling */
@@ -114,11 +47,6 @@
             }
         }
 
-        /* == Mobile Responsive == */
-        @media (max-width: 640px) {
-            .glass-card { padding: 0.9rem; border-radius: 1.1rem; }
-        }
-
         /* Mobile Payout Cards */
         .mobile-payout-card {
             background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.9rem;
@@ -132,23 +60,6 @@
         @media (max-width: 640px) {
             .desktop-table-wrap { display: none; }
             .mobile-cards-wrap { display: flex; }
-        }
-
-        @media (max-width: 767px) {
-            .mobile-auto-h { flex: 0 1 auto !important; min-height: 0 !important; }
-        }
-
-        /* ===== Tab scroll hint (mobile) ===== */
-        .tab-scroller-wrap { position: relative; }
-        @keyframes swipeHint {
-            0%, 100% { opacity: 0.45; }
-            50% { opacity: 1; }
-        }
-        .tab-hint-text {
-            animation: swipeHint 1.4s ease-in-out infinite;
-            font-size: 0.6rem;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.9);
         }
     </style>
     @endpush
@@ -245,7 +156,7 @@
     }">
         <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start mobile-auto-h">
+        <div class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8 space-y-4 flex-1 flex flex-col justify-start">
             
             <div class="w-full flex justify-start">
                 <x-ui.back-button href="{{ route('sales.index') }}" label="Back to Sales Dashboard" />
@@ -254,22 +165,22 @@
             <div class="hidden md:block">
                 <x-ui.page-header title="Sales Incentive Scheme" subtitle="Monitor sales performance incentive calculations based on official schemes and targets." icon="fa-hand-holding-dollar">
                     <x-slot:controls>
-                        <x-ui.tabs x-ref="tabScroller" @scroll="checkTabOverflow()" class="relative z-10 w-full overflow-x-auto">
-                            <x-ui.tab @click="activeTab = 'monthly'" x-bind:class="activeTab === 'monthly' ? 'ui-tab--active' : ''">
-                                <i class="fas fa-calendar-alt"></i> Monthly
-                            </x-ui.tab>
-                            <x-ui.tab @click="activeTab = 'quarterly'" x-bind:class="activeTab === 'quarterly' ? 'ui-tab--active' : ''">
-                                <i class="fas fa-calendar-days"></i> Quarterly
-                            </x-ui.tab>
-                            <x-ui.tab @click="activeTab = 'outlet'" x-bind:class="activeTab === 'outlet' ? 'ui-tab--active' : ''">
-                                <i class="fas fa-store"></i> New Outlet
-                            </x-ui.tab>
+                        <div x-ref="tabScroller" @scroll="checkTabOverflow()" class="flex space-x-1 bg-white/10 p-1 rounded-full border border-white/20 backdrop-blur-md overflow-x-auto relative z-10 w-full">
+                            <button @click="activeTab = 'monthly'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'monthly', 'text-white hover:bg-white/20': activeTab !== 'monthly' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                                <i class="fas fa-calendar-alt mr-2"></i> Monthly
+                            </button>
+                            <button @click="activeTab = 'quarterly'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'quarterly', 'text-white hover:bg-white/20': activeTab !== 'quarterly' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                                <i class="fas fa-calendar-days mr-2"></i> Quarterly
+                            </button>
+                            <button @click="activeTab = 'outlet'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'outlet', 'text-white hover:bg-white/20': activeTab !== 'outlet' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                                <i class="fas fa-store mr-2"></i> New Outlet
+                            </button>
                             @if($hasFullAccess)
-                            <x-ui.tab @click="activeTab = 'settings'" x-bind:class="activeTab === 'settings' ? 'ui-tab--active' : ''">
-                                <i class="fas fa-cog"></i> Settings
-                            </x-ui.tab>
+                            <button @click="activeTab = 'settings'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'settings', 'text-white hover:bg-white/20': activeTab !== 'settings' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
+                                <i class="fas fa-cog mr-2"></i> Settings
+                            </button>
                             @endif
-                        </x-ui.tabs>
+                        </div>
                     </x-slot:controls>
                 </x-ui.page-header>
             </div>
@@ -283,30 +194,39 @@
                         <i class="fas fa-hand-holding-dollar"></i>
                     </div>
                 </div>
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-1.5 flex items-stretch gap-1 overflow-x-auto">
-                    <button @click="activeTab = 'monthly'" x-bind:class="activeTab === 'monthly' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold whitespace-nowrap">
-                        <i class="fas fa-calendar-alt text-sm"></i><span class="text-[10px] uppercase">Monthly</span>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-1.5 flex items-stretch gap-1">
+                    <button @click="activeTab = 'monthly'" :class="activeTab === 'monthly' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold transition-all">
+                        <i class="fas fa-calendar-alt text-sm"></i>
+                        <span class="text-[10px] uppercase tracking-wide">Monthly</span>
                     </button>
-                    <button @click="activeTab = 'quarterly'" x-bind:class="activeTab === 'quarterly' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold whitespace-nowrap">
-                        <i class="fas fa-calendar-days text-sm"></i><span class="text-[10px] uppercase">Quarterly</span>
+                    <button @click="activeTab = 'quarterly'" :class="activeTab === 'quarterly' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold transition-all">
+                        <i class="fas fa-calendar-days text-sm"></i>
+                        <span class="text-[10px] uppercase tracking-wide">Quarterly</span>
                     </button>
-                    <button @click="activeTab = 'outlet'" x-bind:class="activeTab === 'outlet' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold whitespace-nowrap">
-                        <i class="fas fa-store text-sm"></i><span class="text-[10px] uppercase">Outlet</span>
+                    <button @click="activeTab = 'outlet'" :class="activeTab === 'outlet' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold transition-all">
+                        <i class="fas fa-store text-sm"></i>
+                        <span class="text-[10px] uppercase tracking-wide">New Outlet</span>
                     </button>
+                    @if($hasFullAccess)
+                    <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold transition-all">
+                        <i class="fas fa-cog text-sm"></i>
+                        <span class="text-[10px] uppercase tracking-wide">Settings</span>
+                    </button>
+                    @endif
                 </div>
             </div>
 
             {{-- SECTION 1: MONTHLY SCHEME --}}
             <div x-show="activeTab === 'monthly'" class="flex flex-col w-full" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
                 
-                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-lg">
+                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !bg-white">
                     
                     {{-- Header Table + Filter (Rata Kiri & Kanan Balance) --}}
                     <div class="px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
                         <div class="flex items-center gap-3 shrink-0">
-                            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl shadow-sm"><i class="fas fa-table"></i></div>
+                            <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm shadow-sm"><i class="fas fa-table"></i></div>
                             <div>
-                                <h3 class="text-base sm:text-lg font-black text-slate-800">Actual Sales & Monthly Incentive</h3>
+                                <h3 class="text-sm font-bold text-slate-800">Actual Sales & Monthly Incentive</h3>
                                 <p class="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">Period: {{ $bulan }} {{ $tahun }}</p>
                             </div>
                         </div>
@@ -373,7 +293,7 @@
                                     <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Actual Sales</th>
                                     <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Ach %</th>
                                     <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Rate</th>
-                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Est. Incentive</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap bg-emerald-50/60 border-l border-emerald-100 text-emerald-700">Est. Incentive</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
@@ -396,7 +316,7 @@
                                     <td class="px-4 sm:px-6 py-3 text-center font-bold text-slate-600 whitespace-nowrap">
                                         {{ number_format($payout['incentive_rate'], 1, ',', '.') }}%
                                     </td>
-                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-600 whitespace-nowrap">
+                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-700 bg-emerald-50/60 border-l border-emerald-100 whitespace-nowrap">
                                         Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -417,14 +337,14 @@
             {{-- SECTION 2: QUARTERLY SCHEME --}}
             <div x-show="activeTab === 'quarterly'" class="flex flex-col w-full" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
                 
-                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-lg">
+                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !bg-white">
                     
                     {{-- Header Table + Filter --}}
                     <div class="px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
                         <div class="flex items-center gap-3 shrink-0">
-                            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl shadow-sm"><i class="fas fa-table"></i></div>
+                            <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm shadow-sm"><i class="fas fa-table"></i></div>
                             <div>
-                                <h3 class="text-base sm:text-lg font-black text-slate-800">Actual Sales & Quarterly Incentive</h3>
+                                <h3 class="text-sm font-bold text-slate-800">Actual Sales & Quarterly Incentive</h3>
                                 <p class="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">Period: {{ $triwulan }} {{ $tahun }}</p>
                             </div>
                         </div>
@@ -489,7 +409,7 @@
                                     <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Quarterly Target</th>
                                     <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Actual Sales</th>
                                     <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Ach %</th>
-                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Est. Incentive</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap bg-emerald-50/60 border-l border-emerald-100 text-emerald-700">Est. Incentive</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
@@ -509,7 +429,7 @@
                                             {{ number_format($payout['achievement_rate'], 1, ',', '.') }}%
                                         </span>
                                     </td>
-                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-600 whitespace-nowrap">
+                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-700 bg-emerald-50/60 border-l border-emerald-100 whitespace-nowrap">
                                         Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -530,14 +450,14 @@
             {{-- SECTION 3: NEW OUTLET BONUS --}}
             <div x-show="activeTab === 'outlet'" class="flex flex-col w-full" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
                 
-                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-lg">
+                <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !bg-white">
                     
                     {{-- Header Table + Filter --}}
                     <div class="px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
                         <div class="flex items-center gap-3 shrink-0">
-                            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl shadow-sm"><i class="fas fa-table"></i></div>
+                            <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm shadow-sm"><i class="fas fa-table"></i></div>
                             <div>
-                                <h3 class="text-base sm:text-lg font-black text-slate-800">Actual Sales & New Outlet Bonus</h3>
+                                <h3 class="text-sm font-bold text-slate-800">Actual Sales & New Outlet Bonus</h3>
                                 <p class="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">Period: {{ $bulan }} {{ $tahun }}</p>
                             </div>
                         </div>
@@ -603,7 +523,7 @@
                                     <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Sales Person (PS)</th>
                                     <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">New Outlets Count</th>
                                     <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">New Outlets List</th>
-                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Est. Bonus</th>
+                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap bg-emerald-50/60 border-l border-emerald-100 text-emerald-700">Est. Bonus</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
@@ -629,7 +549,7 @@
                                             @endforeach
                                         </div>
                                     </td>
-                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-600 whitespace-nowrap">
+                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-700 bg-emerald-50/60 border-l border-emerald-100 whitespace-nowrap">
                                         Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -659,7 +579,7 @@
                 @endif
 
                 {{-- Global Filters + Configure — digabung dalam satu card --}}
-                <div class="glass-card border-t-4 border-t-blue-500 flex flex-col xl:flex-row xl:items-end justify-between gap-4">
+                <x-ui.glass-card class="border-t-4 border-t-blue-500 flex flex-col xl:flex-row xl:items-end justify-between gap-4 !rounded-3xl !bg-white shadow-sm">
                     <div>
                         <h3 class="text-base sm:text-lg font-bold text-slate-800">Incentive Rules History</h3>
                         <p class="text-slate-500 text-xs mt-0.5">List of all monthly and quarterly incentive rules saved in the system</p>
@@ -685,11 +605,11 @@
                         <x-ui.search-input x-model="historySearchTahun" placeholder="Search Year..." class="w-32 shrink-0" />
                         <x-ui.filter-select x-model="historyFilterBasis" placeholder="All Scheme Models" :options="['nominal' => 'Scheme 1 (Nominal Rp)', 'percentage' => 'Scheme 2 (Percentage %)']" class="w-48 shrink-0" />
                     </div>
-                </div>
+                </x-ui.glass-card>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {{-- Card Riwayat Bulanan --}}
-                    <div class="glass-card border-t-4 border-t-blue-500 flex flex-col gap-4">
+                    <x-ui.glass-card class="border-t-4 border-t-blue-500 flex flex-col gap-4 !rounded-3xl !bg-white shadow-sm">
                         <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
                             <div>
                                 <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -728,8 +648,8 @@
                                                     historyDetailTiers = row.tiers;
                                                     historyDetailType = row.type;
                                                     showHistoryDetailModal = true;
-                                                " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold text-[9px] transition-colors border border-slate-200">
-                                                    <i class="fas fa-eye text-[8px]"></i> Detail
+                                                " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white font-bold text-[10px] shadow-sm transition-colors border border-sky-500">
+                                                    <i class="fas fa-eye text-[10px]"></i> Detail
                                                 </button>
                                                 @if($hasFullAccess)
                                                     <button type="button" @click="
@@ -742,8 +662,8 @@
                                                             settingsBulanPercent = JSON.parse(JSON.stringify(row.tiers));
                                                         }
                                                         showFormModalBulan = true;
-                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-[9px] transition-colors border border-blue-100">
-                                                        <i class="fas fa-edit text-[8px]"></i> Edit
+                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] shadow-sm transition-colors border border-orange-500">
+                                                        <i class="fas fa-edit text-[10px]"></i> Edit
                                                     </button>
                                                     <button type="button" @click="
                                                         if (confirm('Are you sure you want to delete this incentive rule?')) {
@@ -775,8 +695,8 @@
                                                                 alert('Connection error or expired token. Please refresh the page.');
                                                             });
                                                         }
-                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[9px] transition-colors border border-rose-100">
-                                                        <i class="fas fa-trash-can text-[8px]"></i> Delete
+                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] shadow-sm transition-colors border border-red-600">
+                                                        <i class="fas fa-trash-can text-[10px]"></i> Delete
                                                     </button>
                                                 @endif
                                             </td>
@@ -791,10 +711,10 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    </x-ui.glass-card>
 
                     {{-- Card Riwayat Triwulan --}}
-                    <div class="glass-card border-t-4 border-t-blue-500 flex flex-col gap-4">
+                    <x-ui.glass-card class="border-t-4 border-t-blue-500 flex flex-col gap-4 !rounded-3xl !bg-white shadow-sm">
                         <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
                             <div>
                                 <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -833,8 +753,8 @@
                                                     historyDetailTiers = row.tiers;
                                                     historyDetailType = row.type;
                                                     showHistoryDetailModal = true;
-                                                " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold text-[9px] transition-colors border border-slate-200">
-                                                    <i class="fas fa-eye text-[8px]"></i> Detail
+                                                " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white font-bold text-[10px] shadow-sm transition-colors border border-sky-500">
+                                                    <i class="fas fa-eye text-[10px]"></i> Detail
                                                 </button>
                                                 @if($hasFullAccess)
                                                     <button type="button" @click="
@@ -847,8 +767,8 @@
                                                             settingsTriwulanPercent = JSON.parse(JSON.stringify(row.tiers));
                                                         }
                                                         showFormModalTriwulan = true;
-                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-[9px] transition-colors border border-blue-100">
-                                                        <i class="fas fa-edit text-[8px]"></i> Edit
+                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] shadow-sm transition-colors border border-orange-500">
+                                                        <i class="fas fa-edit text-[10px]"></i> Edit
                                                     </button>
                                                     <button type="button" @click="
                                                         if (confirm('Are you sure you want to delete this incentive rule?')) {
@@ -880,8 +800,8 @@
                                                                 alert('Connection error or expired token. Please refresh the page.');
                                                             });
                                                         }
-                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[9px] transition-colors border border-rose-100">
-                                                        <i class="fas fa-trash-can text-[8px]"></i> Delete
+                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] shadow-sm transition-colors border border-red-600">
+                                                        <i class="fas fa-trash-can text-[10px]"></i> Delete
                                                     </button>
                                                 @endif
                                             </td>
@@ -896,7 +816,7 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    </x-ui.glass-card>
                 </div>
             </div>
             @endif
@@ -905,7 +825,7 @@
             {{-- Modal Aturan Skema Bulanan Info --}}
             <div x-show="showInfoModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showInfoModal = false"></div>
-                <div class="glass-card w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden" 
+                <div class="bg-white w-full max-w-3xl rounded-2xl border border-slate-200 p-6 shadow-2xl z-10 relative overflow-hidden" 
                      x-transition:enter="transition ease-out duration-300 transform" 
                      x-transition:enter-start="opacity-0 scale-95" 
                      x-transition:enter-end="opacity-100 scale-100"
@@ -962,7 +882,7 @@
             {{-- Modal Aturan Skema Triwulan Info --}}
             <div x-show="showInfoModalTriwulan" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showInfoModalTriwulan = false"></div>
-                <div class="glass-card w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden" 
+                <div class="bg-white w-full max-w-3xl rounded-2xl border border-slate-200 p-6 shadow-2xl z-10 relative overflow-hidden" 
                      x-transition:enter="transition ease-out duration-300 transform" 
                      x-transition:enter-start="opacity-0 scale-95" 
                      x-transition:enter-end="opacity-100 scale-100"
@@ -1019,7 +939,7 @@
             {{-- Modal Aturan Skema Outlet Baru Info --}}
             <div x-show="showInfoModalOutlet" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showInfoModalOutlet = false"></div>
-                <div class="glass-card w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden" 
+                <div class="bg-white w-full max-w-3xl rounded-2xl border border-slate-200 p-6 shadow-2xl z-10 relative overflow-hidden" 
                      x-transition:enter="transition ease-out duration-300 transform" 
                      x-transition:enter-start="opacity-0 scale-95" 
                      x-transition:enter-end="opacity-100 scale-100"
@@ -1372,10 +1292,10 @@
                 </div>
             </div>
 
-            {{-- Modal History Detail --}}
+            {{-- Modal History Detail — pakai ui-glass biar card jelas --}}
             <div x-show="showHistoryDetailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showHistoryDetailModal = false"></div>
-                <div class="glass-card w-full max-w-lg shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[80vh]" 
+                <div class="bg-white w-full max-w-lg rounded-2xl border border-slate-200 p-6 shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[80vh]" 
                      x-transition:enter="transition ease-out duration-300 transform" 
                      x-transition:enter-start="opacity-0 scale-95" 
                      x-transition:enter-end="opacity-100 scale-100"
@@ -1385,7 +1305,7 @@
                     
                     <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3 shrink-0">
                         <div>
-                            <h3 class="text-base sm:text-lg font-black text-slate-800" x-text="historyDetailTitle"></h3>
+                            <h3 class="text-sm font-bold text-slate-800" x-text="historyDetailTitle"></h3>
                             <p class="text-slate-500 text-xs mt-0.5" x-text="historyDetailSub"></p>
                         </div>
                         <button type="button" @click="showHistoryDetailModal = false" class="text-slate-400 hover:text-slate-600 transition-colors">

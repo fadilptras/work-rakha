@@ -2,7 +2,17 @@
 <x-slot:title>Aktivitas</x-slot:title>
 
 <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
-    <h1 class="text-2xl font-bold text-white">Absensi & Lembur Harian Karyawan</h1>
+    <h1 class="text-2xl font-bold text-white">Absensi Harian Karyawan</h1>
+    <div class="bg-zinc-800 p-1 rounded-lg inline-flex shadow-sm border border-zinc-700">
+        <a href="{{ route('admin.absensi.index') }}"
+           class="px-4 py-2 rounded-md text-sm font-bold transition-all bg-sky-600 text-white shadow">
+            <i class="fas fa-calendar-check mr-2"></i> Absensi Harian
+        </a>
+        <a href="{{ route('admin.absensi.rekap') }}"
+           class="px-4 py-2 rounded-md text-sm font-bold transition-all text-zinc-400 hover:text-white hover:bg-zinc-700">
+            <i class="fas fa-calendar-alt mr-2"></i> Rekap Bulanan
+        </a>
+    </div>
 </div>
 
 {{-- FILTER & ACTIONS SECTION (SEBARIS) --}}
@@ -60,7 +70,7 @@
                 <label class="block text-sm font-medium text-zinc-300 mb-2">Status</label>
                 <div class="flex flex-wrap gap-4 items-center">
                     @php
-                        $availableStatuses = ['hadir' => 'Hadir', 'sakit' => 'Sakit', 'izin' => 'Izin', 'cuti' => 'Cuti', 'lembur' => 'Lembur'];
+                        $availableStatuses = ['hadir' => 'Hadir', 'sakit' => 'Sakit', 'izin' => 'Izin', 'cuti' => 'Cuti', 'tidak hadir' => 'Tidak Hadir'];
                     @endphp
                     @foreach($availableStatuses as $val => $label)
                         <label class="inline-flex items-center cursor-pointer">
@@ -131,57 +141,43 @@
             </tr>
         </thead>
         <tbody class="divide-y divide-zinc-700">
-            @forelse ($combined_records as $record)
+            @forelse ($absensi_harian as $record)
                 @php
-                    $isLembur = ($record->record_type === 'lembur');
                     $statusBadgeColor = 'bg-gray-500/10 text-gray-400';
-                    $statusText = $isLembur ? 'Lembur' : $record->status;
-                    
-                    if ($isLembur) {
-                        $jamMasuk = $record->jam_masuk_lembur ? \Carbon\Carbon::parse($record->jam_masuk_lembur) : null;
-                        $jamKeluar = $record->jam_keluar_lembur ? \Carbon\Carbon::parse($record->jam_keluar_lembur) : null;
-                        $tglKeluar = $record->tanggal; 
-                        $statusBadgeColor = 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 shadow-[0_0_10px_rgba(234,179,8,0.2)]';
-                        
-                        $durasiKerja = '-';
-                        if ($jamMasuk && $jamKeluar) {
-                            $totalMenit = $jamMasuk->diffInMinutes($jamKeluar);
-                            $durasiKerja = floor($totalMenit / 60) . ' Jam ' . ($totalMenit % 60) . ' Menit';
-                        }
-                    } else {
-                        $jamMasuk = $record->jam_masuk ? \Carbon\Carbon::parse($record->jam_masuk) : null;
-                        $jamKeluar = $record->jam_keluar ? \Carbon\Carbon::parse($record->jam_keluar) : null;
-                        $tglKeluar = $record->tanggal_keluar ?? $record->tanggal;
-                        $durasiKerja = $record->durasi_teks ?? '-'; 
-                        
-                        if ($record->status == 'hadir') {
-                            $batasWaktuMasuk = \Carbon\Carbon::createFromTimeString('08:00:00', 'Asia/Jakarta');
-                            $waktuMasukKaryawan = $jamMasuk ? \Carbon\Carbon::parse($jamMasuk, 'Asia/Jakarta') : null;
+                    $statusText = $record->status;
 
-                            $isLate = $waktuMasukKaryawan && $waktuMasukKaryawan->gt($batasWaktuMasuk);
-                            
-                            if ($isLate) {
-                                $statusText = 'Hadir (Terlambat)';
-                                $statusBadgeColor = 'bg-green-500/10 text-green-400';
-                            } else {
-                                $statusText = 'Hadir';
-                                $statusBadgeColor = 'bg-green-500/10 text-green-400';
-                            }
-                        } elseif ($record->status == 'sakit') {
-                            $statusBadgeColor = 'bg-red-500/10 text-red-400';
-                        } elseif ($record->status == 'izin') {
-                            $statusBadgeColor = 'bg-amber-500/10 text-amber-400';
-                        } elseif ($record->status == 'cuti') {
-                            $statusBadgeColor = 'bg-purple-500/10 text-purple-400';
-                        } elseif ($record->status == 'tidak hadir') {
-                            $statusBadgeColor = 'bg-gray-500/10 text-gray-400';
+                    $jamMasuk = $record->jam_masuk ? \Carbon\Carbon::parse($record->jam_masuk) : null;
+                    $jamKeluar = $record->jam_keluar ? \Carbon\Carbon::parse($record->jam_keluar) : null;
+                    $tglKeluar = $record->tanggal_keluar ?? $record->tanggal;
+                    $durasiKerja = $record->durasi_teks ?? '-';
+
+                    if ($record->status == 'hadir') {
+                        $batasWaktuMasuk = \Carbon\Carbon::createFromTimeString('08:00:00', 'Asia/Jakarta');
+                        $waktuMasukKaryawan = $jamMasuk ? \Carbon\Carbon::parse($jamMasuk, 'Asia/Jakarta') : null;
+
+                        $isLate = $waktuMasukKaryawan && $waktuMasukKaryawan->gt($batasWaktuMasuk);
+
+                        if ($isLate) {
+                            $statusText = 'Hadir (Terlambat)';
+                            $statusBadgeColor = 'bg-green-500/10 text-green-400';
+                        } else {
+                            $statusText = 'Hadir';
+                            $statusBadgeColor = 'bg-green-500/10 text-green-400';
                         }
+                    } elseif ($record->status == 'sakit') {
+                        $statusBadgeColor = 'bg-red-500/10 text-red-400';
+                    } elseif ($record->status == 'izin') {
+                        $statusBadgeColor = 'bg-amber-500/10 text-amber-400';
+                    } elseif ($record->status == 'cuti') {
+                        $statusBadgeColor = 'bg-purple-500/10 text-purple-400';
+                    } elseif ($record->status == 'tidak hadir') {
+                        $statusBadgeColor = 'bg-gray-500/10 text-gray-400';
                     }
                 @endphp
-                <tr class="hover:bg-zinc-700/30 transition-colors {{ $isLembur ? 'bg-yellow-900/5' : '' }}">
+                <tr class="hover:bg-zinc-700/30 transition-colors">
                     {{-- KOLOM KARYAWAN --}}
                     <td class="px-4 py-3 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 {{ $isLembur ? 'border-yellow-500/50' : 'border-zinc-600' }} shadow-md">
+                        <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-zinc-600 shadow-md">
                             <img src="{{ isset($record->user->profile_picture) ? asset('storage/' . $record->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($record->user->name ?? 'U').'&background=0284c7&color=e0f2fe' }}"
                                  alt="{{ $record->user->name ?? '' }}" class="w-full h-full object-cover" loading="lazy">
                         </div>
@@ -231,9 +227,6 @@
                     {{-- KOLOM STATUS --}}
                     <td class="px-4 py-3">
                         <span class="px-3 py-1 font-bold leading-tight rounded-full text-xs text-center capitalize inline-flex items-center gap-1.5 {{ $statusBadgeColor }}">
-                            @if($isLembur)
-                                <i class="fas fa-moon"></i>
-                            @endif
                             {{ $statusText }}
                         </span>
                     </td>
@@ -247,12 +240,12 @@
                     <td class="px-4 py-3 space-y-1">
                         @php
                             $hasLink = false;
-                            $lampiranMasuk = $isLembur ? $record->lampiran_masuk : $record->lampiran;
-                            $lampiranKeluar = $isLembur ? $record->lampiran_keluar : $record->lampiran_keluar;
-                            $latMasuk = $isLembur ? $record->latitude_masuk : $record->latitude;
-                            $longMasuk = $isLembur ? $record->longitude_masuk : $record->longitude;
-                            $latKeluar = $isLembur ? $record->latitude_keluar : $record->latitude_keluar;
-                            $longKeluar = $isLembur ? $record->longitude_keluar : $record->longitude_keluar;
+                            $lampiranMasuk = $record->lampiran;
+                            $lampiranKeluar = $record->lampiran_keluar;
+                            $latMasuk = $record->latitude;
+                            $longMasuk = $record->longitude;
+                            $latKeluar = $record->latitude_keluar;
+                            $longKeluar = $record->longitude_keluar;
                         @endphp
 
                         @if ($lampiranMasuk)
@@ -282,7 +275,7 @@
                     <td colspan="7" class="px-4 py-8 text-center">
                         <div class="flex flex-col items-center justify-center text-zinc-400">
                             <i class="fas fa-inbox text-4xl mb-3 text-zinc-600"></i>
-                            <p>Tidak ada data aktivitas yang cocok dengan filter.</p>
+                            <p>Tidak ada data absensi yang cocok dengan filter.</p>
                         </div>
                     </td>
                 </tr>

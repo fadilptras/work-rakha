@@ -167,7 +167,7 @@
                         <div class="text-xs space-y-3">
                             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                                 <span class="text-slate-500 font-semibold">Nama Pemohon</span>
-                                <span class="font-bold text-slate-800 text-right">{{ $pengajuanDana->user->name }}</span>
+                                <span class="font-bold text-slate-800 text-right">{{ $pengajuanDana->user->name ?? 'Unknown' }}</span>
                             </div>
                             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                                 <span class="text-slate-500 font-semibold">Divisi</span>

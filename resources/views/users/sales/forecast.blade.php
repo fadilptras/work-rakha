@@ -146,6 +146,31 @@
             .col-tooltip-popup { width: 260px; font-size: 10px; }
         }
 
+        .forecast-scroll {
+            overflow: auto;
+            max-height: 78vh;
+            min-height: 480px;
+            border-radius: 0.75rem;
+        }
+        .forecast-table { border-collapse: separate; border-spacing: 0; }
+        .forecast-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+        .forecast-table thead th,
+        .forecast-table thead th.col-tooltip {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background-color: #f8fafc;
+            box-shadow: 0 1px 0 #e2e8f0, 0 -1px 0 #e2e8f0;
+        }
+        .forecast-table thead th.bg-blue-50\/60 { background-color: #eff6ff !important; }
+        .forecast-table thead th.bg-emerald-50\/60 { background-color: #ecfdf5 !important; }
+        .forecast-table thead th.bg-amber-50\/60 { background-color: #fffbeb !important; }
+        .forecast-table thead th.bg-orange-50\/60 { background-color: #fff7ed !important; }
+        .forecast-table thead th.bg-rose-50\/60 { background-color: #fff1f2 !important; }
         .forecast-table tbody tr.striped { background-color: #f1f5f9; }
         .forecast-table tbody tr.striped td:nth-child(1),
         .forecast-table tbody tr.striped td:nth-child(2),
@@ -188,7 +213,7 @@
                 </div>
             </div>
 
-            <x-ui.glass-card class="border-t-4 border-t-blue-500 shadow-lg !rounded-3xl !p-6">
+            <x-ui.glass-card class="border-t-4 border-t-blue-500 shadow-lg !rounded-3xl !p-6 min-h-[620px]" style="min-height:620px">
                 <div class="flex flex-col md:flex-row md:items-center md:flex-nowrap justify-between gap-4 mb-6">
                     
                     <form method="GET" action="{{ route('sales.forecast') }}" id="filterForm" class="flex flex-col md:flex-row md:flex-nowrap items-stretch md:items-center gap-3 w-full md:w-auto">
@@ -223,9 +248,9 @@
                     @if(count($stockForecast) > 0)
                     
                     {{-- 1. TAMPILAN DESKTOP --}}
-                    <div class="hidden md:block rounded-xl border border-slate-200 bg-white overflow-visible">
-                        <div class="overflow-x-auto rounded-xl">
-                        <table class="forecast-table w-full text-left border-collapse whitespace-nowrap table-fixed">
+                    <div class="hidden md:block rounded-xl border border-slate-200 bg-white overflow-hidden">
+                        <div class="forecast-scroll overflow-auto rounded-xl max-h-[78vh] min-h-[480px]">
+                        <table class="forecast-table w-full text-left border-separate border-spacing-0 whitespace-nowrap table-fixed">
                             <colgroup>
                                 <col style="width: 24%; min-width: 160px;">
                                 <col style="width: 72px;">
@@ -271,7 +296,7 @@
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-orange-600 leading-tight bg-orange-50/60 col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
                                         <span class="inline-flex items-center justify-center gap-1 cursor-help">End Stock</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">({{ $labelStokRealtime }})</span>
                                         <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="col-tooltip-popup">
-                                            <span class="font-bold text-orange-200">End Stock</span> - stock on {{ $labelStokRealtime }}.@if($realEx)<br><span class="text-orange-100">Real: {{ number_format($realEx['stok_tersedia'],0,',','.') }} {{ $realEx['satuan_stok'] }}</span>@endif<br><span class="opacity-80">Source: latest daily snapshot as of today (real-time).</span>
+                                            <span class="font-bold text-orange-200">End Stock</span> - stock on {{ $labelStokRealtime }}.@if($realEx)<br><span class="text-orange-100">Real: {{ number_format($realEx['stok_tersedia'],0,',','.') }} {{ $realEx['satuan_stok'] }}</span>@endif<br><span class="opacity-80">Source: latest daily snapshot as of last stock update.</span>
                                         </div>
                                     </th>
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-rose-600 leading-tight bg-rose-50/60 col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">

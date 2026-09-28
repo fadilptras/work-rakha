@@ -28,57 +28,6 @@
 
         .header-content { position: relative; z-index: 1; }
 
-        /* == Modern Back Button == */
-        .btn-back-modern {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 6px 14px 6px 6px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            border-radius: 9999px;
-            color: #1e293b;
-            font-size: 0.8rem; font-weight: 700;
-            text-decoration: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            margin-bottom: 0;
-            width: fit-content;
-        }
-        .btn-back-modern:hover { 
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
-            transform: translateY(-2px);
-            color: #1d4ed8;
-        }
-        .btn-back-modern .icon-circle {
-            width: 26px; height: 26px;
-            background: #fff;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: #3b82f6;
-            font-size: 0.75rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-            transition: transform 0.3s ease;
-        }
-        .btn-back-modern:hover .icon-circle {
-            transform: translateX(-3px);
-            background: #EFF6FF;
-        }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
-        }
-        @media (max-width: 640px) {
-            .glass-panel { padding: 1.1rem !important; }
-        }
-        
         .main-tab-content { display: block; animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -97,11 +46,7 @@
             -moz-appearance: textfield;
         }
 
-        @media (max-width: 640px) {
-            .glass-panel { padding: 0.9rem 0.9rem; border-radius: 1.1rem; }
-        }
-
-        /* == Tampilan Mobile (BASE ASLI - Jangan diubah) == */
+        /* == Tampilan Mobile == */
         .monthly-card {
             background: #ffffff;
             border: 2px solid #e2e8f0;
@@ -345,22 +290,6 @@
             .mobile-summary-bar .ms-divider { width: 1px; align-self: stretch; background: rgba(255,255,255,0.25); }
         }
 
-        .mobile-card-search { display: none; }
-        @media (max-width: 640px) {
-            .mobile-card-search {
-                display: flex; align-items: center; gap: 8px;
-                background: #fff; border: 1.5px solid #e2e8f0; border-radius: 0.85rem;
-                padding: 0.6rem 0.85rem; 
-                margin-top: 0.75rem; 
-                margin-bottom: 0.75rem;
-            }
-            .mobile-card-search input {
-                border: none; outline: none; flex: 1; font-size: 0.8rem; font-weight: 600; color: #334155;
-                background: transparent;
-            }
-            .mobile-card-search i { color: #94a3b8; font-size: 0.8rem; }
-        }
-
         .acc-clickable { cursor: pointer; user-select: none; }
         .acc-clickable:active { background: #f8fafc; }
         .acc-chevron { transition: transform 0.25s ease; }
@@ -381,7 +310,7 @@
 
     <div class="flex flex-col flex-1 min-h-screen relative">
         <div class="mesh-bg"></div>
-        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 flex flex-col gap-2.5 md:gap-4">
+        <div class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8 flex flex-col gap-3 md:gap-4">
 
         {{-- Back Button — unified component --}}
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
@@ -419,7 +348,7 @@
             <div id="monthNavCombo" class="flex flex-col md:flex-row items-stretch md:items-center gap-2.5 md:gap-3 w-full md:w-auto header-content relative">
                 
                 {{-- Form Select Month (Tampilan Pill Sesuai Referensi Gambar) --}}
-                <div id="monthlySelectCard" class="glass-panel border-t-4 border-t-blue-500 relative">
+                <div id="monthlySelectCard" class="bg-white border border-slate-200 rounded-2xl p-2 shadow-sm relative">
                     <div class="flex flex-wrap md:flex-nowrap items-stretch justify-between gap-1.5 md:gap-1.5 w-full">
                         
                         {{-- Trigger Area: Clickable (Bulan) --}}
@@ -462,18 +391,18 @@
 
                 {{-- Sub Tabs --}}
                 <div id="monthNavExtra" class="relative">
-                    <div class="grid grid-cols-4 gap-1 sm:gap-2 bg-white p-1.5 sm:p-2.5 rounded-3xl shadow-sm border border-slate-200" id="sub-tabs-container">
+                    <div class="grid grid-cols-4 gap-1 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200" id="sub-tabs-container">
                         <button class="month-sub-tab active" data-target="m-view-pdu" onclick="switchMonthSubTab('m-view-pdu', this)" title="by PDU — Sales per Date" aria-label="by PDU">
                             <i class="fas fa-list"></i> <span>PDU</span>
                         </button>
                         <button class="month-sub-tab" data-target="m-view-outlet" onclick="switchMonthSubTab('m-view-outlet', this)" title="by outlet — Sales per Customer" aria-label="by outlet">
-                            <i class="fas fa-store"></i> <span class="md:hidden lg:inline">Customer</span><span class="hidden md:inline lg:hidden">Cust</span>
+                            <i class="fas fa-store"></i> <span>Customer</span>
                         </button>
                         <button class="month-sub-tab" data-target="m-view-product" onclick="switchMonthSubTab('m-view-product', this)" title="by product — Sales per Product" aria-label="by product">
-                            <i class="fas fa-box"></i> <span class="md:hidden lg:inline">Product</span><span class="hidden md:inline lg:hidden">Prod</span>
+                            <i class="fas fa-box"></i> <span>Product</span>
                         </button>
                         <button class="month-sub-tab" data-target="m-view-closing" onclick="switchMonthSubTab('m-view-closing', this)" title="Closing — Est. Closing" aria-label="Closing">
-                            <i class="fas fa-clipboard-check text-[14px]"></i>
+                            <i class="fas fa-clipboard-check"></i> <span>Closing</span>
                         </button>
                     </div>
                 </div>
@@ -490,7 +419,7 @@
 
         {{-- Container detail — hiasan biru konsisten dengan forecast --}}
         <div id="monthly-detail-container" class="space-y-4 transition-all duration-500">
-            <x-ui.glass-card padding="none" class="border-t-4 border-t-blue-500 shadow-lg !rounded-3xl !p-6">
+            <x-ui.glass-card padding="none" class="border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !p-4 sm:!p-6 !bg-white">
                 {{-- Tampilan 1: Data PDU --}}
                 <div id="m-view-pdu" class="month-view">
                     {{-- Ringkasan cepat (mobile only) --}}
@@ -507,11 +436,11 @@
                     </div>
 
                     {{-- Wadah Grafik --}}
-                    <div class="mb-4 sm:mb-6 p-4 border border-slate-200 rounded-xl bg-slate-50">
+                    <div class="mb-3 sm:mb-6 p-3 sm:p-4 border border-slate-200 rounded-xl bg-slate-50">
                         <div class="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center mb-4">
                             <div class="w-full sm:w-auto mb-3 sm:mb-0">
-                                <h4 class="font-bold text-slate-800 text-lg">PDU Sales Chart</h4>
-                                <p class="text-sm text-slate-500 font-medium mt-1">Grand Total Sales: <span class="font-black text-blue-600 text-base ml-1" id="grandTotalPdu">Rp 0</span></p>
+                                <h4 class="font-bold text-slate-800 text-sm sm:text-lg">PDU Sales Chart</h4>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">Grand Total Sales: <span class="font-black text-blue-600 text-sm sm:text-base ml-1" id="grandTotalPdu">Rp 0</span></p>
                             </div>
                             <div class="relative inline-block w-full sm:w-auto">
                                 <select id="filterPduPs" class="w-full sm:w-auto appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-2 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="drawPduView()">
@@ -547,11 +476,10 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="mobile-card-search md:hidden">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="m-search-pdu" placeholder="Cari tanggal / sales / customer..." oninput="filterAccCards('m-cards-pdu', this.value)">
+                    <div class="md:hidden mt-3 mb-3">
+                        <x-ui.search-input id="m-search-pdu" placeholder="Cari tanggal / sales / customer..." oninput="filterAccCards('m-cards-pdu', this.value)" />
                     </div>
-                    <div id="m-cards-pdu" class="md:hidden space-y-2.5 pb-6"></div>
+                    <div id="m-cards-pdu" class="md:hidden space-y-2 pb-4"></div>
                 </div>
 
                 {{-- Tampilan 2: Data per Outlet --}}
@@ -570,11 +498,11 @@
                     </div>
 
                     {{-- Chart Container --}}
-                    <div class="mb-4 sm:mb-6 p-4 border border-slate-200 rounded-xl bg-slate-50">
+                    <div class="mb-3 sm:mb-6 p-3 sm:p-4 border border-slate-200 rounded-xl bg-slate-50">
                         <div class="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center mb-4">
                             <div class="w-full sm:w-auto mb-3 sm:mb-0">
-                                <h4 class="font-bold text-slate-800 text-lg">Sales Chart per Outlet</h4>
-                                <p class="text-sm text-slate-500 font-medium mt-1">Grand Total Sales: <span class="font-black text-blue-600 text-base ml-1" id="grandTotalOutlet">Rp 0</span></p>
+                                <h4 class="font-bold text-slate-800 text-sm sm:text-lg">Sales Chart per Outlet</h4>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">Grand Total Sales: <span class="font-black text-blue-600 text-sm sm:text-base ml-1" id="grandTotalOutlet">Rp 0</span></p>
                             </div>
                             <div class="relative inline-block w-full sm:w-auto">
                                 <select id="filterOutletPs" class="w-full sm:w-auto appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-2 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="drawOutletChart()">
@@ -608,11 +536,10 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="mobile-card-search md:hidden">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="m-search-outlet" placeholder="Cari sales / outlet / produk..." oninput="filterAccCards('m-cards-outlet', this.value)">
+                    <div class="md:hidden mt-3 mb-3">
+                        <x-ui.search-input id="m-search-outlet" placeholder="Cari sales / outlet / produk..." oninput="filterAccCards('m-cards-outlet', this.value)" />
                     </div>
-                    <div id="m-cards-outlet" class="md:hidden space-y-2.5 pb-6"></div>
+                    <div id="m-cards-outlet" class="md:hidden space-y-2 pb-4"></div>
                 </div>
 
                 {{-- Tampilan 3: Data per Produk --}}
@@ -630,10 +557,10 @@
                         </div>
                     </div>
 
-                    <div class="mb-4 sm:mb-6 p-4 border border-slate-200 rounded-xl bg-slate-50 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+                    <div class="mb-3 sm:mb-6 p-3 sm:p-4 border border-slate-200 rounded-xl bg-slate-50 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
                         <div class="w-full sm:w-auto mb-3 sm:mb-0">
-                            <h4 class="font-bold text-slate-800 text-lg">Sales Table per Product</h4>
-                            <p class="text-sm text-slate-500 font-medium mt-1">Grand Total Sales: <span class="font-black text-blue-600 text-base ml-1" id="grandTotalProduct">Rp 0</span></p>
+                            <h4 class="font-bold text-slate-800 text-sm sm:text-lg">Sales Table per Product</h4>
+                            <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">Grand Total Sales: <span class="font-black text-blue-600 text-sm sm:text-base ml-1" id="grandTotalProduct">Rp 0</span></p>
                         </div>
                         <div class="relative inline-block w-full sm:w-auto">
                             <select id="filterProductPs" class="w-full sm:w-auto appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-2 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="drawProductTable()">
@@ -658,11 +585,10 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="mobile-card-search md:hidden">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="m-search-product" placeholder="Cari nama produk..." oninput="filterAccCards('m-cards-product', this.value)">
+                    <div class="md:hidden mt-3 mb-3">
+                        <x-ui.search-input id="m-search-product" placeholder="Cari nama produk..." oninput="filterAccCards('m-cards-product', this.value)" />
                     </div>
-                    <div id="m-cards-product" class="md:hidden space-y-2.5 pb-6"></div>
+                    <div id="m-cards-product" class="md:hidden space-y-2 pb-4"></div>
                 </div>
 
                 {{-- Tampilan 4: Closing — Input per Outlet, Produk Read-only Lengkap --}}
@@ -685,10 +611,10 @@
                         </div>
                     </div>
 
-                    <div class="mb-4 sm:mb-6 p-4 border border-slate-200 rounded-xl bg-slate-50 flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
+                    <div class="mb-3 sm:mb-6 p-3 sm:p-4 border border-slate-200 rounded-xl bg-slate-50 flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
                         <div class="w-full lg:w-auto mb-3 lg:mb-0">
-                            <h4 class="font-bold text-slate-800 text-lg">Closing Adjustment</h4>
-                            <p class="text-sm text-slate-500 font-medium mt-1">Grand Total = Total Sum Nett + Total Est. Closing &nbsp;<br> Total Sum Nett: <span class="font-black text-blue-600 text-base ml-1" id="grandTotalClosing">Rp 0</span> <span class="text-slate-400 hidden sm:inline">| Total Est. Closing: <span id="grandAddClosing" class="font-bold text-purple-600">Rp 0</span> | Grand Total: <span id="grandTotalAkhir" class="font-black text-green-600">Rp 0</span></span></p>
+                            <h4 class="font-bold text-slate-800 text-sm sm:text-lg">Closing Adjustment</h4>
+                            <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">Grand Total = Total Sum Nett + Total Est. Closing &nbsp;<br> Total Sum Nett: <span class="font-black text-blue-600 text-sm sm:text-base ml-1" id="grandTotalClosing">Rp 0</span> <span class="text-slate-400 hidden sm:inline">| Total Est. Closing: <span id="grandAddClosing" class="font-bold text-purple-600">Rp 0</span> | Grand Total: <span id="grandTotalAkhir" class="font-black text-green-600">Rp 0</span></span></p>
                         </div>
                         <div class="relative inline-block w-full lg:w-auto">
                             <select id="filterClosingPs" class="w-full lg:w-auto appearance-none border border-blue-200 bg-blue-50 hover:bg-blue-100 shadow-sm rounded-lg text-sm pl-4 pr-10 py-2 font-semibold text-blue-700 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none transition-colors" onchange="drawClosingView()">
@@ -714,11 +640,21 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="mobile-card-search md:hidden">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="m-search-closing" placeholder="Cari sales / outlet / produk..." oninput="filterAccCards('m-cards-closing', this.value)">
+                    <div class="md:hidden mt-3 mb-3">
+                        <x-ui.search-input id="m-search-closing" placeholder="Cari sales / outlet / produk..." oninput="filterAccCards('m-cards-closing', this.value)" />
                     </div>
-                    <div id="m-cards-closing" class="md:hidden space-y-2.5 pb-6"></div>
+                    <div id="m-cards-closing" class="md:hidden space-y-2 pb-4"></div>
+                    @if($hasFullAccess ?? false)
+                    <datalist id="manualClosingPsList">
+                        @foreach($listAllPs ?? [] as $ps)<option value="{{ $ps }}"></option>@endforeach
+                    </datalist>
+                    <datalist id="manualClosingCustList">
+                        @foreach($listAllCustomer ?? [] as $cs)<option value="{{ $cs }}"></option>@endforeach
+                    </datalist>
+                    <datalist id="manualClosingProductList">
+                        @foreach($listAllProduct ?? [] as $pd)<option value="{{ $pd }}"></option>@endforeach
+                    </datalist>
+                    @endif
                 </div>
             </x-ui.glass-card>
         </div>
@@ -743,6 +679,13 @@
             
             // Langsung load datanya
             loadMonthlyDetail(initialMonth, targetBtn);
+
+            // Restore last selected sub-tab (PDU/outlet/product/closing)
+            try {
+                const saved = localStorage.getItem('monthly_sub_tab');
+                const btn = saved && document.querySelector(`.month-sub-tab[data-target="${saved}"]`);
+                if (btn && document.getElementById(saved)) switchMonthSubTab(saved, btn);
+            } catch (e) {}
 
             // Inisiasi rotasi chevron di mobile bila grid bulan disembunyikan
             const iconMobile = document.getElementById('monthGridToggleIcon');
@@ -790,6 +733,8 @@
 
             document.querySelectorAll('.month-view').forEach(v => v.classList.add('hidden'));
             document.getElementById(targetId).classList.remove('hidden');
+
+            try { localStorage.setItem('monthly_sub_tab', targetId); } catch (e) {}
         }
 
         let pduChartInstance = null;
@@ -798,6 +743,9 @@
         let currentMonthlyData = null;
         let currentSelectedBulan = "{{ $currentMonth }}";
         const HAS_FULL_ACCESS = {{ json_encode($hasFullAccess ?? false) }};
+
+        // Register Chart.js plugins before creating any charts
+        Chart.register(ChartDataLabels);
 
         function escapeJsStr(str) {
             if (!str) return '';
@@ -818,6 +766,33 @@
             return parseInt(clean, 10);
         }
 
+        // Escape untuk atribut HTML (data-ps / data-cust bisa mengandung kutip)
+        function escAttr(s) {
+            return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function cssEsc(s) {
+            try { return CSS.escape(String(s ?? '')); } catch (e) { return String(s ?? '').replace(/"/g, '\\"'); }
+        }
+
+        // Samakan nilai input kembar (desktop tabel <-> kartu mobile) lalu hitung ulang live.
+        // recalcClosingLive hanya membaca baris tbody, jadi tanpa mirror, ketikan di mobile tidak ikut total.
+        function syncClosingInputs(srcInput) {
+            if (!srcInput) { recalcClosingLive(); return; }
+            const mid = srcInput.getAttribute('data-manual-id');
+            if (mid) {
+                document.querySelectorAll(`input.closing-amount-input[data-manual-id="${cssEsc(mid)}"]`).forEach(inp => {
+                    if (inp !== srcInput) inp.value = srcInput.value;
+                });
+            } else {
+                const ps = srcInput.getAttribute('data-ps') || '';
+                const cust = srcInput.getAttribute('data-cust') || '';
+                document.querySelectorAll(`input.closing-amount-input[data-ps="${cssEsc(ps)}"][data-cust="${cssEsc(cust)}"]`).forEach(inp => {
+                    if (inp !== srcInput) inp.value = srcInput.value;
+                });
+            }
+            recalcClosingLive();
+        }
+
         function onClosingInputFormat(inputEl) {
             let cursorPos = inputEl.selectionStart;
             let oldLen = inputEl.value.length;
@@ -834,31 +809,7 @@
             try { inputEl.setSelectionRange(cursorPos, cursorPos); } catch(e) {}
         }
 
-        // Tab 2 (Outlet) — sekarang READ-ONLY (input pindah ke Tab Closing)
-        function renderClosingRateCell(ps, customerName, rateVal) {
-            const displayVal = (rateVal !== null && rateVal !== undefined && rateVal !== '') ? `Rp ${formatNumberWithDots(rateVal)}` : '-';
-            return `<td class="px-3 py-2 text-right border-l border-slate-200 text-xs font-semibold text-slate-600 w-36">${displayVal}</td>`;
-        }
-        function renderClosingCountCell(ps, customerName, countVal) {
-            const displayVal = (countVal !== null && countVal !== undefined && countVal !== '') ? formatNumberWithDots(countVal) : '-';
-            return `<td class="px-3 py-2 text-center border-l border-slate-200 text-xs font-semibold text-slate-700 w-32">${displayVal}</td>`;
-        }
         // Tab 4 (Closing) — input per outlet, hanya editable di tab ini
-        function renderAddClosingCell(ps, customerName, val) {
-            if (!HAS_FULL_ACCESS) {
-                const displayVal = (val !== null && val !== undefined && val !== '') ? `Rp ${formatNumberWithDots(val)}` : '-';
-                return `<td class="px-3 py-2 text-right border-l border-slate-200 text-xs font-semibold text-slate-700 w-36">${displayVal}</td>`;
-            }
-            const v = (val !== null && val !== undefined && val !== '') ? formatNumberWithDots(val) : '';
-            const safePs = escapeJsStr(ps);
-            const safeCust = escapeJsStr(customerName);
-            return `<td class="px-2 py-1 text-center border-l border-slate-200 w-36">
-                <input type="text" placeholder="0" value="${v}"
-                    class="w-24 text-right text-xs py-1 px-2 border border-amber-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-bold text-slate-800 bg-amber-50 mx-auto block"
-                    oninput="onClosingInputFormat(this)"
-                    onchange="saveOutletClosing('${safePs}', '${safeCust}', 'closing_rate', this.value, this)">
-            </td>`;
-        }
         function renderAddClosingSalesCell(ps, customerName, val) {
             if (!HAS_FULL_ACCESS) {
                 const displayVal = (val !== null && val !== undefined && val !== '') ? formatNumberWithDots(val) : '-';
@@ -867,10 +818,12 @@
             const v = (val !== null && val !== undefined && val !== '') ? formatNumberWithDots(val) : '';
             const safePs = escapeJsStr(ps);
             const safeCust = escapeJsStr(customerName);
+            const attrPs = escAttr(ps);
+            const attrCust = escAttr(customerName);
             return `<td class="px-2 py-1 text-center border-l border-slate-200 w-36 bg-purple-50/30">
-                <input type="text" placeholder="0" value="${v}"
-                    class="w-20 text-center text-xs py-1 px-1.5 border border-purple-300 rounded focus:border-purple-500 focus:ring-1 focus:ring-purple-300 font-bold text-purple-800 bg-white mx-auto block"
-                    oninput="onClosingInputFormat(this)"
+                <input type="text" placeholder="0" value="${v}" data-ps="${attrPs}" data-cust="${attrCust}"
+                    class="closing-amount-input w-20 text-center text-xs py-1 px-1.5 border border-purple-300 rounded focus:border-purple-500 focus:ring-1 focus:ring-purple-300 font-bold text-purple-800 bg-white mx-auto block"
+                    oninput="onClosingInputFormat(this);syncClosingInputs(this)"
                     onchange="saveOutletClosing('${safePs}', '${safeCust}', 'closing_count', this.value, this)">
             </td>`;
         }
@@ -889,12 +842,65 @@
                 inputEl.classList.add('border-blue-500', 'ring-2', 'ring-blue-200');
             }
 
-            const tr = inputEl ? inputEl.closest('tr') : null;
-            let rateInput = tr ? tr.querySelector('input[onchange*="closing_rate"]') : null;
-            let countInput = tr ? tr.querySelector('input[onchange*="closing_count"]') : null;
+            const amount = parseRawNumber(value);
 
-            const rateVal = rateInput ? rateInput.value : (field === 'closing_rate' ? value : null);
-            const countVal = countInput ? countInput.value : (field === 'closing_count' ? value : null);
+            // Kosong atau 0 = hapus closing di tabel sales_closings (biar tidak nyangkut)
+            if (amount === null || amount === 0) {
+                if (inputEl) {
+                    inputEl.classList.remove('border-emerald-500','ring-2','ring-emerald-200','border-red-500');
+                    inputEl.classList.add('border-amber-400','ring-2','ring-amber-200');
+                }
+                fetch(closingsDestroyUrl, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                    body: JSON.stringify({ year: parseInt(year), month: month, ps: ps || null, customer_name: customerName })
+                })
+                .then(res => res.json().then(j=> ({ok:res.ok, body:j})).then(({ok,body})=>{
+                    if (!ok || !body.success) throw new Error(body.message||body.error||'Gagal menghapus');
+                    if (inputEl) {
+                        inputEl.value = '';
+                        // bersihkan juga input kembar (mobile <-> desktop) biar recalc tidak pakai nilai basi
+                        document.querySelectorAll(`input.closing-amount-input[data-ps="${cssEsc(ps || '')}"][data-cust="${cssEsc(customerName)}"]`).forEach(inp => { if (inp !== inputEl) inp.value = ''; });
+                    }
+                    // update currentMonthlyData: hilangkan add_closing
+                    if (currentMonthlyData && currentMonthlyData.outlet) {
+                        currentMonthlyData.outlet.forEach(p=>{
+                            if (String(p.nama).toLowerCase().trim() === String(ps||'').toLowerCase().trim() || !ps) {
+                                p.customer.forEach(c=>{
+                                    if (String(c.nama).toLowerCase().trim() === customerName.toLowerCase().trim()) {
+                                        c.closing_count = null; c.add_closing_sales = null; c.add_closing = null; c.total_akhir = parseFloat(c.nett)||0;
+                                    }
+                                });
+                            }
+                            // fallback general: cari customer tanpa cocok PS
+                            p.customer.forEach(c=>{
+                                if (String(c.nama).toLowerCase().trim() === customerName.toLowerCase().trim() && (c.add_closing_sales||c.closing_count)) {
+                                    if (!ps || String(p.nama).toLowerCase().trim() === String(ps).toLowerCase().trim()) return;
+                                    // sudah handled di atas
+                                }
+                            });
+                        });
+                    }
+                    if (inputEl) {
+                        const tr = inputEl.closest('tr');
+                        const tc = tr ? tr.querySelector('.closing-total-cell') : null;
+                        const nett = tr ? parseFloat(tr.getAttribute('data-nett'))||0 : 0;
+                        if (tc) { tc.innerHTML = fRp(nett); tc.classList.add('bg-amber-50'); setTimeout(()=>tc.classList.remove('bg-amber-50'),1000); }
+                        inputEl.classList.remove('border-amber-400','ring-2','ring-amber-200');
+                        inputEl.classList.add('border-emerald-500','ring-2','ring-emerald-200');
+                        setTimeout(()=>{ inputEl.classList.remove('border-emerald-500','ring-2','ring-emerald-200'); inputEl.classList.add('border-slate-300'); },1200);
+                    }
+                    recalcClosingLive();
+                    // refresh manual rows juga biar sinkron
+                    if (typeof refreshManualClosingRows === 'function') refreshManualClosingRows();
+                }))
+                .catch(err=>{
+                    console.error(err);
+                    if (inputEl){ inputEl.classList.remove('border-amber-400','ring-2','ring-amber-200'); inputEl.classList.add('border-red-500','ring-2','ring-red-200'); }
+                    alert(err.message||'Gagal menghapus closing.');
+                });
+                return;
+            }
 
             const payload = {
                 _token: '{{ csrf_token() }}',
@@ -902,11 +908,10 @@
                 month: month,
                 ps: ps || null,
                 customer_name: customerName,
-                closing_rate: parseRawNumber(rateVal),
-                closing_count: parseRawNumber(countVal)
+                amount: amount
             };
 
-            fetch('{{ route("sales.monthly.update-closing") }}', {
+            fetch(closingsStoreUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -929,19 +934,24 @@
                     if (currentMonthlyData && currentMonthlyData.outlet) {
                         let matchedNett = 0;
                         let matchedAdd = 0;
+                        let tr = inputEl ? inputEl.closest('tr') : null;
+                        // input dari kartu mobile tidak punya <tr> — cari baris desktop kembarannya
+                        if (!tr) {
+                            const twin = document.querySelector(`#m-tbody-closing input.closing-amount-input[data-ps="${cssEsc(ps || '')}"][data-cust="${cssEsc(customerName)}"]`);
+                            if (twin) { if (twin.value !== inputEl.value) twin.value = inputEl.value; tr = twin.closest('tr'); }
+                        }
                         currentMonthlyData.outlet.forEach(p => {
                             if (p.customer) {
                                 p.customer.forEach(c => {
                                     const psMatch = !ps || String(p.nama).toLowerCase().trim() === String(ps).toLowerCase().trim();
                                     if (c.nama === customerName && psMatch) {
-                                        c.closing_rate = payload.closing_rate;
-                                        c.closing_count = payload.closing_count;
-                                        c.add_closing = payload.closing_rate;
-                                        c.add_closing_sales = payload.closing_count;
-                                        const addVal = payload.closing_count ?? payload.closing_rate ?? 0;
-                                        c.total_akhir = (parseFloat(c.nett)||0) + (parseFloat(addVal)||0);
+                                        c.closing_rate = null;
+                                        c.closing_count = payload.amount;
+                                        c.add_closing = null;
+                                        c.add_closing_sales = payload.amount;
+                                        c.total_akhir = (parseFloat(c.nett)||0) + (parseFloat(payload.amount)||0);
                                         matchedNett = c.nett;
-                                        matchedAdd = addVal;
+                                        matchedAdd = payload.amount;
                                     }
                                 });
                             }
@@ -956,10 +966,29 @@
                                 setTimeout(()=> totalCell.classList.remove('bg-purple-100'), 1200);
                             }
                         }
-                        // update grand totals for Closing tab without full redraw (recalc) — only Add. Closing Sales
+                        // update grand totals for Closing tab without full redraw — HARUS respect filter PS aktif
+                        // (Total Sum Nett = nett per filter, diem tidak ikut berubah saat tambah est. closing)
                         try {
-                            let gNett=0,gAdd=0,gAkhir=0,gSales=0;
-                            currentMonthlyData.outlet.forEach(p=> p.customer.forEach(c=>{ const add = c.add_closing_sales ?? c.closing_count ?? c.add_closing ?? c.closing_rate ?? 0; gNett+=parseFloat(c.nett)||0; gAdd+=parseFloat(add)||0; gAkhir+=(parseFloat(c.nett)||0)+(parseFloat(add)||0); gSales+=parseFloat(add)||0; }));
+                            const psFilterNow = document.getElementById('filterClosingPs')?.value || 'all';
+                            const psMatchNow = (psNama) => {
+                                if (psFilterNow === 'all') return true;
+                                if (psFilterNow === 'Sales Team') return String(psNama || '').toLowerCase() !== 'office';
+                                return String(psNama || '') === psFilterNow;
+                            };
+                            let gNett=0,gAdd=0,gAkhir=0;
+                            currentMonthlyData.outlet.forEach(p=> {
+                                if (!psMatchNow(p.nama)) return;
+                                p.customer.forEach(c=>{ const nettV = (parseFloat(c.nett) || 0); const add = c.add_closing_sales ?? c.closing_count ?? c.add_closing ?? c.closing_rate ?? 0; const addV = (parseFloat(add) || 0); gNett += nettV; gAdd += addV; gAkhir += nettV + addV; });
+                            });
+                            // baris manual (nett 0) ikut ke Total Est. Closing sesuai filter
+                            if (typeof manualClosingRows !== 'undefined' && Array.isArray(manualClosingRows)) {
+                                manualClosingRows.forEach(r => {
+                                    if (psFilterNow !== 'all' && psFilterNow !== 'Sales Team' && String(r.ps || '') !== psFilterNow) return;
+                                    if (psFilterNow === 'Sales Team' && String(r.ps || '').toLowerCase() === 'office') return;
+                                    const addM = parseFloat(r.amount) || 0;
+                                    gAdd += addM; gAkhir += addM;
+                                });
+                            }
                             const setT=(id,v)=>{const el=document.getElementById(id); if(el) el.innerText=v;};
                             setT('grandTotalClosing', fRp(gNett));
                             setT('grandAddClosing', fRp(gAdd));
@@ -967,8 +996,27 @@
                             setT('grandTotalClosingMobile', fRp(gNett));
                             setT('grandAddClosingMobile', fRp(gAdd));
                             setT('grandTotalAkhirMobile', fRp(gAkhir));
-                            // also refresh outlet tab grand totals if visible
-                            // lightweight: call drawOutletChart only if needed? skip to avoid flicker
+                            setT('closingGtNett', fRp(gNett));
+                            setT('closingGtAdd', fRp(gAdd));
+                            setT('closingGtAkhir', fRp(gAkhir));
+                            // update baris header PS (tampilan filter spesifik) biar ikut real-time tanpa redraw
+                            try {
+                                if (tr && ps && psFilterNow !== 'all' && psFilterNow !== 'Sales Team') {
+                                    let hTr = tr.previousElementSibling;
+                                    while (hTr && !(hTr.tagName === 'TR' && hTr.classList.contains('row-level-1') && hTr.classList.contains('bg-slate-50'))) hTr = hTr.previousElementSibling;
+                                    if (hTr) {
+                                        let hNett = 0, hAdd = 0;
+                                        (currentMonthlyData.outlet || []).forEach(p => {
+                                            if (String(p.nama) !== String(ps)) return;
+                                            (p.customer || []).forEach(c => { hNett += (parseFloat(c.nett) || 0); hAdd += (parseFloat(c.add_closing_sales ?? c.closing_count ?? c.add_closing ?? c.closing_rate ?? 0) || 0); });
+                                        });
+                                        if (Array.isArray(manualClosingRows)) manualClosingRows.forEach(r => { if (String(r.ps || '') === String(ps)) hAdd += (parseFloat(r.amount) || 0); });
+                                        const hCells = hTr.querySelectorAll('td');
+                                        if (hCells[3]) hCells[3].innerHTML = hAdd ? fRp(hAdd) : '-';
+                                        if (hCells[4]) hCells[4].innerHTML = fRp(hNett + hAdd);
+                                    }
+                                }
+                            } catch(e){}
                         } catch(e){}
                     }
                 } else {
@@ -988,6 +1036,452 @@
             });
         }
 
+        // Hitung ulang Total per baris + Grand Total langsung saat angka diketik (tanpa tunggu save)
+        // Catatan: hanya baris tbody desktop yang dijumlah (input mobile di-mirror ke tbody via syncClosingInputs, jadi tidak double-count)
+        function recalcClosingLive() {
+            const tbody = document.getElementById('m-tbody-closing');
+            if (!tbody) return;
+            let gNett = 0, gAdd = 0;
+            tbody.querySelectorAll('tr.closing-cust-row').forEach(tr => {
+                const nett = parseFloat(tr.getAttribute('data-nett')) || 0;
+                const inp = tr.querySelector('input.closing-amount-input');
+                const add = inp ? (parseRawNumber(inp.value) || 0) : 0;
+                gNett += nett;
+                gAdd += add;
+                const tc = tr.querySelector('.closing-total-cell');
+                if (tc) tc.innerHTML = fRp(nett + add);
+            });
+            // Samakan tampilan Total di kartu mobile dengan baris desktop pasangannya
+            document.querySelectorAll('.m-closing-total').forEach(el => {
+                let tin = null;
+                const mid = el.getAttribute('data-manual-id');
+                if (mid) {
+                    tin = tbody.querySelector(`input.closing-amount-input[data-manual-id="${cssEsc(mid)}"]`);
+                } else {
+                    const ps = el.getAttribute('data-ps') || '';
+                    const cust = el.getAttribute('data-cust') || '';
+                    tin = tbody.querySelector(`input.closing-amount-input[data-ps="${cssEsc(ps)}"][data-cust="${cssEsc(cust)}"]`);
+                }
+                if (!tin) return;
+                const ttr = tin.closest('tr');
+                const tc = ttr ? ttr.querySelector('.closing-total-cell') : null;
+                if (tc) el.innerHTML = tc.innerHTML;
+            });
+            // Preview total baris manual + ikutkan ke grand total secara live (sampai ditekan Tambah)
+            const manualVal = document.getElementById('manualAddValue');
+            const pendingAdd = manualVal ? (parseRawNumber(manualVal.value) || 0) : 0;
+            const manualTotal = document.getElementById('manualAddTotal');
+            if (manualTotal) manualTotal.innerText = fRp(pendingAdd);
+            gAdd += pendingAdd;
+            const gAkhir = gNett + gAdd;
+            const setT = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+            setT('grandTotalClosing', fRp(gNett));
+            setT('grandAddClosing', fRp(gAdd));
+            setT('grandTotalAkhir', fRp(gAkhir));
+            setT('grandTotalClosingMobile', fRp(gNett));
+            setT('grandAddClosingMobile', fRp(gAdd));
+            setT('grandTotalAkhirMobile', fRp(gAkhir));
+            setT('closingGtNett', fRp(gNett));
+            setT('closingGtAdd', fRp(gAdd));
+            setT('closingGtAkhir', fRp(gAkhir));
+        }
+
+        // Toggle produk: klik pertama muncul form per produk (qty & price di kolomnya masing-masing), klik lagi nambah baris produk baru
+        function toggleManualProductFields() {
+            const prodEl = document.getElementById('manualAddProductFields');
+            const qtyWrap = document.getElementById('manualAddQtyWrap');
+            const qtyPlace = document.getElementById('manualAddQtyPlaceholder');
+            const priceWrap = document.getElementById('manualAddPriceWrap');
+            const pricePlace = document.getElementById('manualAddPricePlaceholder');
+            if (!prodEl) return;
+            const isHidden = prodEl.classList.contains('hidden');
+            if (isHidden) {
+                prodEl.classList.remove('hidden');
+                if (qtyWrap) qtyWrap.classList.remove('hidden');
+                if (qtyPlace) qtyPlace.classList.add('hidden');
+                if (priceWrap) priceWrap.classList.remove('hidden');
+                if (pricePlace) pricePlace.classList.add('hidden');
+                // pastikan ada 1 baris produk + qty + price sinkron
+                const prodLines = document.querySelectorAll('#manualAddProductLines .product-line');
+                // sync qty/price lines count
+                // qty & price per produk di kolomnya
+                syncProductLineQtys();
+                const firstProd = document.querySelector('#manualAddProductLines .product-input');
+                if (firstProd) firstProd.focus();
+                updateManualProductRemoveButtons();
+            } else {
+                addManualProductLine();
+            }
+        }
+        function syncProductLineQtys() {
+            const prodCount = document.querySelectorAll('#manualAddProductLines .product-line').length;
+            const qtyWrap = document.getElementById('manualAddQtyWrap');
+            const priceWrap = document.getElementById('manualAddPriceWrap');
+            if (!qtyWrap || !priceWrap) return;
+            // qty & price per produk di kolomnya
+            let qtyLines = qtyWrap.querySelectorAll('.qty-line');
+            let priceLines = priceWrap.querySelectorAll('.price-line');
+            // tambah kurang biar sinkron dengan product lines
+            while (qtyLines.length < prodCount) {
+                const div = document.createElement('div');
+                div.className = 'qty-line product-qty-line flex justify-center';
+                div.innerHTML = '<input type="text" placeholder="Qty" class="qty-input w-20 text-xs py-1 px-1.5 border border-slate-300 rounded focus:border-purple-500 text-slate-700 bg-white outline-none text-center">';
+                qtyWrap.appendChild(div);
+                qtyLines = qtyWrap.querySelectorAll('.qty-line');
+            }
+            while (priceLines.length < prodCount) {
+                const div = document.createElement('div');
+                div.className = 'price-line product-price-line flex justify-center';
+                div.innerHTML = '<input type="text" placeholder="Price" inputmode="numeric" class="price-input w-24 text-xs py-1 px-1.5 border border-slate-300 rounded focus:border-purple-500 text-slate-700 bg-white outline-none text-center" oninput="onClosingInputFormat(this);updateManualEstClosingFromPrices()">';
+                priceWrap.appendChild(div);
+                priceLines = priceWrap.querySelectorAll('.price-line');
+            }
+            while (qtyLines.length > prodCount) { qtyLines[qtyLines.length-1].remove(); qtyLines = qtyWrap.querySelectorAll('.qty-line'); }
+            while (priceLines.length > prodCount) { priceLines[priceLines.length-1].remove(); priceLines = priceWrap.querySelectorAll('.price-line'); }
+        }
+        function addManualProductLine() {
+            const container = document.getElementById('manualAddProductLines');
+            if (!container) return;
+            const first = container.querySelector('.product-line');
+            if (!first) return;
+            const clone = first.cloneNode(true);
+            clone.querySelectorAll('input').forEach(inp=> inp.value='');
+            container.appendChild(clone);
+            // tambah qty & price di kolomnya
+            const qtyWrap = document.getElementById('manualAddQtyWrap');
+            const priceWrap = document.getElementById('manualAddPriceWrap');
+            if (qtyWrap) {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'qty-line product-qty-line flex justify-center';
+                qDiv.innerHTML = '<input type="text" placeholder="Qty" class="qty-input w-20 text-xs py-1 px-1.5 border border-slate-300 rounded focus:border-purple-500 text-slate-700 bg-white outline-none text-center">';
+                qtyWrap.appendChild(qDiv);
+            }
+            if (priceWrap) {
+                const pDiv = document.createElement('div');
+                pDiv.className = 'price-line product-price-line flex justify-center';
+                pDiv.innerHTML = '<input type="text" placeholder="Price" inputmode="numeric" class="price-input w-24 text-xs py-1 px-1.5 border border-slate-300 rounded focus:border-purple-500 text-slate-700 bg-white outline-none text-center" oninput="onClosingInputFormat(this);updateManualEstClosingFromPrices()">';
+                priceWrap.appendChild(pDiv);
+            }
+            updateManualProductRemoveButtons();
+            const prodInp = clone.querySelector('.product-input');
+            if (prodInp) prodInp.focus();
+        }
+        function removeManualProductLine(btn) {
+            const line = btn.closest('.product-line');
+            const container = document.getElementById('manualAddProductLines');
+            if (!line || !container) return;
+            if (container.querySelectorAll('.product-line').length <= 1) return;
+            const idx = Array.from(container.querySelectorAll('.product-line')).indexOf(line);
+            line.remove();
+            // hapus qty & price di kolomnya yang se-index
+            const qtyWrap = document.getElementById('manualAddQtyWrap');
+            const priceWrap = document.getElementById('manualAddPriceWrap');
+            if (qtyWrap) {
+                const qLines = qtyWrap.querySelectorAll('.qty-line');
+                if (qLines[idx]) qLines[idx].remove();
+            }
+            if (priceWrap) {
+                const pLines = priceWrap.querySelectorAll('.price-line');
+                if (pLines[idx]) pLines[idx].remove();
+            }
+            updateManualProductRemoveButtons();
+            updateManualEstClosingFromPrices();
+        }
+        function updateManualProductRemoveButtons() {
+            const lines = document.querySelectorAll('#manualAddProductLines .product-line');
+            lines.forEach(line=>{
+                const btn = line.querySelector('.remove-line-btn');
+                if (btn) btn.classList.toggle('hidden', lines.length<=1);
+            });
+        }
+        function updateManualEstClosingFromPrices() {
+            const priceInputs = document.querySelectorAll('#manualAddPriceWrap .price-input');
+            let sum = 0;
+            let hasPrice = false;
+            priceInputs.forEach(inp=>{
+                const pr = inp.value.trim();
+                if (pr) {
+                    const val = parseRawNumber(pr);
+                    if (val !== null) { sum += val; hasPrice = true; }
+                }
+            });
+            const estInp = document.getElementById('manualAddValue');
+            if (hasPrice && estInp) {
+                estInp.value = formatNumberWithDots(sum);
+                estInp.dispatchEvent(new Event('input', {bubbles:true}));
+                recalcClosingLive();
+            }
+        }
+        // Bersihkan satu field baris Tambah Rencana Closing (x di dalam input)
+        function clearManualField(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.value = '';
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            el.focus();
+        }
+
+        const closingsStoreUrl = "{{ route('sales.monthly.closings.store') }}";
+        const closingsUpdateUrl = "{{ route('sales.monthly.closings.update') }}";
+        const closingsDestroyUrl = "{{ route('sales.monthly.closings.destroy') }}";
+        const closingsIndexUrl = "{{ route('sales.monthly.closings.index') }}";
+        const pageTahun = "{{ $tahun }}";
+        let manualClosingRows = [];
+
+        // Tambah Rencana Closing manual - 1 customer bisa banyak barang (beda produk), qty teks bebas, price di kolom Net Price
+        function addManualClosing() {
+            if (!HAS_FULL_ACCESS || !currentMonthlyData) return;
+            const psEl = document.getElementById('manualAddPs');
+            const custEl = document.getElementById('manualAddCust');
+            const valEl = document.getElementById('manualAddValue');
+            const btn = document.getElementById('manualAddBtn');
+            const psRaw = (psEl ? psEl.value : '').trim();
+            const cust = (custEl ? custEl.value : '').trim();
+            const amount = valEl ? parseRawNumber(valEl.value) : null;
+            const isProdVisible = !document.getElementById('manualAddProductFields').classList.contains('hidden');
+            // prod/qty/price sekarang per baris di kolomnya, bukan single hidden
+            if (!cust) { alert('Nama customer wajib diisi.'); if (custEl) custEl.focus(); return; }
+            if (!amount || amount <= 0) { alert('Est. Closing (Rp) wajib diisi lebih dari 0.'); if (valEl) valEl.focus(); return; }
+            // Kumpulkan product lines - qty & price per produk di kolomnya masing-masing (teks bebas), 1 customer banyak barang
+            const productLines = [];
+            if (isProdVisible) {
+                const prodLines = document.querySelectorAll('#manualAddProductLines .product-line');
+                const qtyInputs = document.querySelectorAll('#manualAddQtyWrap .qty-input');
+                const priceInputs = document.querySelectorAll('#manualAddPriceWrap .price-input');
+                for (let i=0; i<prodLines.length; i++) {
+                    const p = prodLines[i].querySelector('.product-input')?.value.trim() || '';
+                    const q = qtyInputs[i]?.value.trim() || '';
+                    const pr = priceInputs[i]?.value.trim() || '';
+                    const hasAny = p || q || pr;
+                    if (!hasAny) continue;
+                    if (!p) { alert('Nama produk harus diisi (baris '+(i+1)+').'); prodLines[i].querySelector('.product-input').focus(); throw new Error('validation'); }
+                    if (!q) { alert('Qty harus diisi (teks bebas) - baris "'+p+'".'); qtyInputs[i]?.focus(); throw new Error('validation'); }
+                    if (!pr) { alert('Price harus diisi - baris "'+p+'".'); priceInputs[i]?.focus(); throw new Error('validation'); }
+                    productLines.push({product:p, qty:q, price:pr});
+                }
+            }
+            // Validasi duplikat: 1 customer boleh banyak barang beda produk
+            const psKey = psRaw.toLowerCase();
+            try {
+                if (productLines.length === 0) {
+                    const dupSales = currentMonthlyData.outlet.some(p =>
+                        (!psRaw || String(p.nama).toLowerCase().trim() === psKey) &&
+                        p.customer.some(c => String(c.nama).toLowerCase().trim() === cust.toLowerCase())
+                    );
+                    const dupManual = manualClosingRows.some(r =>
+                        String(r.customer_name || '').toLowerCase().trim() === cust.toLowerCase() &&
+                        (!psRaw || String(r.ps || '').toLowerCase().trim() === psKey) &&
+                        !r.product_name
+                    );
+                    if (dupSales || dupManual) { alert('Customer tersebut sudah ada — edit di tabel.'); throw new Error('validation'); }
+                } else {
+                    for (const pl of productLines) {
+                        const dup = manualClosingRows.some(r =>
+                            String(r.customer_name || '').toLowerCase().trim() === cust.toLowerCase() &&
+                            (!psRaw || String(r.ps || '').toLowerCase().trim() === psKey) &&
+                            String(r.product_name || '').toLowerCase().trim() === pl.product.toLowerCase()
+                        );
+                        if (dup) { alert('Produk "'+pl.product+'" untuk "'+cust+'" sudah ada.'); throw new Error('validation'); }
+                    }
+                }
+            } catch(e) { if (e.message==='validation') return; throw e; }
+            const year = parseInt(pageTahun);
+            const month = currentSelectedBulan || "{{ $currentMonth }}";
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin text-[10px]"></i>'; }
+            const payloads = productLines.length > 0
+                ? productLines.map(pl=> ({
+                    _token: '{{ csrf_token() }}',
+                    year: year, month: month, ps: psRaw || null, customer_name: cust,
+                    product_name: pl.product, qty: pl.qty, unit: null,
+                    note: null,
+                    amount: parseRawNumber(pl.price) || 0
+                  }))
+                : [{
+                    _token: '{{ csrf_token() }}',
+                    year: year, month: month, ps: psRaw || null, customer_name: cust,
+                    product_name: null, qty: null, unit: null, note: null, amount: amount
+                  }];
+            let chain = Promise.resolve();
+            let lastRes = null;
+            payloads.forEach(pl=>{
+                chain = chain.then(()=> fetch(closingsStoreUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                    body: JSON.stringify(pl)
+                }).then(res=>res.json()).then(data=>{ if (!data.success) throw new Error(data.message||data.error||'Gagal'); lastRes=data; }));
+            });
+            chain.then(()=>{
+                if (lastRes && lastRes.success || payloads.length>0) {
+                    if (custEl) custEl.value = '';
+                    if (psEl) psEl.value = '';
+                    if (valEl) valEl.value = '';
+                    const container = document.getElementById('manualAddProductLines');
+                    if (container) {
+                        const lines = container.querySelectorAll('.product-line');
+                        lines.forEach((line,idx)=>{
+                            if (idx===0) {
+                                line.querySelector('.product-input').value='';
+                            } else {
+                                line.remove();
+                            }
+                        });
+                        updateManualProductRemoveButtons();
+                    }
+                    // bersihkan qty & price di kolomnya
+                    document.querySelectorAll('#manualAddQtyWrap .qty-input').forEach((inp,idx)=>{
+                        if (idx===0) inp.value=''; else inp.closest('.qty-line')?.remove();
+                    });
+                    document.querySelectorAll('#manualAddPriceWrap .price-input').forEach((inp,idx)=>{
+                        if (idx===0) inp.value=''; else inp.closest('.price-line')?.remove();
+                    });
+                    const prodFields = document.getElementById('manualAddProductFields');
+                    if (prodFields) prodFields.classList.add('hidden');
+                    const qtyWrap2 = document.getElementById('manualAddQtyWrap');
+                    const qtyPlace2 = document.getElementById('manualAddQtyPlaceholder');
+                    if (qtyWrap2) qtyWrap2.classList.add('hidden');
+                    if (qtyPlace2) qtyPlace2.classList.remove('hidden');
+                    const priceWrap2 = document.getElementById('manualAddPriceWrap');
+                    const pricePlace2 = document.getElementById('manualAddPricePlaceholder');
+                    if (priceWrap2) priceWrap2.classList.add('hidden');
+                    if (pricePlace2) pricePlace2.classList.remove('hidden');
+                    const totalEl = document.getElementById('manualAddTotal');
+                    if (totalEl) totalEl.innerText = 'Rp 0';
+                    refreshManualClosingRows();
+                } else {
+                    alert('Gagal menyimpan');
+                }
+            }).catch(err=>{
+                console.error(err);
+                if (err.message !== 'validation') alert(err.message || 'Gagal menyimpan rencana closing.');
+            }).finally(()=>{
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus text-[10px]"></i>'; }
+            });
+        }
+
+        // Ambil baris manual (customer tanpa sales) dari server, lalu gambar ulang tab Closing
+        function refreshManualClosingRows() {
+            const month = currentSelectedBulan || "{{ $currentMonth }}";
+            return fetch(`${closingsIndexUrl}?year=${pageTahun}&month=${encodeURIComponent(month)}&type=sales&only_manual=1`, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(json => {
+                manualClosingRows = (json && json.data) ? json.data : [];
+            })
+            .catch(err => {
+                console.error('Gagal memuat baris manual:', err);
+                manualClosingRows = [];
+            })
+            .finally(() => {
+                drawClosingView();
+            });
+        }
+
+        // Edit nama/PS baris manual: update ke tabel sales_closings
+        function renameManualClosing(id, inputEl) {
+            if (!HAS_FULL_ACCESS) return;
+            const row = manualClosingRows.find(r => String(r.id) === String(id));
+            if (!row) return;
+            const tr = inputEl.closest('tr');
+            const custInp = tr.querySelector('.new-cust-input');
+            const psInp = tr.querySelector('.new-ps-input');
+            const estInp = tr.querySelector('.closing-amount-input');
+            const newCust = (custInp.value || '').trim();
+            const newPs = (psInp.value || '').trim();
+            const oldCust = row.customer_name || '';
+            const oldPs = row.ps || '';
+            if (!newCust) { alert('Nama customer wajib diisi.'); custInp.value = oldCust; custInp.focus(); return; }
+            if (newCust === oldCust && newPs === oldPs) return;
+            const dup = manualClosingRows.some(r =>
+                String(r.id) !== String(id) &&
+                String(r.customer_name || '').toLowerCase().trim() === newCust.toLowerCase() &&
+                (!newPs || String(r.ps || '').toLowerCase().trim() === newPs.toLowerCase())
+            );
+            if (dup) { alert('Nama tersebut sudah ada di daftar manual — gunakan nama lain.'); custInp.value = oldCust; psInp.value = oldPs; return; }
+            const amount = estInp ? (parseRawNumber(estInp.value) || 0) : 0;
+            const year = parseInt(pageTahun);
+            const month = currentSelectedBulan || "{{ $currentMonth }}";
+            custInp.disabled = true; psInp.disabled = true;
+            fetch(closingsUpdateUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                body: JSON.stringify({ _token: '{{ csrf_token() }}', year: year, month: month, old_ps: oldPs || null, old_customer_name: oldCust, old_product_name: row.product_name || null, ps: newPs || null, customer_name: newCust, product_name: row.product_name || null, amount: amount })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) throw new Error(data.error || data.message || 'Gagal mengubah data.');
+                refreshManualClosingRows();
+            })
+            .catch(err => {
+                console.error(err);
+                alert(err.message || 'Gagal mengubah data.');
+                custInp.disabled = false; psInp.disabled = false;
+            });
+        }
+
+        // Simpan nominal baris manual (PUT ke sales_closings) - 0 = hapus biar rapi
+        function saveManualClosingAmount(id, inputEl) {
+            if (!HAS_FULL_ACCESS) return;
+            const row = manualClosingRows.find(r => String(r.id) === String(id));
+            if (!row) return;
+            const amount = parseRawNumber(inputEl.value);
+            const normAmount = amount === null ? 0 : amount;
+            if (parseFloat(row.amount) === normAmount) return;
+            // Jika 0 / kosong -> konfirmasi hapus biar tidak nyangkut 0
+            if (normAmount === 0) {
+                if (!confirm('Set ke 0 akan menghapus rencana "' + (row.customer_name||'') + '" — hapus?')) {
+                    inputEl.value = formatNumberWithDots(row.amount);
+                    return;
+                }
+            }
+            const year = parseInt(pageTahun);
+            const month = currentSelectedBulan || "{{ $currentMonth }}";
+            inputEl.disabled = true;
+            fetch(closingsUpdateUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                body: JSON.stringify({ _token: '{{ csrf_token() }}', year: year, month: month, old_ps: row.ps || null, old_customer_name: row.customer_name, old_product_name: row.product_name || null, ps: row.ps || null, customer_name: row.customer_name, product_name: row.product_name || null, amount: normAmount })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) throw new Error(data.error || data.message || 'Gagal menyimpan nominal.');
+                refreshManualClosingRows();
+            })
+            .catch(err => {
+                console.error(err);
+                alert(err.message || 'Gagal menyimpan nominal.');
+                inputEl.disabled = false;
+            });
+        }
+
+        // Hapus baris manual dari tabel sales_closings - pakai product juga biar 1 customer banyak barang bisa hapus per produk
+        function deleteManualClosing(id, btnEl) {
+            if (!HAS_FULL_ACCESS) return;
+            const row = manualClosingRows.find(r => String(r.id) === String(id));
+            if (!row) return;
+            const label = (row.customer_name || '') + (row.product_name ? ' - ' + row.product_name : '');
+            if (!confirm('Hapus rencana closing "' + label + '"?')) return;
+            const year = parseInt(pageTahun);
+            const month = currentSelectedBulan || "{{ $currentMonth }}";
+            if (btnEl) btnEl.disabled = true;
+            fetch(closingsDestroyUrl, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                body: JSON.stringify({ year: year, month: month, ps: row.ps || null, customer_name: row.customer_name, product_name: row.product_name || null })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) throw new Error(data.error || data.message || 'Gagal menghapus.');
+                refreshManualClosingRows();
+            })
+            .catch(err => {
+                console.error(err);
+                alert(err.message || 'Gagal menghapus.');
+                if (btnEl) btnEl.disabled = false;
+            });
+        }
+
         const fRp = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n||0));
         const fNum = (n) => new Intl.NumberFormat('id-ID').format(n||0);
         
@@ -999,7 +1493,7 @@
         };
 
         let accSeq = 0;
-        function accNode(icon, label, qtyStr, nett, level, parentId, parentAncestors, hasChildren, closingRate, closingCount) {
+        function accNode(icon, label, qtyStr, nett, level, parentId, parentAncestors, hasChildren, closingRate, closingCount, extraHtml) {
             level = Math.min(level || 1, 4);
             const id = 'acc' + (accSeq++);
             const ancestors = parentId ? (parentAncestors || []).concat([parentId]) : [];
@@ -1030,20 +1524,21 @@
             }
 
             const html = `<div id="${id}" class="${classes}" data-parent="${parentId || ''}" data-ancestors="${ancestors.join(',')}" data-label="${safeLabel}"${clickAttr}>
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex flex-col min-w-0 pr-2">
-                        <div class="flex items-center gap-2.5">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex flex-col min-w-0">
+                        <div class="flex items-center gap-2">
                             ${icon ? `<i class="${icon} text-slate-400 text-xs shrink-0"></i>` : `<span class="w-1 shrink-0"></span>`}
                             <span class="${weight} ${textColor} text-[13px] leading-snug break-words">${label}</span>
                             ${chevron}
                         </div>
                         ${closingBadge}
                     </div>
-                    <div class="text-right shrink-0">
-                        <div class="font-black text-slate-800 text-[13px] leading-tight">${qtyStr}</div>
-                        <div class="font-black text-emerald-600 text-[11px] leading-tight mt-1">${nett}</div>
+                    <div class="text-right shrink-0 pl-2 ml-1 border-l border-dashed border-slate-200">
+                        <div class="font-black text-slate-800 text-[13px] leading-tight whitespace-nowrap">${qtyStr}</div>
+                        <div class="font-black text-emerald-600 text-xs leading-tight mt-0.5 whitespace-nowrap">${nett}</div>
                     </div>
                 </div>
+                ${extraHtml || ''}
             </div>`;
 
             return { id, ancestors, html };
@@ -1051,6 +1546,83 @@
 
         function mcEmpty(msg) {
             return `<div class="text-center p-6 text-slate-500 font-medium text-sm bg-white border border-slate-200 rounded-xl">${msg}</div>`;
+        }
+
+        // Kartu mobile khusus Closing — datanya lengkap seperti kolom desktop:
+        // Sum Qty | Sum Net | Est. Closing (input, editable) | Total.
+        function closingCardNode(opts) {
+            const { icon, label, psName, custName, qtyHtml, nettHtml, addSalesVal, totalHtml, level, parentId, parentAncestors, hasChildren, manualId } = opts;
+            const lv = Math.min(level || 1, 4);
+            const id = 'acc' + (accSeq++);
+            const ancestors = parentId ? (parentAncestors || []).concat([parentId]) : [];
+            const border = ['mc-l1', 'mc-l2', 'mc-l3', 'mc-l4'][lv - 1];
+            const startsHidden = lv > 1;
+            const safeLabel = String(label).toLowerCase().replace(/"/g, '&quot;');
+            const chevron = hasChildren
+                ? `<i class="fas fa-chevron-right acc-chevron text-slate-300 text-[10px] ml-1 shrink-0" id="${id}-chev"></i>`
+                : '';
+            const clickAttr = hasChildren ? ` onclick="toggleAcc('${id}')"` : '';
+            const classes = ['mobile-card', 'mobile-card-level', 'acc-node', border, hasChildren ? 'acc-clickable' : '', startsHidden ? 'hidden' : ''].filter(Boolean).join(' ');
+            const hasAdd = addSalesVal !== null && addSalesVal !== undefined && addSalesVal !== '';
+            const attrPs = escAttr(psName || '');
+            const attrCust = escAttr(custName || '');
+            const safePs = escapeJsStr(psName || '');
+            const safeCust = escapeJsStr(custName || '');
+
+            let estBlock = '';
+            if (HAS_FULL_ACCESS) {
+                const v = hasAdd ? formatNumberWithDots(addSalesVal) : '';
+                const onChange = (manualId !== null && manualId !== undefined)
+                    ? `saveManualClosingAmount(${manualId},this)`
+                    : `saveOutletClosing('${safePs}', '${safeCust}', 'closing_count', this.value, this)`;
+                const dataAttr = (manualId !== null && manualId !== undefined)
+                    ? `data-manual-id="${manualId}"`
+                    : `data-ps="${attrPs}" data-cust="${attrCust}"`;
+                estBlock = `<input type="text" inputmode="numeric" placeholder="0" value="${v}" ${dataAttr}
+                    class="closing-amount-input m-closing-input w-full text-center text-xs py-1 px-1.5 border border-purple-300 rounded focus:border-purple-500 focus:ring-1 focus:ring-purple-300 font-bold text-purple-800 bg-white outline-none"
+                    oninput="onClosingInputFormat(this);syncClosingInputs(this)"
+                    onchange="${onChange}">`;
+            } else {
+                estBlock = `<div class="text-xs font-bold text-purple-700">${hasAdd ? formatNumberWithDots(addSalesVal) : '-'}</div>`;
+            }
+            const totalAttr = (manualId !== null && manualId !== undefined)
+                ? `data-manual-id="${manualId}"`
+                : `data-ps="${attrPs}" data-cust="${attrCust}"`;
+
+            let delBtn = '';
+            if (manualId !== null && manualId !== undefined && HAS_FULL_ACCESS) {
+                delBtn = `<button type="button" onclick="event.stopPropagation();deleteManualClosing(${manualId},this)" title="Hapus rencana ini"
+                    class="shrink-0 w-6 h-6 rounded-full bg-white hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors border border-slate-300 flex items-center justify-center">
+                    <i class="fas fa-trash text-[10px]"></i>
+                </button>`;
+            }
+
+            const html = `<div id="${id}" class="${classes}" data-parent="${parentId || ''}" data-ancestors="${ancestors.join(',')}" data-label="${safeLabel}"${clickAttr}>
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        ${delBtn}
+                        ${icon ? `<i class="${icon} text-slate-400 text-xs shrink-0"></i>` : `<span class="w-1 shrink-0"></span>`}
+                        <span class="font-black text-slate-800 text-[13px] leading-snug break-words">${label}</span>
+                        ${chevron}
+                    </div>
+                    <div class="m-closing-total font-black text-emerald-600 text-[13px] leading-tight whitespace-nowrap shrink-0" ${totalAttr}>${totalHtml}</div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-100 text-center">
+                    <div class="min-w-0">
+                        <div class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Sum Qty</div>
+                        <div class="text-xs font-bold text-slate-700 mt-0.5 truncate">${qtyHtml}</div>
+                    </div>
+                    <div class="min-w-0 border-l border-slate-100">
+                        <div class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Sum Net</div>
+                        <div class="text-xs font-bold text-slate-700 mt-0.5 truncate">${nettHtml}</div>
+                    </div>
+                    <div class="min-w-0 border-l border-slate-100">
+                        <div class="text-[9px] font-extrabold text-purple-500 uppercase tracking-wider">Est. Closing</div>
+                        <div class="mt-0.5">${estBlock}</div>
+                    </div>
+                </div>
+            </div>`;
+            return { id, ancestors, html };
         }
 
         function toggleAcc(id) {
@@ -1378,14 +1950,14 @@
                     closingSales.push(c.nett);
                     closingAdd.push(parseFloat(addSalesVal)||0);
                     closingBg.push(colorMap[psName]||'#3b82f6');
-                    htmlClosing += `<tr class="row-level-1 hover:bg-slate-50 transition-colors">
+                    htmlClosing += `<tr class="row-level-1 hover:bg-slate-50 transition-colors closing-cust-row" data-nett="${c.nett||0}">
                         <td class="px-4 py-3"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4"></i><span class="font-bold text-slate-700">${c.nama}</span><span class="ml-2 text-[10px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 text-blue-600">${psName}</span></div></td>
                         <td class="px-4 py-3 text-right border-l border-slate-200 font-semibold">${fNum(c.total_qty)}</td>
                         <td class="px-4 py-3 text-right border-l border-slate-200 font-semibold text-slate-600">${fRp(c.nett)}</td>
                         ${salesCell}
                         ${totalCell}
                     </tr>`;
-                    let n1 = accNode('fas fa-store', `${c.nama} <span class="text-[10px] text-blue-500 font-bold ml-1">${psName}</span>`, fQtyStr(c.total_qty), `Total: ${fRp(total)}`, 1, null, [], c.produk && c.produk.length>0, null, addSalesVal);
+                    let n1 = closingCardNode({ icon: 'fas fa-store', label: `${c.nama} <span class="text-[10px] text-blue-500 font-bold ml-1">${psName}</span>`, psName: psName, custName: c.nama, qtyHtml: fQtyStr(c.total_qty), nettHtml: fRp(c.nett), addSalesVal: addSalesVal, totalHtml: fRp(total), level: 1, parentId: null, parentAncestors: [], hasChildren: c.produk && c.produk.length>0 });
                     htmlCards += n1.html;
                     [...c.produk].sort((a,b)=>b.nett-a.nett).forEach(p=>{
                         let qtyStr = p.satuan? `${fNum(p.qty)} <span class="text-xs text-slate-400 font-semibold ml-1">${p.satuan}</span>` : fNum(p.qty);
@@ -1405,8 +1977,20 @@
                     if (psFilter !== ps.nama) return;
                     totalQty+=ps.total_qty; totalNett+=ps.total_nett;
                     // sum Add. Closing Sales for ps header (cukup 1 kolom)
-                    let psAddSales=0; ps.customer.forEach(c=>{ psAddSales+=parseFloat(c.add_closing_sales ?? c.closing_count ?? c.add_closing ?? c.closing_rate ?? 0); });
+                    // = closing yg nempel di customer ADA sales + baris manual (tanpa sales) milik PS ini.
+                    // Manual JANGAN ikut ke totalAdd di sini karena renderManualRows() di bawah
+                    // akan menambahkannya sekali ke grand total (biar tidak double-count).
+                    let psAddSales=0; ps.customer.forEach(c=>{ psAddSales+=parseFloat(c.add_closing_sales ?? c.closing_count ?? c.add_closing ?? c.closing_rate ?? 0) || 0; });
+                    let psManualAdd=0;
+                    if (Array.isArray(manualClosingRows)) {
+                        const psKey = String(ps.nama || '').toLowerCase().trim();
+                        manualClosingRows.forEach(r => {
+                            if (String(r.ps || '').toLowerCase().trim() === psKey) psManualAdd += parseFloat(r.amount) || 0;
+                        });
+                    }
+                    const psAddTotal = psAddSales + psManualAdd;
                     totalAdd+=psAddSales; totalAddSales+=psAddSales; totalAkhir+=ps.total_nett+psAddSales;
+                    psAddSales = psAddTotal;
                     htmlClosing += `<tr class="row-level-1 bg-slate-50 font-bold">
                         <td class="px-4 py-3"><div class="flex items-start"><i class="fas fa-users mr-2 mt-1 text-blue-500 w-4"></i><span>${ps.nama}</span></div></td>
                         <td class=\"px-4 py-3 text-right border-l border-slate-200\">${fNum(ps.total_qty)}</td>
@@ -1414,20 +1998,20 @@
                         <td class="px-3 py-3 text-center border-l border-slate-200 text-purple-700 bg-purple-50/60">${psAddSales? fRp(psAddSales):'-'}</td>
                         <td class="px-4 py-3 text-right border-l border-slate-200 text-emerald-700 bg-emerald-50/40">${fRp(ps.total_nett+psAddSales)}</td>
                     </tr>`;
-                    let n1 = accNode('fas fa-users', ps.nama, fQtyStr(ps.total_qty), `Total: ${fRp(ps.total_nett+psAddSales)}`, 1, null, [], ps.customer.length>0);
+                    let n1 = accNode('fas fa-users', ps.nama, fQtyStr(ps.total_qty), `Total: ${fRp(ps.total_nett+psAddSales)}`, 1, null, [], ps.customer.length>0, null, null, psAddSales ? `<div class="mt-1.5 text-[10px] font-bold text-purple-700">Est. Closing: Rp ${formatNumberWithDots(psAddSales)}</div>` : '');
                     htmlCards += n1.html;
                     ps.customer.forEach(c=>{
                         const {salesCell, totalCell, total, addSalesVal} = buildRow(ps.nama, c, 2);
                         totalQty+=0; // already counted via ps
                         closingLabels.push(`${c.nama}`); closingSales.push(c.nett); closingAdd.push(parseFloat(addSalesVal)||0); closingBg.push(colorMap[ps.nama]);
-                        htmlClosing += `<tr class="row-level-2 hover:bg-slate-50">
+                        htmlClosing += `<tr class="row-level-2 hover:bg-slate-50 closing-cust-row" data-nett="${c.nett||0}">
                             <td class="py-2 pr-4 pl-6 md:pl-10"><div class="flex items-start"><i class="fas fa-store mr-3 mt-1 text-amber-500 w-4"></i><span class="font-bold text-slate-700">${c.nama}</span></div></td>
                             <td class=\"px-4 py-2 text-right border-l border-slate-200 font-semibold\">${fNum(c.total_qty)}</td>
                             <td class=\"px-4 py-2 text-right border-l border-slate-200 font-semibold text-slate-600\">${fRp(c.nett)}</td>
                             ${salesCell}
                             ${totalCell}
                         </tr>`;
-                        let n2 = accNode('fas fa-store', c.nama, fQtyStr(c.total_qty), `Total: ${fRp(total)}`, 2, n1.id, n1.ancestors, c.produk.length>0, null, addSalesVal);
+                        let n2 = closingCardNode({ icon: 'fas fa-store', label: c.nama, psName: ps.nama, custName: c.nama, qtyHtml: fQtyStr(c.total_qty), nettHtml: fRp(c.nett), addSalesVal: addSalesVal, totalHtml: fRp(total), level: 2, parentId: n1.id, parentAncestors: n1.ancestors, hasChildren: c.produk.length>0 });
                         htmlCards += n2.html;
                         c.produk.forEach(p=>{
                             let qtyStr = p.satuan? `${fNum(p.qty)} <span class="text-xs text-slate-400 font-semibold ml-1">${p.satuan}</span>` : fNum(p.qty);
@@ -1446,13 +2030,141 @@
                 // When specific ps, we already added ps totals; need adjust closingLabels already
             }
 
-            if (htmlClosing) {
+            // Baris manual (customer tanpa sales): data dari server, form terisi, langsung bisa edit/hapus.
+            // Terpisah dari data sales — tidak di-merge ke tabel sales.
+            const renderManualRows = () => {
+                let mHtml = '';
+                let mCards = '';
+                const rows = manualClosingRows.filter(r => {
+                    if (psFilter === 'all') return true;
+                    if (psFilter === 'Sales Team') return String(r.ps || '').toLowerCase() !== 'office';
+                    return String(r.ps || '') === psFilter;
+                });
+                rows.forEach(r => {
+                    const psName = r.ps || '';
+                    const cName = r.customer_name || '';
+                    const addSalesVal = parseFloat(r.amount) || 0;
+                    if (!colorMap[psName]) { colorMap[psName] = palette[cIdx % palette.length]; cIdx++; }
+                    closingLabels.push(`[${psName}] ${cName}`);
+                    closingSales.push(0);
+                    closingAdd.push(addSalesVal);
+                    closingBg.push(colorMap[psName] || '#3b82f6');
+                    totalAdd += addSalesVal;
+                    totalAkhir += addSalesVal;
+                    totalAddSales += addSalesVal;
+                    const escH = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+                    const prodBadge = r.product_name ? `<div class="mt-1.5 ml-8 flex items-center gap-1.5 text-[11px]"><i class="fas fa-box text-slate-400 text-[10px]"></i><span class="font-semibold text-slate-600">${escH(r.product_name)}</span>${r.qty?`<span class="bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 font-bold text-slate-700">${r.qty} ${escH(r.unit||'')}</span>`:''}</div>` : '';
+                    const qtyVal = r.qty || 0;
+                    const priceVal = r.note && r.note.includes('Price:') ? r.note.replace('Price:','').trim() : (r.note || 'Rp 0');
+                    const priceDisplay = priceVal.includes('Rp') ? priceVal : (priceVal && priceVal !== 'Rp 0' ? 'Rp ' + priceVal : 'Rp 0');
+                    mHtml += `<tr class="hover:bg-purple-50 transition-colors closing-cust-row" data-nett="0" data-manual-id="${r.id}" style="background:rgba(250,245,255,.45)">
+                    <td class="px-4 py-2"><div class="flex items-center gap-2">
+                        <button type="button" onclick="deleteManualClosing(${r.id},this)" title="Hapus rencana ini"
+                            class="shrink-0 w-6 h-6 rounded-full bg-white hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors border border-slate-300 hover:border-red-300 flex items-center justify-center">
+                            <i class="fas fa-trash text-[10px]"></i>
+                        </button>
+                        <i class="fas fa-store text-amber-500 w-4 text-center shrink-0"></i>
+                        <input type="text" value="${escH(cName)}" list="manualClosingCustList" autocomplete="off"
+                            class="new-cust-input flex-1 min-w-0 text-xs py-1.5 px-2 border border-transparent hover:border-slate-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-300 font-bold text-slate-700 bg-transparent hover:bg-white focus:bg-white rounded-lg outline-none transition-colors"
+                            onchange="renameManualClosing(${r.id},this)" title="Klik untuk edit nama customer">
+                        <span class="shrink-0 bg-blue-50 border border-blue-100 rounded px-1.5 py-0.5 flex items-center">
+                            <input type="text" value="${escH(psName)}" list="manualClosingPsList" autocomplete="off"
+                                class="new-ps-input w-20 text-[10px] py-0.5 px-1 border border-transparent bg-transparent hover:bg-white focus:bg-white focus:border-purple-300 rounded font-bold text-blue-600 text-center outline-none transition-colors"
+                                onchange="renameManualClosing(${r.id},this)" title="Klik untuk edit PS" placeholder="PS">
+                        </span>
+                    </div>${prodBadge}</td>
+                    <td class="px-4 py-3 text-right border-l border-slate-200 font-semibold">${qtyVal || 0}</td>
+                    <td class="px-4 py-3 text-right border-l border-slate-200 font-semibold text-slate-600">${priceDisplay}</td>
+                    <td class="px-2 py-1 text-center border-l border-slate-200 w-36 bg-purple-50/30">
+                        <input type="text" placeholder="0" value="${formatNumberWithDots(addSalesVal)}" data-manual-id="${r.id}"
+                            class="closing-amount-input w-20 text-center text-xs py-1 px-1.5 border border-purple-300 rounded focus:border-purple-500 focus:ring-1 focus:ring-purple-300 font-bold text-purple-800 bg-white mx-auto block"
+                            oninput="onClosingInputFormat(this);syncClosingInputs(this)"
+                            onchange="saveManualClosingAmount(${r.id},this)">
+                    </td>
+                    <td class="px-4 py-2 text-right border-l border-slate-200 font-black text-emerald-700 bg-emerald-50/40 text-xs closing-total-cell">${fRp(addSalesVal)}</td>
+                </tr>`;
+                    const prodLabel = r.product_name ? ` <span class="text-[10px] text-slate-500 font-semibold ml-1">• ${escH(r.product_name)}${r.qty?` ${r.qty} ${escH(r.unit||'')}`:''}</span>` : '';
+                    mCards += closingCardNode({ icon: 'fas fa-store', label: `${escH(cName)} <span class="text-[10px] text-blue-500 font-bold ml-1">${escH(psName)}</span>${prodLabel}`, psName: psName, custName: cName, qtyHtml: fQtyStr(r.qty||0, r.unit||''), nettHtml: priceDisplay, addSalesVal: addSalesVal, totalHtml: fRp(addSalesVal), level: 1, parentId: null, parentAncestors: [], hasChildren: false, manualId: r.id }).html;
+                });
+                return { mHtml, mCards };
+            };
+
+            if (htmlClosing || HAS_FULL_ACCESS) {
+                // Form tetap di bawah, data baru di ATAS form - produk opsional hidden by default
+                let formRowHtml = '';
+                if (HAS_FULL_ACCESS) {
+                    formRowHtml = `<tr class="bg-purple-50/60 border-t-2 border-dashed border-purple-300">
+                        <td class="px-4 py-2">
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" id="manualAddBtn" onclick="addManualClosing()" title="Tambah rencana closing"
+                                    class="shrink-0 w-6 h-6 rounded-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-[11px] leading-none transition-colors shadow-sm flex items-center justify-center">
+                                    <i class="fas fa-plus text-[10px]"></i>
+                                </button>
+                                <div class="relative flex-1 min-w-0">
+                                    <input type="text" id="manualAddCust" list="manualClosingCustList" placeholder="Nama customer..." autocomplete="off"
+                                        class="peer w-full text-xs py-1.5 pl-2 pr-7 border border-slate-300 rounded-lg focus:border-purple-500 focus:ring-1 focus:ring-purple-300 font-semibold text-slate-700 bg-white outline-none">
+                                    <button type="button" onclick="clearManualField('manualAddCust')" title="Bersihkan"
+                                        class="absolute inset-y-0 right-0 hidden peer-[:not(:placeholder-shown)]:flex items-center pr-2 text-slate-400 hover:text-red-500 transition-colors">
+                                        <i class="fas fa-times-circle text-[10px]"></i>
+                                    </button>
+                                </div>
+                                <div class="relative flex-1 min-w-0">
+                                    <input list="manualClosingPsList" id="manualAddPs" placeholder="PS..." autocomplete="off"
+                                        class="peer w-full text-xs py-1.5 pl-2 pr-7 border border-slate-300 rounded-lg focus:border-purple-500 focus:ring-1 focus:ring-purple-300 font-semibold text-slate-700 bg-white outline-none">
+                                    <button type="button" onclick="clearManualField('manualAddPs')" title="Bersihkan"
+                                        class="absolute inset-y-0 right-0 hidden peer-[:not(:placeholder-shown)]:flex items-center pr-2 text-slate-400 hover:text-red-500 transition-colors">
+                                        <i class="fas fa-times-circle text-[10px]"></i>
+                                    </button>
+                                </div>
+                                <button type="button" onclick="toggleManualProductFields()" title="Tambah produk (opsional)" class="shrink-0 text-[11px] font-bold text-purple-600 hover:text-purple-800 px-2 py-1 rounded border border-purple-200 hover:bg-purple-50 transition-colors">+ Produk</button>
+                            </div>
+                            <div id="manualAddProductFields" class="hidden mt-2">
+                                <div id="manualAddProductLines" class="space-y-2">
+                                    <div class="product-line flex items-center gap-1.5">
+                                        <input type="text" placeholder="Nama produk — ketik rekomendasi" list="manualClosingProductList" autocomplete="off" class="product-input flex-1 min-w-0 text-xs py-1.5 px-2 border border-slate-300 rounded-lg focus:border-purple-500 focus:ring-1 focus:ring-purple-300 text-slate-700 bg-white outline-none">
+                                        <button type="button" onclick="removeManualProductLine(this)" class="remove-line-btn hidden shrink-0 w-6 h-6 rounded-full bg-white border border-slate-300 text-slate-400 hover:text-red-500 hover:border-red-300 flex items-center justify-center"><i class="fas fa-times text-[10px]"></i></button>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">Qty & Price isi di kolomnya per produk — klik + Produk lagi untuk baris baru</p>
+                            </div>
+                        </td>
+                        <td class="px-2 py-1 text-center border-l border-slate-200">
+                            <span id="manualAddQtyPlaceholder" class="text-slate-300 text-xs">—</span>
+                            <div id="manualAddQtyWrap" class="hidden flex flex-col gap-1.5 justify-center">
+                                <div class="qty-line product-qty-line flex justify-center">
+                                    <input type="text" placeholder="Qty" class="qty-input w-20 text-xs py-1 px-1.5 border border-slate-300 rounded focus:border-purple-500 text-slate-700 bg-white outline-none text-center">
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-2 py-1 text-center border-l border-slate-200">
+                            <span id="manualAddPricePlaceholder" class="text-slate-400 text-xs font-semibold">Rp 0</span>
+                            <div id="manualAddPriceWrap" class="hidden flex flex-col gap-1.5 justify-center">
+                                <div class="price-line product-price-line flex justify-center">
+                                    <input type="text" placeholder="Price" inputmode="numeric" class="price-input w-24 text-xs py-1 px-1.5 border border-slate-300 rounded focus:border-purple-500 text-slate-700 bg-white outline-none text-center" oninput="onClosingInputFormat(this);updateManualEstClosingFromPrices()">
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-2 py-1 text-center border-l border-slate-200 bg-purple-50/30">
+                            <input type="text" id="manualAddValue" placeholder="0" inputmode="numeric" autocomplete="off"
+                                class="w-24 text-center text-xs py-1 px-1.5 border border-purple-300 rounded focus:border-purple-500 focus:ring-1 focus:ring-purple-300 font-bold text-purple-800 bg-white mx-auto block outline-none"
+                                oninput="onClosingInputFormat(this);recalcClosingLive()">
+                        </td>
+                        <td class="px-4 py-2 text-right border-l border-slate-200 bg-emerald-50/40">
+                            <span id="manualAddTotal" class="text-xs font-black text-emerald-700">Rp 0</span>
+                        </td>
+                    </tr>`;
+                }
+                // Data baru (manual) di ATAS form, form tetap di bawah manual
+                const manualBlock = renderManualRows();
+                htmlClosing += manualBlock.mHtml;
+                htmlClosing += formRowHtml;
+                htmlCards += manualBlock.mCards;
                 htmlClosing += `<tr class="bg-blue-50 font-bold border-t-2 border-blue-200">
                     <td class="px-4 py-3">GRAND TOTAL</td>
                     <td class=\"px-4 py-3 text-right border-l border-slate-200\">${fNum(totalQty)}</td>
-                    <td class=\"px-4 py-3 text-right border-l border-slate-200\">${fRp(totalNett)}</td>
-                    <td class="px-3 py-3 text-center border-l border-slate-200 text-amber-700">${fRp(totalAddSales)}</td>
-                    <td class="px-4 py-3 text-right border-l border-slate-200 text-emerald-700">${fRp(totalAkhir)}</td>
+                    <td id="closingGtNett" class=\"px-4 py-3 text-right border-l border-slate-200\">${fRp(totalNett)}</td>
+                    <td id="closingGtAdd" class="px-3 py-3 text-center border-l border-slate-200 text-purple-700">${fRp(totalAddSales)}</td>
+                    <td id="closingGtAkhir" class="px-4 py-3 text-right border-l border-slate-200 text-emerald-700">${fRp(totalAkhir)}</td>
                 </tr>`;
             }
             document.getElementById('m-tbody-closing').innerHTML = htmlClosing || '<tr><td colspan="5" class="text-center p-6 text-slate-500">No data</td></tr>';
@@ -1466,6 +2178,18 @@
             setText('grandTotalClosingMobile', fRp(totalNett));
             setText('grandAddClosingMobile', fRp(totalAdd));
             setText('grandTotalAkhirMobile', fRp(totalAkhir));
+
+            // Saran customer khusus nama yang BELUM ada di bulan ini (server-render seluruh data)
+            const custListEl = document.getElementById('manualClosingCustList');
+            if (custListEl) {
+                if (!window._allCustOpts) window._allCustOpts = [...custListEl.options].map(o => o.value);
+                const monthCusts = new Set((data.outlet || []).flatMap(ps => (ps.customer || []).map(c => String(c.nama).toLowerCase().trim())));
+                manualClosingRows.forEach(r => monthCusts.add(String(r.customer_name || '').toLowerCase().trim()));
+                const escOpt = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+                custListEl.innerHTML = window._allCustOpts
+                    .filter(n => !monthCusts.has(String(n).toLowerCase().trim()))
+                    .map(n => `<option value="${escOpt(n)}"></option>`).join('');
+            }
 
             const ctx = document.getElementById('chartClosing');
             if (ctx) {
@@ -1572,13 +2296,11 @@
                         psPduSelect.innerHTML += `<option value="${ps.nama}">${ps.nama}</option>`;
                     });
 
-                    Chart.register(ChartDataLabels);
-
                     currentMonthlyData = data;
                     drawPduView();
                     drawOutletChart();
                     drawProductTable();
-                    drawClosingView();
+                    refreshManualClosingRows();
 
                 }).catch(err => {
                     console.error("Failed to load monthly details", err);

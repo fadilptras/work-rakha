@@ -25,7 +25,11 @@ class SalesTargetController extends BaseSalesController
         if ($request->has('targets') && is_array($request->targets)) {
             // input multiple bulan (form target)
             foreach ($request->targets as $bulan => $amount) {
-                $bulanAngka = array_search($bulan, $this->urutanBulan) + 1;
+                $bulanIdx = array_search($bulan, $this->urutanBulan);
+                if ($bulanIdx === false) {
+                    abort(422, 'Bulan tidak valid: ' . $bulan);
+                }
+                $bulanAngka = $bulanIdx + 1;
                 // clean up amount from non-numeric characters if necessary, but we format via JS and store raw hidden
                 $targetAmount = $amount !== null && $amount !== '' ? (float)$amount : 0;
 
@@ -53,7 +57,11 @@ class SalesTargetController extends BaseSalesController
             }
         } else {
             // input single bulan (form history)
-            $bulanAngka = array_search($request->bulan, $this->urutanBulan) + 1;
+            $bulanIdx = array_search($request->bulan, $this->urutanBulan);
+            if ($bulanIdx === false) {
+                abort(422, 'Bulan tidak valid: ' . $request->bulan);
+            }
+            $bulanAngka = $bulanIdx + 1;
 
             $existing = SalesTarget::where([
                 'year' => $targetTahun,

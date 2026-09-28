@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>KPI Evaluasi - {{ $evaluation->user->name }}</title>
+    <title>KPI Evaluasi - {{ $evaluation->user->name ?? '-' }}</title>
     <style>
         body { font-family: sans-serif; font-size: 12px; color: #333; line-height: 1.4; }
         .header { margin-bottom: 20px; }
@@ -44,7 +44,7 @@
     <table class="info-table">
         <tr>
             <td class="info-label">NAMA</td>
-            <td>: {{ $evaluation->user->name }}</td>
+            <td>: {{ $evaluation->user->name ?? '-' }}</td>
         </tr>
         <tr>
             <td class="info-label">JABATAN</td>

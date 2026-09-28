@@ -14,7 +14,7 @@ class CutiObserver
      */
     public function updated(Cuti $cuti): void
     {
-        if ($cuti->isDirty('status') && $cuti->status === 'disetujui') {
+        if ($cuti->isDirty('status') && $cuti->status === 'selesai') {
             try {
                 \Illuminate\Support\Facades\DB::transaction(function () use ($cuti) {
                     $period = CarbonPeriod::create($cuti->tanggal_mulai, $cuti->tanggal_selesai);
@@ -44,7 +44,7 @@ class CutiObserver
      */
     public function deleted(Cuti $cuti): void
     {
-        if ($cuti->status === 'disetujui') {
+        if ($cuti->status === 'selesai') {
             try {
                 Absensi::where('user_id', $cuti->user_id)
                     ->where('status', 'cuti')

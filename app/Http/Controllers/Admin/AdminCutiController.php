@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cuti;
+use App\Models\CutiBersamaLedger;
 use App\Models\Absensi;
 use App\Models\User;
 use App\Models\Holiday;
@@ -21,15 +22,17 @@ class AdminCutiController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Cuti::with('user')->latest();
-        $activeTab = $request->input('tab', 'pending'); 
+        // Cuti bersama tidak tampil di sini (punya halaman rekap sendiri).
+        $query = Cuti::with('user')->where('jenis_cuti', '!=', 'cuti bersama')->latest();
+        $activeTab = $request->input('tab', 'pending');
+        $activeJenis = $request->input('jenis', 'semua');
 
         switch ($activeTab) {
             case 'pending':
-                $query->whereIn('status', ['diajukan', 'proses_finalisasi']);
+                $query->whereIn('status', ['diajukan', 'disetujui']);
                 break;
             case 'approved':
-                $query->where('status', 'disetujui');
+                $query->where('status', 'selesai');
                 break;
             case 'rejected':
                 $query->where('status', 'ditolak');
@@ -41,6 +44,10 @@ class AdminCutiController extends Controller
 
         if ($request->filled('user_id')) {
             $query->where('user_id', $request->user_id);
+        }
+
+        if ($activeJenis !== 'semua') {
+            $query->where('jenis_cuti', $activeJenis);
         }
 
         if ($request->filled('tanggal_mulai') && $request->filled('tanggal_akhir')) {
@@ -57,10 +64,46 @@ class AdminCutiController extends Controller
             'title' => 'Manajemen Pengajuan Cuti',
             'cutiRequests' => $cutiRequests,
             'users' => $users, 
-            'activeTab' => $activeTab
+            'activeTab' => $activeTab,
+            'activeJenis' => $activeJenis
         ]);
     }
     
+    /**
+     * Halaman rekap cuti bersama: daftar hari libur cuti bersama per tahun
+     * beserta jumlah karyawan yang jatahnya terpotong otomatis.
+     */
+    public function rekapBersama(Request $request)
+    {
+        $year = (int) $request->input('year', now()->year);
+
+        $holidays = Holiday::where('is_cuti_bersama', true)
+            ->whereYear('tanggal', $year)
+            ->orderBy('tanggal')
+            ->get();
+
+        $terpotongPerLibur = $holidays->isNotEmpty()
+            ? CutiBersamaLedger::whereIn('holiday_id', $holidays->pluck('id'))
+                ->selectRaw('holiday_id, COUNT(*) as jumlah')
+                ->groupBy('holiday_id')
+                ->pluck('jumlah', 'holiday_id')
+            : collect();
+
+        $years = Holiday::where('is_cuti_bersama', true)
+            ->selectRaw('DISTINCT YEAR(tanggal) as tahun')
+            ->orderByDesc('tahun')
+            ->pluck('tahun');
+
+        return view('admin.cuti.bersama', [
+            'title' => 'Rekap Cuti Bersama',
+            'holidays' => $holidays,
+            'terpotongPerLibur' => $terpotongPerLibur,
+            'totalPotongan' => $terpotongPerLibur->sum(),
+            'years' => $years,
+            'year' => $year,
+        ]);
+    }
+
     public function setApprovers()
     {
         $potentialApprovers = Cache::rememberForever('approvers_list_dropdown', function () {
@@ -171,14 +214,21 @@ class AdminCutiController extends Controller
             elseif ($currentStage < 4 && $cuti->status_approver_4 == 'menunggu') $nextApprover = $cuti->approver4;
 
             if ($nextApprover) {
-                $cuti->update(['status' => 'proses_finalisasi']);
+                $cuti->update(['status' => 'disetujui']);
                 Notification::send($nextApprover, new PengajuanCutiNotification($cuti, 'baru'));
                 Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'disetujui_parsial'));
             } else {
-                $cuti->update(['status' => 'disetujui']);
-                // lockForUpdate memastikan decrement tidak bisa terpanggil dua kali bersamaan
-                $cuti->user->decrement('sisa_cuti', $cuti->total_hari);
-                Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'disetujui'));
+                // Final menjadi 'selesai' hanya jika disahkan approver 4 (Admin),
+                // atau jika slot approver 4 memang tidak diisi (final di slot terakhir).
+                $finalOlehAdmin = $currentStage == 4 || empty($cuti->approver_cuti_4_id);
+                $cuti->update(['status' => $finalOlehAdmin ? 'selesai' : 'disetujui']);
+                if ($finalOlehAdmin) {
+                    // lockForUpdate memastikan decrement tidak bisa terpanggil dua kali bersamaan
+                    $cuti->user->decrement('sisa_cuti', $cuti->total_hari);
+                    Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'disetujui'));
+                } else {
+                    Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'disetujui_parsial'));
+                }
             }
 
             return redirect()->back()->with('success', 'Status persetujuan berhasil diperbarui.');
@@ -255,17 +305,20 @@ class AdminCutiController extends Controller
 
     public function downloadRekapPDF(Request $request)
     {
-        $query = Cuti::with('user')->latest();
-        $activeTab = $request->input('tab', 'pending'); 
+        // Cuti bersama tidak tampil di sini (punya halaman rekap sendiri).
+        $query = Cuti::with('user')->where('jenis_cuti', '!=', 'cuti bersama')->latest();
+        $activeTab = $request->input('tab', 'pending');
+        $activeJenis = $request->input('jenis', 'semua');
 
         switch ($activeTab) {
-            case 'pending': $query->whereIn('status', ['diajukan', 'proses_finalisasi']); break;
-            case 'approved': $query->whereIn('status', ['disetujui', 'diterima']); break;
+            case 'pending': $query->whereIn('status', ['diajukan', 'disetujui']); break;
+            case 'approved': $query->where('status', 'selesai'); break;
             case 'rejected': $query->where('status', 'ditolak'); break;
             case 'cancelled': $query->where('status', 'dibatalkan'); break;
         }
 
         if ($request->filled('user_id')) $query->where('user_id', $request->user_id);
+        if ($activeJenis !== 'semua') $query->where('jenis_cuti', $activeJenis);
         if ($request->filled('tanggal_mulai') && $request->filled('tanggal_akhir')) {
             $query->whereBetween('tanggal_mulai', [$request->tanggal_mulai, $request->tanggal_akhir]);
         }
@@ -279,8 +332,9 @@ class AdminCutiController extends Controller
         
         $startDate = $request->tanggal_mulai;
         $endDate = $request->tanggal_akhir;
+        $jenisLabel = $activeJenis === 'semua' ? 'Semua Jenis' : ucwords($activeJenis);
 
-        $pdf = Pdf::loadView('admin.cuti.pdf_rekap', compact('cutiRequests', 'activeTab', 'userName', 'startDate', 'endDate'));
+        $pdf = Pdf::loadView('admin.cuti.pdf_rekap', compact('cutiRequests', 'activeTab', 'userName', 'startDate', 'endDate', 'jenisLabel'));
         $pdf->setPaper('a4', 'landscape'); 
         return $pdf->download("rekap-cuti-" . strtoupper($activeTab) . "-" . Carbon::now()->format('Y-m-d') . ".pdf");
     }
@@ -314,7 +368,7 @@ class AdminCutiController extends Controller
             \Illuminate\Support\Facades\Storage::disk('public')->delete($cuti->lampiran);
         }
 
-        if ($cuti->status == 'disetujui') {
+        if ($cuti->status == 'selesai') {
             $cuti->user->increment('sisa_cuti', $cuti->total_hari);
 
 
@@ -334,8 +388,8 @@ class AdminCutiController extends Controller
             $cuti = Cuti::with(['user'])->lockForUpdate()->findOrFail($id);
 
             // Validasi status: hanya boleh untuk yang belum selesai/ditolak/dibatalkan
-            if (in_array($cuti->status, ['disetujui', 'ditolak', 'dibatalkan'])) {
-                return back()->with('error', 'Pengajuan cuti ini sudah disetujui, ditolak, atau dibatalkan.');
+            if (in_array($cuti->status, ['selesai', 'ditolak', 'dibatalkan'])) {
+                return back()->with('error', 'Pengajuan cuti ini sudah selesai, ditolak, atau dibatalkan.');
             }
 
             if ($cuti->status_approver_1 === 'menunggu') {
@@ -347,7 +401,7 @@ class AdminCutiController extends Controller
             ]);
 
             $updateData = [
-                'status' => 'disetujui',
+                'status' => 'selesai',
             ];
 
             // Tandai semua status approver yang masih 'menunggu' menjadi 'skipped'

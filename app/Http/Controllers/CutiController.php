@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\Notification;
 
 class CutiController extends Controller
 {
+    public function index()
+    {
+        return redirect()->route('cuti.create');
+    }
+
     public function create()
     {
         $user = Auth::user();
@@ -176,14 +181,21 @@ class CutiController extends Controller
             }
 
             if ($nextApprover) {
-                $cuti->update(['status' => 'proses_finalisasi']);
+                $cuti->update(['status' => 'disetujui']);
                 Notification::send($nextApprover, new PengajuanCutiNotification($cuti, 'baru'));
                 Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'disetujui_parsial'));
             } else {
-                $cuti->update(['status' => 'disetujui']);
-                // lockForUpdate memastikan decrement tidak bisa terpanggil dua kali bersamaan
-                $cuti->user->decrement('sisa_cuti', $cuti->total_hari);
-                Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'disetujui'));
+                // Final menjadi 'selesai' hanya jika disahkan approver 4 (Admin),
+                // atau jika slot approver 4 memang tidak diisi (final di slot terakhir).
+                $finalOlehAdmin = $currentStage == 4 || empty($cuti->approver_cuti_4_id);
+                $cuti->update(['status' => $finalOlehAdmin ? 'selesai' : 'disetujui']);
+                if ($finalOlehAdmin) {
+                    // lockForUpdate memastikan decrement tidak bisa terpanggil dua kali bersamaan
+                    $cuti->user->decrement('sisa_cuti', $cuti->total_hari);
+                    Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'disetujui'));
+                } else {
+                    Notification::send($cuti->user, new PengajuanCutiNotification($cuti, 'disetujui_parsial'));
+                }
             }
 
             return redirect()->back()->with('success', 'Status pengajuan berhasil diperbarui.');
@@ -192,7 +204,23 @@ class CutiController extends Controller
 
     public function downloadPdf($id)
     {
+        $user = Auth::user();
         $cuti = Cuti::with(['user', 'approver1', 'approver2', 'approver3', 'approver4'])->findOrFail($id);
+
+        $isOwner = $user->id === $cuti->user_id;
+        $isAdmin = $user->role === 'admin';
+
+        $isApprover = in_array($user->id, [
+            $cuti->approver_cuti_1_id,
+            $cuti->approver_cuti_2_id,
+            $cuti->approver_cuti_3_id,
+            $cuti->approver_cuti_4_id
+        ]);
+
+        if (!$isOwner && !$isAdmin && !$isApprover) {
+            abort(403, 'Anda tidak memiliki akses ke pengajuan ini.');
+        }
+
         $sisaCuti = $cuti->user->sisa_cuti ?? 0;
 
         $pdf = Pdf::loadView('pdf.documents.pengajuan-cuti', [
@@ -213,12 +241,12 @@ class CutiController extends Controller
             // lockForUpdate mencegah kondisi cuti baru disetujui saat cancel diproses
             $cuti = \App\Models\Cuti::lockForUpdate()->findOrFail($cuti->id);
 
-            if (!in_array($cuti->status, ['diajukan', 'proses_finalisasi', 'disetujui'])) {
+            if (!in_array($cuti->status, ['diajukan', 'disetujui', 'selesai'])) {
                 return redirect()->back()->with('error', 'Cuti yang sudah ditolak atau dibatalkan tidak bisa dibatalkan lagi.');
             }
 
-            // Jika membatalkan cuti yang sudah disetujui (saldo sudah dipotong), maka refund saldonya
-            if ($cuti->status == 'disetujui') {
+            // Jika membatalkan cuti yang sudah selesai (saldo sudah dipotong), maka refund saldonya
+            if ($cuti->status == 'selesai') {
                 $cuti->user->increment('sisa_cuti', $cuti->total_hari);
             }
 

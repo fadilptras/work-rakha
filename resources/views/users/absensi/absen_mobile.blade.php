@@ -329,10 +329,10 @@
                             @endphp
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
-                                    <img src="{{ $rekan->user->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
+                                    <img src="{{ $rekan->user?->profile_picture ? asset('storage/' . $rekan->user->profile_picture) : 'https://ui-avatars.com/api/?name='.urlencode($rekan->user->name ?? 'U').'&background=random&color=fff&size=64' }}"
                                          alt="{{ $rekan->user->name ?? '' }}" class="w-10 h-10 rounded-full object-cover border-2 border-slate-100">
                                     <div>
-                                        <p class="text-xs font-bold text-slate-700">{{ $rekan->user->name }}</p>
+                                        <p class="text-xs font-bold text-slate-700">{{ $rekan->user->name ?? 'User Dihapus' }}</p>
                                         <p class="text-[10px] text-slate-400 font-semibold">{{ $rekan->jam_masuk ? \Carbon\Carbon::parse($rekan->jam_masuk)->format('H:i') . ' WIB' : '--:--' }}</p>
                                     </div>
                                 </div>

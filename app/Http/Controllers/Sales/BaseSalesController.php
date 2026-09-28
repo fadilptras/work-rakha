@@ -31,13 +31,16 @@ abstract class BaseSalesController extends Controller
 
         $jabatan = strtolower($user->jabatan ?? '');
         $divisi = strtolower($user->divisi ?? '');
+        $email = strtolower($user->email ?? '');
 
         $isTopManagement = \Illuminate\Support\Str::contains($jabatan, 'direktur') || $divisi === 'top management';
         $isKepalaDivisiMO = (($user->is_kepala_divisi == 1) || \Illuminate\Support\Str::contains($jabatan, 'kepala')) && in_array($divisi, ['marketing dan operasional']);
         $isAdminMarketing = \Illuminate\Support\Str::contains($jabatan, 'admin support');
+        $isSalesSupervisor = \Illuminate\Support\Str::contains($jabatan, 'sales supervisor')
+            || in_array($email, ['paladin_arief@yahoo.com']);
         $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
 
-        return $isTopManagement || $isKepalaDivisiMO || $isAdminMarketing
+        return $isTopManagement || $isKepalaDivisiMO || $isAdminMarketing || $isSalesSupervisor
         || $isTest
         ;
     }

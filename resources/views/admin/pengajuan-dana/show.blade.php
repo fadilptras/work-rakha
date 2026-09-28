@@ -8,8 +8,8 @@
                 <h2 class="text-xl font-bold text-white">Detail Pengajuan: {{ $pengajuanDana->judul_pengajuan }}</h2>
                 <p class="text-sm text-zinc-400 mt-1">
                     Diajukan oleh: 
-                    <span class="font-medium text-zinc-300">{{ $pengajuanDana->user->name }}</span> 
-                    - Divisi {{ $pengajuanDana->user->divisi }}
+                    <span class="font-medium text-zinc-300">{{ $pengajuanDana->user->name ?? 'N/A' }}</span> 
+                    - Divisi {{ $pengajuanDana->user->divisi ?? '-' }}
                 </p>
             </div>
             <div class="flex items-center gap-3">

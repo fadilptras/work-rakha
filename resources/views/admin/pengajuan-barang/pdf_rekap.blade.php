@@ -59,7 +59,7 @@
                 @forelse($pengajuanBarangs as $pengajuan)
                     <tr>
                         <td>{{ $pengajuan->created_at->format('d M Y') }}</td>
-                        <td>{{ $pengajuan->user->name }}</td>
+                        <td>{{ $pengajuan->user->name ?? '-' }}</td>
                         <td>{{ $pengajuan->judul_pengajuan }}</td>
                         <td class="text-center">{{ count($pengajuan->rincian_barang ?? []) }} Item</td>
                         <td>

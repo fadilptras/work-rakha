@@ -138,7 +138,7 @@
                         {{-- UBAH: Nama jadi Link --}}
                         <td class="px-6 py-4 font-medium">
                             <a href="{{ route('admin.pengajuan_barang.show', $pengajuan) }}" class="text-white hover:text-sky-400 hover:underline transition flex flex-col">
-                                <span class="text-base truncate">{{ $pengajuan->user->name }}</span>
+                                <span class="text-base truncate">{{ $pengajuan->user->name ?? '-' }}</span>
                                 <span class="text-xs text-zinc-500 font-normal mt-0.5 group-hover:text-sky-500/70">Klik untuk melihat detail</span>
                             </a>
                         </td>
