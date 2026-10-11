@@ -215,6 +215,49 @@ class SalesForecastController extends BaseSalesController
         ]);
     }
 
+    /**
+     * Data tabel forecast sebagai JSON (untuk popup referensi di form pengajuan barang).
+     * Memakai buildForecastData yang sama dengan halaman forecast (satu sumber kebenaran),
+     * hanya field yang dibutuhkan form yang dikirim agar payload ringan.
+     */
+    public function forecastData(Request $request)
+    {
+        if (!$this->hasForecastAccess()) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses ke data forecast.'], 403);
+        }
+
+        $tahun = $request->input('tahun', date('Y'));
+
+        [$stockForecast, $bulanReferensi, $bulanAktif, $labelStokRealtime, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi] =
+            $this->buildForecastData($tahun, $request->input('bulan_akhir'));
+
+        $rows = array_map(fn($item) => [
+            'nama_produk'   => $item['nama_produk'],
+            'satuan_sales'  => $item['satuan_sales'],
+            'satuan_stok'   => $item['satuan_stok'],
+            'avg_qty'       => $item['avg_qty'],
+            'forecast_qty'  => $item['forecast_qty'],
+            'buffer_qty'    => $item['buffer_qty'],
+            'order_qty'     => $item['order_qty'],
+            'stok_tersedia' => $item['stok_tersedia'],
+            'doi_qty'       => $item['doi_qty'],
+        ], $stockForecast);
+
+        return response()->json([
+            'success' => true,
+            'data' => $rows,
+            'meta' => [
+                'tahun' => $tahun,
+                'bulan_aktif' => $bulanAktif,
+                'ref_months' => $activeRefMonths,
+                'percentage' => $activePercentage,
+                'doi' => $activeDoi,
+                'label_stok' => $labelStokRealtime,
+                'total' => count($rows),
+            ],
+        ]);
+    }
+
     public function exportExcel(Request $request)
     {
         if (!$this->hasForecastAccess()) {

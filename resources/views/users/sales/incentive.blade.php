@@ -1,7 +1,3 @@
-@php
-    $agent = new \Jenssegers\Agent\Agent();
-    $isMobile = $agent->isMobile();
-@endphp
 <x-layout-users title="{{ $title ?? 'Sales Incentive Scheme' }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -35,6 +31,7 @@
         /* Sticky Column PS for Table */
         .table-sticky-container { position: relative; overflow-x: auto; }
         .table-sticky-container table { width: 100%; border-collapse: collapse; }
+        .table-sticky-container.desktop-table-wrap { padding-bottom: 10px; }
         @media (max-width: 767px) {
             .table-sticky-container th:first-child, .table-sticky-container td:first-child {
                 position: sticky; left: 0; z-index: 10;
@@ -61,10 +58,19 @@
             .desktop-table-wrap { display: none; }
             .mobile-cards-wrap { display: flex; }
         }
+
+        /* Riwayat settings: tinggi kartu dibatasi, scroll di dalam tabel (halaman tidak memanjang) */
+        .rules-history-scroll { overflow: auto; }
+        .rules-history-scroll table { border-collapse: separate; border-spacing: 0; }
+        .rules-history-scroll thead th {
+            position: sticky; top: 0; z-index: 10; background-color: #f8fafc;
+            background-clip: padding-box;
+            box-shadow: 0 1px 0 #e2e8f0;
+        }
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16 mobile-auto-h" x-data="{
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-x-clip text-slate-800 pb-16 mobile-auto-h" x-data="{
         activeTab: (() => {
             const validTabs = ['monthly', 'quarterly', 'outlet'@if($hasFullAccess), 'settings'@endif];
             const urlTab = new URLSearchParams(window.location.search).get('tab');
@@ -73,33 +79,30 @@
             if (stored && validTabs.includes(stored)) return stored;
             return 'monthly';
         })(),
-        showTabHint: true,
-        checkTabOverflow() {
-            const el = this.$refs.tabScroller;
-            if (!el) return;
-            const hasOverflow = el.scrollWidth > el.clientWidth + 4;
-            const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
-            this.showTabHint = hasOverflow && !atEnd;
-        },
         showInfoModal: false,
         showInfoModalTriwulan: false,
         showInfoModalOutlet: false,
         showFormModalBulan: false,
         showFormModalTriwulan: false,
+        showFormModalOutlet: false,
         formTahun: '{{ $tahun }}',
         formBulan: '{{ $bulan }}',
         formTriwulan: '{{ $triwulan }}',
         formBasisBulan: '{{ $activeBasis }}',
         formBasisTriwulan: '{{ $activeBasisTriwulan }}',
-        settingsBulanNominal: {{ json_encode($settingsBulanNominal->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }},
-        settingsTriwulanNominal: {{ json_encode($settingsTriwulanNominal->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }},
-        settingsBulanPercent: {{ json_encode($settingsBulanPercent->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }},
-        settingsTriwulanPercent: {{ json_encode($settingsTriwulanPercent->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }},
+        {{-- Data settings hanya di-render untuk full akses (tab Settings di-gate $hasFullAccess) --}}
+        settingsBulanNominal: @if($hasFullAccess){{ json_encode($settingsBulanNominal->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }}@else[]@endif,
+        settingsTriwulanNominal: @if($hasFullAccess){{ json_encode($settingsTriwulanNominal->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }}@else[]@endif,
+        settingsBulanPercent: @if($hasFullAccess){{ json_encode($settingsBulanPercent->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }}@else[]@endif,
+        settingsTriwulanPercent: @if($hasFullAccess){{ json_encode($settingsTriwulanPercent->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }}@else[]@endif,
+        settingsOutlet: @if($hasFullAccess){{ json_encode($settingsOutlet->map(fn($s) => ['min_achievement' => (float)$s->min_achievement, 'incentive_value' => (float)$s->incentive_value])) }}@else[]@endif,
+        settingsOutletPristine: [],
         
-        historySearchTahun: '', historyFilterType: '', historyFilterBasis: '',
-        copySourceBulan: '', copySourceTriwulan: '',
+        historySearchTahun: '', historyFilterBasis: '',
+        copySourceBulan: '', copySourceTriwulan: '', copySourceOutlet: '',
         showHistoryDetailModal: false, historyDetailTitle: '', historyDetailSub: '', historyDetailTiers: [], historyDetailType: '',
         historyList: [
+            @if($hasFullAccess)
             @foreach($settingsHistory as $key => $tiers)
                 @php [$hTahun, $hBulan, $hType, $hBasis] = explode('|', $key); @endphp
                 {
@@ -107,6 +110,7 @@
                     tiers: {{ json_encode($tiers->map(fn($t) => ['min_achievement' => (float)$t->min_achievement, 'incentive_value' => (float)$t->incentive_value, 'basis' => $t->basis])) }}
                 },
             @endforeach
+            @endif
         ],
         filteredHistoryList(type = '') {
             const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'Triwulan I', 'Triwulan II', 'Triwulan III', 'Triwulan IV'];
@@ -146,17 +150,16 @@
         init() {
             localStorage.setItem('active_incentive_tab', this.activeTab);
             const url = new URL(window.location); url.searchParams.set('tab', this.activeTab); window.history.replaceState({}, '', url);
+            this.settingsOutletPristine = JSON.parse(JSON.stringify(this.settingsOutlet || []));
             this.$watch('activeTab', value => {
                 localStorage.setItem('active_incentive_tab', value);
                 const url = new URL(window.location); url.searchParams.set('tab', value); window.history.replaceState({}, '', url);
             });
-            this.$nextTick(() => this.checkTabOverflow());
-            window.addEventListener('resize', () => this.checkTabOverflow());
         }
     }">
         <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8 space-y-4 flex-1 flex flex-col justify-start">
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
             
             <div class="w-full flex justify-start">
                 <x-ui.back-button href="{{ route('sales.index') }}" label="Back to Sales Dashboard" />
@@ -165,7 +168,7 @@
             <div class="hidden md:block">
                 <x-ui.page-header title="Sales Incentive Scheme" subtitle="Monitor sales performance incentive calculations based on official schemes and targets." icon="fa-hand-holding-dollar">
                     <x-slot:controls>
-                        <div x-ref="tabScroller" @scroll="checkTabOverflow()" class="flex space-x-1 bg-white/10 p-1 rounded-full border border-white/20 backdrop-blur-md overflow-x-auto relative z-10 w-full">
+                        <div class="flex space-x-1 bg-white/10 p-1 rounded-full border border-white/20 backdrop-blur-md overflow-x-auto relative z-10 w-full">
                             <button @click="activeTab = 'monthly'" :class="{ 'bg-white text-blue-700 shadow-md': activeTab === 'monthly', 'text-white hover:bg-white/20': activeTab !== 'monthly' }" class="px-4 py-1.5 text-sm rounded-full font-bold transition-all whitespace-nowrap flex items-center flex-1 justify-center">
                                 <i class="fas fa-calendar-alt mr-2"></i> Monthly
                             </button>
@@ -197,20 +200,20 @@
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-1.5 flex items-stretch gap-1">
                     <button @click="activeTab = 'monthly'" :class="activeTab === 'monthly' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold transition-all">
                         <i class="fas fa-calendar-alt text-sm"></i>
-                        <span class="text-[10px] uppercase tracking-wide">Monthly</span>
+                        <span class="text-xs uppercase tracking-wide">Monthly</span>
                     </button>
                     <button @click="activeTab = 'quarterly'" :class="activeTab === 'quarterly' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold transition-all">
                         <i class="fas fa-calendar-days text-sm"></i>
-                        <span class="text-[10px] uppercase tracking-wide">Quarterly</span>
+                        <span class="text-xs uppercase tracking-wide">Quarterly</span>
                     </button>
                     <button @click="activeTab = 'outlet'" :class="activeTab === 'outlet' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold transition-all">
                         <i class="fas fa-store text-sm"></i>
-                        <span class="text-[10px] uppercase tracking-wide">New Outlet</span>
+                        <span class="text-xs uppercase tracking-wide">New Outlet</span>
                     </button>
                     @if($hasFullAccess)
                     <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-transparent text-slate-500'" class="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-bold transition-all">
                         <i class="fas fa-cog text-sm"></i>
-                        <span class="text-[10px] uppercase tracking-wide">Settings</span>
+                        <span class="text-xs uppercase tracking-wide">Settings</span>
                     </button>
                     @endif
                 </div>
@@ -222,12 +225,12 @@
                 <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !bg-white">
                     
                     {{-- Header Table + Filter (Rata Kiri & Kanan Balance) --}}
-                    <div class="px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
+                    <div class="px-3 py-2.5 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
                         <div class="flex items-center gap-3 shrink-0">
                             <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm shadow-sm"><i class="fas fa-table"></i></div>
                             <div>
-                                <h3 class="text-sm font-bold text-slate-800">Actual Sales & Monthly Incentive</h3>
-                                <p class="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">Period: {{ $bulan }} {{ $tahun }}</p>
+                                <h3 class="text-sm font-bold text-slate-800">Actual Sales & Monthly Incentive <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full align-middle">{{ count($payouts) }} PS</span></h3>
+                                <p class="text-xs sm:text-xs text-slate-500 font-semibold mt-0.5">Period: {{ $bulan }} {{ $tahun }}</p>
                             </div>
                         </div>
 
@@ -258,7 +261,7 @@
                                 <div class="min-w-0 flex-1">
                                     <div class="font-bold text-slate-800 text-sm truncate">{{ $payout['ps'] }}</div>
                                     <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
-                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[10px]
+                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-xs
                                             @if($payout['achievement_rate'] >= 200) bg-sky-50 text-sky-700
                                             @elseif($payout['achievement_rate'] >= 150) bg-indigo-50 text-indigo-700
                                             @elseif($payout['achievement_rate'] >= 130) bg-emerald-50 text-emerald-700
@@ -267,15 +270,15 @@
                                             @else bg-rose-50 text-rose-700 @endif">
                                             {{ number_format($payout['achievement_rate'], 1, ',', '.') }}%
                                         </span>
-                                        <span class="text-[10px] font-semibold text-slate-500">Rate: {{ number_format($payout['incentive_rate'], 1, ',', '.') }}%</span>
+                                        <span class="text-xs font-semibold text-slate-500">Rate: {{ number_format($payout['incentive_rate'], 1, ',', '.') }}%</span>
                                     </div>
                                 </div>
                                 <div class="text-right shrink-0">
                                     <div class="font-black text-emerald-600 text-sm leading-tight">Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}</div>
-                                    <div class="text-[9px] font-semibold text-slate-400 mt-0.5">Insentif</div>
+                                    <div class="text-[10px] font-semibold text-slate-400 mt-0.5">Insentif</div>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100 text-[10px] font-semibold text-slate-500">
+                            <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100 text-xs font-semibold text-slate-500">
                                 <div>Target: <span class="font-bold text-slate-700">Rp {{ number_format($payout['target'], 0, ',', '.') }}</span></div>
                                 <div>Actual: <span class="font-bold text-slate-700">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</span></div>
                             </div>
@@ -284,25 +287,25 @@
                     </div>
 
                     {{-- Desktop Table --}}
-                    <div class="overflow-x-auto flex-1 table-sticky-container desktop-table-wrap">
-                        <table class="w-full text-sm text-left text-slate-600">
+                    <div class="overflow-auto flex-1 table-sticky-container desktop-table-wrap rules-history-scroll" style="max-height:420px;">
+                        <table class="w-full text-left text-slate-600" style="font-size:13px;">
                             <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
-                                    <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Sales Person (PS)</th>
-                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Target</th>
-                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Actual Sales</th>
-                                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Ach %</th>
-                                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Rate</th>
-                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap bg-emerald-50/60 border-l border-emerald-100 text-emerald-700">Est. Incentive</th>
+                                    <th class="px-3 py-2.5 text-left whitespace-nowrap">Sales Person (PS)</th>
+                                    <th class="px-3 py-2.5 text-right whitespace-nowrap">Target</th>
+                                    <th class="px-3 py-2.5 text-right whitespace-nowrap">Actual Sales</th>
+                                    <th class="px-3 py-2.5 text-center whitespace-nowrap">Ach %</th>
+                                    <th class="px-3 py-2.5 text-center whitespace-nowrap">Rate</th>
+                                    <th class="px-3 py-2.5 text-right whitespace-nowrap bg-emerald-50/60 border-l border-emerald-100 text-emerald-700">Est. Incentive</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($payouts as $payout)
                                 <tr class="hover:bg-indigo-50/50 transition-colors">
-                                    <td class="px-4 sm:px-6 py-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
-                                    <td class="px-4 sm:px-6 py-3 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
-                                    <td class="px-4 sm:px-6 py-3 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
-                                    <td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">
+                                    <td class="px-3 py-2.5 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
+                                    <td class="px-3 py-2.5 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
+                                    <td class="px-3 py-2.5 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
+                                    <td class="px-3 py-2.5 text-center whitespace-nowrap">
                                         <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-xs
                                             @if($payout['achievement_rate'] >= 200) bg-sky-50 text-sky-700
                                             @elseif($payout['achievement_rate'] >= 150) bg-indigo-50 text-indigo-700
@@ -313,10 +316,10 @@
                                             {{ number_format($payout['achievement_rate'], 1, ',', '.') }}%
                                         </span>
                                     </td>
-                                    <td class="px-4 sm:px-6 py-3 text-center font-bold text-slate-600 whitespace-nowrap">
+                                    <td class="px-3 py-2.5 text-center font-bold text-slate-600 whitespace-nowrap">
                                         {{ number_format($payout['incentive_rate'], 1, ',', '.') }}%
                                     </td>
-                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-700 bg-emerald-50/60 border-l border-emerald-100 whitespace-nowrap">
+                                    <td class="px-3 py-2.5 text-right font-black text-emerald-700 bg-emerald-50/60 border-l border-emerald-100 whitespace-nowrap">
                                         Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -340,12 +343,12 @@
                 <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !bg-white">
                     
                     {{-- Header Table + Filter --}}
-                    <div class="px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
+                    <div class="px-3 py-2.5 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
                         <div class="flex items-center gap-3 shrink-0">
                             <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm shadow-sm"><i class="fas fa-table"></i></div>
                             <div>
-                                <h3 class="text-sm font-bold text-slate-800">Actual Sales & Quarterly Incentive</h3>
-                                <p class="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">Period: {{ $triwulan }} {{ $tahun }}</p>
+                                <h3 class="text-sm font-bold text-slate-800">Actual Sales & Quarterly Incentive <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full align-middle">{{ count($payoutsTriwulan) }} PS</span></h3>
+                                <p class="text-xs sm:text-xs text-slate-500 font-semibold mt-0.5">Period: {{ $triwulan }} {{ $tahun }}</p>
                             </div>
                         </div>
 
@@ -376,7 +379,7 @@
                                 <div class="min-w-0 flex-1">
                                     <div class="font-bold text-slate-800 text-sm truncate">{{ $payout['ps'] }}</div>
                                     <div class="mt-1.5">
-                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[10px]
+                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-xs
                                             @if($payout['achievement_rate'] >= 200) bg-sky-50 text-sky-700
                                             @elseif($payout['achievement_rate'] >= 150) bg-indigo-50 text-indigo-700
                                             @elseif($payout['achievement_rate'] >= 130) bg-emerald-50 text-emerald-700
@@ -389,10 +392,10 @@
                                 </div>
                                 <div class="text-right shrink-0">
                                     <div class="font-black text-emerald-600 text-sm leading-tight">Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}</div>
-                                    <div class="text-[9px] font-semibold text-slate-400 mt-0.5">Insentif</div>
+                                    <div class="text-[10px] font-semibold text-slate-400 mt-0.5">Insentif</div>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100 text-[10px] font-semibold text-slate-500">
+                            <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100 text-xs font-semibold text-slate-500">
                                 <div>Target: <span class="font-bold text-slate-700">Rp {{ number_format($payout['target'], 0, ',', '.') }}</span></div>
                                 <div>Actual: <span class="font-bold text-slate-700">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</span></div>
                             </div>
@@ -401,24 +404,24 @@
                     </div>
 
                     {{-- Desktop Table --}}
-                    <div class="overflow-x-auto flex-1 table-sticky-container desktop-table-wrap">
-                        <table class="w-full text-sm text-left text-slate-600">
+                    <div class="overflow-auto flex-1 table-sticky-container desktop-table-wrap rules-history-scroll" style="max-height:420px;">
+                        <table class="w-full text-left text-slate-600" style="font-size:13px;">
                             <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
-                                    <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Sales Person (PS)</th>
-                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Quarterly Target</th>
-                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap">Actual Sales</th>
-                                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">Ach %</th>
-                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap bg-emerald-50/60 border-l border-emerald-100 text-emerald-700">Est. Incentive</th>
+                                    <th class="px-3 py-2.5 text-left whitespace-nowrap">Sales Person (PS)</th>
+                                    <th class="px-3 py-2.5 text-right whitespace-nowrap">Quarterly Target</th>
+                                    <th class="px-3 py-2.5 text-right whitespace-nowrap">Actual Sales</th>
+                                    <th class="px-3 py-2.5 text-center whitespace-nowrap">Ach %</th>
+                                    <th class="px-3 py-2.5 text-right whitespace-nowrap bg-emerald-50/60 border-l border-emerald-100 text-emerald-700">Est. Incentive</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($payoutsTriwulan as $payout)
                                 <tr class="hover:bg-indigo-50/50 transition-colors">
-                                    <td class="px-4 sm:px-6 py-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
-                                    <td class="px-4 sm:px-6 py-3 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
-                                    <td class="px-4 sm:px-6 py-3 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
-                                    <td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">
+                                    <td class="px-3 py-2.5 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
+                                    <td class="px-3 py-2.5 text-right font-medium whitespace-nowrap">Rp {{ number_format($payout['target'], 0, ',', '.') }}</td>
+                                    <td class="px-3 py-2.5 text-right font-bold text-slate-800 whitespace-nowrap">Rp {{ number_format($payout['sales'], 0, ',', '.') }}</td>
+                                    <td class="px-3 py-2.5 text-center whitespace-nowrap">
                                         <span class="inline-flex items-center justify-center font-bold px-2.5 py-1 rounded-full text-xs
                                             @if($payout['achievement_rate'] >= 200) bg-sky-50 text-sky-700
                                             @elseif($payout['achievement_rate'] >= 150) bg-indigo-50 text-indigo-700
@@ -429,7 +432,7 @@
                                             {{ number_format($payout['achievement_rate'], 1, ',', '.') }}%
                                         </span>
                                     </td>
-                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-700 bg-emerald-50/60 border-l border-emerald-100 whitespace-nowrap">
+                                    <td class="px-3 py-2.5 text-right font-black text-emerald-700 bg-emerald-50/60 border-l border-emerald-100 whitespace-nowrap">
                                         Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -453,12 +456,12 @@
                 <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-sm !rounded-3xl !bg-white">
                     
                     {{-- Header Table + Filter --}}
-                    <div class="px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
+                    <div class="px-3 py-2.5 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
                         <div class="flex items-center gap-3 shrink-0">
                             <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm shadow-sm"><i class="fas fa-table"></i></div>
                             <div>
-                                <h3 class="text-sm font-bold text-slate-800">Actual Sales & New Outlet Bonus</h3>
-                                <p class="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">Period: {{ $bulan }} {{ $tahun }}</p>
+                                <h3 class="text-sm font-bold text-slate-800">Actual Sales & New Outlet Bonus <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full align-middle">{{ count($payoutsOutlet) }} PS</span></h3>
+                                <p class="text-xs sm:text-xs text-slate-500 font-semibold mt-0.5">Period: {{ $bulan }} {{ $tahun }}</p>
                             </div>
                         </div>
 
@@ -489,7 +492,7 @@
                                 <div class="min-w-0 flex-1">
                                     <div class="font-bold text-slate-800 text-sm truncate">{{ $payout['ps'] }}</div>
                                     <div class="mt-1.5">
-                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[10px]
+                                        <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-xs
                                             @if($payout['new_outlets_count'] >= 21) bg-sky-50 text-sky-700
                                             @elseif($payout['new_outlets_count'] >= 16) bg-indigo-50 text-indigo-700
                                             @elseif($payout['new_outlets_count'] >= 11) bg-emerald-50 text-emerald-700
@@ -501,13 +504,13 @@
                                 </div>
                                 <div class="text-right shrink-0">
                                     <div class="font-black text-emerald-600 text-sm leading-tight">Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}</div>
-                                    <div class="text-[9px] font-semibold text-slate-400 mt-0.5">Bonus</div>
+                                    <div class="text-[10px] font-semibold text-slate-400 mt-0.5">Bonus</div>
                                 </div>
                             </div>
                             @if(count($payout['new_outlets_list']) > 0)
                             <div class="flex flex-wrap gap-1 mt-2 pt-2 border-t border-slate-100">
                                 @foreach($payout['new_outlets_list'] as $outlet)
-                                    <span class="inline-block bg-slate-100 text-slate-600 text-[9px] px-2 py-0.5 rounded-md font-medium border border-slate-200/50">{{ $outlet }}</span>
+                                    <span class="inline-block bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-md font-medium border border-slate-200/50">{{ $outlet }}</span>
                                 @endforeach
                             </div>
                             @endif
@@ -516,21 +519,21 @@
                     </div>
 
                     {{-- Desktop Table --}}
-                    <div class="overflow-x-auto flex-1 table-sticky-container desktop-table-wrap">
-                        <table class="w-full text-sm text-left text-slate-600">
+                    <div class="overflow-auto flex-1 table-sticky-container desktop-table-wrap rules-history-scroll" style="max-height:420px;">
+                        <table class="w-full text-left text-slate-600" style="font-size:13px;">
                             <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
-                                    <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">Sales Person (PS)</th>
-                                    <th class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">New Outlets Count</th>
-                                    <th class="px-4 sm:px-6 py-4 text-left whitespace-nowrap">New Outlets List</th>
-                                    <th class="px-4 sm:px-6 py-4 text-right whitespace-nowrap bg-emerald-50/60 border-l border-emerald-100 text-emerald-700">Est. Bonus</th>
+                                    <th class="px-3 py-2.5 text-left whitespace-nowrap">Sales Person (PS)</th>
+                                    <th class="px-3 py-2.5 text-center whitespace-nowrap">New Outlets Count</th>
+                                    <th class="px-3 py-2.5 text-left whitespace-nowrap">New Outlets List</th>
+                                    <th class="px-3 py-2.5 text-right whitespace-nowrap bg-emerald-50/60 border-l border-emerald-100 text-emerald-700">Est. Bonus</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($payoutsOutlet as $payout)
                                 <tr class="hover:bg-indigo-50/50 transition-colors">
-                                    <td class="px-4 sm:px-6 py-3 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
-                                    <td class="px-4 sm:px-6 py-3 text-center whitespace-nowrap">
+                                    <td class="px-3 py-2.5 font-bold text-slate-800 whitespace-nowrap">{{ $payout['ps'] }}</td>
+                                    <td class="px-3 py-2.5 text-center whitespace-nowrap">
                                         <span class="inline-flex items-center justify-center font-bold px-2.5 py-1 rounded-full text-xs
                                             @if($payout['new_outlets_count'] >= 21) bg-sky-50 text-sky-700
                                             @elseif($payout['new_outlets_count'] >= 16) bg-indigo-50 text-indigo-700
@@ -543,13 +546,13 @@
                                     <td class="px-4 sm:px-6 py-3">
                                         <div class="flex flex-wrap gap-1 max-w-md">
                                             @foreach($payout['new_outlets_list'] as $outlet)
-                                                <span class="inline-block bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-md font-medium border border-slate-200/50">
+                                                <span class="inline-block bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-md font-medium border border-slate-200/50">
                                                     {{ $outlet }}
                                                 </span>
                                             @endforeach
                                         </div>
                                     </td>
-                                    <td class="px-4 sm:px-6 py-3 text-right font-black text-emerald-700 bg-emerald-50/60 border-l border-emerald-100 whitespace-nowrap">
+                                    <td class="px-3 py-2.5 text-right font-black text-emerald-700 bg-emerald-50/60 border-l border-emerald-100 whitespace-nowrap">
                                         Rp {{ number_format($payout['incentive_amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -572,26 +575,21 @@
             <div x-show="activeTab === 'settings'" class="flex flex-col gap-4" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
                 
                 @if(session('success'))
-                    <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 sm:px-6 py-3 rounded-xl flex items-center gap-3">
+                    <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-2.5 rounded-xl flex items-center gap-3">
                         <i class="fas fa-circle-check text-xl"></i>
                         <span class="text-sm font-semibold">{{ session('success') }}</span>
                     </div>
                 @endif
 
-                {{-- Global Filters + Configure — digabung dalam satu card --}}
-                <x-ui.glass-card class="border-t-4 border-t-blue-500 flex flex-col xl:flex-row xl:items-end justify-between gap-4 !rounded-3xl !bg-white shadow-sm">
-                    <div>
-                        <h3 class="text-base sm:text-lg font-bold text-slate-800">Incentive Rules History</h3>
-                        <p class="text-slate-500 text-xs mt-0.5">List of all monthly and quarterly incentive rules saved in the system</p>
-                    </div>
-                    
+                {{-- Toolbar Configure + filter + 3 kartu riwayat sebaris (tiap tabel scroll internal) --}}
+                <x-ui.glass-card class="border-t-4 border-t-blue-500 flex flex-row flex-wrap items-center justify-start gap-2 !rounded-3xl !bg-white shadow-sm !p-4">
                     <div class="flex flex-wrap items-center gap-2">
                         <button type="button" @click="
                             formTahun = '{{ $tahun }}';
                             formBulan = '{{ $bulan }}';
                             formBasisBulan = '{{ $activeBasis }}';
                             showFormModalBulan = true;
-                        " class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0">
+                        " class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0">
                             <i class="fas fa-calendar-day"></i> Configure Monthly Rules
                         </button>
                         <button type="button" @click="
@@ -599,71 +597,74 @@
                             formTriwulan = '{{ $triwulan }}';
                             formBasisTriwulan = '{{ $activeBasisTriwulan }}';
                             showFormModalTriwulan = true;
-                        " class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0">
+                        " class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0">
                             <i class="fas fa-calendar-minus"></i> Configure Quarterly Rules
                         </button>
-                        <x-ui.search-input x-model="historySearchTahun" placeholder="Search Year..." class="w-32 shrink-0" />
-                        <x-ui.filter-select x-model="historyFilterBasis" placeholder="All Scheme Models" :options="['nominal' => 'Scheme 1 (Nominal Rp)', 'percentage' => 'Scheme 2 (Percentage %)']" class="w-48 shrink-0" />
+                        <button type="button" @click="
+                            formTahun = '{{ $tahun }}';
+                            formBulan = '{{ $bulan }}';
+                            settingsOutlet = JSON.parse(JSON.stringify(settingsOutletPristine));
+                            showFormModalOutlet = true;
+                        " class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0">
+                            <i class="fas fa-store"></i> Configure New Outlet Rules
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 ml-auto">
+                        <x-ui.search-input x-model="historySearchTahun" placeholder="Ketik tahun, cth. 2025…" class="w-64 shrink-0" />
+                        <x-ui.filter-select x-model="historyFilterBasis" placeholder="Semua Skema…" :options="['nominal' => 'Scheme 1 (Nominal Rp)', 'percentage' => 'Scheme 2 (Percentage %)']" class="w-64 shrink-0" />
                     </div>
                 </x-ui.glass-card>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {{-- Card Riwayat Bulanan --}}
-                    <x-ui.glass-card class="border-t-4 border-t-blue-500 flex flex-col gap-4 !rounded-3xl !bg-white shadow-sm">
-                        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
-                            <div>
-                                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                    <i class="fas fa-calendar-alt text-indigo-500"></i>
-                                    <span>Monthly Rules History</span>
-                                </h4>
-                            </div>
-                            <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('bulan').length + ' data'"></span>
+                {{-- 3 kartu riwayat sebaris, tiap tabel scroll internal (kartu tetap ramping) --}}
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {{-- Monthly --}}
+                    <x-ui.glass-card class="border-t-4 border-t-blue-500 flex flex-col gap-3 !rounded-3xl !bg-white shadow-sm !p-4">
+                        <div class="border-b border-slate-100 pb-2 flex items-center justify-between gap-2">
+                            <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <i class="fas fa-calendar-alt text-indigo-500"></i> Monthly
+                            </h4>
+                            <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('bulan').length + ' data'"></span>
                         </div>
-
-                        <div class="overflow-x-auto w-full">
+                        <div class="overflow-auto w-full rules-history-scroll" style="max-height:300px;">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                                        <th class="py-2.5 px-2">Year</th>
-                                        <th class="py-2.5 px-2">Month</th>
-                                        <th class="py-2.5 px-2">Scheme Model</th>
-                                        <th class="py-2.5 px-2 text-center">Action</th>
+                                    <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                        <th class="py-2 px-1.5">Year</th>
+                                        <th class="py-2 px-1.5">Month</th>
+                                        <th class="py-2 px-1.5">Scheme</th>
+                                        <th class="py-2 px-1.5 text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <template x-for="(row, index) in filteredHistoryList('bulan')" :key="index">
-                                        <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-slate-700 text-xs">
-                                            <td class="py-3 px-2 font-bold text-slate-800" x-text="row.tahun"></td>
-                                            <td class="py-3 px-2 font-semibold text-blue-600" x-text="row.bulan"></td>
-                                            <td class="py-3 px-2">
-                                                <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[9px]"
+                                        <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-slate-700 text-sm">
+                                            <td class="py-2 px-1.5 font-bold text-slate-800" x-text="row.tahun"></td>
+                                            <td class="py-2 px-1.5 font-semibold text-blue-600" x-text="row.bulan"></td>
+                                            <td class="py-2 px-1.5">
+                                                <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[10px]"
                                                     :class="row.basis === 'nominal' ? 'bg-teal-50 text-teal-700' : 'bg-violet-50 text-violet-700'"
-                                                    x-text="row.basis === 'nominal' ? 'Scheme 1: Nominal' : 'Scheme 2: Percentage'">
+                                                    x-text="row.basis === 'nominal' ? 'Scheme 1' : 'Scheme 2'">
                                                 </span>
                                             </td>
-                                            <td class="py-3 px-2 text-center flex items-center justify-center gap-1">
+                                            <td class="py-2 px-1.5 text-center"><div class="inline-flex items-center justify-center gap-1">
                                                 <button type="button" @click="
                                                     historyDetailTitle = row.bulan + ' ' + row.tahun;
                                                     historyDetailSub = 'Monthly Incentive - ' + (row.basis === 'nominal' ? 'Scheme 1 (Nominal Actual Sales)' : 'Scheme 2 (Percentage vs Target)');
                                                     historyDetailTiers = row.tiers;
                                                     historyDetailType = row.type;
                                                     showHistoryDetailModal = true;
-                                                " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white font-bold text-[10px] shadow-sm transition-colors border border-sky-500">
-                                                    <i class="fas fa-eye text-[10px]"></i> Detail
+                                                " title="Detail" class="w-7 h-7 rounded-lg bg-sky-500 hover:bg-sky-600 text-white inline-flex items-center justify-center transition-colors border border-sky-500 shadow-sm">
+                                                    <i class="fas fa-eye text-xs"></i>
                                                 </button>
                                                 @if($hasFullAccess)
                                                     <button type="button" @click="
                                                         formTahun = row.tahun;
                                                         formBulan = row.bulan;
                                                         formBasisBulan = row.basis;
-                                                        if (row.basis === 'nominal') {
-                                                            settingsBulanNominal = JSON.parse(JSON.stringify(row.tiers));
-                                                        } else {
-                                                            settingsBulanPercent = JSON.parse(JSON.stringify(row.tiers));
-                                                        }
+                                                        if (row.basis === 'nominal') { settingsBulanNominal = JSON.parse(JSON.stringify(row.tiers)); } else { settingsBulanPercent = JSON.parse(JSON.stringify(row.tiers)); }
                                                         showFormModalBulan = true;
-                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] shadow-sm transition-colors border border-orange-500">
-                                                        <i class="fas fa-edit text-[10px]"></i> Edit
+                                                    " title="Edit" class="w-7 h-7 rounded-lg bg-orange-500 hover:bg-orange-600 text-white inline-flex items-center justify-center transition-colors border border-orange-500 shadow-sm">
+                                                        <i class="fas fa-edit text-xs"></i>
                                                     </button>
                                                     <button type="button" @click="
                                                         if (confirm('Are you sure you want to delete this incentive rule?')) {
@@ -695,80 +696,71 @@
                                                                 alert('Connection error or expired token. Please refresh the page.');
                                                             });
                                                         }
-                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] shadow-sm transition-colors border border-red-600">
-                                                        <i class="fas fa-trash-can text-[10px]"></i> Delete
+                                                    " title="Delete" class="w-7 h-7 rounded-lg bg-red-600 hover:bg-red-700 text-white inline-flex items-center justify-center transition-colors border border-red-600 shadow-sm">
+                                                        <i class="fas fa-trash-can text-xs"></i>
                                                     </button>
                                                 @endif
-                                            </td>
+                                            </div></td>
                                         </tr>
                                     </template>
                                     <tr x-show="filteredHistoryList('bulan').length === 0">
-                                        <td colspan="4" class="py-8 text-center text-slate-400">
+                                        <td colspan="4" class="py-6 text-center text-slate-400">
                                             <i class="fas fa-folder-open text-2xl mb-1 text-slate-300"></i>
-                                            <p class="text-[11px] font-semibold">No monthly history found.</p>
+                                            <p class="text-xs font-semibold">No monthly history found.</p>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </x-ui.glass-card>
-
-                    {{-- Card Riwayat Triwulan --}}
-                    <x-ui.glass-card class="border-t-4 border-t-blue-500 flex flex-col gap-4 !rounded-3xl !bg-white shadow-sm">
-                        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
-                            <div>
-                                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                    <i class="fas fa-calendar-minus text-amber-500"></i>
-                                    <span>Quarterly Rules History</span>
-                                </h4>
-                            </div>
-                            <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('triwulan').length + ' data'"></span>
+                    {{-- Quarterly --}}
+                    <x-ui.glass-card class="border-t-4 border-t-blue-500 flex flex-col gap-3 !rounded-3xl !bg-white shadow-sm !p-4">
+                        <div class="border-b border-slate-100 pb-2 flex items-center justify-between gap-2">
+                            <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <i class="fas fa-calendar-minus text-amber-500"></i> Quarterly
+                            </h4>
+                            <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('triwulan').length + ' data'"></span>
                         </div>
-
-                        <div class="overflow-x-auto w-full">
+                        <div class="overflow-auto w-full rules-history-scroll" style="max-height:300px;">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                                        <th class="py-2.5 px-2">Year</th>
-                                        <th class="py-2.5 px-2">Quarter</th>
-                                        <th class="py-2.5 px-2">Scheme Model</th>
-                                        <th class="py-2.5 px-2 text-center">Action</th>
+                                    <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                        <th class="py-2 px-1.5">Year</th>
+                                        <th class="py-2 px-1.5">Quarter</th>
+                                        <th class="py-2 px-1.5">Scheme</th>
+                                        <th class="py-2 px-1.5 text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <template x-for="(row, index) in filteredHistoryList('triwulan')" :key="index">
-                                        <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-slate-700 text-xs">
-                                            <td class="py-3 px-2 font-bold text-slate-800" x-text="row.tahun"></td>
-                                            <td class="py-3 px-2 font-semibold text-blue-600" x-text="row.bulan"></td>
-                                            <td class="py-3 px-2">
-                                                <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[9px]"
+                                        <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-slate-700 text-sm">
+                                            <td class="py-2 px-1.5 font-bold text-slate-800" x-text="row.tahun"></td>
+                                            <td class="py-2 px-1.5 font-semibold text-blue-600" x-text="row.bulan"></td>
+                                            <td class="py-2 px-1.5">
+                                                <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[10px]"
                                                     :class="row.basis === 'nominal' ? 'bg-teal-50 text-teal-700' : 'bg-violet-50 text-violet-700'"
-                                                    x-text="row.basis === 'nominal' ? 'Scheme 1: Nominal' : 'Scheme 2: Percentage'">
+                                                    x-text="row.basis === 'nominal' ? 'Scheme 1' : 'Scheme 2'">
                                                 </span>
                                             </td>
-                                            <td class="py-3 px-2 text-center flex items-center justify-center gap-1">
+                                            <td class="py-2 px-1.5 text-center"><div class="inline-flex items-center justify-center gap-1">
                                                 <button type="button" @click="
                                                     historyDetailTitle = row.bulan + ' ' + row.tahun;
                                                     historyDetailSub = 'Quarterly Bonus - ' + (row.basis === 'nominal' ? 'Scheme 1 (Nominal Actual Sales)' : 'Scheme 2 (Percentage vs Target)');
                                                     historyDetailTiers = row.tiers;
                                                     historyDetailType = row.type;
                                                     showHistoryDetailModal = true;
-                                                " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white font-bold text-[10px] shadow-sm transition-colors border border-sky-500">
-                                                    <i class="fas fa-eye text-[10px]"></i> Detail
+                                                " title="Detail" class="w-7 h-7 rounded-lg bg-sky-500 hover:bg-sky-600 text-white inline-flex items-center justify-center transition-colors border border-sky-500 shadow-sm">
+                                                    <i class="fas fa-eye text-xs"></i>
                                                 </button>
                                                 @if($hasFullAccess)
                                                     <button type="button" @click="
                                                         formTahun = row.tahun;
                                                         formTriwulan = row.bulan;
                                                         formBasisTriwulan = row.basis;
-                                                        if (row.basis === 'nominal') {
-                                                            settingsTriwulanNominal = JSON.parse(JSON.stringify(row.tiers));
-                                                        } else {
-                                                            settingsTriwulanPercent = JSON.parse(JSON.stringify(row.tiers));
-                                                        }
+                                                        if (row.basis === 'nominal') { settingsTriwulanNominal = JSON.parse(JSON.stringify(row.tiers)); } else { settingsTriwulanPercent = JSON.parse(JSON.stringify(row.tiers)); }
                                                         showFormModalTriwulan = true;
-                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] shadow-sm transition-colors border border-orange-500">
-                                                        <i class="fas fa-edit text-[10px]"></i> Edit
+                                                    " title="Edit" class="w-7 h-7 rounded-lg bg-orange-500 hover:bg-orange-600 text-white inline-flex items-center justify-center transition-colors border border-orange-500 shadow-sm">
+                                                        <i class="fas fa-edit text-xs"></i>
                                                     </button>
                                                     <button type="button" @click="
                                                         if (confirm('Are you sure you want to delete this incentive rule?')) {
@@ -800,17 +792,109 @@
                                                                 alert('Connection error or expired token. Please refresh the page.');
                                                             });
                                                         }
-                                                    " class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] shadow-sm transition-colors border border-red-600">
-                                                        <i class="fas fa-trash-can text-[10px]"></i> Delete
+                                                    " title="Delete" class="w-7 h-7 rounded-lg bg-red-600 hover:bg-red-700 text-white inline-flex items-center justify-center transition-colors border border-red-600 shadow-sm">
+                                                        <i class="fas fa-trash-can text-xs"></i>
                                                     </button>
                                                 @endif
-                                            </td>
+                                            </div></td>
                                         </tr>
                                     </template>
                                     <tr x-show="filteredHistoryList('triwulan').length === 0">
-                                        <td colspan="4" class="py-8 text-center text-slate-400">
+                                        <td colspan="4" class="py-6 text-center text-slate-400">
                                             <i class="fas fa-folder-open text-2xl mb-1 text-slate-300"></i>
-                                            <p class="text-[11px] font-semibold">No quarterly history found.</p>
+                                            <p class="text-xs font-semibold">No quarterly history found.</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </x-ui.glass-card>
+                    {{-- Outlet --}}
+                    <x-ui.glass-card class="border-t-4 border-t-blue-500 flex flex-col gap-3 !rounded-3xl !bg-white shadow-sm !p-4">
+                        <div class="border-b border-slate-100 pb-2 flex items-center justify-between gap-2">
+                            <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <i class="fas fa-store text-emerald-500"></i> New Outlet
+                            </h4>
+                            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full" x-text="filteredHistoryList('outlet').length + ' data'"></span>
+                        </div>
+                        <div class="overflow-auto w-full rules-history-scroll" style="max-height:300px;">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                        <th class="py-2 px-1.5">Year</th>
+                                        <th class="py-2 px-1.5">Month</th>
+                                        <th class="py-2 px-1.5">Tiers</th>
+                                        <th class="py-2 px-1.5 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(row, index) in filteredHistoryList('outlet')" :key="index">
+                                        <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-slate-700 text-sm">
+                                            <td class="py-2 px-1.5 font-bold text-slate-800" x-text="row.tahun"></td>
+                                            <td class="py-2 px-1.5 font-semibold text-blue-600" x-text="row.bulan"></td>
+                                            <td class="py-2 px-1.5">
+                                                <span class="inline-flex items-center justify-center font-bold px-2 py-0.5 rounded-full text-[10px] bg-teal-50 text-teal-700" x-text="row.tierCount + ' tiers'"></span>
+                                            </td>
+                                            <td class="py-2 px-1.5 text-center"><div class="inline-flex items-center justify-center gap-1">
+                                                <button type="button" @click="
+                                                    historyDetailTitle = 'New Outlet Bonus ' + row.bulan + ' ' + row.tahun;
+                                                    historyDetailSub = 'New Outlet Bonus - flat Rp per outlet count';
+                                                    historyDetailTiers = row.tiers;
+                                                    historyDetailType = row.type;
+                                                    showHistoryDetailModal = true;
+                                                " title="Detail" class="w-7 h-7 rounded-lg bg-sky-500 hover:bg-sky-600 text-white inline-flex items-center justify-center transition-colors border border-sky-500 shadow-sm">
+                                                    <i class="fas fa-eye text-xs"></i>
+                                                </button>
+                                                @if($hasFullAccess)
+                                                    <button type="button" @click="
+                                                        formTahun = row.tahun;
+                                                        formBulan = row.bulan;
+                                                        settingsOutlet = JSON.parse(JSON.stringify(row.tiers));
+                                                        showFormModalOutlet = true;
+                                                    " title="Edit" class="w-7 h-7 rounded-lg bg-orange-500 hover:bg-orange-600 text-white inline-flex items-center justify-center transition-colors border border-orange-500 shadow-sm">
+                                                        <i class="fas fa-edit text-xs"></i>
+                                                    </button>
+                                                    <button type="button" @click="
+                                                        if (confirm('Are you sure you want to delete this outlet rule?')) {
+                                                            fetch('{{ route('sales.incentive.settings.delete') }}', {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'X-Requested-With': 'XMLHttpRequest',
+                                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                                                },
+                                                                body: JSON.stringify({
+                                                                    _token: '{{ csrf_token() }}',
+                                                                    tahun: row.tahun,
+                                                                    bulan: row.bulan,
+                                                                    type: row.type,
+                                                                    basis: row.basis
+                                                                })
+                                                            })
+                                                            .then(res => res.json())
+                                                            .then(data => {
+                                                                if (data.success) {
+                                                                    const u = new URL(window.location); u.searchParams.set('tab', 'settings'); window.location.href = u.toString();
+                                                                } else {
+                                                                    alert(data.message || 'Failed to delete data.');
+                                                                }
+                                                            })
+                                                            .catch(err => {
+                                                                console.error(err);
+                                                                alert('Connection error or expired token. Please refresh the page.');
+                                                            });
+                                                        }
+                                                    " title="Delete" class="w-7 h-7 rounded-lg bg-red-600 hover:bg-red-700 text-white inline-flex items-center justify-center transition-colors border border-red-600 shadow-sm">
+                                                        <i class="fas fa-trash-can text-xs"></i>
+                                                    </button>
+                                                @endif
+                                            </div></td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="filteredHistoryList('outlet').length === 0">
+                                        <td colspan="4" class="py-6 text-center text-slate-400">
+                                            <i class="fas fa-folder-open text-2xl mb-1 text-slate-300"></i>
+                                            <p class="text-xs font-semibold">No outlet history found.</p>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -846,32 +930,32 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-diamond mb-2"><i class="fas fa-circle-chevron-up"></i> &ge; 200%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-sky-600 text-lg">3.0%</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-platinum mb-2"><i class="fas fa-circle-chevron-up"></i> &ge; 150%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-indigo-600 text-lg">2.0%</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-gold mb-2"><i class="fas fa-circle-check"></i> &ge; 130%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-yellow-600 text-lg">1.5%</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-check"></i> &ge; 100%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-slate-700 text-lg">1.0%</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-bronze mb-2"><i class="fas fa-circle-check"></i> &ge; 95%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-amber-600 text-lg">0.5%</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all opacity-60 text-center">
                             <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-xmark"></i> &lt; 95%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-rose-600 text-lg">0%</span>
                         </div>
                     </div>
@@ -903,32 +987,32 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-diamond mb-2"><i class="fas fa-circle-chevron-up"></i> &ge; 200%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-sky-600 text-base">Rp 6.000.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-platinum mb-2"><i class="fas fa-circle-chevron-up"></i> &ge; 150%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-indigo-600 text-base">Rp 4.500.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-gold mb-2"><i class="fas fa-circle-check"></i> &ge; 130%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-yellow-600 text-base">Rp 3.000.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-check"></i> &ge; 100%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-slate-700 text-base">Rp 1.500.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
                             <span class="tier-badge tier-bronze mb-2"><i class="fas fa-circle-check"></i> &ge; 95%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-amber-600 text-base">Rp 1.000.000</span>
                         </div>
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all opacity-60 text-center">
                             <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-xmark"></i> &lt; 95%</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Sales Achieved</span>
                             <span class="font-bold text-rose-600 text-base">Rp 0</span>
                         </div>
                     </div>
@@ -958,36 +1042,15 @@
                     </div>
                     
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        @forelse($settingsOutlet as $i => $set)
                         <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
-                            <span class="tier-badge tier-diamond mb-2"><i class="fas fa-circle-chevron-up"></i> &ge; 21 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
-                            <span class="font-bold text-sky-600 text-base">Rp 1.000.000</span>
+                            <span class="tier-badge {{ ['tier-diamond', 'tier-platinum', 'tier-gold', 'tier-silver', 'tier-bronze'][$i] ?? 'tier-silver' }} mb-2"><i class="fas fa-store"></i> &ge; {{ number_format($set->min_achievement, 0, ',', '.') }} Outlets</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
+                            <span class="font-bold text-emerald-600 text-base">Rp {{ number_format($set->incentive_value, 0, ',', '.') }}</span>
                         </div>
-                        <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
-                            <span class="tier-badge tier-platinum mb-2"><i class="fas fa-circle-chevron-up"></i> 16 - 20 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
-                            <span class="font-bold text-indigo-600 text-base">Rp 800.000</span>
-                        </div>
-                        <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
-                            <span class="tier-badge tier-gold mb-2"><i class="fas fa-circle-check"></i> 11 - 15 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
-                            <span class="font-bold text-yellow-600 text-base">Rp 500.000</span>
-                        </div>
-                        <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
-                            <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-check"></i> 6 - 10 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
-                            <span class="font-bold text-slate-700 text-base">Rp 300.000</span>
-                        </div>
-                        <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all text-center">
-                            <span class="tier-badge tier-bronze mb-2"><i class="fas fa-circle-check"></i> 1 - 5 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
-                            <span class="font-bold text-amber-600 text-base">Rp 150.000</span>
-                        </div>
-                        <div class="flex flex-col items-center justify-center p-3 bg-slate-50/50 rounded-xl border border-slate-100 hover:border-slate-200/80 transition-all opacity-60 text-center">
-                            <span class="tier-badge tier-silver mb-2"><i class="fas fa-circle-xmark"></i> 0 Outlets</span>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">New Outlet Bonus</span>
-                            <span class="font-bold text-rose-600 text-base">Rp 0</span>
-                        </div>
+                        @empty
+                        <div class="col-span-full text-center text-xs text-slate-400 font-semibold py-4">Belum ada skema outlet — atur lewat tab Settings.</div>
+                        @endforelse
                     </div>
                     <p class="text-xs text-slate-400 mt-4 leading-relaxed">* New outlet bonus is awarded as a flat amount if the customer name has never been recorded in transactions prior to the selected period.</p>
                 </div>
@@ -996,7 +1059,7 @@
             {{-- Modal Form Aturan Bulanan --}}
             <div x-show="showFormModalBulan" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showFormModalBulan = false"></div>
-                <div class="glass-card w-full max-w-2xl shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[92vh]" 
+                <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden flex flex-col" style="max-height:70vh;"
                      x-transition:enter="transition ease-out duration-300 transform" 
                      x-transition:enter-start="opacity-0 scale-95" 
                      x-transition:enter-end="opacity-100 scale-100"
@@ -1004,8 +1067,8 @@
                      x-transition:leave-start="opacity-100 scale-100"
                      x-transition:leave-end="opacity-0 scale-95">
                     
-                    <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3 shrink-0">
-                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-slate-800">
+                    <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2 shrink-0">
+                        <h3 class="text-base font-black flex items-center gap-2 text-slate-800">
                             <i class="fas fa-calendar-day text-blue-500"></i>
                             <span>Configure Monthly Incentive Rules</span>
                         </h3>
@@ -1015,14 +1078,16 @@
                     </div>
 
                     <div class="overflow-y-auto flex-1 pr-1">
-                        <form class="flex flex-col gap-4 pb-2">
-                            <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100 flex items-center justify-between gap-3 text-xs">
+                        <form class="flex flex-col gap-3 pb-2">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div class="flex flex-col gap-3 min-w-0">
+                            <div class="bg-blue-50/50 p-2.5 rounded-xl border border-blue-100 flex flex-col gap-2 text-xs">
                                 <div class="flex items-center gap-2">
                                     <i class="fas fa-copy text-blue-500"></i>
                                     <span class="font-bold text-slate-700">Copy from Other Period:</span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <select x-model="copySourceBulan" class="border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1 cursor-pointer outline-none">
+                                <div class="flex flex-col gap-2">
+                                    <select x-model="copySourceBulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none">
                                         <option value="">-- Select Month --</option>
                                         <template x-for="item in historyList.filter(h => h.type === 'bulan')" :key="item.bulan + '|' + item.tahun + '|' + item.basis">
                                             <option :value="item.bulan + '|' + item.tahun + '|' + item.basis" x-text="item.bulan + ' ' + item.tahun + ' (' + (item.basis === 'nominal' ? 'Scheme 1' : 'Scheme 2') + ')'"></option>
@@ -1041,15 +1106,15 @@
                                                 }
                                             }
                                         }
-                                    " class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-sm">
-                                        Copy
+                                    " class="w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-sm">
+                                        <i class="fas fa-copy text-xs"></i> Copy
                                     </button>
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <div class="grid grid-cols-1 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Year</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Target Year</label>
                                     <select name="tahun" x-model="formTahun" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         @foreach($listTahun as $t)
                                             <option value="{{ $t }}">{{ $t }}</option>
@@ -1057,7 +1122,7 @@
                                     </select>
                                 </div>
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Month</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Target Month</label>
                                     <select name="bulan" x-model="formBulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         @foreach($listBulan as $b)
                                             <option value="{{ $b }}">{{ $b }}</option>
@@ -1065,18 +1130,19 @@
                                     </select>
                                 </div>
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scheme Model</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Scheme Model</label>
                                     <select x-model="formBasisBulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         <option value="nominal">Scheme 1 (Nominal Actual Sales Rp)</option>
                                         <option value="percentage">Scheme 2 (Percentage % vs Target)</option>
                                     </select>
                                 </div>
                             </div>
-
+                                </div>
+                                <div class="md:col-span-2 flex flex-col gap-3 min-w-0">
                             <div class="flex flex-col gap-3">
                                 <table class="w-full text-left border-collapse">
                                     <thead>
-                                        <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                        <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
                                             <th class="py-2 px-1 w-7/12" x-text="formBasisBulan === 'nominal' ? 'Min. Sales (Rp)' : 'Min. Achievement (%)'"></th>
                                             <th class="py-2 px-1 w-4/12">Incentive (%)</th>
                                             <th class="py-2 px-1 w-1/12 text-center">Action</th>
@@ -1085,35 +1151,37 @@
                                     <tbody>
                                         <template x-for="(tier, index) in (formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent)" :key="index">
                                             <tr class="border-b border-slate-100/50">
-                                                <td class="py-1.5 px-1">
+                                                <td class="py-1 px-1">
                                                     <div class="relative">
-                                                        <span x-show="formBasisBulan === 'nominal'" class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-[11px] font-bold">Rp</span>
+                                                        <span x-show="formBasisBulan === 'nominal'" class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-xs font-bold">Rp</span>
                                                         <input type="number" name="min_achievement[]" x-model="tier.min_achievement" required class="w-full border border-slate-200 bg-white rounded-lg py-1 text-xs font-semibold text-slate-800 focus:ring-blue-500 focus:border-blue-500 transition-colors" :class="formBasisBulan === 'nominal' ? 'pl-7 pr-3' : 'pl-3 pr-6'">
-                                                        <span x-show="formBasisBulan === 'percentage'" class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 text-[11px] font-bold">%</span>
+                                                        <span x-show="formBasisBulan === 'percentage'" class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 text-xs font-bold">%</span>
                                                     </div>
-                                                    <div x-show="formBasisBulan === 'nominal' && tier.min_achievement" class="text-[10px] text-blue-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.min_achievement)"></div>
+                                                    <div x-show="formBasisBulan === 'nominal' && tier.min_achievement" class="text-xs text-blue-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.min_achievement)"></div>
                                                 </td>
-                                                <td class="py-1.5 px-1">
+                                                <td class="py-1 px-1">
                                                     <div class="relative">
                                                         <input type="number" step="0.01" name="incentive_value[]" x-model="tier.incentive_value" required class="w-full border border-slate-200 bg-white rounded-lg pl-3 pr-6 py-1 text-xs font-semibold text-slate-800 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                                                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 text-[11px] font-bold">%</span>
+                                                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 text-xs font-bold">%</span>
                                                     </div>
                                                 </td>
-                                                <td class="py-1.5 px-1 text-center">
+                                                <td class="py-1 px-1 text-center">
                                                     <button type="button" @click="(formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent).splice(index, 1)" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 inline-flex items-center justify-center transition-colors border border-rose-100">
-                                                        <i class="fas fa-trash-can text-[10px]"></i>
+                                                        <i class="fas fa-trash-can text-xs"></i>
                                                     </button>
                                                 </td>
                                             </tr>
                                         </template>
                                     </tbody>
                                 </table>
-                                <button type="button" @click="(formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-[10px] transition-colors shadow-sm">
+                                <button type="button" @click="(formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-xs transition-colors shadow-sm">
                                     <i class="fas fa-plus"></i> Add Tier
                                 </button>
                             </div>
+                                </div>
+                            </div>
 
-                            <div class="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-slate-100">
+                            <div class="flex items-center justify-end gap-3 mt-3 pt-2 border-t border-slate-100">
                                 <button type="button" @click="showFormModalBulan = false" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs transition-colors">Cancel</button>
                                 <button type="button" @click="
                                     const currentBulanList = formBasisBulan === 'nominal' ? settingsBulanNominal : settingsBulanPercent;
@@ -1145,7 +1213,7 @@
             {{-- Modal Form Aturan Triwulan --}}
             <div x-show="showFormModalTriwulan" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showFormModalTriwulan = false"></div>
-                <div class="glass-card w-full max-w-2xl shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[92vh]" 
+                <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden flex flex-col" style="max-height:70vh;"
                      x-transition:enter="transition ease-out duration-300 transform" 
                      x-transition:enter-start="opacity-0 scale-95" 
                      x-transition:enter-end="opacity-100 scale-100"
@@ -1153,8 +1221,8 @@
                      x-transition:leave-start="opacity-100 scale-100"
                      x-transition:leave-end="opacity-0 scale-95">
                     
-                    <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3 shrink-0">
-                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-slate-800">
+                    <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2 shrink-0">
+                        <h3 class="text-base font-black flex items-center gap-2 text-slate-800">
                             <i class="fas fa-calendar-minus text-indigo-500"></i>
                             <span>Configure Quarterly Bonus Rules</span>
                         </h3>
@@ -1164,14 +1232,16 @@
                     </div>
 
                     <div class="overflow-y-auto flex-1 pr-1">
-                        <form class="flex flex-col gap-4 pb-2">
-                            <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 flex items-center justify-between gap-3 text-xs">
+                        <form class="flex flex-col gap-3 pb-2">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div class="flex flex-col gap-3 min-w-0">
+                            <div class="bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100 flex flex-col gap-2 text-xs">
                                 <div class="flex items-center gap-2">
                                     <i class="fas fa-copy text-indigo-500"></i>
                                     <span class="font-bold text-slate-700">Copy from Other Period:</span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <select x-model="copySourceTriwulan" class="border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1 cursor-pointer outline-none">
+                                <div class="flex flex-col gap-2">
+                                    <select x-model="copySourceTriwulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none">
                                         <option value="">-- Select Quarter --</option>
                                         <template x-for="item in historyList.filter(h => h.type === 'triwulan')" :key="item.bulan + '|' + item.tahun + '|' + item.basis">
                                             <option :value="item.bulan + '|' + item.tahun + '|' + item.basis" x-text="item.bulan + ' ' + item.tahun + ' (' + (item.basis === 'nominal' ? 'Scheme 1' : 'Scheme 2') + ')'"></option>
@@ -1190,15 +1260,15 @@
                                                 }
                                             }
                                         }
-                                    " class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors shadow-sm">
-                                        Copy
+                                    " class="w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors shadow-sm">
+                                        <i class="fas fa-copy text-xs"></i> Copy
                                     </button>
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <div class="grid grid-cols-1 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Year</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Target Year</label>
                                     <select name="tahun" x-model="formTahun" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         @foreach($listTahun as $t)
                                             <option value="{{ $t }}">{{ $t }}</option>
@@ -1206,7 +1276,7 @@
                                     </select>
                                 </div>
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Quarter</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Target Quarter</label>
                                     <select name="triwulan" x-model="formTriwulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         @foreach(['Triwulan I', 'Triwulan II', 'Triwulan III', 'Triwulan IV'] as $q)
                                             <option value="{{ $q }}">{{ $q }}</option>
@@ -1214,18 +1284,19 @@
                                     </select>
                                 </div>
                                 <div class="flex flex-col gap-1">
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scheme Model</label>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Scheme Model</label>
                                     <select x-model="formBasisTriwulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-blue-500 focus:border-blue-500">
                                         <option value="nominal">Scheme 1 (Nominal Actual Sales Rp)</option>
                                         <option value="percentage">Scheme 2 (Percentage % vs Target)</option>
                                     </select>
                                 </div>
                             </div>
-
+                                </div>
+                                <div class="md:col-span-2 flex flex-col gap-3 min-w-0">
                             <div class="flex flex-col gap-3">
                                 <table class="w-full text-left border-collapse">
                                     <thead>
-                                        <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                        <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
                                             <th class="py-2 px-1 w-6/12" x-text="formBasisTriwulan === 'nominal' ? 'Min. Sales (Rp)' : 'Min. Achievement (%)'"></th>
                                             <th class="py-2 px-1 w-5/12">Bonus Nominal (Rp)</th>
                                             <th class="py-2 px-1 w-1/12 text-center">Action</th>
@@ -1234,36 +1305,38 @@
                                     <tbody>
                                         <template x-for="(tier, index) in (formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent)" :key="index">
                                             <tr class="border-b border-slate-100/50">
-                                                <td class="py-1.5 px-1">
+                                                <td class="py-1 px-1">
                                                     <div class="relative">
-                                                        <span x-show="formBasisTriwulan === 'nominal'" class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-[11px] font-bold">Rp</span>
+                                                        <span x-show="formBasisTriwulan === 'nominal'" class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-xs font-bold">Rp</span>
                                                         <input type="number" name="min_achievement_triwulan[]" x-model="tier.min_achievement" required class="w-full border border-slate-200 bg-white rounded-lg py-1 text-xs font-semibold text-slate-800 focus:ring-blue-500 focus:border-blue-500 transition-colors" :class="formBasisTriwulan === 'nominal' ? 'pl-7 pr-3' : 'pl-3 pr-6'">
-                                                        <span x-show="formBasisTriwulan === 'percentage'" class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 text-[11px] font-bold">%</span>
+                                                        <span x-show="formBasisTriwulan === 'percentage'" class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400 text-xs font-bold">%</span>
                                                     </div>
-                                                    <div x-show="formBasisTriwulan === 'nominal' && tier.min_achievement" class="text-[10px] text-blue-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.min_achievement)"></div>
+                                                    <div x-show="formBasisTriwulan === 'nominal' && tier.min_achievement" class="text-xs text-blue-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.min_achievement)"></div>
                                                 </td>
-                                                <td class="py-1.5 px-1">
+                                                <td class="py-1 px-1">
                                                     <div class="relative">
-                                                        <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-[11px] font-bold">Rp</span>
+                                                        <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-xs font-bold">Rp</span>
                                                         <input type="number" name="incentive_value_triwulan[]" x-model="tier.incentive_value" required class="w-full border border-slate-200 bg-white rounded-lg pl-7 pr-3 py-1 text-xs font-semibold text-slate-800 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                                     </div>
-                                                    <div x-show="tier.incentive_value" class="text-[10px] text-indigo-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.incentive_value)"></div>
+                                                    <div x-show="tier.incentive_value" class="text-xs text-indigo-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.incentive_value)"></div>
                                                 </td>
-                                                <td class="py-1.5 px-1 text-center">
+                                                <td class="py-1 px-1 text-center">
                                                     <button type="button" @click="(formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent).splice(index, 1)" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 inline-flex items-center justify-center transition-colors border border-rose-100">
-                                                        <i class="fas fa-trash-can text-[10px]"></i>
+                                                        <i class="fas fa-trash-can text-xs"></i>
                                                     </button>
                                                 </td>
                                             </tr>
                                         </template>
                                     </tbody>
                                 </table>
-                                <button type="button" @click="(formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-[10px] transition-colors shadow-sm">
+                                <button type="button" @click="(formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent).push({min_achievement: 0, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold text-xs transition-colors shadow-sm">
                                     <i class="fas fa-plus"></i> Add Tier
                                 </button>
                             </div>
+                                </div>
+                            </div>
 
-                            <div class="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-slate-100">
+                            <div class="flex items-center justify-end gap-3 mt-3 pt-2 border-t border-slate-100">
                                 <button type="button" @click="showFormModalTriwulan = false" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs transition-colors">Cancel</button>
                                 <button type="button" @click="
                                     const currentTriwulanList = formBasisTriwulan === 'nominal' ? settingsTriwulanNominal : settingsTriwulanPercent;
@@ -1292,7 +1365,144 @@
                 </div>
             </div>
 
-            {{-- Modal History Detail — pakai ui-glass biar card jelas --}}
+            {{-- Modal Form Aturan New Outlet --}}
+            <div x-show="showFormModalOutlet" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
+                <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showFormModalOutlet = false"></div>
+                <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 w-full max-w-3xl shadow-2xl z-10 relative overflow-hidden flex flex-col" style="max-height:70vh;"
+                     x-transition:enter="transition ease-out duration-300 transform"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-200 transform"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95">
+
+                    <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2 shrink-0">
+                        <h3 class="text-base font-black flex items-center gap-2 text-slate-800">
+                            <i class="fas fa-store text-emerald-500"></i>
+                            <span>Configure New Outlet Bonus Rules</span>
+                        </h3>
+                        <button type="button" @click="showFormModalOutlet = false" class="text-slate-400 hover:text-slate-600 transition-colors">
+                            <i class="fas fa-times text-lg"></i>
+                        </button>
+                    </div>
+
+                    <div class="overflow-y-auto flex-1 pr-1">
+                        <form class="flex flex-col gap-3 pb-2">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div class="flex flex-col gap-3 min-w-0">
+                            <div class="bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100 flex flex-col gap-2 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-copy text-emerald-500"></i>
+                                    <span class="font-bold text-slate-700">Copy from Other Period:</span>
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <select x-model="copySourceOutlet" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none">
+                                        <option value="">-- Select Month --</option>
+                                        <template x-for="item in historyList.filter(h => h.type === 'outlet')" :key="item.bulan + '|' + item.tahun">
+                                            <option :value="item.bulan + '|' + item.tahun" x-text="item.bulan + ' ' + item.tahun + ' (' + item.tierCount + ' tiers)'"></option>
+                                        </template>
+                                    </select>
+                                    <button type="button" @click="
+                                        if (copySourceOutlet) {
+                                            const [cBul, cTah] = copySourceOutlet.split('|');
+                                            const source = historyList.find(h => h.bulan === cBul && h.tahun === cTah && h.type === 'outlet');
+                                            if (source) {
+                                                settingsOutlet = JSON.parse(JSON.stringify(source.tiers));
+                                            }
+                                        }
+                                    " class="w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors shadow-sm">
+                                        <i class="fas fa-copy text-xs"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Target Year</label>
+                                    <select name="tahun" x-model="formTahun" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                        @foreach($listTahun as $t)
+                                            <option value="{{ $t }}">{{ $t }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Target Month</label>
+                                    <select name="bulan" x-model="formBulan" class="w-full border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 px-3 py-1.5 cursor-pointer outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                        @foreach($listBulan as $b)
+                                            <option value="{{ $b }}">{{ $b }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                                </div>
+                                <div class="md:col-span-2 flex flex-col gap-3 min-w-0">
+                            <div class="flex flex-col gap-3">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                            <th class="py-2 px-1 w-6/12">Min. New Outlets</th>
+                                            <th class="py-2 px-1 w-5/12">Bonus Nominal (Rp)</th>
+                                            <th class="py-2 px-1 w-1/12 text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="(tier, index) in settingsOutlet" :key="index">
+                                            <tr class="border-b border-slate-100/50">
+                                                <td class="py-1 px-1">
+                                                    <input type="number" min="1" step="1" x-model="tier.min_achievement" required class="w-full border border-slate-200 bg-white rounded-lg px-3 py-1 text-xs font-semibold text-slate-800 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
+                                                </td>
+                                                <td class="py-1 px-1">
+                                                    <div class="relative">
+                                                        <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400 text-xs font-bold">Rp</span>
+                                                        <input type="number" min="0" step="any" x-model="tier.incentive_value" required class="w-full border border-slate-200 bg-white rounded-lg pl-7 pr-3 py-1 text-xs font-semibold text-slate-800 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
+                                                    </div>
+                                                    <div x-show="tier.incentive_value" class="text-xs text-emerald-600 font-bold mt-0.5 px-1" x-text="formatRupiahShorthand(tier.incentive_value)"></div>
+                                                </td>
+                                                <td class="py-1 px-1 text-center">
+                                                    <button type="button" @click="settingsOutlet.splice(index, 1)" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 inline-flex items-center justify-center transition-colors border border-rose-100">
+                                                        <i class="fas fa-trash-can text-xs"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                                <button type="button" @click="settingsOutlet.push({min_achievement: 1, incentive_value: 0})" class="self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50 font-bold text-xs transition-colors shadow-sm">
+                                    <i class="fas fa-plus"></i> Add Tier
+                                </button>
+                            </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-3 mt-3 pt-2 border-t border-slate-100">
+                                <button type="button" @click="showFormModalOutlet = false" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs transition-colors">Cancel</button>
+                                <button type="button" @click="
+                                    const payloadOutlet = {
+                                        _token: '{{ csrf_token() }}', tahun: formTahun, bulan: formBulan, type: 'outlet', basis: 'nominal',
+                                        min_achievement: settingsOutlet.map(t => t.min_achievement),
+                                        incentive_value: settingsOutlet.map(t => t.incentive_value)
+                                    };
+                                    fetch('{{ route('sales.incentive.settings.save') }}', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                        body: JSON.stringify(payloadOutlet)
+                                    }).then(res => {
+                                        if (res.ok) {
+                                            const u = new URL(window.location); u.searchParams.set('tab', 'settings'); window.location.href = u.toString();
+                                        } else {
+                                            res.json().then(data => alert(data.message || 'Failed to save rules.'));
+                                        }
+                                    });
+                                " class="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-colors">
+                                    <i class="fas fa-save"></i> Save & Activate
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Modal History Detail (rincian tier aturan terpilih) --}}
             <div x-show="showHistoryDetailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
                 <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showHistoryDetailModal = false"></div>
                 <div class="bg-white w-full max-w-lg rounded-2xl border border-slate-200 p-6 shadow-2xl z-10 relative overflow-hidden flex flex-col max-h-[80vh]" 
@@ -1316,7 +1526,7 @@
                     <div class="flex-1 overflow-y-auto pr-1">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="border-b border-slate-100 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                <tr class="border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
                                     <th class="py-2 px-1">Min. Target</th>
                                     <th class="py-2 px-1 text-right">Incentive / Bonus Value</th>
                                 </tr>
@@ -1324,7 +1534,13 @@
                             <tbody>
                                 <template x-for="(tier, idx) in historyDetailTiers" :key="idx">
                                     <tr class="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors text-xs text-slate-700">
-                                        <td class="py-2.5 px-1 font-semibold" x-text="getTierRangeLabel(historyDetailTiers, idx, tier.basis)">
+                                        <td class="py-2.5 px-1 font-semibold">
+                                            <template x-if="historyDetailType === 'outlet'">
+                                                <span>≥ <span x-text="tier.min_achievement"></span> Outlets</span>
+                                            </template>
+                                            <template x-if="historyDetailType !== 'outlet'">
+                                                <span x-text="getTierRangeLabel(historyDetailTiers, idx, tier.basis)"></span>
+                                            </template>
                                         </td>
                                         <td class="py-2.5 px-1 text-right font-black text-emerald-600">
                                             <template x-if="historyDetailType === 'bulan'">
@@ -1340,7 +1556,7 @@
                         </table>
                     </div>
 
-                    <div class="flex justify-end mt-4 pt-3 border-t border-slate-100 shrink-0">
+                    <div class="flex justify-end mt-3 pt-2 border-t border-slate-100 shrink-0">
                         <button type="button" @click="showHistoryDetailModal = false" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors">
                             Close
                         </button>

@@ -9,7 +9,7 @@
     $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing') || \Illuminate\Support\Str::contains($jabatan, 'purchasing');
     $isRestrictedViewOnly = $isAdminGudang || $isLegalPurchasing;
     
-    $backRoute = $isRestrictedViewOnly ? route('sales.gudang.dashboard') : route('sales.index');
+    $backRoute = $isRestrictedViewOnly ? route('warehouse.dashboard') : route('sales.index');
     $backText = $isRestrictedViewOnly ? 'Back to Dashboard Gudang' : 'Back to Sales Dashboard';
 @endphp
 <x-layout-users :title="$title ?? 'Sales Forecast'">
@@ -185,13 +185,13 @@
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16" x-data="{ showForecastModal: false, showRefMonthsModal: false, showDoiModal: false }">
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-x-clip text-slate-800 pb-16" x-data="{ showForecastModal: false, showRefMonthsModal: false, showDoiModal: false }">
         <div id="global-moq-toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-xl opacity-0 pointer-events-none transition-opacity duration-300 z-[9999] flex items-center gap-2">
             <i class="fas fa-check-circle"></i> Tersimpan
         </div>
         <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start">
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
             
             <div class="w-full flex justify-start">
                 <x-ui.back-button :href="$backRoute" :label="$backText" />
@@ -216,8 +216,8 @@
             <x-ui.glass-card class="border-t-4 border-t-blue-500 shadow-lg !rounded-3xl !p-6 min-h-[620px]" style="min-height:620px">
                 <div class="flex flex-col md:flex-row md:items-center md:flex-nowrap justify-between gap-4 mb-6">
                     
-                    <form method="GET" action="{{ route('sales.forecast') }}" id="filterForm" class="flex flex-col md:flex-row md:flex-nowrap items-stretch md:items-center gap-3 w-full md:w-auto">
-                        <x-ui.search-input id="searchInput" onkeyup="handleSearchInput()" placeholder="Search Product Name" class="w-full md:w-72 shrink-0" />
+                    <form method="GET" action="{{ route('sales.forecast') }}" id="filterForm" class="flex flex-col md:flex-row md:flex-nowrap items-stretch md:items-center gap-3 w-full md:w-auto" onsubmit="return false;">
+                        <x-ui.search-input id="searchInput" onkeyup="handleSearchInput()" oninput="handleSearchInput()" onkeydown="if(event.key==='Enter'){event.preventDefault();}" placeholder="Search Product Name" class="w-full md:w-72 shrink-0" autocomplete="off" />
 
                         <div class="flex items-center gap-2 shrink-0">
                             <x-ui.filter-select name="bulan_akhir" onchange="this.form.submit()" value="{{ $bulanAktif ?? '' }}" :options="collect($bulanTersediaUrut)->mapWithKeys(fn($b) => [$b => $monthTranslations[$b] ?? $b])->toArray()" class="flex-1 md:w-36" />
@@ -643,13 +643,15 @@
     @push('scripts')
     <script>
         function handleSearchInput() {
-            let input = document.getElementById("searchInput").value.toLowerCase();
+            const searchEl = document.getElementById("searchInput");
+            if (!searchEl) return;
+            let rawValue = searchEl.value || "";
+            let input = rawValue.toLowerCase().trim();
+            // Tombol clear lama (kalau ada) — komponen ui-search sekarang pakai tombol clear internal berbasis CSS peer,
+            // jadi guard null agar tidak throw "Cannot read properties of null" yang menghentikan filter.
             let clearBtn = document.getElementById("clearSearchBtn");
-            
-            if (input.length > 0) {
-                clearBtn.classList.remove("hidden");
-            } else {
-                clearBtn.classList.add("hidden");
+            if (clearBtn) {
+                clearBtn.classList.toggle("hidden", input.length === 0);
             }
 
             let items = document.querySelectorAll(".searchable-item");
@@ -657,13 +659,14 @@
 
             items.forEach(item => {
                 let nameEl = item.querySelector('.nama-produk');
-                if (nameEl) {
-                    if (nameEl.innerText.toLowerCase().indexOf(input) > -1) {
-                        item.style.display = "";
-                        visibleCount++;
-                    } else {
-                        item.style.display = "none";
-                    }
+                let haystack = nameEl
+                    ? (nameEl.innerText || nameEl.textContent || "")
+                    : (item.getAttribute('data-product') || item.textContent || "");
+                if (haystack.toLowerCase().indexOf(input) > -1) {
+                    item.style.display = "";
+                    visibleCount++;
+                } else {
+                    item.style.display = "none";
                 }
             });
 
@@ -676,10 +679,10 @@
                 if (emptyStateDiv) {
                     emptyStateDiv.classList.remove("hidden");
                     emptyStateDiv.classList.add("flex");
-                    emptyText.innerHTML = `No products found for "<span class="font-bold">${document.getElementById("searchInput").value}</span>".`;
+                    if (emptyText) emptyText.textContent = `No products found for "${rawValue}".`;
                 }
             } else {
-                if (dataContainer) dataContainer.style.display = "block";
+                if (dataContainer) dataContainer.style.display = "";
                 if (emptyStateDiv) {
                     emptyStateDiv.classList.remove("flex");
                     emptyStateDiv.classList.add("hidden");
@@ -703,12 +706,22 @@
             });
         }
 
-        document.addEventListener("DOMContentLoaded", applyZebra);
+        document.addEventListener("DOMContentLoaded", () => {
+            applyZebra();
+            // Backup wiring: tombol clear internal komponen ui-search me-dispatch event 'input',
+            // jadi pastikan filter jalan walau atribut inline ter-strip suatu saat.
+            const searchEl = document.getElementById("searchInput");
+            if (searchEl) {
+                searchEl.addEventListener("input", handleSearchInput);
+            }
+        });
         if (document.readyState !== "loading") applyZebra();
 
         function clearSearch() {
             let input = document.getElementById("searchInput");
+            if (!input) return;
             input.value = "";
+            input.dispatchEvent(new Event('input', { bubbles: true }));
             handleSearchInput();
             input.focus();
         }

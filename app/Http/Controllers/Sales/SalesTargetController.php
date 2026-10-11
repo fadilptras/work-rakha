@@ -90,4 +90,30 @@ class SalesTargetController extends BaseSalesController
         $activeTab = $request->form_type == 'history' ? 'tab-history' : 'tab-tgt';
         return redirect()->back()->with('success', $msg)->with('active_tab', $activeTab);
     }
+
+    /**
+     * Hapus seluruh target satu PS dalam satu tahun (12 bulan).
+     * Data sales tidak ikut terhapus.
+     */
+    public function destroyByPs(Request $request)
+    {
+        if (!$this->hasFullSalesAccess()) {
+            abort(403, 'Anda tidak memiliki hak akses untuk menghapus target.');
+        }
+
+        $request->validate([
+            'tahun' => 'required|integer',
+            'ps' => 'required|string|max:255',
+        ]);
+
+        $deleted = SalesTarget::where('year', (int) $request->tahun)
+            ->where('ps', $request->ps)
+            ->delete();
+
+        $msg = $deleted > 0
+            ? "Target {$request->ps} tahun {$request->tahun} berhasil dihapus ({$deleted} bulan)!"
+            : "Tidak ada target {$request->ps} tahun {$request->tahun} yang dihapus.";
+
+        return redirect()->back()->with('success', $msg)->with('active_tab', 'tab-tgt');
+    }
 }

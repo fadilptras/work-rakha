@@ -68,8 +68,9 @@ abstract class BaseSalesController extends Controller
         $jabatan = strtolower($user->jabatan ?? '');
         
         $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
+        $isSeniorStaffGudang = \Illuminate\Support\Str::contains($jabatan, 'senior staff gudang') || (\Illuminate\Support\Str::contains($jabatan, 'senior') && \Illuminate\Support\Str::contains($jabatan, 'gudang'));
         $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing') || \Illuminate\Support\Str::contains($jabatan, 'purchasing');
 
-        return in_array($divisi, ['marketing dan operasional', 'finance dan gudang', 'fianance dan gudang']) || $isAdminGudang || $isLegalPurchasing;
+        return in_array($divisi, ['marketing dan operasional', 'finance dan gudang', 'fianance dan gudang']) || $isAdminGudang || $isSeniorStaffGudang || $isLegalPurchasing;
     }
 }

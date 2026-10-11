@@ -76,11 +76,11 @@
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16" x-data="pricingManager({{ ($hasFullAccess ?? false) ? 'true' : 'false' }})">
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-x-clip text-slate-800 pb-16" x-data="pricingManager({{ ($hasFullAccess ?? false) ? 'true' : 'false' }})">
         <div class="mesh-bg"></div>
 
         {{-- MAIN WRAPPER: selaras manage (p-4 sm:p-6 lg:px-8) --}}
-        <div class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8 space-y-4 flex-1 flex flex-col justify-start">
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
             
             <div class="w-full flex justify-start">
                 <x-ui.back-button href="{{ route('sales.index') }}" label="Back to Sales Dashboard" />
@@ -232,7 +232,7 @@
                                 </template>
                                 <template x-if="filteredProducts.length === 0">
                                     <tr>
-                                        <td colspan="6" class="px-6 py-16 text-center text-slate-400">
+                                        <td colspan="5" class="px-6 py-16 text-center text-slate-400">
                                             <i class="fas fa-box-open text-4xl mb-4 text-slate-300 block"></i>
                                             <h4 class="font-bold text-base text-slate-600">No Products Found</h4>
                                             <p class="text-sm mt-1">No matching products found.</p>
@@ -242,7 +242,6 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
             </x-ui.glass-card>
             </div>
 
@@ -286,7 +285,7 @@
                                 <div class="lg:col-span-1">
                                     <label class="ui-label">Contact Person (PS)</label>
                                     <div class="relative">
-                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-8 text-blue-400"><i class="fas fa-id-badge text-[11px]"></i></span>
+                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-400"><i class="fas fa-id-badge text-[11px]"></i></span>
                                         <select x-model="selectedPs" @change="updatePsPhone()" class="w-full appearance-none border border-slate-200 bg-white hover:bg-slate-50 shadow-sm rounded-lg text-xs pl-8 pr-8 h-[38px] font-bold text-blue-700 focus:ring-0 focus:border-slate-200 outline-none cursor-pointer">
                                             <option value="">-- Select PS --</option>
                                             @foreach($psList as $ps)
@@ -306,7 +305,7 @@
                                 <div class="lg:col-span-1">
                                     <label class="ui-label">Tax / PPN Setting</label>
                                     <div class="relative">
-                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-8 text-blue-400"><i class="fas fa-percent text-[11px]"></i></span>
+                                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-400"><i class="fas fa-percent text-[11px]"></i></span>
                                         <select x-model.number="ppnOption" class="w-full appearance-none border border-slate-200 bg-white hover:bg-slate-50 shadow-sm rounded-lg text-xs pl-8 pr-8 h-[38px] font-bold text-blue-700 focus:ring-0 focus:border-slate-200 outline-none cursor-pointer">
                                             <option value="11">PPN 11%</option>
                                             <option value="0">Non-PPN (0%)</option>
@@ -340,7 +339,7 @@
                             </div>
                             
                             {{-- MOBILE: SPH Items Card List --}}
-                            <div class="md:hidden space-y-2">
+                            <div class="md:hidden px-3 pt-2 pb-3 space-y-2">
                                 <template x-for="(item, index) in selectedItems" :key="'msph-' + index">
                                     <div class="m-card">
                                         <div class="flex items-start justify-between gap-2">
@@ -402,43 +401,37 @@
                                         <col style="width:150px">
                                         <col style="width:56px">
                                     </colgroup>
-                                    <thead>
-                                        <tr class="bg-slate-50 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-                                            <th class="py-3 px-4 text-center text-slate-500">No</th>
-                                            <th class="py-3 px-3 text-slate-500">Product Name</th>
-                                            <th class="py-3 px-3 text-slate-500">Presentation</th>
-                                            <th class="py-3 px-3 text-right text-blue-600">HNA Price</th>
-                                            <th class="py-3 px-3 text-right text-slate-600">HNA/Pcs</th>
-                                            <th class="py-3 px-3 text-center text-amber-600">Discount</th>
-                                            <th class="py-3 px-3 text-right text-slate-600">Net+PPN</th>
-                                            <th class="py-3 px-3 text-right bg-blue-50/60 text-blue-600">Net+PPN / Pcs</th>
-                                            <th class="py-3 px-3 text-center text-slate-500"></th>
+                                    <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
+                                        <tr>
+                                            <th class="py-3 px-5 text-center">No</th>
+                                            <th class="py-3 px-5">Product Name</th>
+                                            <th class="py-3 px-5">Presentation</th>
+                                            <th class="py-3 px-5 text-right">HNA Price</th>
+                                            <th class="py-3 px-5 text-right">HNA/Pcs</th>
+                                            <th class="py-3 px-5 text-center">Discount</th>
+                                            <th class="py-3 px-5 text-right">Net+PPN</th>
+                                            <th class="py-3 px-5 text-right bg-blue-50/60 text-blue-600">Net+PPN / Pcs</th>
+                                            <th class="py-3 px-5 text-center"></th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
                                         <template x-for="(item, index) in selectedItems" :key="index">
                                             <tr class="hover:bg-slate-50 group transition-colors">
-                                                <td class="py-2.5 px-4 text-center font-bold text-slate-400" x-text="index + 1"></td>
-                                                <td class="py-2.5 px-3 font-bold text-slate-800 whitespace-normal leading-tight" x-text="item.product_name"></td>
-                                                <td class="py-2.5 px-3"><span class="bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-semibold text-xs" x-text="item.presentation"></span></td>
-                                                <td class="py-2.5 px-3 text-right border-l border-slate-100 font-bold text-slate-600" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(itemHna(item))"></td>
-                                                <td class="py-2.5 px-3 text-right border-l border-slate-100 font-semibold text-slate-500" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(hnaPerPcs(item))"></td>
-                                                
-                                                {{-- FIX: Layout Icon Persen Diperbaiki --}}
-                                                {{-- FIX: Layout Icon Persen Diperbaiki --}}
-                                                <td class="py-2.5 px-3 text-center border-l border-slate-100">
+                                                <td class="py-3 px-5 text-center font-bold text-slate-400" x-text="index + 1"></td>
+                                                <td class="py-3 px-5 font-bold text-slate-800 whitespace-normal leading-tight" x-text="item.product_name"></td>
+                                                <td class="py-3 px-5"><span class="bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-semibold text-xs" x-text="item.presentation"></span></td>
+                                                <td class="py-3 px-5 text-right font-black text-blue-600" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(itemHna(item))"></td>
+                                                <td class="py-3 px-5 text-right font-semibold text-slate-700" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(hnaPerPcs(item))"></td>
+                                                <td class="py-3 px-5 text-center">
                                                     <div class="relative flex items-center w-24 mx-auto">
-                                                        <!-- Ubah pr-7 menjadi pr-8 agar angka tidak menabrak ikon -->
                                                         <input type="number" x-model.number="item.discount" min="0" max="100" class="w-full pl-2 pr-8 text-right font-bold text-sm text-amber-700 bg-white border border-amber-200 rounded-md py-1 outline-none focus:border-amber-500 hover:border-amber-400 transition-colors appearance-none">
-                                                        
-                                                        <!-- Ubah pr-1 menjadi pr-3 agar ikon % tidak terlalu mepet ke kanan -->
                                                         <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-[12px] text-slate-500 font-bold pointer-events-none">%</span>
                                                     </div>
                                                 </td>
                                                 
-                                                <td class="py-2.5 px-3 text-right border-l border-slate-100 font-bold text-slate-700" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(netPpn(item))"></td>
-                                                <td class="py-2.5 px-3 text-right border-l border-slate-100 bg-blue-50/40 font-black text-blue-600" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(netPpnPerPcs(item))"></td>
-                                                <td class="py-2.5 px-3 text-center border-l border-slate-100">
+                                                <td class="py-3 px-5 text-right font-bold text-slate-800" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(netPpn(item))"></td>
+                                                <td class="py-3 px-5 text-right bg-blue-50/40 font-black text-blue-600" x-text="'Rp ' + new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0}).format(netPpnPerPcs(item))"></td>
+                                                <td class="py-3 px-5 text-center">
                                                     <button @click="selectedItems.splice(index, 1)" class="w-8 h-8 rounded-md bg-rose-50 text-rose-500 hover:text-rose-600 flex items-center justify-center mx-auto hover:bg-rose-100 transition-all opacity-60 group-hover:opacity-100 cursor-pointer"><i class="fas fa-times text-sm"></i></button>
                                                 </td>
                                             </tr>
@@ -450,7 +443,7 @@
                                 </table>
                             </div>
 
-                        <div class="p-5 bg-white border-t border-slate-100">
+                        <div class="px-5 py-4 bg-slate-50 border-t border-slate-200">
                         {{-- 4. Ringkasan --}}
                         <div x-show="selectedItems.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 text-center">
@@ -504,7 +497,7 @@
                         <template x-for="history in filteredHistory" :key="'mh-' + history.id">
                             <div class="m-card">
                                 <div class="flex items-start justify-between gap-2">
-                                    <a :href="'/sales/sph/' + history.id" class="min-w-0">
+                                    <a :href="'{{ route('sales.sph.show', ['sph' => '__ID__']) }}'.replace('__ID__', history.id)" class="min-w-0">
                                         <div class="m-card-title text-blue-600" x-text="history.sphNumber"></div>
                                         <div class="text-[11px] text-slate-500 font-semibold mt-0.5" x-text="history.date"></div>
                                     </a>
@@ -524,8 +517,8 @@
                                 </div>
                                 <div class="m-card-actions">
                                     <button x-show="hasFullAccess" x-cloak @click="editSph(history)" class="bg-amber-50 text-amber-600 border border-amber-200"><i class="fas fa-edit"></i> Edit</button>
-                                    <a :href="'/sales/sph/' + history.id + '/export/pdf'" class="bg-red-50 text-red-600 border border-red-200"><i class="fas fa-file-pdf"></i> PDF</a>
-                                    <a :href="'/sales/sph/' + history.id + '/export/excel'" class="bg-green-50 text-green-600 border border-green-200"><i class="fas fa-file-excel"></i> Excel</a>
+                                    <a :href="'{{ route('sales.sph.export.pdf', ['sph' => '__ID__']) }}'.replace('__ID__', history.id)" class="bg-red-50 text-red-600 border border-red-200"><i class="fas fa-file-pdf"></i> PDF</a>
+                                    <a :href="'{{ route('sales.sph.export.excel', ['sph' => '__ID__']) }}'.replace('__ID__', history.id)" class="bg-green-50 text-green-600 border border-green-200"><i class="fas fa-file-excel"></i> Excel</a>
                                     <button x-show="hasFullAccess" x-cloak @click="deleteHistory(history.id)" class="bg-rose-50 text-rose-500 border border-rose-200 max-w-[44px]"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
@@ -548,20 +541,20 @@
                                 <col class="w-[10%]">
                                 <col class="w-[18%]">
                             </colgroup>
-                            <thead>
-                                <tr class="bg-slate-50 text-xs font-bold uppercase tracking-wider border-b border-slate-200 whitespace-nowrap">
-                                    <th class="py-3 px-5 text-slate-500">SPH Number</th>
-                                    <th class="py-3 px-4 text-slate-500">Date</th>
-                                    <th class="py-3 px-4 text-slate-500">Company / PIC</th>
-                                    <th class="py-3 px-4 text-slate-500">Sales Person (PS)</th>
-                                    <th class="py-3 px-4 text-center text-slate-500">Items</th>
-                                    <th class="py-3 px-5 text-center text-slate-500">Actions</th>
+                            <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
+                                <tr>
+                                    <th class="py-3 px-5">SPH Number</th>
+                                    <th class="py-3 px-5">Date</th>
+                                    <th class="py-3 px-5">Company / PIC</th>
+                                    <th class="py-3 px-5">Sales Person (PS)</th>
+                                    <th class="py-3 px-5 text-center">Items</th>
+                                    <th class="py-3 px-5 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
                                 <template x-if="loadingHistory">
                                     <tr>
-                                        <td colspan="8" class="py-12 text-center text-slate-400 bg-slate-50">
+                                        <td colspan="6" class="py-12 text-center text-slate-400 bg-slate-50">
                                             <i class="fas fa-spinner fa-spin text-3xl mb-3 text-blue-400 block"></i>
                                             <p class="text-sm font-medium">Loading SPH history...</p>
                                         </td>
@@ -570,34 +563,34 @@
                                 <template x-for="history in filteredHistory" :key="history.id">
                                     <tr class="hover:bg-slate-50/70 transition-colors">
                                         <td class="py-3 px-5 font-bold text-blue-600 whitespace-nowrap">
-                                            <a :href="'/sales/sph/' + history.id" class="inline-flex items-center gap-1.5 hover:underline cursor-pointer" title="View SPH details">
+                                            <a :href="'{{ route('sales.sph.show', ['sph' => '__ID__']) }}'.replace('__ID__', history.id)" class="inline-flex items-center gap-1.5 hover:underline cursor-pointer" title="View SPH details">
                                                 <span x-text="history.sphNumber"></span>
                                                 <i class="fas fa-external-link-alt text-[10px] text-blue-400"></i>
                                             </a>
                                         </td>
-                                        <td class="py-3 px-4 font-semibold text-slate-500 whitespace-nowrap" x-text="history.date"></td>
-                                        <td class="py-3 px-4 border-l border-slate-100">
+                                        <td class="py-3 px-5 font-semibold text-slate-500 whitespace-nowrap" x-text="history.date"></td>
+                                        <td class="py-3 px-5">
                                             <div>
-                                                <a :href="'/sales/sph/' + history.id" class="hover:underline cursor-pointer">
+                                                <a :href="'{{ route('sales.sph.show', ['sph' => '__ID__']) }}'.replace('__ID__', history.id)" class="hover:underline cursor-pointer">
                                                     <div class="font-bold text-slate-800 whitespace-normal leading-snug" x-text="history.customerCompany"></div>
                                                 </a>
                                                 <div class="text-xs text-slate-500 font-medium mt-0.5 whitespace-normal" x-text="history.customerName"></div>
                                             </div>
                                         </td>
-                                        <td class="py-3 px-4 border-l border-slate-100 whitespace-nowrap">
+                                        <td class="py-3 px-5 whitespace-nowrap">
                                             <div class="font-semibold text-slate-700" x-text="history.selectedPs"></div>
                                             <div class="text-xs text-slate-500 mt-0.5" x-text="history.psPhone"></div>
                                         </td>
-                                        <td class="py-3 px-4 text-center border-l border-slate-100 whitespace-nowrap">
+                                        <td class="py-3 px-5 text-center whitespace-nowrap">
                                             <span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-bold text-xs" x-text="history.items.length + ' Items'"></span>
                                         </td>
-                                        <td class="py-3 px-5 text-center border-l border-slate-100 whitespace-nowrap">
+                                        <td class="py-3 px-5 text-center whitespace-nowrap">
                                             <div class="flex items-center justify-center gap-2">
                                                 <x-ui.edit-button x-show="hasFullAccess" x-cloak @click="editSph(history)" title="Edit SPH" />
-                                                <a :href="'/sales/sph/' + history.id + '/export/pdf'" class="w-8 h-8 rounded-md bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 flex items-center justify-center transition-all text-xs border border-red-200 hover:border-red-300 hover:shadow-md hover:shadow-red-100 hover:-translate-y-0.5 cursor-pointer" title="Export SPH PDF">
+                                                <a :href="'{{ route('sales.sph.export.pdf', ['sph' => '__ID__']) }}'.replace('__ID__', history.id)" class="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 flex items-center justify-center transition-all text-xs border border-red-200 cursor-pointer" title="Export SPH PDF">
                                                     <i class="fas fa-file-pdf"></i>
                                                 </a>
-                                                <a :href="'/sales/sph/' + history.id + '/export/excel'" class="w-8 h-8 rounded-md bg-green-50 hover:bg-green-500 hover:text-white text-green-600 flex items-center justify-center transition-all text-xs border border-green-200 cursor-pointer" title="Export SPH Excel">
+                                                <a :href="'{{ route('sales.sph.export.excel', ['sph' => '__ID__']) }}'.replace('__ID__', history.id)" class="w-7 h-7 rounded-lg bg-green-50 hover:bg-green-100 text-green-600 hover:text-green-700 flex items-center justify-center transition-all text-xs border border-green-200 cursor-pointer" title="Export SPH Excel">
                                                     <i class="fas fa-file-excel"></i>
                                                 </a>
                                                 <x-ui.delete-button x-show="hasFullAccess" x-cloak @click="deleteHistory(history.id)" title="Delete Record" />
@@ -607,7 +600,7 @@
                                 </template>
                                 <template x-if="filteredHistory.length === 0">
                                     <tr>
-                                        <td colspan="8" class="py-16 text-center text-slate-400 bg-slate-50">
+                                        <td colspan="6" class="py-16 text-center text-slate-400 bg-slate-50">
                                             <i class="fas fa-box-open text-4xl mb-4 text-slate-300 block"></i>
                                             <h4 class="font-bold text-base text-slate-600">No SPH History</h4>
                                             <p class="text-sm mt-1">Create a new quotation from the SPH Form tab.</p>

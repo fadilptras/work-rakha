@@ -69,10 +69,10 @@
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800 pb-16">
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-x-clip text-slate-800 pb-16">
         <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col">
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
             <div class="w-full flex justify-start mb-3 md:mb-4">
                 <a href="{{ route('sales.pricing') }}" class="btn-back-modern shrink-0">
                     <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>

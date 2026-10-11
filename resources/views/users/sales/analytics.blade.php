@@ -1,7 +1,5 @@
 @php
-    $agent = new \Jenssegers\Agent\Agent();
-    $isMobile = $agent->isMobile();
-
+    // Helper badge/teks achievement — dijaga function_exists agar aman bila view di-render ulang.
     if (!function_exists('getAchvBadgeClass')) {
         function getAchvBadgeClass($rate) {
             $rateNum = floatval($rate);
@@ -31,12 +29,10 @@
 <x-layout-users title="{{ $title ?? 'Sales Analytics & Target' }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
     @push('styles')
     <style>
-        /* == Modern Back Button (Dark Mode) == */
+        /* Tombol kembali (dark) */
         .btn-back-modern {
             display: inline-flex; align-items: center; gap: 10px;
             padding: 8px 18px 8px 8px;
@@ -82,7 +78,7 @@
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Power BI Styles */
+        /* Filter & tabel visualisasi */
         .pbi-slicer { background: #1e293b url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") no-repeat right 0.75rem center/1.5em 1.5em; border: 1px solid #334155; border-radius: 10px; padding: 8px 12px; padding-right: 2.5rem; font-size: 0.85rem; color: #f8fafc; font-weight: 600; outline: none; width: 100%; -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; }
         .pbi-label { display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
         .pbi-kpi { border-radius: 14px; padding: 18px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); transition: transform 0.2s; }
@@ -93,13 +89,8 @@
         table.pbi-table td.row-header { text-align: left; font-weight: 700; color: #f8fafc; background: rgba(15, 23, 42, 0.4); }
         .val-good { color: #34d399; font-weight: 700; }
         .val-bad { color: #f87171; font-weight: 700; }
-        .val-neutral { color: #fbbf24; font-weight: 700; }
 
-        /* Monitoring Styles (Adapted for Dark Mode) */
-        .mod-select { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 8px 12px; font-size: 0.85rem; color: #f8fafc; outline: none; transition: all 0.2s; height: 42px; width: 100%; }
-        .mod-select:focus { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
-
-        /* Strengthened Sticky PS Column */
+        /* Kolom PS sticky */
         .sticky-ps-col {
             position: sticky !important;
             left: 0 !important;
@@ -123,20 +114,11 @@
             background-color: #334155 !important;
         }
         
-        /* Choices.js Overrides for Dark Mode */
-        .choices[data-type*="select-multiple"] .choices__inner, .choices[data-type*="text"] .choices__inner { padding-bottom: 2px !important; padding-top: 2px !important; }
-        .choices__inner { border-radius: 10px !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; background: rgba(30, 41, 59, 0.7) !important; padding: 2px 8px !important; min-height: 42px !important; color: #f8fafc !important; }
-        .choices__input { color: #f8fafc !important; background: transparent !important; margin-bottom: 0 !important; }
-        .choices__list--dropdown { background: #1e293b !important; border: 1px solid #334155 !important; color: #f8fafc !important; z-index: 50 !important; }
-        .choices__list--multiple .choices__item { background-color: #0ea5e9 !important; border: none !important; border-radius: 6px !important; font-size: 0.75rem !important; padding: 2px 6px !important; margin-top: 4px !important; }
-        .choices[data-type*="select-multiple"] .choices__button { border-left: 1px solid rgba(255,255,255,0.2) !important; margin-left: 5px !important; }
-        .choices__list--dropdown .choices__item--selectable.is-highlighted { background-color: rgba(59, 130, 246, 0.2) !important; color: #38bdf8 !important; }
-        
         .mon-tab { padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; color: #94a3b8; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); }
         .mon-tab:hover { background: rgba(255,255,255,0.05); color: #f8fafc; }
         .mon-tab.active { background: #3b82f6; color: white; border-color: #60a5fa; box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3); }
         
-        /* Monitoring Table */
+        /* Tabel matrix */
         table.data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
         table.data-table th { background: #0f172a; color: #9ca3af; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid rgba(255,255,255,0.1); padding: 14px 16px; font-weight: 800; position: sticky; top: 0; z-index: 20; letter-spacing: 0.05em; white-space: nowrap; }
         table.data-table td { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 16px; color: #e2e8f0; font-size: 0.85rem; white-space: nowrap; }
@@ -145,9 +127,14 @@
         .sticky-col { position: sticky; left: 0; background: #1e293b !important; z-index: 10; border-right: 2px solid rgba(255,255,255,0.05); font-weight: 700; color: #60a5fa !important; box-shadow: 2px 0 5px rgba(0,0,0,0.1); min-width: 280px; max-width: 320px; white-space: normal !important; word-break: break-word; }
         table.data-table th.sticky-col { z-index: 30 !important; background: #0f172a !important; }
 
-        /* ============ MOBILE TIDY (maks. 767px) — pola monthly: kompak & stack ============
-           Seluruh aturan di bawah ini HANYA berlaku di HP. Tampilan desktop (md ke atas)
-           tidak tersentuh sama sekali. */
+        /* Scrollbar ramping (dark) untuk area tabel/rank yang scroll */
+        .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Mobile (maks. 767px): versi kompak — desktop tidak tersentuh */
         @media (max-width: 767px) {
             /* Panel lebih ramping agar konten lega */
             .glass-panel { padding: 14px; border-radius: 14px; }
@@ -176,9 +163,6 @@
             table.data-table td { padding: 10px 12px; font-size: 0.78rem; }
             .sticky-col { min-width: 150px; max-width: 190px; }
             .sticky-ps-col { min-width: 110px !important; width: 110px !important; max-width: 110px !important; }
-
-            /* Bar sub-tab Matrix tidak renggang */
-            #tab-mon .glass-panel .flex-wrap { gap: 0.5rem !important; }
             .mon-tab { font-size: 0.72rem; padding: 8px 12px; }
 
             /* Tabel Target: padding sel dipadatkan */
@@ -195,13 +179,16 @@
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 min-h-screen analytics-bg relative overflow-hidden">
-        <div class="relative z-10 w-full max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col gap-6">
+    <div class="flex flex-col flex-1 min-h-screen analytics-bg relative overflow-x-clip">
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
 
-            <a href="{{ route('sales.index') }}" class="btn-back-modern">
-                <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                Kembali ke Dashboard
-            </a>
+            <!-- Back Button -->
+            <div class="w-full flex justify-start pt-1 pb-1 shrink-0">
+                <a href="{{ route('sales.index') }}" class="btn-back-modern">
+                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                    Kembali ke Dashboard
+                </a>
+            </div>
 
             {{-- HEADER & TABS --}}
             <div class="relative z-10 w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-5 md:p-6 shadow-2xl border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-6">
@@ -326,17 +313,17 @@
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
                             <h2 class="text-base font-black text-white"><i class="fas fa-users-viewfinder text-indigo-400 mr-2"></i> PS Achievement Rate & Growth Trend ({{ $tahun }})</h2>
                         </div>
-                        <div class="relative h-[350px] w-full">
+                        <div class="relative h-[430px] w-full">
                             <canvas id="chartPsOverview"></canvas>
                         </div>
                     </div>
                     <div class="glass-panel lg:col-span-1 flex flex-col h-full">
                         <h2 class="text-sm font-black text-white mb-4 pb-2 border-b border-slate-700/50 flex items-center gap-2">
-                            <i class="fas fa-trophy text-amber-400"></i> Rank Kontribusi
+                            <i class="fas fa-trophy text-amber-400"></i> Contribution Rank
                         </h2>
-                        <div id="psRankList" class="flex flex-col gap-2 pr-1 flex-grow">
-                            {{-- Populated by JS --}}
-                        </div>
+                    <div id="psRankList" class="flex flex-col gap-2 pr-1 flex-grow overflow-y-auto custom-scrollbar max-h-[320px] lg:max-h-[430px]">
+                        {{-- Populated by JS --}}
+                    </div>
                     </div>
                 </div>
 
@@ -434,8 +421,8 @@
                             <thead>
                                 <tr>
                                     <th class="text-left">Sales (PS)</th>
-                                    <th>Target ({{ $bulanTerpilih ?: 'Terakhir' }})</th>
-                                    <th>Sales ({{ $bulanTerpilih ?: 'Terakhir' }})</th>
+                                    <th>Target ({{ $bulanTerpilih ?: ($summary['bulan_aktif'] ?? 'Terakhir') }})</th>
+                                    <th>Sales ({{ $bulanTerpilih ?: ($summary['bulan_aktif'] ?? 'Terakhir') }})</th>
                                     <th>Achievement Rate</th>
                                     <th>Sales Bulan Lalu</th>
                                     <th>Growth vs Bulan Lalu</th>
@@ -568,7 +555,7 @@
 
                 {{-- Tabel Matrix --}}
                 <div class="glass-panel !p-0 overflow-hidden">
-                    <div class="flex flex-wrap gap-8 px-6 pt-6 border-b border-slate-700 pb-4">
+                    <div class="flex flex-wrap gap-2 px-6 pt-6 border-b border-slate-700 pb-4">
                         <div class="mon-tab active" data-mtab="tab-customer">By Customer</div>
                         <div class="mon-tab" data-mtab="tab-customer-produk">By Customer & Product</div>
                         <div class="mon-tab" data-mtab="tab-produk">By Product</div>
@@ -612,14 +599,14 @@
 
             <!-- Tab 3 - Target Sales -->
             <div id="tab-tgt" class="main-tab-content {{ $activeTab == 'tab-tgt' ? 'active' : '' }} space-y-6">
-                <div class="flex flex-col md:flex-row justify-end items-start md:items-center gap-4 mb-6">
+                <div class="flex flex-col md:flex-row justify-end items-start md:items-center gap-4">
                     <button onclick="document.getElementById('modal-target').classList.remove('hidden')" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-amber-500/20">
                         <i class="fas fa-plus mr-1"></i> Set Target Individu
                     </button>
                 </div>
                 
                 {{-- Target Keseluruhan --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="glass-panel text-center py-5 border-t-2 border-t-indigo-400 relative group">
                         <button onclick="showKpiInfo('annual_target')" class="absolute top-3 right-3 text-slate-500 hover:text-indigo-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
                         <p class="text-xs text-slate-400 uppercase font-bold">Annual Target</p>
@@ -628,7 +615,7 @@
                     <div class="glass-panel text-center py-5 border-t-2 border-t-sky-400 relative group">
                         <button onclick="showKpiInfo('monthly_target')" class="absolute top-3 right-3 text-slate-500 hover:text-sky-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
                         <p class="text-xs text-slate-400 uppercase font-bold">Monthly Target</p>
-                        <h3 class="text-xl font-black text-sky-400 mt-1">Rp {{ number_format($monthlyAll[date('n') > 0 ? $urutanBulan[date('n')-1] : 'January']['target'] ?? 0, 0, ',', '.') }}</h3>
+                        <h3 class="text-xl font-black text-sky-400 mt-1">Rp {{ number_format($monthlyAll[$urutanBulan[date('n')-1]]['target'] ?? 0, 0, ',', '.') }}</h3>
                     </div>
                     <div class="glass-panel text-center py-5 border-t-2 border-t-emerald-400 relative group">
                         <button onclick="showKpiInfo('actual_sales')" class="absolute top-3 right-3 text-slate-500 hover:text-emerald-400 transition transform hover:scale-110" title="Lihat detail & rumus"><i class="fas fa-info-circle"></i></button>
@@ -705,7 +692,7 @@
                             <div class="flex items-center gap-2 w-full sm:w-auto">
                                 <span class="text-[11px] text-slate-400 font-extrabold uppercase tracking-wider whitespace-nowrap">Filter:</span>
                                 <select id="filterTargetBulan" class="pbi-slicer !py-1.5 !text-xs min-w-[140px] bg-slate-900 border-slate-700 rounded-lg text-slate-200 font-bold" onchange="updateTargetIndividuTable(this.value)">
-                                    <option value="current">Bulan Ini ({{ date('n') > 0 ? $urutanBulan[date('n')-1] : 'January' }})</option>
+                                    <option value="current">Bulan Ini ({{ $urutanBulan[date('n')-1] }})</option>
                                     <option value="ytd">Semua Bulan (YTD)</option>
                                     @foreach($urutanBulan as $b)
                                         <option value="{{ $b }}">{{ $b }}</option>
@@ -721,22 +708,21 @@
                                         <th class="px-3 py-3.5 text-left border-b border-slate-800 text-sky-400">PS</th>
                                         <th class="px-3 py-3.5 text-center border-b border-l border-slate-800">Monthly</th>
                                         <th class="px-3 py-3.5 text-center border-b border-l border-slate-800">YTD</th>
-                                        <th class="px-2 py-3.5 text-center border-b border-l border-slate-800 w-10"></th>
+                                        <th class="px-2 py-3.5 text-center border-b border-l border-slate-800 w-10"><span class="sr-only">Aksi</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="targetPsTableBody" class="divide-y divide-slate-700/50">
                                     @foreach($listPs as $ps)
                                         @php
                                             $d = $allPsAchievement[$ps] ?? ['target'=>0, 'sales'=>0, 'rate'=>0];
-                                            $currentMonthName = date('n') > 0 ? $urutanBulan[date('n')-1] : 'January';
+                                            $currentMonthName = $urutanBulan[date('n')-1];
                                             
                                             $psMonthlyData = $monthlyPerPs[$currentMonthName][$ps] ?? ['target' => 0, 'sales' => 0, 'rate' => 0];
                                             $targetBulanIni = $psMonthlyData['target'] ?? 0;
                                             $actualBulanIni = $psMonthlyData['sales'] ?? 0;
                                             $rateBulanIni = $psMonthlyData['rate'] ?? 0;
-                                            $isOffice = strtolower($ps) === 'office';
                                         @endphp
-                                        <tr class="hover:bg-slate-800/40 transition target-ps-row" data-ps="{{ $ps }}" data-is-salesteam="{{ $isOffice ? 'false' : 'true' }}">
+                                        <tr class="hover:bg-slate-800/40 transition" data-ps="{{ $ps }}">
                                             <td class="px-3 py-4 font-bold text-slate-200 border-b border-slate-700/50">{{ $ps }}</td>
                                             <td class="px-3 py-4 text-center border-b border-l border-slate-700/50">
                                                 <div class="text-xs text-sky-400 font-semibold">Target: Rp {{ number_format($targetBulanIni,0,',','.') }}</div>
@@ -749,7 +735,16 @@
                                                 <span class="px-2 py-0.5 rounded-md text-xs font-black inline-block mt-2 {{ getAchvBadgeClass($d['rate']) }}">{{ $d['rate'] }}%</span>
                                             </td>
                                             <td class="px-2 py-4 text-center border-b border-l border-slate-700/50">
-                                                <button class="text-sky-400 hover:text-sky-300 p-1.5 rounded-lg hover:bg-sky-950 transition" onclick="editTarget('{{ $ps }}')" title="Set Target"><i class="fas fa-edit"></i></button>
+                                                <div class="flex items-center justify-center gap-1">
+                                                    <button type="button" class="text-sky-400 hover:text-sky-300 p-1.5 rounded-lg hover:bg-sky-950 transition" data-ps="{{ $ps }}" onclick="editTarget(this.dataset.ps)" title="Set Target"><i class="fas fa-edit"></i></button>
+                                                    <form action="{{ route('sales.target.destroy') }}" method="POST" class="inline" data-ps="{{ $ps }}" data-tahun="{{ $tahun }}" onsubmit="return confirmDeleteTarget(event)">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <input type="hidden" name="tahun" value="{{ $tahun }}">
+                                                        <input type="hidden" name="ps" value="{{ $ps }}">
+                                                        <button type="submit" class="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-950 transition" title="Hapus Target"><i class="fas fa-trash-can"></i></button>
+                                                    </form>
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -776,7 +771,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-700/50">
                                 @php
-                                    // Build Matrix
+                                    // Susun matriks target per PS per bulan.
                                     $matrixTarget = [];
                                     foreach($listPs as $psName) {
                                         $matrixTarget[$psName] = array_fill_keys($urutanBulan, 0);
@@ -807,9 +802,18 @@
                                             Rp {{ number_format($rowTotal, 0, ',', '.') }}
                                         </td>
                                         <td class="px-4 py-3 text-center border-l border-slate-700/50">
-                                            <button class="text-sky-400 hover:text-sky-300 transition" onclick="editTarget('{{ $psName }}')" title="Edit Target Bulanan">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </button>
+                                            <div class="flex items-center justify-center gap-1">
+                                                <button type="button" class="text-sky-400 hover:text-sky-300 p-1.5 rounded-lg hover:bg-sky-950 transition" data-ps="{{ $psName }}" onclick="editTarget(this.dataset.ps)" title="Edit Target Bulanan">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                                <form action="{{ route('sales.target.destroy') }}" method="POST" class="inline" data-ps="{{ $psName }}" data-tahun="{{ $tahun }}" onsubmit="return confirmDeleteTarget(event)">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <input type="hidden" name="tahun" value="{{ $tahun }}">
+                                                    <input type="hidden" name="ps" value="{{ $psName }}">
+                                                    <button type="submit" class="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-950 transition" title="Hapus Target"><i class="fas fa-trash-can"></i></button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -901,7 +905,7 @@
                 <i class="fas fa-info-circle text-sky-400"></i> <span id="kpi-info-title-text">Informasi KPI</span>
             </h3>
             <div id="kpi-info-content" class="text-sm text-slate-300 space-y-3 leading-relaxed">
-                <!-- Content injected via JS -->
+                <!-- Diisi via JS -->
             </div>
             <div class="mt-6 flex justify-end">
                 <button onclick="closeKpiInfo()" class="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition">Tutup</button>
@@ -929,7 +933,7 @@
                             <div class="relative">
                                 <select name="ps" id="target_ps" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-3 appearance-none outline-none focus:border-sky-500 transition" required onchange="populateTargetInputs(this.value)">
                                     <option value="">-- Pilih PS --</option>
-                                    @foreach($listPs as $p)
+                                    @foreach(($listTargetPsInput ?? $listUserPs ?? $listPs ?? []) as $p)
                                         <option value="{{ $p }}">{{ $p }}</option>
                                     @endforeach
                                 </select>
@@ -964,8 +968,6 @@
 
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
     <script>
         // Main Tab Switcher
         function switchMainTab(targetId, btnEl) {
@@ -973,29 +975,44 @@
             document.querySelectorAll('.main-tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(targetId).classList.add('active');
             btnEl.classList.add('active');
+            // Ingat tab terakhir agar refresh browser tidak balik ke tab awal.
+            try { localStorage.setItem('sales_analytics_tab', targetId); } catch (e) {}
         }
 
-        // Currency Formatter
-        function formatCurrency(inputEl, hiddenId) {
-            // Remove non-numeric characters
-            let rawValue = inputEl.value.replace(/[^0-9]/g, '');
-            
-            // Set hidden field value
-            document.getElementById(hiddenId).value = rawValue;
-            
-            // Format and display in text field
-            if (rawValue) {
-                inputEl.value = new Intl.NumberFormat('id-ID').format(rawValue);
-            } else {
-                inputEl.value = '';
+        // Restore tab terakhir saat halaman dimuat (mis. refresh browser).
+        // Prioritas: flash session dari server (habis simpan/hapus) > localStorage > default.
+        document.addEventListener('DOMContentLoaded', function() {
+            var serverTab = @json($activeTab);
+            var fromFlash = @json(session()->has('active_tab'));
+            var validTabs = ['tab-pbi', 'tab-mon', 'tab-tgt', 'tab-history'];
+            var initial = serverTab;
+            try {
+                if (fromFlash) {
+                    localStorage.setItem('sales_analytics_tab', serverTab);
+                } else {
+                    var saved = localStorage.getItem('sales_analytics_tab');
+                    if (saved && validTabs.indexOf(saved) !== -1) initial = saved;
+                }
+            } catch (e) {}
+            if (initial && initial !== serverTab) {
+                var btn = document.querySelector('.main-tab-btn[data-target="' + initial + '"]');
+                var panel = document.getElementById(initial);
+                if (btn && panel && typeof switchMainTab === 'function') switchMainTab(initial, btn);
             }
+        });
+
+        // Format input Rp: tampilkan ber-separator, simpan angka mentah di hidden.
+        function formatCurrency(inputEl, hiddenId) {
+            let rawValue = inputEl.value.replace(/[^0-9]/g, '');
+            document.getElementById(hiddenId).value = rawValue;
+            inputEl.value = rawValue ? new Intl.NumberFormat('id-ID').format(rawValue) : '';
         }
 
         const allTargetsData = @json($targets ?? []);
         const targetUrutanBulan = @json($urutanBulan ?? []);
 
         function populateTargetInputs(psName) {
-            // clear first
+            // Kosongkan dulu semua input.
             targetUrutanBulan.forEach((b, idx) => {
                 let display = document.getElementById('display_target_' + idx);
                 let raw = document.getElementById('raw_target_' + idx);
@@ -1005,10 +1022,10 @@
             
             if(!psName) return;
             
-            // find targets for this PS
+            // Isi kembali dari target tersimpan PS tersebut.
             let psTargets = allTargetsData.filter(t => t.ps === psName);
             psTargets.forEach(t => {
-                let idx = targetUrutanBulan.indexOf(t.bulan);
+                let idx = targetUrutanBulan.indexOf(t.month);
                 if(idx !== -1 && t.target_amount > 0) {
                     let display = document.getElementById('display_target_' + idx);
                     let raw = document.getElementById('raw_target_' + idx);
@@ -1018,7 +1035,7 @@
             });
         }
 
-        // Edit Target
+        // Buka modal edit target + isi nilai tersimpan PS tersebut.
         function editTarget(psName) {
             document.getElementById('modal-target').classList.remove('hidden');
             let psSelect = document.querySelector('#modal-target select[name="ps"]');
@@ -1028,7 +1045,7 @@
             }
         }
 
-        // Monitoring Matrix Sub-Tabs
+        // Sub-tab tabel Matrix.
         document.querySelectorAll('.mon-tab').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.mon-tab').forEach(b => b.classList.remove('active'));
@@ -1051,10 +1068,7 @@
                 const listBulan = @json($chartBulan);
                 const listPs = @json($listPs);
                 const monthlyOverview = @json($monthlyOverview);
-                const psPerformance = @json($psPerformance);
                 const psCumulative = @json($psCumulative);
-
-                const allPsPerformanceByMonth = @json($allPsPerformanceByMonth);
 
                 // PBI Chart 1: Overview
                 const targetData1 = listBulan.map(b => monthlyOverview[b].target);
@@ -1067,14 +1081,10 @@
                     data: {
                         labels: listBulan,
                         datasets: [
-                            { 
+                            {
                                 label: 'Target', data: targetData1, backgroundColor: '#fbbf24', borderRadius: 4, order: 2,
-                                datalabels: { display: false } 
-                            },
-                            { 
-                                label: 'Sales', data: salesData1, backgroundColor: '#3b82f6', borderRadius: 4, order: 2,
-                                datalabels: { 
-                                    display: true, 
+                                datalabels: {
+                                    display: true,
                                     align: (ctx) => {
                                         let v = ctx.dataset.data[ctx.dataIndex];
                                         let max = Math.max(...salesData1, ...targetData1, 1);
@@ -1093,9 +1103,38 @@
                                     color: (ctx) => {
                                         let v = ctx.dataset.data[ctx.dataIndex];
                                         let max = Math.max(...salesData1, ...targetData1, 1);
-                                        return (v < max * 0.25) ? '#e2e8f0' : '#ffffff';
+                                        return (v < max * 0.25) ? '#e2e8f0' : '#0f172a';
                                     },
-                                    clamp: true, font: { size: 10 },
+                                    clamp: true, font: { size: 10, weight: 'bold' },
+                                    rotation: -90,
+                                    formatter: (v) => v > 0 ? new Intl.NumberFormat('id-ID').format(v) : ''
+                                }
+                            },
+                            { 
+                                label: 'Sales', data: salesData1, backgroundColor: '#3b82f6', borderRadius: 4, order: 2,
+                                datalabels: {
+                                    display: true,
+                                    align: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        let max = Math.max(...salesData1, ...targetData1, 1);
+                                        return (v < max * 0.25) ? 'top' : 'center';
+                                    },
+                                    anchor: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        let max = Math.max(...salesData1, ...targetData1, 1);
+                                        return (v < max * 0.25) ? 'end' : 'center';
+                                    },
+                                    offset: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        let max = Math.max(...salesData1, ...targetData1, 1);
+                                        return (v < max * 0.25) ? 8 : 0;
+                                    },
+                                    color: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        let max = Math.max(...salesData1, ...targetData1, 1);
+                                        return (v < max * 0.25) ? '#e2e8f0' : '#0f172a';
+                                    },
+                                    clamp: true, font: { size: 10, weight: 'bold' },
                                     rotation: -90,
                                     formatter: (v) => v > 0 ? new Intl.NumberFormat('id-ID').format(v) : ''
                                 }
@@ -1165,6 +1204,14 @@
                     const achvData2 = activeLabels.map(ps => psCumulative[ps].cum_ach_rate);
                     const growthData2 = activeLabels.map(ps => psCumulative[ps].cum_growth_rate);
 
+                    // Batas bawah sumbu Growth dinamis (kelipatan 25 + padding) agar
+                    // nilai minus tidak kepotong.
+                    const gMin = growthData2.length ? Math.min(...growthData2, 0) : 0;
+                    const y1Min = Math.floor((gMin - 15) / 25) * 25;
+                    // Ambang bar: angka sales hanya tampil di dalam bar yang cukup tinggi
+                    // agar tidak menumpuk dengan pil Achv% di atasnya.
+                    const maxBar2 = Math.max(...targetData2, ...salesData2, 1);
+
                     const rankList = document.getElementById('psRankList');
                     if (rankList && activeLabels.length > 0) {
                         let rankData = activeLabels.map((ps, idx) => ({ name: ps, sales: salesData2[idx] }));
@@ -1200,32 +1247,68 @@
                         data: {
                             labels: activeLabels,
                             datasets: [
-                                { label: 'Target', data: targetData2, backgroundColor: '#fbbf24', borderRadius: 4, order: 2, datalabels: { display: false } },
-                                { 
-                                    label: 'Sales', data: salesData2, backgroundColor: '#10b981', borderRadius: 4, order: 2,
-                                    datalabels: { 
-                                        display: true, align: 'top', anchor: 'end', offset: 4, color: '#e2e8f0', font: { size: 10 },
-                                        textAlign: 'center',
-                                        formatter: (v) => {
-                                            if (v > 0) {
-                                                return new Intl.NumberFormat('id-ID').format(v);
-                                            }
-                                            return '';
-                                        }
-                                    } 
+                                {
+                                label: 'Target', data: targetData2, backgroundColor: '#fbbf24', borderRadius: 4, order: 2,
+                                datalabels: {
+                                    display: true,
+                                    align: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        return (v < maxBar2 * 0.25) ? 'top' : 'center';
+                                    },
+                                    anchor: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        return (v < maxBar2 * 0.25) ? 'end' : 'center';
+                                    },
+                                    offset: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        return (v < maxBar2 * 0.25) ? 8 : 0;
+                                    },
+                                    color: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        return (v < maxBar2 * 0.25) ? '#e2e8f0' : '#0f172a';
+                                    },
+                                        clamp: true, font: { size: 10, weight: 'bold' },
+                                        rotation: -90,
+                                        formatter: (v) => v > 0 ? new Intl.NumberFormat('id-ID').format(v) : ''
+                                    }
                                 },
-                                { 
+                                {
+                                label: 'Sales', data: salesData2, backgroundColor: '#10b981', borderRadius: 4, order: 2,
+                                datalabels: {
+                                    display: true,
+                                    align: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        return (v < maxBar2 * 0.25) ? 'top' : 'center';
+                                    },
+                                    anchor: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        return (v < maxBar2 * 0.25) ? 'end' : 'center';
+                                    },
+                                    offset: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        return (v < maxBar2 * 0.25) ? 8 : 0;
+                                    },
+                                    color: (ctx) => {
+                                        let v = ctx.dataset.data[ctx.dataIndex];
+                                        return (v < maxBar2 * 0.25) ? '#e2e8f0' : '#0f172a';
+                                    },
+                                        clamp: true, font: { size: 10, weight: 'bold' },
+                                        rotation: -90,
+                                        formatter: (v) => v > 0 ? new Intl.NumberFormat('id-ID').format(v) : ''
+                                    }
+                                },
+                                {
                                     label: 'Achv %', data: salesData2, type: 'line', borderColor: '#f43f5e', borderWidth: 3, pointBackgroundColor: '#f43f5e', pointBorderColor: '#fff', pointRadius: 5, fill: false, order: 1,
-                                    datalabels: { 
-                                        display: true, align: 'top', anchor: 'center', offset: 12, clamp: true, color: '#ffffff', font: { weight: 'bold', size: 10 },
+                                    datalabels: {
+                                        display: true, align: 'top', anchor: 'center', offset: 14, clamp: true, color: '#ffffff', font: { weight: 'bold', size: 10 },
                                         backgroundColor: 'rgba(15, 23, 42, 0.95)', borderColor: '#f43f5e', borderWidth: 1, borderRadius: 4, padding: { top: 3, bottom: 3, left: 5, right: 5 },
                                         formatter: (v, ctx) => achvData2[ctx.dataIndex] + '%'
                                     }
                                 },
-                                { 
+                                {
                                     label: 'Growth %', data: growthData2, yAxisID: 'y1', type: 'line', borderColor: '#a855f7', borderWidth: 3, pointBackgroundColor: '#a855f7', pointBorderColor: '#fff', pointRadius: 5, fill: false, order: 1,
-                                    datalabels: { 
-                                        display: true, align: 'bottom', anchor: 'center', offset: 12, clamp: true, color: '#ffffff', font: { weight: 'bold', size: 10 },
+                                    datalabels: {
+                                        display: true, align: 'bottom', anchor: 'center', offset: 14, clamp: true, color: '#ffffff', font: { weight: 'bold', size: 10 },
                                         backgroundColor: 'rgba(15, 23, 42, 0.95)', borderColor: '#a855f7', borderWidth: 1, borderRadius: 4, padding: { top: 3, bottom: 3, left: 5, right: 5 },
                                         formatter: (v) => (v > 0 ? '+' : '') + v + '%'
                                     }
@@ -1234,11 +1317,12 @@
                         },
                         options: { 
                             responsive: true, maintainAspectRatio: false, 
-                            scales: { 
+                            scales: {
                                 y: { type: 'linear', position: 'left', beginAtZero: true },
-                                y1: { type: 'linear', position: 'right', beginAtZero: false, min: -25, grid: { drawOnChartArea: false } }
+                                y1: { type: 'linear', position: 'right', beginAtZero: false, min: y1Min, grid: { drawOnChartArea: false } },
+                                x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 0 } }
                             },
-                            layout: { padding: { top: 30 } },
+                            layout: { padding: { top: 36 } },
                             interaction: { mode: 'index', intersect: false },
                             plugins: {
                                 tooltip: {
@@ -1332,10 +1416,26 @@
 
                 // PBI Chart 4: Product Category PS
                 const topProductCategoryPs = @json($topProductCategoryPs ?? []);
-                const productLabels = topProductCategoryPs.map(p => p.nama_produk.length > 35 ? p.nama_produk.substr(0, 32) + '...' : p.nama_produk);
-                
-                // Set dynamic height based on number of products (e.g. 22px per product, minimum 350px)
-                const dynamicHeight = Math.max(350, topProductCategoryPs.length * 22);
+                // Tampilkan nama produk lengkap: bungkus ke beberapa baris agar tidak terpotong (Chart.js render array = multiline).
+                const fullProductNames = topProductCategoryPs.map(p => p.nama_produk || '-');
+                function wrapLabel(str, maxChars = 55) {
+                    const words = String(str).split(' ');
+                    const lines = [];
+                    let line = '';
+                    words.forEach(w => {
+                        const test = line ? line + ' ' + w : w;
+                        if (test.length > maxChars && line) { lines.push(line); line = w; }
+                        else { line = test; }
+                    });
+                    if (line) lines.push(line);
+                    // Kata tunggal yang sangat panjang: potong keras per maxChars agar tetap tampil semua.
+                    return lines.flatMap(l => l.length > maxChars ? (l.match(new RegExp('.{1,' + maxChars + '}', 'g')) || [l]) : [l]);
+                }
+                const productLabels = fullProductNames.map(n => wrapLabel(n, 55));
+
+                // Tinggi dinamis mengikuti jumlah baris label agar tidak saling himpit (min 420px).
+                const totalLabelLines = productLabels.reduce((a, l) => a + l.length, 0);
+                const dynamicHeight = Math.max(420, (topProductCategoryPs.length * 14) + (totalLabelLines * 20));
                 document.getElementById('productChartContainer').style.height = dynamicHeight + 'px';
 
                 new Chart(document.getElementById('chartProductCategoryPs'), {
@@ -1349,14 +1449,20 @@
                             datalabels: { display: false }
                         }))
                     },
-                    options: { 
-                        indexAxis: 'y', 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        scales: { x:{stacked:true}, y:{stacked:true} },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { left: 8, right: 12 } },
+                        scales: {
+                            x: { stacked: true, ticks: { color: '#cbd5e1', font: { size: 10 } }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                            y: { stacked: true, ticks: { autoSkip: false, color: '#e2e8f0', font: { size: 11 } }, grid: { color: 'rgba(148,163,184,0.1)' } }
+                        },
                         plugins: {
+                            legend: { labels: { color: '#cbd5e1', font: { size: 11 } } },
                             tooltip: {
                                 callbacks: {
+                                    title: (items) => fullProductNames[items[0]?.dataIndex] ?? '',
                                     label: (context) => context.dataset.label + ': ' + new Intl.NumberFormat('id-ID').format(context.raw)
                                 }
                             }
@@ -1365,14 +1471,8 @@
                 });
             @endif
 
-            // Monitoring Matrix Logic
-            let choicesInstances = [];
-            document.querySelectorAll('.choices-multiple').forEach(el => {
-                choicesInstances.push(new Choices(el, { removeItemButton: true, placeholderValue: 'Pilih...' }));
-            });
-
+            // Logika tabel Matrix (data via AJAX).
             function formatRupiah(n) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n||0)); }
-            function formatNum(n) { return new Intl.NumberFormat('id-ID').format(n||0); }
 
             function loadMonitoring() {
                 const params = new URLSearchParams();
@@ -1400,13 +1500,13 @@
                             document.getElementById(headId).innerHTML = th;
 
                             let html = rows.map(r => {
-                                let td = `<tr><td class="sticky-col font-bold text-white">${r[nameKey]||'-'}</td><td class="text-right text-emerald-300 font-bold">${formatRupiah(r.total_nett)}</td>`;
+                                let td = `<tr><td class="sticky-col font-bold text-white">${escAttr(r[nameKey])||'-'}</td><td class="text-right text-emerald-300 font-bold">${formatRupiah(r.total_nett)}</td>`;
                                 listBulan.forEach(b => {
                                     td += `<td class="text-right">${formatRupiah(r.bulanan[b]?.nett||0)}</td>`;
                                 });
                                 return td + `</tr>`;
                             }).join('');
-                            document.getElementById(bodyId).innerHTML = html || '<tr><td colspan="10" class="text-center p-4">No data available</td></tr>';
+                            document.getElementById(bodyId).innerHTML = html || '<tr><td colspan="20" class="text-center p-4">No data available</td></tr>';
                         }
 
                         function buildTableSubGroup(bodyId, headId, rows, groupLabel, subLabel) {
@@ -1417,17 +1517,17 @@
 
                             let html = '';
                             rows.forEach(r => {
-                                // baris header grup
-                                html += `<tr class="bg-slate-800/80"><td class="sticky-col font-bold text-white border-b border-slate-700">${r.nama||'-'}</td><td class="text-right text-emerald-300 font-bold border-b border-slate-700">${formatRupiah(r.total_nett)}</td>`;
+                                // Baris header grup.
+                                html += `<tr class="bg-slate-800/80"><td class="sticky-col font-bold text-white border-b border-slate-700">${escAttr(r.nama)||'-'}</td><td class="text-right text-emerald-300 font-bold border-b border-slate-700">${formatRupiah(r.total_nett)}</td>`;
                                 listBulan.forEach(b => {
                                     html += `<td class="text-right border-b border-slate-700 font-bold">${formatRupiah(r.bulanan[b]?.nett||0)}</td>`;
                                 });
                                 html += `</tr>`;
                                 
-                                // baris sub grup
+                                // Baris sub-grup.
                                 if (r.sub && r.sub.length > 0) {
                                     r.sub.forEach(s => {
-                                        html += `<tr><td class="sticky-col pl-6 border-l-2 border-slate-600"><span class="text-slate-400 font-medium">${s.nama||'-'}</span></td><td class="text-right text-emerald-400/70">${formatRupiah(s.total_nett)}</td>`;
+                                        html += `<tr><td class="sticky-col pl-6 border-l-2 border-slate-600"><span class="text-slate-400 font-medium">${escAttr(s.nama)||'-'}</span></td><td class="text-right text-emerald-400/70">${formatRupiah(s.total_nett)}</td>`;
                                         listBulan.forEach(b => {
                                             html += `<td class="text-right text-slate-400">${formatRupiah(s.bulanan[b]?.nett||0)}</td>`;
                                         });
@@ -1435,7 +1535,7 @@
                                     });
                                 }
                             });
-                            document.getElementById(bodyId).innerHTML = html || '<tr><td colspan="10" class="text-center p-4">No data available</td></tr>';
+                            document.getElementById(bodyId).innerHTML = html || '<tr><td colspan="20" class="text-center p-4">No data available</td></tr>';
                         }
 
                         buildTable('body-customer', 'head-customer', data.per_customer, 'Customer', 'nama');
@@ -1443,6 +1543,11 @@
                         buildTable('body-produk', 'head-produk', data.per_produk, 'Product', 'nama');
                         buildTableSubGroup('body-produk-ps', 'head-produk-ps', data.pivot_produk_ps, 'Product', 'Sales (PS)');
                         buildTable('body-ps', 'head-ps', data.per_ps, 'Sales (PS)', 'nama');
+                    })
+                    .catch(() => {
+                        ['body-customer', 'body-customer-produk', 'body-produk', 'body-produk-ps', 'body-ps'].forEach(id => {
+                            document.getElementById(id).innerHTML = '<tr><td colspan="20" class="text-center p-4 text-rose-400">Gagal memuat data. Coba lagi.</td></tr>';
+                        });
                     });
             }
 
@@ -1460,6 +1565,24 @@
 
         function formatNum(num) {
             return new Intl.NumberFormat('id-ID').format(Math.round(num || 0));
+        }
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        function escAttr(s) {
+            return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#039;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // Hapus target satu PS: nama PS dibaca dari data-attribute saat submit
+        // (aman untuk nama ber-tanda kutip), lalu konfirmasi via helper global.
+        function confirmDeleteTarget(event) {
+            var form = event.currentTarget
+                || (event.target && event.target.closest ? event.target.closest('form') : null);
+            var psInput = form ? form.querySelector('input[name="ps"]') : null;
+            var tahunInput = form ? form.querySelector('input[name="tahun"]') : null;
+            var ps = (form && form.dataset && form.dataset.ps) || (psInput ? psInput.value : '');
+            var tahun = (form && form.dataset && form.dataset.tahun) || (tahunInput ? tahunInput.value : '');
+            confirmSubmit(event, 'Hapus seluruh target ' + ps + ' tahun ' + tahun + ' (12 bulan)? Data sales tidak ikut terhapus.');
+            return false;
         }
 
         function updateRekapTargetTable(psVal) {
@@ -1520,11 +1643,10 @@
             if (!tbody) return;
 
             let html = '';
-            const currentMonth = "{{ date('n') > 0 ? $urutanBulan[date('n')-1] : 'January' }}";
+            const currentMonth = "{{ $urutanBulan[date('n')-1] }}";
             const activeMonth = (bulanVal === 'current') ? currentMonth : bulanVal;
 
             rawListPs.forEach(ps => {
-                const isOffice = ps.toLowerCase() === 'office';
                 const dYtd = rawAllPsAchievement[ps] || { target: 0, sales: 0, rate: 0 };
 
                 let tBulan = 0;
@@ -1551,8 +1673,8 @@
                 else if (rYtdNum >= 85) badgeYtd = 'bg-emerald-950/90 text-emerald-400 border border-emerald-600/40';
 
                 html += `
-                    <tr class="hover:bg-slate-800/40 transition target-ps-row" data-ps="${ps}" data-is-salesteam="${isOffice ? 'false' : 'true'}">
-                        <td class="px-3 py-4 font-bold text-slate-200 border-b border-slate-700/50">${ps}</td>
+                    <tr class="hover:bg-slate-800/40 transition" data-ps="${escAttr(ps)}">
+                        <td class="px-3 py-4 font-bold text-slate-200 border-b border-slate-700/50">${escAttr(ps)}</td>
                         <td class="px-3 py-4 text-center border-b border-l border-slate-700/50">
                             <div class="text-xs text-sky-400 font-semibold">Target: Rp ${formatNum(tBulan)}</div>
                             <div class="text-xs text-emerald-400 font-bold mt-1">Actual: Rp ${formatNum(sBulan)}</div>
@@ -1564,7 +1686,16 @@
                             <span class="px-2 py-0.5 rounded-md text-xs font-black inline-block mt-2 ${badgeYtd}">${dYtd.rate}%</span>
                         </td>
                         <td class="px-2 py-4 text-center border-b border-l border-slate-700/50">
-                            <button class="text-sky-400 hover:text-sky-300 p-1.5 rounded-lg hover:bg-sky-950 transition" onclick="editTarget('${ps}')" title="Set Target"><i class="fas fa-edit"></i></button>
+                            <div class="flex items-center justify-center gap-1">
+                                <button type="button" class="text-sky-400 hover:text-sky-300 p-1.5 rounded-lg hover:bg-sky-950 transition" data-ps="${escAttr(ps)}" onclick="editTarget(this.dataset.ps)" title="Set Target"><i class="fas fa-edit"></i></button>
+                                <form action="{{ route('sales.target.destroy') }}" method="POST" class="inline" data-ps="${escAttr(ps)}" data-tahun="{{ $tahun }}" onsubmit="return confirmDeleteTarget(event)">
+                                    <input type="hidden" name="_token" value="${csrfToken}">
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <input type="hidden" name="tahun" value="{{ $tahun }}">
+                                    <input type="hidden" name="ps" value="${escAttr(ps)}">
+                                    <button type="submit" class="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-950 transition" title="Hapus Target"><i class="fas fa-trash-can"></i></button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -1572,25 +1703,7 @@
             tbody.innerHTML = html;
         }
 
-        function filterTargetPsTable(val) {
-            const rows = document.querySelectorAll('.target-ps-row');
-            rows.forEach(row => {
-                const psName = row.getAttribute('data-ps') || '';
-                const isSalesTeam = row.getAttribute('data-is-salesteam') === 'true';
-                
-                if (val === 'all') {
-                    row.style.display = '';
-                } else if (val === 'Sales Team') {
-                    row.style.display = isSalesTeam ? '' : 'none';
-                } else if (val === 'Office') {
-                    row.style.display = psName.toLowerCase() === 'office' ? '' : 'none';
-                } else {
-                    row.style.display = psName.toLowerCase() === val.toLowerCase() ? '' : 'none';
-                }
-            });
-        }
-
-        // KPI Info Modal Logic
+        // Logika modal info KPI.
         const kpiData = {
             'annual_target': {
                 title: 'Annual Target',
@@ -1614,27 +1727,27 @@
             },
             'matrix_sales_nett': {
                 title: 'Total Net Sales',
-                desc: 'Total accumulated net sales value based on the applied filters.',
+                desc: 'Total akumulasi nilai penjualan bersih sesuai filter yang dipakai.',
                 formula: '&sum; Net Sales Amount'
             },
             'matrix_total_qty': {
                 title: 'Total Quantity',
-                desc: 'Total number of product units sold based on the applied filters.',
+                desc: 'Total unit produk terjual sesuai filter yang dipakai.',
                 formula: '&sum; Product Quantity Sold'
             },
             'matrix_total_customer': {
                 title: 'Total Customers',
-                desc: 'Total number of unique customers who made purchases based on the applied filters.',
+                desc: 'Jumlah customer unik yang bertransaksi sesuai filter yang dipakai.',
                 formula: 'Count of Distinct Customers'
             },
             'matrix_total_produk': {
                 title: 'Total Products',
-                desc: 'Total number of unique product categories/items sold based on the applied filters.',
+                desc: 'Jumlah produk unik yang terjual sesuai filter yang dipakai.',
                 formula: 'Count of Distinct Products'
             },
             'matrix_achv_rate': {
                 title: 'Achievement Rate (YTD)',
-                desc: 'Sales achievement percentage compared to the target, dynamically calculated based on the applied filters.',
+                desc: 'Persentase pencapaian penjualan terhadap target, dihitung dinamis sesuai filter yang dipakai.',
                 formula: '(Total Net Sales &divide; Target) &times; 100%'
             }
         };
@@ -1658,7 +1771,7 @@
             const box = document.getElementById('modal-kpi-content-box');
             
             modal.classList.remove('hidden');
-            // Small delay to allow display block to apply before animating opacity/scale
+            // Jeda kecil agar display sempat terpasang sebelum animasi jalan.
             setTimeout(() => {
                 box.classList.remove('scale-95', 'opacity-0');
                 box.classList.add('scale-100', 'opacity-100');
@@ -1674,7 +1787,7 @@
             
             setTimeout(() => {
                 modal.classList.add('hidden');
-            }, 200); // Wait for transition
+            }, 200); // Tunggu transisi selesai.
         }
     </script>
     @endpush

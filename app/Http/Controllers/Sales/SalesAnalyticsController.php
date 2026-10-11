@@ -6,6 +6,7 @@ use App\Models\Sales;
 use App\Models\SalesTarget;
 use App\Models\SalesIncentiveSetting;
 use App\Models\SalesClosing;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +49,35 @@ class SalesAnalyticsController extends BaseSalesController
         $tahunLalu = (int)$tahun - 1;
 
         $targets = SalesTarget::where('year', $tahun)->get();
+
+        // Gabung PS dari input target baru ke data analytics: PS yang sudah punya
+        // target tersimpan tapi belum punya sales tetap ikut dalam $listPs sehingga
+        // targetnya masuk ke rekap, tabel per-PS, dan grafik (dengan sales 0).
+        $listPs = array_values(array_unique(array_merge(
+            $listPs,
+            $targets->pluck('ps')->map(fn($n) => trim((string) $n))->filter(fn($n) => $n !== '')->toArray()
+        )));
+        sort($listPs, SORT_NATURAL | SORT_FLAG_CASE);
+
+        // Kandidat PS untuk form input (Set Target): karyawan divisi Marketing dan
+        // Operasional — sama seperti form manual input di Manage (SalesDataController).
+        // Karyawan baru tanpa sales tetap muncul sehingga target bisa diinput mandiri.
+        $listUserPs = User::where('divisi', 'Marketing dan Operasional')
+            ->whereNotNull('name')
+            ->where('name', '!=', '')
+            ->orderBy('name', 'asc')
+            ->pluck('name')
+            ->map(fn($n) => trim($n))
+            ->filter(fn($n) => $n !== '')
+            ->values()
+            ->toArray();
+
+        // Opsi dropdown target = karyawan marketing + PS yang sudah punya target
+        // tersimpan tapi tidak lagi terdaftar (mis. resign) agar riwayatnya tetap bisa diedit.
+        $listTargetPsInput = array_values(array_unique(array_merge(
+            $listUserPs,
+            $targets->pluck('ps')->map(fn($n) => trim((string) $n))->filter(fn($n) => $n !== '')->toArray()
+        )));
         $salesCurrent = Sales::whereYear('date', $tahun)
             ->select('month', 'ps', DB::raw('SUM(net_price) as total_sales'))
             ->groupBy('month', 'ps')->get();
@@ -169,7 +199,9 @@ class SalesAnalyticsController extends BaseSalesController
             'triwulanTerpilih',
             'targets',
             'historySales',
-            'psAvatars'
+            'psAvatars',
+            'listUserPs',
+            'listTargetPsInput'
         ), $analyticsData))->with('title', 'Sales Analytics & Target');
     }
 
@@ -190,9 +222,20 @@ class SalesAnalyticsController extends BaseSalesController
             array_unshift($listTahun, date('Y'));
         }
 
-        // Saran global (seluruh data, tidak terbatas bulan/filter) untuk baris Tambah Rencana Closing
-        $listAllPs = Cache::remember('monthly_all_ps', 600, function () {
-            return Sales::whereNotNull('ps')->where('ps', '!=', '')->distinct()->orderBy('ps')->pluck('ps')->toArray();
+        // Saran global (seluruh data, tidak terbatas bulan/filter) untuk baris Tambah Rencana Closing.
+        // Digabung dengan karyawan divisi Marketing dan Operasional agar PS baru
+        // tanpa sales tetap bisa dipilih mandiri (seperti form manual input Manage).
+        $listAllPs = Cache::remember('monthly_all_ps_v2', 600, function () {
+            $dariSales = Sales::whereNotNull('ps')->where('ps', '!=', '')->distinct()->orderBy('ps')->pluck('ps')->toArray();
+            $dariKaryawan = User::where('divisi', 'Marketing dan Operasional')
+                ->whereNotNull('name')
+                ->where('name', '!=', '')
+                ->orderBy('name', 'asc')
+                ->pluck('name')
+                ->map(fn($n) => trim($n))
+                ->filter(fn($n) => $n !== '')
+                ->toArray();
+            return array_values(array_unique(array_merge($dariKaryawan, $dariSales)));
         });
         $listAllCustomer = Cache::remember('monthly_all_customer', 600, function () {
             return Sales::whereNotNull('customer_name')->where('customer_name', '!=', '')->distinct()->orderBy('customer_name')->pluck('customer_name')->toArray();
@@ -207,7 +250,7 @@ class SalesAnalyticsController extends BaseSalesController
     public function stock(Request $request)
     {
         if (!$this->hasAnySalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Monitoring Stock.');
-        return view('users.stock.stock')->with('title', 'Monitoring Stock Barang');
+        return view('users.sales.rakha-warehouse-monitoring')->with('title', 'Monitoring Stock Barang');
     }
 
     public function monitoringData(Request $request)
@@ -606,6 +649,19 @@ class SalesAnalyticsController extends BaseSalesController
         }
         unset($psSort);
 
+        // Suntik PS dari input target baru yang belum punya sales bulan ini:
+        // buat grup PDU kosong (total 0) agar targetnya masuk ke data monthly
+        // (tabel, chart, dan achievement). Grup tanpa sales & tanpa target tidak dibuat.
+        $adaPs = array_flip(array_map(fn($k) => strtolower(trim((string) $k)), array_keys($pdu)));
+        $isFull = $this->hasFullSalesAccess();
+        foreach ($targetData as $t) {
+            $namaTarget = trim((string) ($t->ps ?? ''));
+            if ($namaTarget === '' || isset($adaPs[strtolower($namaTarget)])) continue;
+            if (!$isFull && strcasecmp($namaTarget, 'office') === 0) continue;
+            $pdu[$namaTarget] = ['nama' => $namaTarget, 'total_qty' => 0, 'total_nett' => 0, 'tanggal' => []];
+            $adaPs[strtolower($namaTarget)] = true;
+        }
+
         $pduList = array_values($pdu);
         foreach ($pduList as &$psData) {
             $psData['tanggal'] = array_values($psData['tanggal']);
@@ -764,6 +820,14 @@ class SalesAnalyticsController extends BaseSalesController
             ->orderBy('ps', 'asc')
             ->pluck('ps')
             ->toArray();
+
+        // Gabung PS dari input target baru agar ikut dalam data visualisasi.
+        $listPs = array_values(array_unique(array_merge(
+            $listPs,
+            SalesTarget::where('year', $tahun)->distinct()->pluck('ps')
+                ->map(fn($n) => trim((string) $n))->filter(fn($n) => $n !== '')->toArray()
+        )));
+        sort($listPs, SORT_NATURAL | SORT_FLAG_CASE);
 
         $analytics = $this->getVisualisasiDataPayload($tahun, $bulanTerpilih, $psTerpilih, $listPs, $triwulanTerpilih);
 

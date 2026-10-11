@@ -42,16 +42,18 @@ class SalesSphController extends BaseSalesController
     /**
      * Ambil daftar Contact Person (PS) beserta nomor telepon (nomor_telepon)
      * dinamis langsung dari tabel users.
-     * Filter: HANYA jabatan mengandung "marketing" (case-insensitive, trim)
-     * -> sebelumnya pakai OR divisi yang menyebabkan non-marketing ikut muncul
-     *    (Kepala Operasional, Ekspedisi, Tim IT, Direktur, Test = 6 false positive).
+     * Filter: jabatan mengandung "marketing" ATAU "product specialist"
+     * (case-insensitive, trim).
      * Nomor dibersihkan ke format 08... via normalizePhoneTo08().
      */
     public static function getPsUsers(): array
     {
         return User::whereNotNull('name')
             ->whereNotNull('jabatan')
-            ->whereRaw('LOWER(TRIM(jabatan)) LIKE ?', ['%marketing%'])
+            ->where(function ($q) {
+                $q->whereRaw('LOWER(TRIM(jabatan)) LIKE ?', ['%marketing%'])
+                    ->orWhereRaw('LOWER(TRIM(jabatan)) LIKE ?', ['%product specialist%']);
+            })
             ->orderBy('name', 'asc')
             ->get(['name', 'nomor_telepon'])
             ->map(fn ($u) => [

@@ -310,7 +310,7 @@
 
     <div class="flex flex-col flex-1 min-h-screen relative">
         <div class="mesh-bg"></div>
-        <div class="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8 flex flex-col gap-3 md:gap-4">
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
 
         {{-- Back Button — unified component --}}
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">

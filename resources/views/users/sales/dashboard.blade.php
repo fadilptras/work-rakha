@@ -366,7 +366,7 @@
                 </a>
 
                 {{-- Kartu 4: Stock Monitoring --}}
-                <a href="{{ route('sales.stock') }}" class="module-card card-orange group title-reveal stagger-1" style="animation-delay: 0.4s;">
+                <a href="{{ route('sales.monitoring.index') }}" class="module-card card-orange group title-reveal stagger-1" style="animation-delay: 0.4s;">
                     <div class="icon-box">
                         <i class="fas fa-boxes-stacked"></i>
                     </div>
@@ -444,6 +444,33 @@
 
                     <div class="bg-decoration absolute -bottom-6 -right-6 text-sky-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
                         <i class="fas fa-tags"></i>
+                    </div>
+                </a>
+
+                {{-- Kartu: Expense Request --}}
+                <a href="{{ route('pengajuan_dana.index', ['from' => 'sales']) }}" class="module-card card-green group title-reveal stagger-2" style="animation-delay: 0.8s;">
+                    <div class="icon-box">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+
+                    <div class="card-content">
+                        <h2 class="text-lg md:text-[19px] font-bold text-slate-800 tracking-tight group-hover:text-emerald-600 transition-colors leading-tight">Expense Request</h2>
+                        <p class="text-slate-500 text-[13px] md:text-[15px] leading-relaxed font-medium line-clamp-2">
+                            Submit and track operational expense requests.
+                        </p>
+
+                        <div class="card-action mt-auto flex items-center gap-2 text-xs md:text-[13px] font-bold text-emerald-600 opacity-80 group-hover:opacity-100 transition-all duration-300">
+                            <span>Open Request</span>
+                            <i class="fas fa-arrow-right text-[11px] transition-transform group-hover:translate-x-1.5"></i>
+                        </div>
+                    </div>
+
+                    <div class="mobile-chevron">
+                        <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+
+                    <div class="bg-decoration absolute -bottom-6 -right-6 text-emerald-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
+                        <i class="fas fa-receipt"></i>
                     </div>
                 </a>
 

@@ -30,7 +30,7 @@ use App\Http\Controllers\CutiController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\AktivitasController;
-use App\Http\Controllers\PengajuanBarangController;
+use App\Http\Controllers\Warehouse\WsSpbController;
 use App\Http\Controllers\KpiController;
 use App\Http\Controllers\Sales\SalesDashboardController;
 use App\Http\Controllers\Sales\SalesIncentiveController;
@@ -41,7 +41,14 @@ use App\Http\Controllers\Sales\SalesTargetController;
 use App\Http\Controllers\Sales\SalesForecastController;
 use App\Http\Controllers\Sales\SalesPricingController;
 use App\Http\Controllers\Sales\SalesSphController;
-use App\Http\Controllers\StockController;
+use App\Http\Controllers\Sales\MonitoringStockController;
+use App\Http\Controllers\Warehouse\WsProductController;
+use App\Http\Controllers\Warehouse\InventoryController;
+use App\Http\Controllers\Warehouse\WsDashboardController;
+use App\Http\Controllers\Warehouse\WsStockCardController;
+use App\Http\Controllers\Warehouse\WsStockOpnameController;
+use App\Http\Controllers\Warehouse\WsMutationController;
+use App\Http\Controllers\Warehouse\WsSjController;
 use App\Http\Controllers\Crm\ClientController;
 use App\Http\Controllers\Crm\TransactionController;
 use App\Http\Controllers\Crm\ReportController;
@@ -125,7 +132,6 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
         Route::get('/pengajuan-dana/{pengajuanDana}', 'show')->name('pengajuan_dana.show');
         Route::post('/pengajuan-dana/{pengajuanDana}/approve', 'approve')->name('pengajuan_dana.approve');
         Route::post('/pengajuan-dana/{pengajuanDana}/reject', 'reject')->name('pengajuan_dana.reject');
-        Route::post('/pengajuan-dana/{pengajuanDana}/proses-pembayaran', 'prosesPembayaran')->name('pengajuan_dana.proses_pembayaran');
         Route::get('/pengajuan-dana/{pengajuanDana}/download', 'downloadPDF')->name('pengajuan_dana.download');
         Route::post('/pengajuan-dana/{pengajuanDana}/cancel', 'cancel')->name('pengajuan_dana.cancel');
     });
@@ -200,39 +206,35 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
 
         Route::controller(SalesForecastController::class)->group(function () {
             Route::get('/forecast', 'forecast')->name('forecast');
+            Route::get('/forecast/data', 'forecastData')->name('forecast.data');
             Route::get('/forecast/export/excel', 'exportExcel')->name('forecast.export.excel');
             Route::get('/forecast/export/pdf', 'exportPdf')->name('forecast.export.pdf');
             Route::post('/forecast/store-order', 'storeSuggestedOrder')->name('forecast.store-order');
             Route::post('/forecast/settings', 'saveForecastSettings')->name('forecast.settings.save');
         });
 
-        Route::controller(StockController::class)->group(function () {
-            Route::get('/stock', 'index')->name('stock');
-            Route::get('/stock/history', 'historyIndex')->name('stock.history_index');
-            Route::post('/stock/update-bulk', 'updateBulk')->name('stock.update_bulk');
-            Route::post('/stock/add-barang', 'addBarang')->name('stock.add_barang');
-            Route::post('/stock/parse-import', 'parseImport')->name('stock.parse_import');
-            Route::post('/stock/save-import', 'saveImport')->name('stock.save_import');
-            Route::get('/stock/export', 'exportExcel')->name('stock.export');
-            Route::get('/stock/template', 'downloadTemplate')->name('stock.template');
-            Route::post('/stock/undo/{log}', 'undo')->name('stock.undo');
-            Route::get('/stock/log/{log}/details', 'logDetails')->name('stock.log_details');
-            Route::get('/gudang/dashboard', 'dashboard')->name('gudang.dashboard');
+        Route::controller(MonitoringStockController::class)->prefix('stock')->name('monitoring.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/history', 'historyIndex')->name('history');
+            Route::post('/update-bulk', 'updateBulk')->name('update_bulk');
+            Route::post('/parse-import', 'parseImport')->name('parse_import');
+            Route::post('/save-import', 'saveImport')->name('save_import');
+            Route::get('/export', 'exportExcel')->name('export');
+            Route::get('/template', 'downloadTemplate')->name('template');
+            Route::post('/undo/{log}', 'undo')->name('undo');
+            Route::get('/log/{log}/details', 'logDetails')->name('log_details');
+        });
 
-            Route::get('/stock/barang', 'barangIndex')->name('stock.barang.index');
-            Route::get('/stock/barang/export', 'exportBarang')->name('stock.barang.export');
-            Route::get('/stock/barang/packagings', 'barangPackagings')->name('stock.barang.packagings.index');
-            Route::post('/stock/barang/packagings', 'storeBarangPackaging')->name('stock.barang.packagings.store');
-            Route::put('/stock/barang/packagings/{packaging}', 'updateBarangPackaging')->name('stock.barang.packagings.update');
-            Route::delete('/stock/barang/packagings/{packaging}', 'destroyBarangPackaging')->name('stock.barang.packagings.destroy');
-            Route::post('/stock/barang', 'storeBarang')->name('stock.barang.store');
-            Route::post('/stock/barang/bulk-update', 'bulkUpdateBarang')->name('stock.barang.bulk_update');
-            Route::put('/stock/barang/{barang}', 'updateBarang')->name('stock.barang.update');
-            Route::delete('/stock/barang/{barang}', 'destroyBarang')->name('stock.barang.destroy');
+        // NOTE: route spesifik /target harus didaftarkan SEBELUM wildcard /{sale}
+        // di bawah, supaya DELETE /sales/target tidak ditangkap SalesDataController@destroy.
+        Route::controller(SalesTargetController::class)->group(function () {
+            Route::post('/target', 'storeTarget')->name('target.store');
+            Route::delete('/target', 'destroyByPs')->name('target.destroy');
         });
 
         Route::controller(SalesDataController::class)->group(function () {
             Route::get('/manage', 'manage')->name('manage');
+            Route::get('/price-history', 'priceHistory')->name('price_history');
             Route::post('/manual', 'storeManual')->name('store_manual');
             Route::post('/import', 'importExcel')->name('import_excel');
             Route::get('/template', 'downloadTemplate')->name('download_template');
@@ -240,10 +242,6 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
             Route::delete('/bulk-destroy', 'bulkDestroy')->name('bulk_destroy');
             Route::put('/{sale}', 'update')->name('update');
             Route::delete('/{sale}', 'destroy')->name('destroy');
-        });
-
-        Route::controller(SalesTargetController::class)->group(function () {
-            Route::post('/target', 'storeTarget')->name('target.store');
         });
 
         Route::controller(SalesPricingController::class)->group(function () {
@@ -268,6 +266,71 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
         });
     });
 
+    // Warehouse — URL /warehouse/..., nama route warehouse.* (sejajar sales.*).
+    // Middleware auth ikut grup luar; grup ini hanya mengatur prefix + nama.
+    Route::prefix('warehouse')->name('warehouse.')->group(function () {
+        Route::controller(WsDashboardController::class)->group(function () {
+            Route::get('/gudang/dashboard', 'dashboard')->name('dashboard');
+        });
+
+        Route::controller(WsStockCardController::class)->group(function () {
+            Route::get('/stock/card', 'cardIndex')->name('stockcard.index');
+            Route::get('/stock/card/{product}/export-pdf', 'cardExportPdf')->name('stockcard.export.pdf');
+            Route::put('/stock/card/moves/{move}', 'cardMoveUpdate')->name('stockcard.moves.update');
+            Route::delete('/stock/card/moves/{move}', 'cardMoveDestroy')->name('stockcard.moves.destroy');
+            Route::get('/stock/card/{product}', 'cardShow')->name('stockcard.show');
+        });
+
+        Route::controller(WsMutationController::class)->group(function () {
+            Route::get('/stock/pencatatan', 'pencatatanIndex')->name('mutation.index');
+            Route::get('/stock/pencatatan/batches', 'productBatches')->name('mutation.batches');
+            Route::post('/stock/pencatatan', 'pencatatanStore')->name('mutation.store');
+            Route::delete('/stock/pencatatan/bulk', 'pencatatanBulkDestroy')->name('mutation.bulk_destroy');
+            Route::put('/stock/pencatatan/{move}', 'pencatatanUpdate')->name('mutation.update');
+            Route::delete('/stock/pencatatan/{move}', 'pencatatanDestroy')->name('mutation.destroy');
+            Route::get('/stock/warehouse', 'warehouse')->name('index');
+            Route::get('/stock/warehouse/dokumen/{doc}', 'documentDetail')->name('document');
+            Route::get('/stock/warehouse/export-mutasi', 'exportMutasiPdf')->name('export-mutasi');
+            Route::get('/stock/warehouse/export-sj', 'exportSjPdf')->name('export-sj');
+        });
+
+        Route::controller(WsSjController::class)->group(function () {
+            Route::get('/stock/surat-jalan', 'index')->name('sj.index');
+            Route::get('/stock/surat-jalan/export/pdf', 'exportPdf')->name('sj.export.pdf');
+            Route::get('/stock/surat-jalan/{doc}/cetak', 'print')->name('sj.print');
+        });
+
+        Route::controller(WsProductController::class)->group(function () {
+            Route::get('/stock/barang', 'barangIndex')->name('product.index');
+            Route::get('/stock/barang/export', 'exportBarang')->name('product.export');
+            Route::get('/stock/barang/packagings', 'barangPackagings')->name('product.packagings.index');
+            Route::post('/stock/barang/packagings', 'storeBarangPackaging')->name('product.packagings.store');
+            Route::put('/stock/barang/packagings/{packaging}', 'updateBarangPackaging')->name('product.packagings.update');
+            Route::delete('/stock/barang/packagings/{packaging}', 'destroyBarangPackaging')->name('product.packagings.destroy');
+            Route::post('/stock/barang', 'storeBarang')->name('product.store');
+            Route::post('/stock/barang/bulk-update', 'bulkUpdateBarang')->name('product.bulk_update');
+            Route::put('/stock/barang/{barang}', 'updateBarang')->name('product.update');
+            Route::delete('/stock/barang/{barang}', 'destroyBarang')->name('product.destroy');
+        });
+
+        Route::controller(WsStockOpnameController::class)->group(function () {
+            Route::get('/opname', 'opnameIndex')->name('stockopname.index');
+            Route::post('/inventory/opname', 'opnameStore')->name('stockopname.store');
+            Route::post('/inventory/scrap', 'scrapStore')->name('stockopname.scrap');
+        });
+
+        Route::controller(InventoryController::class)->group(function () {
+            Route::get('/inventory', 'index')->name('inventory');
+            Route::post('/inventory/moves', 'storeMove')->name('inventory.moves.store');
+            Route::post('/inventory/moves/{move}/validate', 'validateMove')->name('inventory.moves.validate');
+            Route::post('/inventory/moves/{move}/cancel', 'cancelMove')->name('inventory.moves.cancel');
+            Route::post('/inventory/moves/{move}/reverse', 'reverseMove')->name('inventory.moves.reverse');
+            Route::put('/inventory/products/{product}/min-stock', 'minStockUpdate')->name('inventory.min-stock.update');
+            Route::post('/inventory/rules', 'rulesStore')->name('inventory.rules.store');
+            Route::post('/inventory/draft-order', 'draftOrder')->name('inventory.draft-order');
+        });
+    });
+
     Route::get('/test-gap', fn() => view('test-gap'))->name('test.gap');
 
     // Aktivitas
@@ -278,11 +341,13 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     });
 
     // Pengajuan Barang (User)
-    Route::controller(PengajuanBarangController::class)->prefix('pengajuan-barang')->name('pengajuan_barang.')->group(function () {
+    // Pengajuan Barang / SPB (User)
+    Route::controller(WsSpbController::class)->prefix('pengajuan-barang')->name('pengajuan_barang.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::post('/', 'store')->name('store');
         Route::get('/history', 'history')->name('history');
         Route::get('/cek-riwayat', 'checkRiwayat')->name('checkRiwayat');
+        Route::get('/cek-forecast', 'checkForecast')->name('checkForecast');
         Route::get('/monitoring-all', 'monitoringAll')->name('monitoring_all');
         Route::get('/{pengajuanBarang}', 'show')->name('show')->whereNumber('pengajuanBarang');
         Route::get('/{pengajuanBarang}/download', 'download')->name('download')->whereNumber('pengajuanBarang');

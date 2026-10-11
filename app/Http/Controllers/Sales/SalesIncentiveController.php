@@ -47,6 +47,22 @@ class SalesIncentiveController extends BaseSalesController
             ->pluck('ps')
             ->toArray();
 
+        // Gabung PS dari input target baru ke data incentive: PS yang sudah punya
+        // target tersimpan tapi belum punya sales tetap ikut dihitung (dengan sales 0).
+        $targetPsBaru = SalesTarget::where('year', $tahun)->distinct()->pluck('ps')
+            ->map(fn($n) => trim((string) $n))
+            ->filter(fn($n) => $n !== '')
+            ->values()
+            ->toArray();
+        if (!$this->hasFullSalesAccess()) {
+            $targetPsBaru = array_values(array_filter(
+                $targetPsBaru,
+                fn($n) => strcasecmp($n, 'office') !== 0
+            ));
+        }
+        $listPs = array_values(array_unique(array_merge($listPs, $targetPsBaru)));
+        sort($listPs, SORT_NATURAL | SORT_FLAG_CASE);
+
         // target bulanan (case-insensitive)
         $targets = SalesTarget::where('year', $tahun)
             ->whereRaw('LOWER(month) = ?', [strtolower($bulan)])
@@ -74,6 +90,24 @@ class SalesIncentiveController extends BaseSalesController
         $settingsBulanPercent = $this->getIncentiveSettings($tahun, $bulan, 'bulan', 'percentage');
         $settingsTriwulanNominal = $this->getIncentiveSettings($tahun, $triwulan, 'triwulan', 'nominal');
         $settingsTriwulanPercent = $this->getIncentiveSettings($tahun, $triwulan, 'triwulan', 'percentage');
+        // Skema bonus outlet: tier jumlah outlet -> bonus Rp (basis nominal), per bulan berjalan.
+        // SENGAJA tidak auto-seed seperti bulan/triwulan: sekadar melihat tab/filter bulan
+        // tidak boleh diam-diam menulis baris settings (riwayat hanya berisi yang dikonfigurasi manual).
+        // Kalau kosong, payout pakai fallback + modal Configure dibuka dengan tier default (belum tersimpan).
+        $settingsOutlet = \App\Models\SalesIncentiveSetting::where('year', $tahun)
+            ->where('month', $bulan)
+            ->where('type', 'outlet')
+            ->orderBy('min_achievement', 'desc')
+            ->get();
+        if ($settingsOutlet->isEmpty()) {
+            $settingsOutlet = collect([
+                ['min_achievement' => 21, 'incentive_value' => 1000000],
+                ['min_achievement' => 16, 'incentive_value' => 800000],
+                ['min_achievement' => 11, 'incentive_value' => 500000],
+                ['min_achievement' => 6, 'incentive_value' => 300000],
+                ['min_achievement' => 1, 'incentive_value' => 150000],
+            ])->map(fn($d) => (object) $d);
+        }
 
         // Tentukan skema yang aktif (jika ada skema nominal tersimpan di DB, maka basis nominal aktif)
         $existsNominal = \App\Models\SalesIncentiveSetting::where('year', $tahun)
@@ -242,12 +276,21 @@ class SalesIncentiveController extends BaseSalesController
             }
         }
 
-        $payoutsOutlet = collect($listPs)->map(function ($ps) use ($newOutletsByPs) {
+        $payoutsOutlet = collect($listPs)->map(function ($ps) use ($newOutletsByPs, $settingsOutlet) {
             $outlets = $newOutletsByPs[$ps] ?? [];
             $count = count($outlets);
-            
+
+            // Bonus outlet dari database (tier jumlah outlet -> bonus Rp, urut min_achievement desc).
+            // Fallback skema lama bila settings kosong (mis. DB lama).
             $incentiveAmount = 0;
-            if ($count >= 21) {
+            if ($settingsOutlet->isNotEmpty()) {
+                foreach ($settingsOutlet as $set) {
+                    if ($count >= (float) $set->min_achievement) {
+                        $incentiveAmount = (float) $set->incentive_value;
+                        break;
+                    }
+                }
+            } elseif ($count >= 21) {
                 $incentiveAmount = 1000000;
             } elseif ($count >= 16) {
                 $incentiveAmount = 800000;
@@ -307,12 +350,11 @@ class SalesIncentiveController extends BaseSalesController
             'payouts' => $payouts,
             'payoutsTriwulan' => $payoutsTriwulan,
             'payoutsOutlet' => $payoutsOutlet,
-            'settingsBulan' => $settingsBulan,
-            'settingsTriwulan' => $settingsTriwulan,
             'settingsBulanNominal' => $settingsBulanNominal,
             'settingsBulanPercent' => $settingsBulanPercent,
             'settingsTriwulanNominal' => $settingsTriwulanNominal,
             'settingsTriwulanPercent' => $settingsTriwulanPercent,
+            'settingsOutlet' => $settingsOutlet,
             'activeBasis' => $activeBasis,
             'activeBasisTriwulan' => $activeBasisTriwulan,
             'settingsHistory' => $settingsHistory,
@@ -338,7 +380,16 @@ class SalesIncentiveController extends BaseSalesController
             if (!$anyExists) {
                 // Seed defaults for this year and month
                 $defaults = [];
-                if ($basis === 'nominal') {
+                if ($type === 'outlet') {
+                    // Tier jumlah outlet -> bonus Rp (sama dengan skema lama sebelum bisa dikonfigurasi)
+                    $defaults = [
+                        ['min_achievement' => 21, 'incentive_value' => 1000000],
+                        ['min_achievement' => 16, 'incentive_value' => 800000],
+                        ['min_achievement' => 11, 'incentive_value' => 500000],
+                        ['min_achievement' => 6, 'incentive_value' => 300000],
+                        ['min_achievement' => 1, 'incentive_value' => 150000],
+                    ];
+                } elseif ($basis === 'nominal') {
                     if ($type === 'bulan') {
                         $defaults = [
                             ['min_achievement' => 500000000, 'incentive_value' => 5.0],
@@ -408,7 +459,7 @@ class SalesIncentiveController extends BaseSalesController
         $request->validate([
             'tahun' => 'required|integer',
             'bulan' => 'required|string',
-            'type' => 'required|in:bulan,triwulan',
+            'type' => 'required|in:bulan,triwulan,outlet',
             'basis' => 'required|in:percentage,nominal',
             'min_achievement' => 'required|array',
             'min_achievement.*' => 'required|numeric|min:0|max:9999999999',
@@ -453,7 +504,7 @@ class SalesIncentiveController extends BaseSalesController
         $request->validate([
             'tahun' => 'required|integer',
             'bulan' => 'required|string',
-            'type' => 'required|in:bulan,triwulan',
+            'type' => 'required|in:bulan,triwulan,outlet',
             'basis' => 'required|string',
         ]);
 

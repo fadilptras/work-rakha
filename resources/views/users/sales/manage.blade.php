@@ -116,6 +116,34 @@
         .pr-icon-search { padding-right: 40px !important; }
         .pr-icon-datalist { padding-right: 52px !important; }
 
+        /* Panel riwayat harga: bottom-sheet di mobile, melayang di kanan modal pada desktop.
+           Posisi desktop dihitung JS dari posisi modal (fixed + left/top eksplisit).
+           CSS biasa (tidak tergantung hasil build Tailwind). */
+        #sales-item-history { position: fixed; left: 1rem; right: 1rem; bottom: 1rem; z-index: 5; }
+        #sales-item-history .hist-card { max-height: 42vh; }
+        #price-history-body { min-height: 64px; }
+        @media (min-width: 1024px) {
+            #sales-item-history { width: 21rem; }
+            #sales-item-history .hist-card { max-height: calc(100vh - 260px); }
+        }
+
+        /* == Pola forecast murni: filter & thead NEMPEL MATI dengan card,
+           tabel scroll di dalam box-nya sendiri — tidak ada elemen melayang == */
+        .manage-table-scroll { overflow: auto; max-height: 65vh; min-height: 280px; }
+        .manage-table-scroll table.manage-table { border-collapse: separate; border-spacing: 0; }
+        .manage-table-scroll thead { background-color: #f8fafc; }
+        .manage-table-scroll thead th {
+            position: sticky; top: 0; z-index: 20;
+            background-color: #f8fafc;
+            background-clip: padding-box;
+            box-shadow: 0 1px 0 #e2e8f0, 0 6px 10px -6px rgba(15,23,42,.18);
+            isolation: isolate;
+        }
+        .manage-table-scroll thead th.bg-emerald-50\/60 { background-color: #ecfdf5 !important; }
+        @media (max-width: 767px) {
+            .manage-table-scroll { max-height: 60vh; min-height: 240px; }
+        }
+
         /* == Button == */
         .btn-primary { background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
         .btn-primary:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 6px 10px -1px rgba(59, 130, 246, 0.4); }
@@ -126,8 +154,8 @@
     </style>
     @endpush
 
-    <div class="mesh-bg flex flex-col flex-1 min-h-screen relative overflow-hidden text-slate-800">
-        <div class="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 flex-1 flex flex-col justify-start" x-data="manageData()">
+    <div class="mesh-bg flex flex-col flex-1 min-h-screen relative overflow-x-clip text-slate-800">
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start" x-data="manageData()">
 
         <div class="w-full flex justify-start mb-3 md:mb-4">
             <x-ui.back-button href="{{ route('sales.index') }}" label="Back to Sales Dashboard" />
@@ -176,9 +204,10 @@
         {{-- [TAB 1] History Table --}}
         <div x-show="activeTab === 'table'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-4 flex flex-col w-full">
             
-            {{-- Filter Form — glass-card konsisten --}}
-            <x-ui.glass-card padding="none" class="!p-6 relative z-10 w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-lg !rounded-3xl">
-                <form action="{{ route('sales.manage') }}" method="GET" id="filterForm">
+            {{-- Filter + Tabel SATU card — filter sticky, thead sticky, yang jalan cuma baris data --}}
+            <x-ui.glass-card padding="none" class="!p-0 overflow-clip flex flex-col w-full max-w-full mx-auto !rounded-3xl !bg-white border border-slate-200 border-t-4 border-t-blue-500 shadow-lg" style="background:#ffffff;">
+                <div class="bg-white">
+                <form action="{{ route('sales.manage') }}" method="GET" id="filterForm" class="p-6 pb-5 border-b border-slate-100">
                     <button type="submit" class="hidden" aria-hidden="true"></button>
                     
                     {{-- Baris 1: 4 form (Search, Customer, Product, PS) --}}
@@ -237,13 +266,11 @@
                         </div>
                     </div>
                 </form>
-            </x-ui.glass-card>
+                </div>
 
-            {{-- Data Table — putih solid 100% (fix gelap: ui-glass default bg-white/90 tembus ungu #ede9fe) --}}
-            <x-ui.glass-card padding="none" class="!p-0 overflow-hidden flex flex-col w-full max-w-full mx-auto !rounded-3xl !bg-white border border-slate-200 shadow-sm" style="background:#ffffff;">
-                <div class="overflow-x-auto flex-1 bg-white">
-                        <table class="w-full text-sm text-left text-slate-600 bg-white">
-                            <thead class="text-xs text-slate-500 uppercase bg-white border-b border-slate-200 font-bold tracking-wider">
+                <div class="flex-1 bg-white manage-table-scroll">
+                        <table class="manage-table w-full text-sm text-left text-slate-600 bg-white">
+                            <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
                                     <th class="px-4 py-4 w-10 text-center">
                                         <input type="checkbox" id="check-all" class="rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer">
@@ -295,7 +322,7 @@
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="px-6 py-4 border-t border-slate-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
                     <button type="button" onclick="confirmBulkDelete()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow-sm hidden" id="btn-bulk-delete">
                         <i class="fas fa-trash-alt mr-1"></i> Delete (<span id="selected-count">0</span>)
@@ -310,17 +337,17 @@
         {{-- [TAB 2] Manual Data Input — selaras components/ui (ui-label, ui-input, ui-glass) --}}
         <div x-show="activeTab === 'input'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="w-full">
             <x-ui.glass-card class="w-full max-w-full mx-auto border-t-4 border-t-blue-500 shadow-lg !rounded-3xl !p-6">
-                <form action="{{ route('sales.store_manual') }}" method="POST" id="manual-sales-form" onsubmit="confirmSubmit(event, 'Save this sales data?')">
+                <form action="{{ route('sales.store_manual') }}" method="POST" id="manual-sales-form">
                     @csrf
                     <div class="space-y-5">
                         {{-- Baris 1: Date / PS / Customer — selaras filter (gap-3, label 10px) --}}
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div>
-                                <label class="ui-label">Date <span class="text-red-500">*</span></label>
-                                <div class="relative">
-                                    <input type="date" name="tanggal" required class="ui-input-date">
+                                <div>
+                                    <label class="ui-label">Date <span class="text-red-500">*</span></label>
+                                    <div class="relative">
+                                        <input type="date" name="tanggal" required value="{{ old('tanggal', date('Y-m-d')) }}" class="ui-input-date">
+                                    </div>
                                 </div>
-                            </div>
                             <div>
                                 <label class="ui-label">Customer Name <span class="text-red-500">*</span></label>
                                 <div class="relative">
@@ -344,12 +371,39 @@
                                     Product Details
                                 </h4>
                                 <button type="button" id="tambah-produk-btn" class="inline-flex items-center justify-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 h-[30px] px-3 rounded-lg text-xs font-bold shadow-sm transition-colors whitespace-nowrap">
-                                    <i class="fas fa-plus text-[10px]"></i> Add Product Row
+                                    <i class="fas fa-plus text-[10px]"></i> Add Product
                                 </button>
                             </div>
-                            
-                            <div class="space-y-3" id="rincian-produk-container">
-                                <!-- Vanilla JS goes here -->
+
+                            {{-- Cari produk: klik hasil -> popup detail --}}
+                            <div class="relative">
+                                <div class="relative">
+                                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-blue-300 text-xs pointer-events-none"></i>
+                                    <input type="text" id="product-search" placeholder="Type product name, then click a result…" title="Type a product name, then click a result to fill details via popup." class="ui-search !h-[32px] !bg-white hover:!bg-white !text-slate-700" style="padding-left:36px;" autocomplete="off">
+                                </div>
+                                <div id="product-search-results" class="hidden absolute left-0 right-0 z-30 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-64 overflow-y-auto divide-y divide-slate-100"></div>
+                            </div>
+
+                            <div class="border border-slate-200 rounded-xl bg-white" style="overflow:hidden;">
+                                <div style="max-height:46vh;overflow:auto;">
+                                    <table class="w-full text-xs" style="min-width:640px;">
+                                        <thead>
+                                            <tr class="bg-slate-50/80 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200" style="position:sticky;top:0;background-color:#f8fafc;z-index:10;">
+                                                <th class="px-3 py-2 text-center font-bold" style="width:36px;">No</th>
+                                                <th class="px-3 py-2 text-left font-bold">Product</th>
+                                                <th class="px-3 py-2 text-right font-bold" style="width:80px;">Qty</th>
+                                                <th class="px-3 py-2 text-right font-bold" style="width:110px;">HNA</th>
+                                                <th class="px-3 py-2 text-center font-bold" style="width:70px;">Disc%</th>
+                                                <th class="px-3 py-2 text-right font-bold" style="width:110px;">Subtotal</th>
+                                                <th class="px-3 py-2 text-center font-bold" style="width:76px;">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="rincian-produk-container" class="divide-y divide-slate-100"></tbody>
+                                    </table>
+                                </div>
+                                <div id="empty-produk" class="px-4 py-3 text-center bg-slate-50/50 border-t border-dashed border-slate-200">
+                                    <p class="text-xs font-bold text-slate-500"><i class="fas fa-box-open text-slate-300 mr-1.5"></i>Belum ada produk — cari di atas lalu klik untuk menambahkan.</p>
+                                </div>
                             </div>
                             
                             <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-3 shadow-sm">
@@ -376,7 +430,77 @@
             </x-ui.glass-card>
         </div>
 
-        {{-- [TAB 3] Import & Export — compact & seimbang (2 col sama tinggi) --}}
+                    {{-- Popup detail produk (dibuka dari hasil pencarian / tombol tambah / ubah) --}}
+                    <x-ui.modal id="sales-item-modal" maxWidth="max-w-lg" title="Tambah Produk" subtitle="Isi jumlah, satuan, HNA & diskon, lalu simpan ke tabel." icon="fa-box-open">
+                        <div>
+                            <label class="ui-label" for="m-nama">Nama Produk <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <input list="produk-list-options" type="text" id="m-nama" class="ui-input ui-input--sm !bg-white !text-slate-800 pr-icon-datalist" placeholder="Pilih / ketik nama produk…" autocomplete="off">
+                                <button type="button" id="m-nama-clear" class="icon-clear-datalist hidden text-slate-300 hover:text-slate-500 transition-colors" title="Bersihkan nama produk"><i class="fas fa-times-circle text-sm"></i></button>
+                            </div>
+                            <p class="text-[10px] text-slate-400 font-semibold mt-1">Pilih produk untuk melihat riwayat harga ke customer ini di panel kanan.</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="ui-label" for="m-qty">Jumlah (Qty) <span class="text-red-500">*</span></label>
+                                <input type="number" id="m-qty" class="ui-input ui-input--sm !bg-white !text-slate-800" placeholder="0" min="1">
+                            </div>
+                            <div>
+                                <label class="ui-label" for="m-satuan">Satuan</label>
+                                <input list="satuan-list-options" type="text" id="m-satuan" class="ui-input ui-input--sm !bg-white !text-slate-800" placeholder="Pcs / Box…" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="ui-label" for="m-hna">HNA (Rp)</label>
+                                <input type="text" id="m-hna" class="ui-input ui-input--sm !bg-white !text-slate-800" placeholder="0" inputmode="numeric" autocomplete="off">
+                            </div>
+                            <div>
+                                <label class="ui-label" for="m-diskon">Diskon (%)</label>
+                                <input type="number" id="m-diskon" class="ui-input ui-input--sm !bg-white !text-slate-800" placeholder="0" min="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-2.5 flex items-center justify-between gap-2">
+                            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Nett</span>
+                            <span id="m-nett" class="text-base font-black text-blue-700">Rp 0</span>
+                        </div>
+                        <p id="m-error" class="hidden text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5"></p>
+                        <x-slot:footer>
+                            <x-ui.button variant="secondary" size="sm" data-modal-close>Batal</x-ui.button>
+                            <x-ui.button variant="primary" size="sm" icon="fa-check" id="m-save">Simpan ke Tabel</x-ui.button>
+                        </x-slot:footer>
+                    </x-ui.modal>
+
+                    {{-- Panel riwayat harga: dipindah ke dalam container popup via JS agar se-layer
+                         (tidak tertutup blur) — di kanan modal pada desktop, bottom-sheet di mobile --}}
+                    <div id="sales-item-history" class="hidden">
+                        <div class="hist-card bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+                            <div class="px-4 py-3 border-b border-slate-100 flex items-start justify-between gap-2 bg-amber-50/60 shrink-0">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0"><i class="fas fa-clock-rotate-left text-xs"></i></span>
+                                    <div class="min-w-0">
+                                        <h5 class="font-bold text-xs text-slate-800 leading-tight">Riwayat Harga</h5>
+                                        <p id="price-history-sub" class="text-[10px] text-slate-400 font-medium truncate mt-0.5">—</p>
+                                    </div>
+                                </div>
+                                <button type="button" id="price-history-close" class="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center transition-colors shrink-0" title="Tutup"><i class="fas fa-times text-xs"></i></button>
+                            </div>
+                            <div id="price-history-body" class="overflow-y-auto divide-y divide-slate-100"></div>
+                            <div class="px-4 py-2 border-t border-slate-100 bg-slate-50/60 shrink-0">
+                                <p class="text-[10px] text-slate-400 font-semibold">6 transaksi terakhir. Klik <span class="text-blue-600 font-bold">Pakai</span> untuk mengisi HNA.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Draft manual hanya dibersihkan saat save SUKSES di tab ini.
+                        Validasi gagal / sukses import tidak ikut menghapus (data tetap bisa dipulihkan). --}}
+                    @if(session('success') && session('active_tab') === 'input')
+                    <script>
+                        try { localStorage.removeItem('manual_sales_draft'); } catch (e) {}
+                    </script>
+                    @endif
+
+                    {{-- [TAB 3] Import & Export — compact & seimbang (2 col sama tinggi) --}}
         <div x-show="activeTab === 'import'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="w-full">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full max-w-full mx-auto items-stretch">
                 {{-- Kiri: Upload — stretch penuh, dropzone flex-1 biar tinggi ngisi --}}
@@ -461,7 +585,7 @@
                                     <div><label class="modern-label">Date</label><input type="date" name="tanggal" x-model="formData.tanggal" class="modern-input"></div>
                                     <div><label class="modern-label">Customer</label><input list="customer-list-options" type="text" name="nama_customer" x-model="formData.nama_customer" class="modern-input" autocomplete="off"></div>
                                     
-                                    <div><label class="modern-label">PS</label><input list="ps-list-options" type="text" name="ps" x-model="formData.ps" class="modern-input" autocomplete="off"></div>
+                                    <div><label class="modern-label">PS</label><input list="ps-input-options" type="text" name="ps" x-model="formData.ps" class="modern-input" autocomplete="off"></div>
                                     <div><label class="modern-label">Product</label><input list="produk-list-options" type="text" name="nama_produk" x-model="formData.nama_produk" class="modern-input" autocomplete="off"></div>
                                     
                                     <div class="grid grid-cols-2 gap-4">
@@ -578,6 +702,8 @@
             }
         }
 
+
+
         // Kalkulasi Harga Nett (Form Manual)
         document.addEventListener('DOMContentLoaded', function() {
             const qtyInput = document.getElementById('input-qty');
@@ -645,8 +771,79 @@
             const addBtn = document.getElementById('tambah-produk-btn');
             const grandTotalEl = document.getElementById('grand-total-text');
             const form = document.getElementById('manual-sales-form');
-            let productCounter = 0;
+            const emptyProduk = document.getElementById('empty-produk');
             let isRestoring = false;
+            let editingRow = null;
+
+            const mNama = document.getElementById('m-nama');
+            const mQty = document.getElementById('m-qty');
+            const mSatuan = document.getElementById('m-satuan');
+            const mHnaDisplay = document.getElementById('m-hna');
+            const mHnaRaw = { value: '0' };
+            const mDiskon = document.getElementById('m-diskon');
+            const mNett = document.getElementById('m-nett');
+            const mErr = document.getElementById('m-error');
+            const mSave = document.getElementById('m-save');
+            const searchInput = document.getElementById('product-search');
+            const searchBox = document.getElementById('product-search-results');
+            const namaMaster = Array.from(document.querySelectorAll('#produk-list-options option')).map(o => o.value).filter(Boolean);
+
+            function updateEmpty() {
+                if (!emptyProduk || !container) return;
+                emptyProduk.style.display = container.querySelectorAll('.row-manual').length ? 'none' : 'block';
+            }
+
+            function showModalErr(msg) {
+                if (!mErr) return;
+                if (!msg) { mErr.classList.add('hidden'); mErr.textContent = ''; return; }
+                mErr.textContent = msg;
+                mErr.classList.remove('hidden');
+            }
+
+            function setModalTitle(t) {
+                const el = document.getElementById('sales-item-modal-title');
+                if (el) el.textContent = t;
+            }
+
+            function refreshModalNett() {
+                const qty = parseFloat(mQty && mQty.value) || 0;
+                const hna = parseFloat(mHnaRaw.value) || 0;
+                const disc = parseFloat(mDiskon && mDiskon.value) || 0;
+                const nett = Math.max(0, qty * hna * (1 - disc / 100));
+                if (mNett) mNett.textContent = 'Rp ' + formatRupiah(nett);
+                return nett;
+            }
+
+            function openItemModal(prefill, row) {
+                editingRow = row || null;
+                setModalTitle(editingRow ? 'Ubah Produk' : 'Tambah Produk');
+                const p = prefill || {};
+                const hidden = function (name) {
+                    const el = editingRow ? editingRow.querySelector('input[name="' + name + '"]') : null;
+                    return el ? el.value : '';
+                };
+                if (mNama) mNama.value = p.nama_produk !== undefined ? p.nama_produk : hidden('nama_produk[]');
+                if (mQty) mQty.value = p.qty !== undefined ? p.qty : hidden('qty[]');
+                if (mSatuan) mSatuan.value = p.satuan !== undefined ? p.satuan : hidden('satuan[]');
+                const hnaVal = p.hna !== undefined ? p.hna : hidden('hna[]');
+                mHnaRaw.value = hnaVal || '0';
+                if (mHnaDisplay) mHnaDisplay.value = hnaVal ? formatRupiah(hnaVal) : '';
+                if (mDiskon) mDiskon.value = p.diskon !== undefined ? p.diskon : hidden('diskon[]');
+                showModalErr('');
+                refreshModalNett();
+                syncNamaClear();
+                if (typeof uiModalOpen === 'function') uiModalOpen('sales-item-modal');
+                else { const m = document.getElementById('sales-item-modal'); if (m) { m.classList.remove('hidden'); m.classList.add('flex'); } }
+                setTimeout(function () { if (mNama) mNama.focus(); }, 250);
+                scheduleHistoryLoad();
+            }
+
+            function closeItemModal() {
+                if (typeof uiModalClose === 'function') uiModalClose('sales-item-modal');
+                else { const m = document.getElementById('sales-item-modal'); if (m) { m.classList.add('hidden'); m.classList.remove('flex'); } }
+                hideHistory();
+                editingRow = null;
+            }
 
             function formatRupiah(num) {
                 return new Intl.NumberFormat('id-ID').format(Math.round(num));
@@ -665,12 +862,12 @@
             function saveFormToLocalStorage() {
                 if (!form || isRestoring) return;
                 const products = [];
-                container.querySelectorAll('.p-3').forEach(row => {
+                container.querySelectorAll('.row-manual').forEach(row => {
                     const namaInput = row.querySelector('input[name="nama_produk[]"]');
-                    const qtyInput = row.querySelector('.input-qty');
+                    const qtyInput = row.querySelector('input[name="qty[]"]');
                     const satuanInput = row.querySelector('input[name="satuan[]"]');
-                    const hnaRawInput = row.querySelector('.input-hna-raw');
-                    const diskonInput = row.querySelector('.input-diskon');
+                    const hnaRawInput = row.querySelector('input[name="hna[]"]');
+                    const diskonInput = row.querySelector('input[name="diskon[]"]');
                     
                     if (namaInput) {
                         products.push({
@@ -692,181 +889,306 @@
                 
                 localStorage.setItem('manual_sales_draft', JSON.stringify(formData));
             }
-
             function restoreFormFromLocalStorage() {
                 if (!form) return;
                 const saved = localStorage.getItem('manual_sales_draft');
-                if (!saved) {
-                    addProductRow(); // Initialize with one empty row if no draft exists
-                    return;
-                }
+                if (!saved) { updateEmpty(); calculateGrandTotal(); return; }
                 
                 try {
                     isRestoring = true;
                     const formData = JSON.parse(saved);
-                    form.querySelector('input[name="tanggal"]').value = formData.tanggal || '';
+                    if (formData.tanggal) form.querySelector('input[name="tanggal"]').value = formData.tanggal;
                     form.querySelector('input[name="ps"]').value = formData.ps || '';
                     form.querySelector('input[name="nama_customer"]').value = formData.nama_customer || '';
                     
                     container.innerHTML = ''; // Clear container
                     
                     if (formData.products && formData.products.length > 0) {
-                        for (let i = formData.products.length - 1; i >= 0; i--) {
-                            addProductRow(formData.products[i]);
-                        }
-                    } else {
-                        addProductRow();
+                        formData.products.forEach(p => addProductRow(p));
                     }
+                    updateEmpty();
                 } catch (e) {
                     console.error('Error restoring draft:', e);
-                    addProductRow();
+                    updateEmpty();
                 } finally {
                     isRestoring = false;
                     calculateGrandTotal();
                 }
             }
 
-            function addProductRow(initialData = null) {
-                productCounter++;
-                const rowId = 'product-row-' + Date.now() + Math.random().toString(36).substr(2, 9);
-                const row = document.createElement('div');
-                row.className = 'p-3 bg-white border border-slate-200 rounded-xl relative shadow-sm hover:border-blue-200 transition-colors animate-[fadeIn_0.3s_ease-in-out]';
-                row.id = rowId;
-                
-                row.innerHTML = `
-                    <div class="flex justify-between items-center mb-2.5 border-b border-slate-100 pb-2.5">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded-md product-number-badge">Product #${productCounter}</span>
-                            <div class="flex items-center gap-1.5 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-md text-[10px] shadow-sm">
-                                <span class="font-bold text-slate-500 uppercase tracking-wider">Subtotal:</span>
-                                <span class="text-blue-700 font-black subtotal-text">Rp 0</span>
-                                <input type="hidden" name="harga_nett[]" value="0" class="input-harga-nett">
-                            </div>
-                        </div>
-                        <button type="button" class="btn-remove-product inline-flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 h-[26px] rounded-lg transition-colors shadow-sm" title="Delete this product">
-                            <i class="fas fa-trash-alt text-[10px]"></i> Delete
-                        </button>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
-                        <div>
-                            <label class="ui-label">Product Name <span class="text-red-500">*</span></label>
-                            <div class="relative">
-                                <input list="produk-list-options" type="text" name="nama_produk[]" required placeholder="Product Name" class="ui-input ui-input--sm pr-8" autocomplete="off">
-                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-blue-700"><i class="fas fa-chevron-down text-[10px]"></i></span>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="ui-label">Qty <span class="text-red-500">*</span></label>
-                                <input type="number" name="qty[]" min="1" required placeholder="0" class="ui-input ui-input--sm input-qty">
-                            </div>
-                            <div>
-                                <label class="ui-label">Unit</label>
-                                <div class="relative">
-                                    <input list="satuan-list-options" type="text" name="satuan[]" placeholder="Pcs/Box" class="ui-input ui-input--sm pr-8" autocomplete="off">
-                                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-blue-700"><i class="fas fa-chevron-down text-[10px]"></i></span>
-                                </div>
-                            </div>
-                        </div>
+            function calcNett(qty, hna, diskon) {
+                const subtotal = (parseFloat(qty) || 0) * (parseFloat(hna) || 0);
+                return Math.max(0, subtotal - subtotal * ((parseFloat(diskon) || 0) / 100));
+            }
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="ui-label">HNA (Rp)</label>
-                                <input type="text" placeholder="0" class="ui-input ui-input--sm input-hna-display" autocomplete="off">
-                                <input type="hidden" name="hna[]" class="input-hna-raw" value="0">
-                            </div>
-                            <div>
-                                <label class="ui-label">Discount (%)</label>
-                                <input type="number" name="diskon[]" step="0.01" min="0" placeholder="0" class="ui-input ui-input--sm input-diskon">
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                container.prepend(row);
-                
-                const qtyInput = row.querySelector('.input-qty');
-                const hnaDisplay = row.querySelector('.input-hna-display');
-                const hnaRaw = row.querySelector('.input-hna-raw');
-                const diskonInput = row.querySelector('.input-diskon');
-                const subtotalText = row.querySelector('.subtotal-text');
-                const hargaNettInput = row.querySelector('.input-harga-nett');
-                
-                function calculateRow() {
-                    const qty = parseFloat(qtyInput.value) || 0;
-                    const hna = parseFloat(hnaRaw.value) || 0;
-                    const diskon = parseFloat(diskonInput.value) || 0;
-                    const subtotal = qty * hna;
-                    const diskonNominal = subtotal * (diskon / 100);
-                    const finalNett = Math.max(0, subtotal - diskonNominal);
-                    
-                    hargaNettInput.value = finalNett;
-                    subtotalText.textContent = 'Rp ' + formatRupiah(finalNett);
-                    calculateGrandTotal();
-                }
-                
-                hnaDisplay.addEventListener('input', function() {
-                    let val = this.value.replace(/[^0-9]/g, '');
-                    if (val !== "") {
-                        this.value = formatRupiah(val);
-                        hnaRaw.value = val;
-                    } else {
-                        this.value = "";
-                        hnaRaw.value = 0;
+            function fillRowValues(tr, vals) {
+                const set = function (name, v) { const el = tr.querySelector('input[name="' + name + '"]'); if (el) el.value = v === undefined || v === null ? '' : v; };
+                set('nama_produk[]', vals.nama_produk);
+                set('qty[]', vals.qty);
+                set('satuan[]', vals.satuan);
+                set('hna[]', vals.hna);
+                set('diskon[]', vals.diskon);
+                set('harga_nett[]', vals.nett);
+                tr.querySelector('.cell-nama').textContent = vals.nama_produk || '—';
+                tr.querySelector('.cell-sub').textContent = vals.satuan || '';
+                tr.querySelector('.qty-txt').textContent = vals.qty || '';
+                tr.querySelector('.hna-txt').textContent = vals.hna !== '' && vals.hna !== undefined ? 'Rp ' + formatRupiah(vals.hna) : '';
+                tr.querySelector('.disc-txt').textContent = (vals.diskon !== '' && vals.diskon !== undefined) ? vals.diskon + '%' : '';
+                tr.querySelector('.nett-txt').textContent = 'Rp ' + formatRupiah(vals.nett || 0);
+            }
+
+            function renumber() {
+                if (!container) return;
+                container.querySelectorAll('.row-manual').forEach(function (tr, i) {
+                    const no = tr.querySelector('.row-no');
+                    if (no) no.textContent = i + 1;
+                });
+            }
+
+            function addProductRow(initialData) {
+                if (!container) return;
+                const d = initialData || {};
+                const nett = calcNett(d.qty, d.hna, d.diskon);
+                const tr = document.createElement('tr');
+                tr.className = 'row-manual hover:bg-blue-50/50 transition-colors bg-white';
+                tr.innerHTML =
+                    '<td class="px-3 py-2 text-center text-slate-400 font-semibold row-no"></td>' +
+                    '<td class="px-3 py-2 align-top">' +
+                        '<div class="font-bold text-slate-800 cell-nama leading-snug"></div>' +
+                        '<div class="text-[11px] text-slate-400 font-semibold mt-0.5 cell-sub leading-snug"></div>' +
+                        '<input type="hidden" name="nama_produk[]">' +
+                        '<input type="hidden" name="satuan[]">' +
+                    '</td>' +
+                    '<td class="px-3 py-2 align-top text-right whitespace-nowrap">' +
+                        '<span class="font-black text-slate-800 qty-txt"></span>' +
+                        '<input type="hidden" name="qty[]">' +
+                    '</td>' +
+                    '<td class="px-3 py-2 align-top text-right whitespace-nowrap">' +
+                        '<span class="font-bold text-slate-600 hna-txt"></span>' +
+                        '<input type="hidden" name="hna[]">' +
+                    '</td>' +
+                    '<td class="px-3 py-2 align-top text-center whitespace-nowrap">' +
+                        '<span class="font-bold text-slate-500 disc-txt"></span>' +
+                        '<input type="hidden" name="diskon[]">' +
+                    '</td>' +
+                    '<td class="px-3 py-2 align-top text-right whitespace-nowrap">' +
+                        '<span class="font-black text-blue-700 nett-txt"></span>' +
+                        '<input type="hidden" name="harga_nett[]" class="input-harga-nett">' +
+                    '</td>' +
+                    '<td class="px-3 py-2 align-top text-center whitespace-nowrap">' +
+                        '<button type="button" title="Ubah" class="btn-edit ui-btn ui-btn--edit mr-1"><i class="fas fa-pen text-[11px]"></i></button>' +
+                        '<button type="button" title="Hapus" class="btn-del ui-btn ui-btn--delete"><i class="fas fa-trash-can text-[11px]"></i></button>' +
+                    '</td>';
+                fillRowValues(tr, {
+                    nama_produk: d.nama_produk || '',
+                    qty: d.qty || '',
+                    satuan: d.satuan || '',
+                    hna: d.hna || '',
+                    diskon: d.diskon || '',
+                    nett: d.nett !== undefined ? d.nett : nett
+                });
+                tr.querySelector('.btn-del').addEventListener('click', function () { tr.remove(); renumber(); calculateGrandTotal(); updateEmpty(); saveFormToLocalStorage(); });
+                tr.querySelector('.btn-edit').addEventListener('click', function () { openItemModal(null, tr); });
+                container.appendChild(tr);
+                renumber();
+                updateEmpty();
+                calculateGrandTotal();
+                saveFormToLocalStorage();
+            }
+
+            // Cari produk dari master (datalist): klik hasil -> buka popup
+            function renderSearch(keyword) {
+                if (!searchBox) return;
+                const kw = (keyword || '').trim().toLowerCase();
+                if (!kw) { searchBox.classList.add('hidden'); searchBox.innerHTML = ''; return; }
+                const list = namaMaster.filter(function (n) { return (n || '').toLowerCase().includes(kw); }).slice(0, 12);
+                let html = list.map(function (n) {
+                    return '<button type="button" data-nama="' + n.replace(/"/g, '&quot;') + '" class="w-full text-left px-4 py-2.5 hover:bg-blue-50/70 flex items-center gap-3 transition-colors">' +
+                        '<i class="fas fa-box text-blue-300 text-xs shrink-0"></i>' +
+                        '<span class="block text-xs font-bold text-slate-800 truncate">' + n.replace(/</g, '&lt;') + '</span></button>';
+                }).join('');
+                html += '<button type="button" data-nama="' + (keyword || '').trim().replace(/"/g, '&quot;') + '" class="w-full text-left px-4 py-2.5 bg-slate-50 hover:bg-blue-50/70 border-t border-slate-100 flex items-center gap-2 transition-colors">' +
+                    '<i class="fas fa-plus text-emerald-500 text-xs shrink-0"></i>' +
+                    '<span class="block text-xs font-bold text-slate-600 truncate">Pakai "' + (keyword || '').trim().replace(/</g, '&lt;') + '" sebagai produk baru</span></button>';
+                searchBox.innerHTML = html;
+                searchBox.classList.remove('hidden');
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function () { renderSearch(searchInput.value); });
+                searchInput.addEventListener('focus', function () { renderSearch(searchInput.value); });
+                document.addEventListener('click', function (e) {
+                    if (searchBox && !searchBox.classList.contains('hidden')) {
+                        if (!searchBox.contains(e.target) && e.target !== searchInput) searchBox.classList.add('hidden');
                     }
-                    calculateRow();
                 });
-                
-                qtyInput.addEventListener('input', calculateRow);
-                diskonInput.addEventListener('input', calculateRow);
+            }
+            if (searchBox) {
+                searchBox.addEventListener('click', function (e) {
+                    const btn = e.target && e.target.closest ? e.target.closest('[data-nama]') : null;
+                    if (!btn) return;
+                    const nama = btn.getAttribute('data-nama') || '';
+                    searchBox.classList.add('hidden');
+                    if (searchInput) searchInput.value = '';
+                    openItemModal({ nama_produk: nama });
+                });
+            }
 
-                row.querySelector('input[name="nama_produk[]"]').addEventListener('input', saveFormToLocalStorage);
-                row.querySelector('input[name="satuan[]"]').addEventListener('input', saveFormToLocalStorage);
-                
-                const removeBtn = row.querySelector('.btn-remove-product');
-                removeBtn.addEventListener('click', function() {
-                    row.remove();
-                    updateProductNumbers();
+            // Popup: hitung nett live, Enter = simpan
+            function syncHnaFromDisplay() {
+                const clean = ((mHnaDisplay && mHnaDisplay.value) || '').replace(/[^0-9]/g, '');
+                mHnaRaw.value = clean === '' ? '0' : clean;
+                if (mHnaDisplay && clean !== '') mHnaDisplay.value = formatRupiah(clean);
+                refreshModalNett();
+            }
+            if (mHnaDisplay) mHnaDisplay.addEventListener('input', syncHnaFromDisplay);
+            [mNama, mQty, mSatuan, mDiskon].forEach(function (el) {
+                if (!el) return;
+                el.addEventListener('input', refreshModalNett);
+                el.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') { e.preventDefault(); if (mSave) mSave.click(); }
+                });
+            });
+            if (mHnaDisplay) mHnaDisplay.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); if (mSave) mSave.click(); }
+            });
+            if (mSave) {
+                mSave.addEventListener('click', function () {
+                    const nama = ((mNama && mNama.value) || '').trim();
+                    const qty = ((mQty && mQty.value) || '').trim();
+                    const satuan = ((mSatuan && mSatuan.value) || '').trim();
+                    const hna = (mHnaRaw.value || '').trim();
+                    const diskon = ((mDiskon && mDiskon.value) || '').trim();
+                    if (!nama) { showModalErr('Nama produk wajib diisi.'); if (mNama) mNama.focus(); return; }
+                    const q = parseFloat(qty);
+                    if (!qty || !(q >= 1)) { showModalErr('Qty wajib diisi dan minimal 1.'); if (mQty) mQty.focus(); return; }
+                    showModalErr('');
+                    const vals = { nama_produk: nama, qty: qty, satuan: satuan, hna: hna, diskon: diskon, nett: calcNett(qty, hna, diskon) };
+                    if (editingRow) fillRowValues(editingRow, vals);
+                    else addProductRow(vals);
                     calculateGrandTotal();
-                    checkRemoveButtons();
+                    saveFormToLocalStorage();
+                    updateEmpty();
+                    closeItemModal();
                 });
+            }
 
-                if (initialData) {
-                    row.querySelector('input[name="nama_produk[]"]').value = initialData.nama_produk || '';
-                    row.querySelector('.input-qty').value = initialData.qty || '';
-                    row.querySelector('input[name="satuan[]"]').value = initialData.satuan || '';
-                    row.querySelector('.input-hna-raw').value = initialData.hna || 0;
-                    row.querySelector('.input-hna-display').value = initialData.hna ? formatRupiah(initialData.hna) : '';
-                    row.querySelector('.input-diskon').value = initialData.diskon || '';
-                    calculateRow();
-                }
-                
-                checkRemoveButtons();
-            }
-            
-            function updateProductNumbers() {
-                const badges = container.querySelectorAll('.product-number-badge');
-                badges.forEach((badge, index) => {
-                    badge.textContent = 'Product #' + (index + 1);
-                });
-                productCounter = badges.length;
-            }
-            
-            function checkRemoveButtons() {
-                const removeBtns = container.querySelectorAll('.btn-remove-product');
-                if(removeBtns.length <= 1) {
-                    removeBtns.forEach(btn => btn.style.display = 'none');
-                } else {
-                    removeBtns.forEach(btn => btn.style.display = 'flex');
-                }
-            }
-            
-            if(addBtn && container) {
-                addBtn.addEventListener('click', () => addProductRow());
+            if (addBtn && container) {
+                addBtn.addEventListener('click', function () { openItemModal(); });
                 restoreFormFromLocalStorage();
             }
+
+            // Panel riwayat harga produk ke customer ini (di kanan popup item).
+            // Dipindah ke dalam container modal agar se-layer dengan popup (tidak tertutup blur)
+            // dan ikut terbawa saat modal dipindah ke body.
+            const histPanel = document.getElementById('sales-item-history');
+            const itemModalBox = document.getElementById('sales-item-modal');
+            if (itemModalBox && histPanel && histPanel.parentElement !== itemModalBox) itemModalBox.appendChild(histPanel);
+            const histBody = document.getElementById('price-history-body');
+            const histSub = document.getElementById('price-history-sub');
+            const histClose = document.getElementById('price-history-close');
+            const customerInput = form ? form.querySelector('input[name="nama_customer"]') : null;
+            const mNamaClear = document.getElementById('m-nama-clear');
+            let histTimer = null;
+            let histSeq = 0;
+
+            function syncNamaClear() { if (mNamaClear && mNama) mNamaClear.classList.toggle('hidden', !mNama.value); }
+            if (mNamaClear) mNamaClear.addEventListener('click', function () {
+                if (!mNama) return;
+                mNama.value = '';
+                mNama.focus();
+                syncNamaClear();
+                scheduleHistoryLoad();
+            });
+
+            function escHtml(s) { return String(s === undefined || s === null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+            function isItemModalOpen() { const m = document.getElementById('sales-item-modal'); return !!(m && !m.classList.contains('hidden')); }
+            function hideHistory() { if (histPanel) { histPanel.classList.add('hidden'); histPanel.removeAttribute('style'); } }
+            function currentCustomer() { return ((customerInput && customerInput.value) || '').trim(); }
+
+            function renderHistory(rows, product, customer) {
+                if (!histBody) return;
+                if (histSub) histSub.textContent = product + ' → ' + customer;
+                if (!rows || !rows.length) {
+                    histBody.innerHTML = '<div class="px-4 py-6 text-center"><i class="fas fa-receipt text-slate-200 text-2xl mb-2 block"></i><p class="text-[11px] font-bold text-slate-400">Belum ada riwayat harga<br>produk ini ke customer tersebut.</p></div>';
+                    return;
+                }
+                histBody.innerHTML = rows.map(function (r) {
+                    const disc = parseFloat(r.discount) || 0;
+                    return '<div class="px-4 py-2.5 flex items-center gap-3">' +
+                        '<div class="min-w-0 flex-1">' +
+                            '<div class="text-[11px] font-black text-slate-700">Rp ' + formatRupiah(r.base_price) + (disc > 0 ? ' <span class="text-amber-600 font-bold">-' + disc + '%</span>' : '') + '</div>' +
+                            '<div class="text-[10px] text-slate-400 font-semibold mt-0.5">' + escHtml(r.date) + ' · ' + escHtml(r.qty) + ' ' + escHtml(r.unit) + ' · Nett Rp ' + formatRupiah(r.net_price) + '</div>' +
+                        '</div>' +
+                        '<button type="button" data-hna="' + r.base_price + '" class="hist-use shrink-0 text-[10px] font-black text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2.5 py-1.5 transition-colors">Pakai</button>' +
+                    '</div>';
+                }).join('');
+            }
+
+            function loadHistory() {
+                const product = ((mNama && mNama.value) || '').trim();
+                const customer = currentCustomer();
+                if (!histPanel || !isItemModalOpen() || !product || !customer) { hideHistory(); return; }
+                histPanel.classList.remove('hidden');
+                alignHistory();
+                if (histSub) histSub.textContent = product + ' → ' + customer;
+                if (histBody) histBody.innerHTML = '<div class="px-4 py-6 text-center text-[11px] font-bold text-slate-400"><i class="fas fa-spinner fa-spin mr-1.5"></i>Memuat riwayat…</div>';
+                const seq = ++histSeq;
+                fetch('{{ route('sales.price_history') }}?customer=' + encodeURIComponent(customer) + '&product=' + encodeURIComponent(product) + '&limit=6')
+                    .then(function (res) { if (!res.ok) throw new Error('http ' + res.status); return res.json(); })
+                    .then(function (json) {
+                        if (seq !== histSeq) return;
+                        if (((mNama && mNama.value) || '').trim() !== product || currentCustomer() !== customer) return;
+                        renderHistory(json.data || [], product, customer);
+                    })
+                    .catch(function () {
+                        if (seq !== histSeq) return;
+                        if (histBody) histBody.innerHTML = '<div class="px-4 py-6 text-center text-[11px] font-bold text-rose-400">Gagal memuat riwayat.</div>';
+                    });
+            }
+
+            // Posisikan panel dari koordinat modal yang terukur (deterministik di semua layar).
+            // Desktop: melayang di kanan modal, sisi atas rata persis dengan kartu form.
+            // Mobile: ikut CSS bottom-sheet.
+            function alignHistory() {
+                if (!histPanel || !isItemModalOpen()) return;
+                histPanel.removeAttribute('style');
+                if (!window.matchMedia('(min-width: 1024px)').matches) return;
+                const panel = itemModalBox ? itemModalBox.querySelector('[data-ui-modal-panel]') : null;
+                if (!panel || !panel.getBoundingClientRect) return;
+                const r = panel.getBoundingClientRect();
+                const w = 336; // 21rem
+                let left = Math.round(r.right + 12);
+                if (left + w > window.innerWidth - 12) left = Math.max(12, window.innerWidth - w - 12);
+                histPanel.style.position = 'fixed';
+                histPanel.style.left = left + 'px';
+                histPanel.style.top = Math.round(r.top) + 'px';
+                histPanel.style.right = 'auto';
+                histPanel.style.bottom = 'auto';
+                histPanel.style.width = w + 'px';
+                histPanel.style.margin = '0';
+                histPanel.style.zIndex = '5';
+            }
+
+            function scheduleHistoryLoad() {
+                if (histTimer) clearTimeout(histTimer);
+                histTimer = setTimeout(loadHistory, 350);
+            }
+
+            if (mNama) mNama.addEventListener('input', scheduleHistoryLoad);
+            if (mNama) mNama.addEventListener('input', syncNamaClear);
+            if (customerInput) customerInput.addEventListener('input', function () { if (isItemModalOpen()) scheduleHistoryLoad(); });
+            if (histClose) histClose.addEventListener('click', hideHistory);
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideHistory(); });
+            window.addEventListener('resize', function () { if (histPanel && !histPanel.classList.contains('hidden')) alignHistory(); });
+            if (histBody) histBody.addEventListener('click', function (e) {
+                const btn = e.target && e.target.closest ? e.target.closest('.hist-use') : null;
+                if (!btn || !mHnaDisplay) return;
+                mHnaRaw.value = btn.getAttribute('data-hna') || '0';
+                mHnaDisplay.value = mHnaRaw.value !== '0' ? formatRupiah(mHnaRaw.value) : '';
+                refreshModalNett();
+                if (mQty) mQty.focus();
+            });
 
             if (form) {
                 form.addEventListener('input', function(e) {
@@ -879,8 +1201,20 @@
                         saveFormToLocalStorage();
                     }
                 });
-                form.addEventListener('submit', function() {
-                    localStorage.removeItem('manual_sales_draft');
+                form.addEventListener('submit', function(e) {
+                    if (container && container.querySelectorAll('.row-manual').length === 0) {
+                        e.preventDefault();
+                        alert('Belum ada produk — cari produk di atas, klik, isi detail di popup, lalu Simpan ke Tabel.');
+                        openItemModal();
+                        return false;
+                    }
+                    // Lanjut ke konfirmasi global; cegah submit ganda agar tidak duplikat.
+                    e.preventDefault();
+                    if (typeof confirmSubmit === 'function') {
+                        confirmSubmit({ preventDefault: function () {}, currentTarget: form, target: document.getElementById('submit-button') }, 'Save this sales data?');
+                    } else if (confirm('Save this sales data?')) {
+                        form.submit();
+                    }
                 });
             }
         });

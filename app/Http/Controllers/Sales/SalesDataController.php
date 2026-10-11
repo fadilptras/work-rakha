@@ -127,6 +127,39 @@ class SalesDataController extends BaseSalesController
         ]);
     }
 
+    /**
+     * Riwayat harga satu produk ke satu customer (transaksi terakhir).
+     * Dipakai popup input manual agar HNA yang diinput konsisten.
+     */
+    public function priceHistory(Request $request)
+    {
+        if (!$this->hasFullSalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Kelola Data Sales.');
+
+        $request->validate([
+            'customer' => 'required|string|max:255',
+            'product' => 'required|string|max:255',
+            'limit' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        $rows = Sales::where('customer_name', $request->customer)
+            ->where('product_name', $request->product)
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->limit($request->input('limit', 6))
+            ->get(['date', 'month', 'qty', 'unit', 'base_price', 'discount', 'net_price']);
+
+        return response()->json([
+            'data' => $rows->map(fn($r) => [
+                'date' => $r->date ? date('d M Y', strtotime($r->date)) : ($r->month ?? '-'),
+                'qty' => (float) $r->qty,
+                'unit' => $r->unit ?? '',
+                'base_price' => (float) $r->base_price,
+                'discount' => (float) $r->discount,
+                'net_price' => (float) $r->net_price,
+            ]),
+        ]);
+    }
+
     public function storeManual(Request $request)
     {
         $request->validate([
