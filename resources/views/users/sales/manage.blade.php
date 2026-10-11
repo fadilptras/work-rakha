@@ -129,7 +129,16 @@
 
         /* == Pola forecast murni: filter & thead NEMPEL MATI dengan card,
            tabel scroll di dalam box-nya sendiri — tidak ada elemen melayang == */
-        .manage-table-scroll { overflow: auto; max-height: 65vh; min-height: 280px; }
+        .manage-table-scroll { overflow: auto; max-height: 72vh; min-height: 380px; }
+
+        /* Loader infinite scroll: overlay melayang (tidak menambah tinggi tabel = tidak menggeser). */
+        #manage-table-scroll { position: relative; }
+        #scroll-loader { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 20; opacity: 0; visibility: hidden; transition: opacity .25s ease, visibility .25s; pointer-events: none; }
+        #scroll-loader.show { opacity: 1; visibility: visible; transform: translateX(-50%); }
+        #scroll-loader .pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(30, 41, 59, .92); color: #e2e8f0; font-size: 11px; font-weight: 700; padding: 8px 16px; border-radius: 9999px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); }
+        @keyframes rowIn { from { opacity: 0; } to { opacity: 1; } }
+        .row-appended { animation: rowIn .3s ease both; }
+        @media (prefers-reduced-motion: reduce) { .row-appended { animation: none; } #scroll-loader { transition: none; } }
         .manage-table-scroll table.manage-table { border-collapse: separate; border-spacing: 0; }
         .manage-table-scroll thead { background-color: #f8fafc; }
         .manage-table-scroll thead th {
@@ -268,7 +277,7 @@
                 </form>
                 </div>
 
-                <div class="flex-1 bg-white manage-table-scroll">
+                <div class="flex-1 bg-white manage-table-scroll" id="manage-table-scroll">
                         <table class="manage-table w-full text-sm text-left text-slate-600 bg-white">
                             <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
@@ -285,7 +294,7 @@
                                     <th class="px-4 py-4 text-center">Action</th>
                                 </tr>
                             </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody id="sales-table-body" data-last-page="{{ $sales->lastPage() }}" class="divide-y divide-slate-100">
                             @forelse($sales as $index => $item)
                             <tr class="hover:bg-indigo-50/50 transition-colors">
                                 <td class="px-4 py-3 text-center">
@@ -321,15 +330,13 @@
                             @endforelse
                         </tbody>
                     </table>
+                    <div id="scroll-loader" aria-hidden="true"><span class="pill"><i class="fas fa-spinner fa-spin"></i>Memuat baris berikutnya…</span></div>
                 </div>
 
-                <div class="px-6 py-4 border-t border-slate-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <button type="button" onclick="confirmBulkDelete()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow-sm hidden" id="btn-bulk-delete">
+                <div id="manage-table-footer" class="px-6 py-4 border-t border-slate-200 bg-white hidden">
+                    <button type="button" onclick="confirmBulkDelete()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow-sm" id="btn-bulk-delete">
                         <i class="fas fa-trash-alt mr-1"></i> Delete (<span id="selected-count">0</span>)
                     </button>
-                    @if($sales->hasPages())
-                    <div class="w-full sm:w-auto">{{ $sales->links() }}</div>
-                    @endif
                 </div>
             </x-ui.glass-card>
         </div>
@@ -665,6 +672,7 @@
                 formData: { id: '', tanggal: '', bulan: '', nama_customer: '', ps: '', nama_produk: '', qty: 0, satuan: '', hna: 0, diskon: 0, harga_nett: 0 },
                 
                 init() {
+                    window._manageAlpine = this;
                     this.$watch('activeTab', value => {
                         localStorage.setItem('sales_active_tab', value);
                     });
@@ -700,6 +708,16 @@
                     return new Intl.NumberFormat('id-ID').format(Math.round(number));
                 }
             }
+        }
+
+        // Dipakai tombol Ubah pada baris hasil infinite scroll (di luar jangkauan Alpine).
+        function openEditItem(btn) {
+            try {
+                const item = JSON.parse(btn.getAttribute('data-item') || '{}');
+                if (window._manageAlpine && typeof window._manageAlpine.openEditModal === 'function') {
+                    window._manageAlpine.openEditModal(item);
+                }
+            } catch (e) {}
         }
 
 
@@ -1219,14 +1237,116 @@
             }
         });
 
+        // Infinite scroll tabel kelola data: saat scroll mentok bawah, 30 baris
+        // berikutnya ditempel otomatis tanpa refresh (filter ikut query string).
+        document.addEventListener('DOMContentLoaded', function() {
+            const scrollBox = document.getElementById('manage-table-scroll');
+            const tbody = document.getElementById('sales-table-body');
+            const loader = document.getElementById('scroll-loader');
+            if (!scrollBox || !tbody) return;
+            const urlParams = new URLSearchParams(window.location.search);
+            let nextPage = (parseInt(urlParams.get('page') || '1', 10) || 1) + 1;
+            let lastPage = parseInt(tbody.dataset.lastPage || '1', 10);
+            let loading = false;
+            let tick = false;
+            let endShown = false;
+            const salesBaseUrl = "{{ url('sales') }}";
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+
+            function esc(s) { return String(s === undefined || s === null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+            function fmtRp(n) { return new Intl.NumberFormat('id-ID').format(Math.round(parseFloat(n) || 0)); }
+
+            function salesRowHtml(r) {
+                const itemJson = JSON.stringify(r.item || {}).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+                const d = parseFloat(r.discount) || 0;
+                return '<tr class="hover:bg-indigo-50/50 transition-colors row-appended">' +
+                    '<td class="px-4 py-3 text-center"><input type="checkbox" name="ids[]" value="' + r.id + '" class="row-checkbox rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer"></td>' +
+                    '<td class="px-4 py-3 text-center text-slate-400 font-medium">' + r.no + '</td>' +
+                    '<td class="px-4 py-3 whitespace-nowrap font-medium text-slate-700">' + esc(r.date) + '</td>' +
+                    '<td class="px-4 py-3 font-bold text-slate-900">' + esc(r.customer_name) + '</td>' +
+                    '<td class="px-4 py-3 text-center font-bold text-indigo-600">' + esc(r.ps) + '</td>' +
+                    '<td class="px-4 py-3"><div class="text-slate-800 font-medium">' + esc(r.product_name) + '</div>' +
+                        '<div class="text-xs text-slate-400 mt-0.5">HNA: Rp ' + fmtRp(r.base_price) + ' | Discount: ' + d + '%</div></td>' +
+                    '<td class="px-4 py-3 whitespace-nowrap"><span class="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">' + esc(String(r.qty)) + ' ' + esc(r.unit) + '</span></td>' +
+                    '<td class="px-4 py-3 text-right whitespace-nowrap font-bold text-emerald-700 bg-emerald-50/60 border-l border-emerald-100">Rp ' + fmtRp(r.net_price) + '</td>' +
+                    '<td class="px-4 py-3 text-center whitespace-nowrap"><div class="flex items-center justify-center gap-2">' +
+                        '<button type="button" title="Edit" data-item="' + itemJson + '" onclick="openEditItem(this)" class="ui-btn ui-btn--edit"><i class="fas fa-pen text-[11px]"></i></button>' +
+                        '<form action="' + salesBaseUrl + '/' + r.id + '" method="POST" id="form-delete-' + r.id + '" class="inline">' +
+                            '<input type="hidden" name="_token" value="' + csrfToken + '">' +
+                            '<input type="hidden" name="_method" value="DELETE">' +
+                            '<button type="button" title="Delete" onclick="confirmDelete(\'' + r.id + '\')" class="ui-btn ui-btn--delete"><i class="fas fa-trash-can text-[11px]"></i></button>' +
+                        '</form>' +
+                    '</div></td></tr>';
+            }
+
+            function fetchNext() {
+                if (loading || nextPage > lastPage) return;
+                const oldRetry = document.getElementById('scroll-retry');
+                if (oldRetry) oldRetry.remove();
+                // Browser tanpa fetch: tampilkan tombol muat manual (pindah halaman penuh).
+                if (typeof fetch !== 'function') {
+                    if (!document.getElementById('scroll-fallback')) {
+                        const fp = new URLSearchParams(window.location.search);
+                        fp.set('page', nextPage);
+                        tbody.insertAdjacentHTML('beforeend', '<tr id="scroll-fallback"><td colspan="9" class="px-4 py-4 text-center"><a href="' + window.location.pathname + '?' + fp.toString() + '" class="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-4 py-2 transition-colors">Tampilkan 30 berikutnya</a></td></tr>');
+                    }
+                    return;
+                }
+                loading = true;
+                if (loader) loader.classList.add('show');
+                const params = new URLSearchParams(window.location.search);
+                params.set('page', nextPage);
+                const ctrl = ('AbortController' in window) ? new AbortController() : null;
+                const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 20000) : null;
+                const fetchOpts = { headers: { 'X-Requested-With': 'XMLHttpRequest' } };
+                if (ctrl) fetchOpts.signal = ctrl.signal;
+                fetch('{{ route('sales.table_data') }}?' + params.toString(), fetchOpts)
+                    .then(function (res) { if (!res.ok) throw new Error('http ' + res.status); return res.json(); })
+                    .then(function (json) {
+                        if (timer) clearTimeout(timer);
+                        if (loader) loader.classList.remove('show');
+                        loading = false;
+                        (json.rows || []).forEach(function (r) { tbody.insertAdjacentHTML('beforeend', salesRowHtml(r)); });
+                        nextPage = (json.current_page || nextPage) + 1;
+                        lastPage = json.last_page || lastPage;
+                        if (nextPage > lastPage && !endShown && (json.rows || []).length) {
+                            endShown = true;
+                            tbody.insertAdjacentHTML('beforeend', '<tr><td colspan="9" class="px-4 py-3 text-center text-[11px] font-bold text-slate-300">— Semua data sudah tampil —</td></tr>');
+                        }
+                    }, function () {
+                        if (timer) clearTimeout(timer);
+                        if (loader) loader.classList.remove('show');
+                        loading = false;
+                        if (!document.getElementById('scroll-retry')) {
+                            tbody.insertAdjacentHTML('beforeend', '<tr id="scroll-retry"><td colspan="9" class="px-4 py-4 text-center"><button type="button" onclick="retrySalesScroll()" class="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-4 py-2 transition-colors"><i class="fas fa-rotate-right mr-1.5"></i>Gagal memuat — coba lagi</button></td></tr>');
+                        }
+                    });
+            }
+
+            window.retrySalesScroll = function () {
+                const r = document.getElementById('scroll-retry');
+                if (r) r.remove();
+                fetchNext();
+            };
+
+            scrollBox.addEventListener('scroll', function () {
+                if (tick) return;
+                tick = true;
+                requestAnimationFrame(function () {
+                    tick = false;
+                    if (scrollBox.scrollTop + scrollBox.clientHeight >= scrollBox.scrollHeight - 320) fetchNext();
+                });
+            });
+        });
+
         // Bulk Delete Logic
         document.addEventListener('DOMContentLoaded', function() {
             const checkAll = document.getElementById('check-all');
-            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
             const btnBulkDelete = document.getElementById('btn-bulk-delete');
             const selectedCount = document.getElementById('selected-count');
 
             function updateBulkDeleteButton() {
+                const boxes = document.querySelectorAll('.row-checkbox');
                 const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
                 if (btnBulkDelete && selectedCount) {
                     if (checkedCount > 0) {
@@ -1236,28 +1356,32 @@
                         btnBulkDelete.classList.add('hidden');
                     }
                 }
-                
-                if (checkAll && rowCheckboxes.length > 0) {
-                    checkAll.checked = checkedCount === rowCheckboxes.length;
+                const footer = document.getElementById('manage-table-footer');
+                if (footer) footer.classList.toggle('hidden', checkedCount === 0);
+
+                if (checkAll) {
+                    checkAll.checked = boxes.length > 0 && checkedCount === boxes.length;
                 }
             }
 
             if (checkAll) {
                 checkAll.addEventListener('change', function() {
-                    rowCheckboxes.forEach(cb => {
+                    document.querySelectorAll('.row-checkbox').forEach(cb => {
                         cb.checked = this.checked;
                     });
                     updateBulkDeleteButton();
                 });
             }
 
-            rowCheckboxes.forEach(cb => {
-                cb.addEventListener('change', function() {
-                    const allChecked = document.querySelectorAll('.row-checkbox:checked').length === rowCheckboxes.length;
-                    if (checkAll) checkAll.checked = allChecked;
-                    updateBulkDeleteButton();
+            const salesTbody = document.getElementById('sales-table-body');
+            if (salesTbody) {
+                salesTbody.addEventListener('change', function (e) {
+                    if (e.target && e.target.classList && e.target.classList.contains('row-checkbox')) {
+                        updateBulkDeleteButton();
+                    }
                 });
-            });
+            }
+            updateBulkDeleteButton();
         });
 
         function confirmBulkDelete() {

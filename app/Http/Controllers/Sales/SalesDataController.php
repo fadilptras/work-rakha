@@ -15,59 +15,7 @@ class SalesDataController extends BaseSalesController
     public function manage(Request $request)
     {
         if (!$this->hasFullSalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Kelola Data Sales.');
-        $query = Sales::query();
-
-        // pencarian (search)
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('customer_name', 'like', "%{$search}%")
-                    ->orWhere('product_name', 'like', "%{$search}%")
-                    ->orWhere('ps', 'like', "%{$search}%");
-            });
-        }
-
-        // filter tanggal
-        if ($request->filled('tanggal')) {
-            $query->whereDate('date', $request->input('tanggal'));
-        }
-
-        // filter bulan
-        if ($request->filled('bulan')) {
-            $query->where('month', $request->input('bulan'));
-        }
-
-        // filter tahun
-        if ($request->filled('tahun')) {
-            $query->whereYear('date', $request->input('tahun'));
-        }
-
-        // filter customer
-        if ($request->filled('nama_customer')) {
-            $query->where('customer_name', 'like', '%' . $request->input('nama_customer') . '%');
-        }
-
-        // filter produk
-        if ($request->filled('nama_produk')) {
-            $query->where('product_name', 'like', '%' . $request->input('nama_produk') . '%');
-        }
-
-        // filter ps
-        if ($request->filled('ps')) {
-            $query->where('ps', $request->input('ps'));
-        }
-
-        $sort = $request->input('sort', 'terbaru');
-        if ($sort === 'terlama') {
-            $query->orderBy('date', 'asc')->orderBy('created_at', 'asc');
-        } elseif ($sort === 'tertinggi') {
-            $query->orderBy('net_price', 'desc')->orderBy('created_at', 'desc');
-        } elseif ($sort === 'terendah') {
-            $query->orderBy('net_price', 'asc')->orderBy('created_at', 'asc');
-        } else {
-            // Default: terbaru — sort by tanggal desc, lalu created_at desc (waktu pembuatan)
-            $query->orderBy('date', 'desc')->orderBy('created_at', 'desc');
-        }
+        $query = $this->filteredQuery($request);
 
         $sales = $query->paginate(30)->withQueryString();
 
@@ -124,6 +72,99 @@ class SalesDataController extends BaseSalesController
             'listPs' => $listPs,
             'listSatuan' => $listSatuan,
             'listUserPs' => $listUserPs,
+        ]);
+    }
+
+    /**
+     * Query dasar tabel kelola data: filter + sort yang sama dipakai
+     * halaman manage (server-render) dan endpoint tableData (infinite scroll).
+     */
+    protected function filteredQuery(Request $request)
+    {
+        $query = Sales::query();
+
+        // pencarian (search)
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('customer_name', 'like', "%{$search}%")
+                    ->orWhere('product_name', 'like', "%{$search}%")
+                    ->orWhere('ps', 'like', "%{$search}%");
+            });
+        }
+
+        // filter tanggal
+        if ($request->filled('tanggal')) {
+            $query->whereDate('date', $request->input('tanggal'));
+        }
+
+        // filter bulan
+        if ($request->filled('bulan')) {
+            $query->where('month', $request->input('bulan'));
+        }
+
+        // filter tahun
+        if ($request->filled('tahun')) {
+            $query->whereYear('date', $request->input('tahun'));
+        }
+
+        // filter customer
+        if ($request->filled('nama_customer')) {
+            $query->where('customer_name', 'like', '%' . $request->input('nama_customer') . '%');
+        }
+
+        // filter produk
+        if ($request->filled('nama_produk')) {
+            $query->where('product_name', 'like', '%' . $request->input('nama_produk') . '%');
+        }
+
+        // filter ps
+        if ($request->filled('ps')) {
+            $query->where('ps', $request->input('ps'));
+        }
+
+        $sort = $request->input('sort', 'terbaru');
+        if ($sort === 'terlama') {
+            $query->orderBy('date', 'asc')->orderBy('created_at', 'asc');
+        } elseif ($sort === 'tertinggi') {
+            $query->orderBy('net_price', 'desc')->orderBy('created_at', 'desc');
+        } elseif ($sort === 'terendah') {
+            $query->orderBy('net_price', 'asc')->orderBy('created_at', 'asc');
+        } else {
+            // Default: terbaru — sort by tanggal desc, lalu created_at desc (waktu pembuatan)
+            $query->orderBy('date', 'desc')->orderBy('created_at', 'desc');
+        }
+
+        return $query;
+    }
+
+    /**
+     * Baris tabel kelola data untuk infinite scroll (JSON, 30 baris per halaman).
+     */
+    public function tableData(Request $request)
+    {
+        if (!$this->hasFullSalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Kelola Data Sales.');
+
+        $sales = $this->filteredQuery($request)->paginate(30);
+
+        return response()->json([
+            'rows' => $sales->getCollection()->values()->map(fn($item, $i) => [
+                'id' => $item->id,
+                'no' => $sales->firstItem() + $i,
+                'date' => $item->date ? \Carbon\Carbon::parse($item->date)->format('d/m/Y') : '-',
+                'customer_name' => $item->customer_name ?? '-',
+                'ps' => $item->ps ?? '-',
+                'product_name' => $item->product_name ?? '-',
+                'base_price' => (float) ($item->base_price ?? 0),
+                'discount' => (float) ($item->discount ?? 0),
+                'qty' => $item->qty ?? 0,
+                'unit' => $item->unit ?? '',
+                'net_price' => (float) ($item->net_price ?? 0),
+                'item' => $item->only(['id', 'date', 'month', 'customer_name', 'ps', 'product_name', 'qty', 'unit', 'base_price', 'discount', 'net_price']),
+            ]),
+            'current_page' => $sales->currentPage(),
+            'last_page' => $sales->lastPage(),
+            'total' => $sales->total(),
         ]);
     }
 
