@@ -23,19 +23,23 @@ class Product extends Model
         'fill_unit',
         'stock',
         'stock_po',
+        'min_stock',
+        'reorder_qty',
         'is_deleted',
     ];
 
     protected $casts = [
         'stock' => 'integer',
         'stock_po' => 'integer',
+        'min_stock' => 'decimal:2',
+        'reorder_qty' => 'decimal:2',
         'pcs_per_unit' => 'integer',
         'is_deleted' => 'boolean',
     ];
 
     /**
-     * Build a normalized match_key from a product name.
-     * Lowercase, strip all non-alphanumeric, collapse.
+     * Buat match_key ternormalisasi dari nama produk.
+     * Huruf kecil dan hanya alfanumerik.
      */
     public static function buildMatchKey(?string $name): string
     {
@@ -45,18 +49,10 @@ class Product extends Model
         return $key;
     }
 
-    /* ============================================================
-     * Soft Delete (is_deleted flag) — lihat trait SoftDeletesFlag.
-     *
-     * products memakai soft-delete: saat barangs dihapus, produk
-     * terkait tidak ikut hilang melainkan ditandai is_deleted = 1
-     * supaya rekap data tetap utuh. Pendaftaran ulang dengan kode
-     * yang sama mengaktifkan kembali tombstone via restore().
-     * ============================================================ */
-
     /**
-     * Kolom kurasi yang di-reset saat restore, supaya produk kembali
-     * antre untuk dikurasi ulang di halaman Aturan Produk.
+     * Kolom kurasi yang di-reset saat restore.
+     * Produk memakai soft-delete (is_deleted), jadi restore
+     * mengembalikan produk agar antre kurasi ulang di Aturan Produk.
      */
     protected function restoreResets(): array
     {
@@ -69,8 +65,8 @@ class Product extends Model
     }
 
     /**
-     * Isi per satuan jual yang dipakai untuk konversi stok.
-     * = pcs_per_unit bila diisi (>1), selain itu 1.
+     * Isi per satuan jual untuk konversi stok.
+     * Mengembalikan pcs_per_unit jika >= 1, selain itu 1.
      */
     public function packQty(): int
     {
@@ -80,8 +76,8 @@ class Product extends Model
     }
 
     /**
-     * Display quantity with pack detail.
-     * Example: 300 pcs → "3 Polybag (300 pcs)"
+     * Format stok dengan detail kemasan.
+     * Contoh: 300 pcs -> "3 Polybag (300 pcs)".
      */
     public function formatStock(): string
     {
@@ -102,5 +98,20 @@ class Product extends Model
         }
 
         return "{$packQty} {$unit} ({$stock} {$fillUnit})";
+    }
+
+    public function batches(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductBatch::class);
+    }
+
+    public function moves(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StockMove::class);
+    }
+
+    public function reorderingRule(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ReorderingRule::class);
     }
 }

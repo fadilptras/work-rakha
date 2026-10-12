@@ -5,29 +5,19 @@ namespace App\Support;
 use App\Models\ProductPackaging;
 
 /**
- * Aturan "packaging" / satuan jual produk — satu sumber kebenaran.
- *
- * Sumber data: tabel `product_packaging` (master satuan, data-driven).
- * Menambah/mengubah satuan = insert/update row di tabel, tanpa ubah kode.
- *
- * Tipe satuan:
- *  - single : satuan tunggal (Pcs/Roll/Botol) -> isi otomatis 1, tidak bisa diisi
- *  - flex   : isi bebas (Pack/Box) -> boleh diisi
- *  - fixed  : wajib isi (Polybag/Bag/Pouches/Karton)
+ * Aturan packaging produk (sumber: tabel product_packaging).
+ * Ubah satuan via DB, tanpa ubah kode.
+ * Tipe: single (isi 1), fixed (wajib isi), flex (boleh isi).
  */
 class PackagingCatalog
 {
-    /** Preset cepat isi per satuan (UI; global, bukan per-packaging). */
+    /** Preset isi cepat untuk UI. */
     public const PRESETS = [1, 10, 100, 1000];
 
-    /** Cache dalam satu request (tabel master kecil, cukup di-muat sekali). */
+    /** Cache request (master kecil, muat sekali). */
     private static ?array $entries = null;
 
-    /**
-     * Semua packaging aktif sebagai array:
-     * ['polybag' => ['type' => 'fixed', 'units' => ['Pcs']], ...]
-     * key dinormalisasi lowercase, nilai siap JSON untuk Alpine.
-     */
+    /** Semua packaging aktif (key lowercase, siap JSON). */
     public static function catalog(): array
     {
         $catalog = [];
@@ -42,7 +32,7 @@ class PackagingCatalog
         return $catalog;
     }
 
-    /** Daftar satuan yang disarankan (packaging aktif, urutan insert). */
+    /** Daftar nama packaging aktif. */
     public static function suggestions(): array
     {
         return array_map(fn ($e) => $e->packaging, self::entries());
@@ -53,10 +43,7 @@ class PackagingCatalog
         return static::PRESETS;
     }
 
-    /**
-     * Metadata satuan (dari tabel product_packaging).
-     * Satuan tak dikenal dianggap 'flex' dengan isi 'Pcs' (perilaku default).
-     */
+    /** Meta satuan; tak dikenal = flex + Pcs. */
     public static function metaFor(string $unit): array
     {
         $key = ProductPackaging::normalize($unit);
@@ -79,22 +66,19 @@ class PackagingCatalog
         return static::typeFor($unit) === 'single';
     }
 
-    /** Satuan fixed (polybag/bag/pouches/karton) wajib punya isi. */
+    /** Satuan fixed wajib isi. */
     public static function needsContent(string $unit): bool
     {
         return static::typeFor($unit) === 'fixed';
     }
 
-    /** Bisakah diisi? Gunakan untuk memutuskan apakah input isi perlu ditampilkan. */
+    /** True bila input isi perlu ditampilkan. */
     public static function canFill(string $unit): bool
     {
         return !static::isSingle($unit);
     }
 
-    /**
-     * pack_qty / pcs_per_unit.
-     * = isi (>=1) jika satuan bisa diisi, selain itu 1.
-     */
+    /** Isi per kemasan; 1 bila single / kosong. */
     public static function resolvePackQty(?string $unit, ?int $pcsPerUnit): int
     {
         $isi = (int) ($pcsPerUnit ?? 0);
@@ -103,10 +87,7 @@ class PackagingCatalog
         return ($canFill && $isi >= 1) ? $isi : 1;
     }
 
-    /**
-     * Format tampilan packaging yang disimpan.
-     * Contoh: 'General', 'Roll', 'Polybag/ 100 Pcs', 'Box/ 50 Pasang'.
-     */
+    /** Teks tampil: 'Polybag/ 100 Pcs'. */
     public static function packagingPreview(?string $unit, ?int $pcsPerUnit, ?string $fillUnit): string
     {
         $pkg = trim((string) $unit);
@@ -124,10 +105,7 @@ class PackagingCatalog
         return "{$pkg}/ {$isi} {$fill}";
     }
 
-    /**
-     * Parsing balik string packaging jadi komponen.
-     * Contoh: 'Polybag/ 100 Pcs' -> {unit, pcs_per_unit, fill_unit}.
-     */
+    /** Parse 'Polybag/ 100 Pcs' -> unit, pcs, fill. */
     public static function parse(?string $presentation): array
     {
         if ($presentation === null || trim($presentation) === '') {
@@ -151,9 +129,7 @@ class PackagingCatalog
         return ['unit' => $unit, 'pcs_per_unit' => null, 'fill_unit' => 'Pcs'];
     }
 
-    /**
-     * Data siap JSON untuk Alpine (dipakai view form Aturan Produk & pricing).
-     */
+    /** Data JSON untuk Alpine. */
     public static function toArray(): array
     {
         return [
@@ -163,7 +139,7 @@ class PackagingCatalog
         ];
     }
 
-    /** Reset cache dalam request (dipakai test/seed). */
+    /** Reset cache (test/seed). */
     public static function flush(): void
     {
         self::$entries = null;

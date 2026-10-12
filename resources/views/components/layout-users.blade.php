@@ -1,3 +1,4 @@
+@props(['title' => 'Dashboard', 'fluid' => false])
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -44,21 +45,28 @@
         </div>
         <div class="flex-grow overflow-y-auto">
             <nav class="p-4 pt-6">
+                @php($isSuperUser = Auth::check() && \App\Models\User::isSuperUserEmail(Auth::user()->email ?? ''))
                 <ul class="space-y-4">
                     <li><a href="{{ route('dashboard') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Dashboard"><i class="fas fa-th-large text-xl"></i></a></li>
                     <li><a href="{{ route('pengajuan_dana.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Pengajuan Dana"><i class="fas fa-coins text-xl"></i></a></li>
+                    {{-- Form SPB untuk role gudang masuk lewat Warehouse Dashboard, jadi ikon sidebar disembunyikan khusus mereka (kecuali superuser test) --}}
+                    @unless(!$isSuperUser && Auth::check() && (
+                        in_array(strtolower(Auth::user()->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang']) ||
+                        \Illuminate\Support\Str::contains(strtolower(Auth::user()->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing'])
+                    ))
                     <li><a href="{{ route('pengajuan_barang.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Pengajuan Barang"><i class="fas fa-box-open text-xl"></i></a></li>
+                    @endunless
                     
-                    {{-- Pengecekan Akses Marketing / Top Management --}}
-                    @if(Auth::check() && (in_array(strtolower(Auth::user()->divisi ?? ''), ['marketing dan operasional', 'top management']) || \Illuminate\Support\Str::contains(strtolower(Auth::user()->jabatan ?? ''), 'direktur')))
+                    {{-- Pengecekan Akses Marketing / Top Management (superuser selalu lolos) --}}
+                    @if($isSuperUser || (Auth::check() && (in_array(strtolower(Auth::user()->divisi ?? ''), ['marketing dan operasional', 'top management']) || \Illuminate\Support\Str::contains(strtolower(Auth::user()->jabatan ?? ''), 'direktur'))))
                         <li><a href="{{ route('crm.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="CRM"><i class="fas fa-users text-xl"></i></a></li>
                         <li><a href="{{ route('sales.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Sales Command Center"><i class="fa-solid fa-chart-simple text-xl"></i></a></li>
                     @endif
-                    @if(Auth::check() && (
+                    @if($isSuperUser || (Auth::check() && (
                         in_array(strtolower(Auth::user()->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang']) || 
                         \Illuminate\Support\Str::contains(strtolower(Auth::user()->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing'])
-                    ))
-                        <li><a href="{{ route('sales.gudang.dashboard') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Dashboard Gudang"><i class="fas fa-warehouse text-xl"></i></a></li>
+                    )))
+                        <li><a href="{{ route('warehouse.dashboard') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="Dashboard Gudang"><i class="fas fa-warehouse text-xl"></i></a></li>
                     @endif
                     
                     <li><a href="{{ route('kpi.index') }}" class="flex items-center justify-center p-3 rounded-lg hover:bg-blue-700/50" title="KPI"><i class="fas fa-chart-line text-xl"></i></a></li>
@@ -75,7 +83,7 @@
         </div>
     </div>
 
-    <div class="flex-1 flex flex-col min-h-screen relative m-0 p-0">
+    <div class="{{ $fluid ? 'flex flex-col w-full relative m-0 p-0' : 'flex-1 flex flex-col min-h-screen relative m-0 p-0' }}">
         {{-- Navbar --}}
         <header class="bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg sticky top-0 z-20 text-white shrink-0 m-0">
             <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -180,6 +188,38 @@
                 }
             });
         }
+    </script>
+    {{-- Tombol X untuk input ketikan (opt-in: tambah data-clearable pada form) --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('form[data-clearable] input[type="text"]').forEach(function (input) {
+                if (input.dataset.clearReady) return;
+                input.dataset.clearReady = '1';
+                var wrap = document.createElement('span');
+                wrap.style.cssText = 'position:relative;display:block;';
+                input.parentNode.insertBefore(wrap, input);
+                wrap.appendChild(input);
+                input.style.paddingRight = '28px';
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.title = 'Hapus';
+                btn.setAttribute('aria-label', 'Hapus isian');
+                btn.innerHTML = '<i class="fas fa-times-circle"></i>';
+                btn.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);display:none;align-items:center;color:#1d4ed8;font-size:11px;padding:2px;background:transparent;border:none;cursor:pointer;';
+                function sync() { btn.style.display = input.value ? 'flex' : 'none'; }
+                btn.addEventListener('click', function () {
+                    input.value = '';
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    if (window.Alpine && input.hasAttribute('x-model')) { try { Alpine.evaluate(input.closest('[x-data]'), input.getAttribute('x-model') + " = ''"); } catch (e) {} }
+                    input.focus();
+                    sync();
+                });
+                input.addEventListener('input', sync);
+                wrap.appendChild(btn);
+                sync();
+            });
+        });
     </script>
 </body>
 </html>

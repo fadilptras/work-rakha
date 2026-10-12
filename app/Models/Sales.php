@@ -8,6 +8,7 @@ class Sales extends Model
     protected $table = 'sales';
     protected $fillable = [
         'date',
+        'customer_id',
         'customer_name',
         'product_name',
         'qty',
@@ -18,4 +19,9 @@ class Sales extends Model
         'month',
         'ps',
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }

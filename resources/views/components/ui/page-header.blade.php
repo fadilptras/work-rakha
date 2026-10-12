@@ -1,5 +1,5 @@
-@props(['title' => '', 'subtitle' => '', 'icon' => null])
-<div {{ $attributes->merge(['class' => 'ui-page-header']) }}>
+@props(['title' => '', 'subtitle' => '', 'icon' => null, 'sticky' => true])
+<div {{ $attributes->merge(['class' => 'ui-page-header']) }}@if(!$sticky) style="position:static"@endif>
   <div class="relative z-10 flex items-center gap-4 min-w-0">
     @if($icon)
       <div class="hidden md:flex w-11 h-11 rounded-xl bg-white/20 items-center justify-center text-white text-base shrink-0 shadow-inner">

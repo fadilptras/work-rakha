@@ -107,6 +107,24 @@ class User extends Authenticatable
             'tanggal_lahir'     => 'date:Y-m-d',
         ];
     }
+
+    /**
+     * Superuser testing: lolos semua guard sidebar + controller sisi user.
+     * Ditentukan by email agar tetap lolos walau divisi/jabatan diganti.
+     */
+    public const SUPERUSER_EMAILS = [
+        'test@gmail.com',
+    ];
+
+    public function isSuperUser(): bool
+    {
+        return in_array(strtolower(trim($this->email ?? '')), self::SUPERUSER_EMAILS, true);
+    }
+
+    public static function isSuperUserEmail(?string $email): bool
+    {
+        return in_array(strtolower(trim($email ?? '')), self::SUPERUSER_EMAILS, true);
+    }
     
     public function approverDana1(): BelongsTo
     {

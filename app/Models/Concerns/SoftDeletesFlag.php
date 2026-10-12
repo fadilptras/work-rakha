@@ -16,13 +16,13 @@ trait SoftDeletesFlag
     /** Scope: hanya baris aktif (belum di-soft-delete). */
     public function scopeActive($query)
     {
-        return $query->where('is_deleted', 0);
+        return $query->where($query->getModel()->getTable() . '.is_deleted', 0);
     }
 
     /** Scope: hanya baris yang sudah di-soft-delete (tombstone). */
     public function scopeTrashed($query)
     {
-        return $query->where('is_deleted', 1);
+        return $query->where($query->getModel()->getTable() . '.is_deleted', 1);
     }
 
     /** Apakah baris sedang dalam status dihapus? */

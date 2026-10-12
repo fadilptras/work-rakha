@@ -6,16 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Master aturan packaging — satu sumber kebenaran aturan packaging.
- *
- * Hanya `packaging` (nama kemasan) + `pack` (daftar satuan isi) yang diisi
- * user. `type` dihitung otomatis dari jumlah isi pack:
- *  - pack kosong []          -> 'single' (isi otomatis 1)
- *  - pack 1 item ["Pcs"]     -> 'fixed'  (wajib pilih satuan isi)
- *  - pack 2+ item             -> 'flex'   (bisa pilih salah satu)
- *
- * Penghapusan bersifat permanen (hard delete).
- * Soft delete (is_deleted) tidak dipakai di tabel master ini, hanya di tabel products.
+ * Master aturan packaging.
+ * User isi `packaging` + `pack`; `type` dihitung otomatis:
+ * [] -> single, 1 item -> fixed, 2+ -> flex.
+ * Hapus permanen (tanpa soft-delete).
  */
 class ProductPackaging extends Model
 {
@@ -37,7 +31,7 @@ class ProductPackaging extends Model
     public const TYPE_FIXED = 'fixed';
     public const TYPE_FLEX = 'flex';
 
-    /** Hitung type berdasarkan jumlah satuan isi (pack). */
+    /** Hitung type dari jumlah isi pack. */
     public static function typeFromPack(array $pack): string
     {
         $count = count(array_values(array_filter($pack, fn ($u) => trim((string) $u) !== '')));
@@ -52,7 +46,7 @@ class ProductPackaging extends Model
         return static::TYPE_FLEX;
     }
 
-    /** Kunci lookup normal (lowercase+trim) supaya "Polybag" == "polybag". */
+    /** Normalisasi kunci: lowercase + trim. */
     public static function normalize(?string $value): string
     {
         return strtolower(trim((string) $value));
