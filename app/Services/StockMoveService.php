@@ -54,10 +54,13 @@ class StockMoveService
                 'user_id' => $user?->id,
             ]);
 
-            // Backdate: tempel ke created_at agar urutan kartu ikut tanggal tsb.
+            // Backdate created_at (update() tak mempan: tak fillable + auto-touch).
             if (! empty($data['occurred_at'])) {
                 $when = \Carbon\Carbon::parse($data['occurred_at'])->setTimeFrom(now());
-                $move->update(['created_at' => $when, 'updated_at' => $when]);
+                $move->timestamps = false;
+                $move->created_at = $when;
+                $move->updated_at = $when;
+                $move->save();
             }
 
             return $move;

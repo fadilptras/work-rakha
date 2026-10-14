@@ -312,6 +312,10 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
 
         Route::controller(WsStockOpnameController::class)->group(function () {
             Route::get('/opname', 'opnameIndex')->name('stockopname.index');
+            Route::get('/opname/catat', 'catatIndex')->name('stockopname.catat');
+            Route::get('/opname/draf', 'draftList')->name('stockopname.drafts');
+            Route::get('/opname/cetak-bulan', 'opnamePrintBulan')->name('stockopname.print-bulan');
+            Route::post('/opname/selesai', 'opnameFinish')->name('stockopname.finish');
             Route::get('/opname/{move}/cetak', 'opnamePrint')->name('stockopname.print')->whereNumber('move');
             Route::post('/inventory/opname', 'opnameStore')->name('stockopname.store');
             Route::post('/inventory/scrap', 'scrapStore')->name('stockopname.scrap');
@@ -326,6 +330,22 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
             Route::put('/inventory/products/{product}/min-stock', 'minStockUpdate')->name('inventory.min-stock.update');
             Route::post('/inventory/rules', 'rulesStore')->name('inventory.rules.store');
             Route::post('/inventory/draft-order', 'draftOrder')->name('inventory.draft-order');
+        });
+
+        // Alias lawas: halaman monitoring stok pernah diakses via warehouse.*.
+        // Diarahkan ke controller yang sama agar route('warehouse.monitoring.*')
+        // tidak RouteNotFoundException.
+        Route::controller(MonitoringStockController::class)->prefix('monitoring')->name('monitoring.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/history', 'historyIndex')->name('history');
+            Route::post('/update-bulk', 'updateBulk')->name('update_bulk');
+            Route::post('/parse-import', 'parseImport')->name('parse_import');
+            Route::post('/save-import', 'saveImport')->name('save_import');
+            Route::post('/add-barang', 'addBarang')->name('add_barang');
+            Route::get('/export', 'exportExcel')->name('export');
+            Route::get('/template', 'downloadTemplate')->name('template');
+            Route::post('/undo/{log}', 'undo')->name('undo');
+            Route::get('/log/{log}/details', 'logDetails')->name('log_details');
         });
     });
 

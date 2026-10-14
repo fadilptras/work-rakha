@@ -60,6 +60,19 @@ class DocumentNumberService
         );
     }
 
+    /** Nomor SOP opname ala Accurate: SOP/MM/YY/NNNNN (counter global berlanjut). */
+    public function formatSop(int $sequence, ?\DateTimeInterface $date = null): string
+    {
+        $date = $date ?? now();
+
+        return sprintf(
+            'SOP/%s/%s/%05d',
+            $date->format('m'),
+            $date->format('y'),
+            $sequence
+        );
+    }
+
     /** Nomor berikutnya tanpa commit — untuk preview form. */
     public function previewNext(string $type): string
     {

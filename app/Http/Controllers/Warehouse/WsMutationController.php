@@ -343,6 +343,10 @@ class WsMutationController extends WsBaseController
         if (!$this->canManageStock()) {
             abort(403, 'Hanya pengelola stok yang bisa edit pencatatan.');
         }
+        // Baris opname utuh milik alur Opname (koreksi via Catat → Selesaikan).
+        if (str_starts_with((string) $move->reason, 'Opname:')) {
+            return back()->with('error', 'Baris opname hanya bisa dikoreksi lewat halaman Catat Opname.');
+        }
         if ($move->status !== StockMove::STATUS_DONE) {
             return back()->with('error', 'Hanya baris berstatus selesai yang bisa diedit.');
         }
@@ -438,7 +442,10 @@ class WsMutationController extends WsBaseController
                 return "Baris #{$move->id} dikoreksi via reversal + mutasi baru #{$baru->id}.";
             });
         } catch (\Throwable $e) {
-            return back()->with('error', $e->getMessage())->withInput();
+            report($e);
+            $errMsg = $e instanceof \InvalidArgumentException ? $e->getMessage() : 'Terjadi kesalahan sistem. Coba lagi atau hubungi admin.';
+
+            return back()->with('error', $errMsg)->withInput();
         }
 
         return back()->with('success', $msg);
@@ -471,6 +478,14 @@ class WsMutationController extends WsBaseController
         if (!$this->canManageStock()) {
             abort(403, 'Hanya pengelola stok yang bisa hapus pencatatan.');
         }
+        // Baris opname utuh milik alur Opname (koreksi via Catat → Selesaikan).
+        if (str_starts_with((string) $move->reason, 'Opname:')) {
+            return back()->with('error', 'Baris opname hanya bisa dikoreksi lewat halaman Catat Opname.');
+        }
+        // Idempoten: baris yang sudah dibatalkan tidak bisa dibatalkan lagi.
+        if (str_contains((string) $move->reason, '[dibatalkan]')) {
+            return back()->with('error', "Baris #{$move->id} sudah dibatalkan sebelumnya.");
+        }
         if ($move->status !== StockMove::STATUS_DONE) {
             return back()->with('error', 'Hanya baris berstatus selesai yang bisa dihapus.');
         }
@@ -483,7 +498,10 @@ class WsMutationController extends WsBaseController
             }
             $msg = "Baris #{$move->id} dibatalkan via reversal #{$lawan->id}. Stok dikembalikan.";
         } catch (\Throwable $e) {
-            return back()->with('error', $e->getMessage());
+            report($e);
+            $errMsg = $e instanceof \InvalidArgumentException ? $e->getMessage() : 'Terjadi kesalahan sistem. Coba lagi atau hubungi admin.';
+
+            return back()->with('error', $errMsg);
         }
 
         return back()->with('success', $msg);
@@ -510,6 +528,14 @@ class WsMutationController extends WsBaseController
                 $failures[] = "#{$id}: sudah bukan status selesai.";
                 continue;
             }
+            if (str_starts_with((string) $move->reason, 'Opname:')) {
+                $failures[] = "#{$id}: baris opname hanya bisa dikoreksi lewat halaman Catat Opname.";
+                continue;
+            }
+            if (str_contains((string) $move->reason, '[dibatalkan]')) {
+                $failures[] = "#{$id}: sudah dibatalkan sebelumnya.";
+                continue;
+            }
             try {
                 $lawan = $svc->reverseMove($move, Auth::user(), "Hapus pencatatan #{$move->id} ({$move->reason})");
                 if (!str_contains((string) $move->reason, '[dibatalkan]')) {
@@ -517,7 +543,8 @@ class WsMutationController extends WsBaseController
                 }
                 $ok++;
             } catch (\Throwable $e) {
-                $failures[] = "#{$id}: " . $e->getMessage();
+                report($e);
+                $failures[] = "#{$id}: " . ($e instanceof \InvalidArgumentException ? $e->getMessage() : 'kesalahan sistem.');
             }
         }
 
@@ -808,7 +835,10 @@ class WsMutationController extends WsBaseController
             ], Auth::user());
             $svc->validateMove($move, Auth::user());
         } catch (\Throwable $e) {
-            return back()->with('error', $e->getMessage())->withInput();
+            report($e);
+            $errMsg = $e instanceof \InvalidArgumentException ? $e->getMessage() : 'Terjadi kesalahan sistem. Coba lagi atau hubungi admin.';
+
+            return back()->with('error', $errMsg)->withInput();
         }
 
         return back()->with('success', "Stok {$product->product_name} ditetapkan {$validated['counted_qty']} (selisih {$diff} otomatis disesuaikan).");

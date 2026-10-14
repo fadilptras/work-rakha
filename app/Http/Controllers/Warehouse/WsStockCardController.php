@@ -124,6 +124,15 @@ class WsStockCardController extends WsBaseController
         if (!$this->canManageStock()) {
             abort(403, 'Hanya pengelola stok yang bisa edit Kartu Stock.');
         }
+        // Baris opname utuh milik alur Opname (koreksi via Catat → Selesaikan).
+        if (str_starts_with((string) $move->reason, 'Opname:')) {
+            $msg = 'Baris opname hanya bisa dikoreksi lewat halaman Catat Opname.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+
+            return back()->with('error', $msg);
+        }
         if ($move->status !== StockMove::STATUS_DONE) {
             $msg = 'Hanya baris berstatus selesai yang bisa diedit.';
             if ($request->ajax() || $request->wantsJson()) {
@@ -174,11 +183,13 @@ class WsStockCardController extends WsBaseController
                 });
             }
         } catch (\Throwable $e) {
+            report($e);
+            $errMsg = $e instanceof \InvalidArgumentException ? $e->getMessage() : 'Terjadi kesalahan sistem. Coba lagi atau hubungi admin.';
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+                return response()->json(['success' => false, 'message' => $errMsg], 422);
             }
 
-            return back()->with('error', $e->getMessage())->withInput();
+            return back()->with('error', $errMsg)->withInput();
         }
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -197,6 +208,24 @@ class WsStockCardController extends WsBaseController
         if (!$this->canManageStock()) {
             abort(403, 'Hanya pengelola stok yang bisa hapus baris Kartu Stock.');
         }
+        // Baris opname utuh milik alur Opname (koreksi via Catat → Selesaikan).
+        if (str_starts_with((string) $move->reason, 'Opname:')) {
+            $msg = 'Baris opname hanya bisa dikoreksi lewat halaman Catat Opname.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+
+            return back()->with('error', $msg);
+        }
+        // Idempoten: baris yang sudah dibatalkan tidak bisa dibatalkan lagi.
+        if (str_contains((string) $move->reason, '[dibatalkan]')) {
+            $msg = "Baris #{$move->id} sudah dibatalkan sebelumnya.";
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+
+            return back()->with('error', $msg);
+        }
         if ($move->status !== StockMove::STATUS_DONE) {
             $msg = 'Hanya baris berstatus selesai yang bisa dihapus.';
             if ($request->ajax() || $request->wantsJson()) {
@@ -214,11 +243,13 @@ class WsStockCardController extends WsBaseController
             }
             $okMsg = "Baris #{$move->id} dibatalkan via reversal #{$lawan->id}. Stok dikembalikan.";
         } catch (\Throwable $e) {
+            report($e);
+            $errMsg = $e instanceof \InvalidArgumentException ? $e->getMessage() : 'Terjadi kesalahan sistem. Coba lagi atau hubungi admin.';
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+                return response()->json(['success' => false, 'message' => $errMsg], 422);
             }
 
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', $errMsg);
         }
 
         if ($request->ajax() || $request->wantsJson()) {
