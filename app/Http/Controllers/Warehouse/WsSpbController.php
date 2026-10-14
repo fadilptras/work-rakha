@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Warehouse;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\PengajuanBarang;
 use App\Models\User;
@@ -12,18 +13,19 @@ use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
-class PengajuanBarangController extends Controller
+class WsSpbController extends Controller
 {
     public function index()
     {
         $title = 'Pengajuan Barang';
         $totalPengajuan = Auth::user()->pengajuanBarangs()->count();
 
-        // ambil daftar supplier
+        // Dropdown supplier.
         $supplierList = Cache::remember('supplier_list_dropdown', 300, function () {
             if (Schema::hasTable('suppliers')) {
-                $dbSuppliers = \App\Models\Supplier::orderBy('nama_supplier')->pluck('nama_supplier')->toArray();
+                $dbSuppliers = \App\Models\Supplier::active()->orderBy('supplier_name')->pluck('supplier_name')->toArray();
                 if (!empty($dbSuppliers)) {
                     return $dbSuppliers;
                 }
@@ -31,7 +33,7 @@ class PengajuanBarangController extends Controller
             return [];
         });
 
-        // ambil daftar barang dari master products (pengganti barangs lama)
+        // Dropdown produk (dari products).
         $barangList = Cache::remember('barang_list_dropdown', 300, function () {
             if (Schema::hasTable('products')) {
                 $dbBarangs = \App\Models\Product::where('is_deleted', 0)->orderBy('product_name')->pluck('product_name')->toArray();
@@ -42,7 +44,39 @@ class PengajuanBarangController extends Controller
             return [];
         });
 
-        return view('users.pengajuan-barang.pengajuan-barang-form', compact('title', 'totalPengajuan', 'supplierList', 'barangList'));
+        // Peta nama -> kode (display saja).
+        $barangKodeMap = Cache::remember('barang_kode_map', 300, function () {
+            if (Schema::hasTable('products')) {
+                return \App\Models\Product::where('is_deleted', 0)->orderBy('product_name')->pluck('product_code', 'product_name')->toArray();
+            }
+            return [];
+        });
+
+        // Preview No. SPB otomatis (readonly di form; nomor final mengikuti accessor saat data tersimpan)
+        $now = Carbon::now();
+        $urutanBulanan = PengajuanBarang::whereYear('created_at', $now->format('Y'))
+            ->whereMonth('created_at', $now->format('m'))
+            ->count() + 1;
+        $romawi = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'];
+        $previewNomorSpb = str_pad($urutanBulanan, 3, '0', STR_PAD_LEFT) . '/RAKHA/' . $romawi[(int) $now->format('n')] . '/' . $now->format('Y');
+
+        // Back button berbasis asal halaman (?from=ops|dashboard), fallback role lama.
+        $backFrom = strtolower(trim((string) request()->query('from', '')));
+        if ($backFrom === 'ops') {
+            $backRoute = route('warehouse.index', ['tab' => 'produk']);
+            $backText = 'Back to Warehouse Ops';
+        } elseif ($backFrom === 'dashboard') {
+            $backRoute = route('warehouse.dashboard');
+            $backText = 'Back to Warehouse Dashboard';
+        } else {
+            $u = Auth::user();
+            $isWh = in_array(strtolower($u->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang'])
+                || \Illuminate\Support\Str::contains(strtolower($u->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing']);
+            $backRoute = $isWh ? route('warehouse.dashboard') : route('dashboard');
+            $backText = $isWh ? 'Back to Warehouse Dashboard' : 'Back to Dashboard';
+        }
+
+        return view('users.warehouse.spb.pengajuan-barang-form', compact('title', 'totalPengajuan', 'supplierList', 'barangList', 'barangKodeMap', 'previewNomorSpb', 'backRoute', 'backText', 'backFrom'));
     }
 
     public function history(Request $request)
@@ -57,14 +91,14 @@ class PengajuanBarangController extends Controller
         }
         $pengajuanBarangs = $query->paginate(15)->appends($request->query());
 
-        return view('users.pengajuan-barang.pengajuan-barang-riwayat', [
+        return view('users.warehouse.spb.pengajuan-barang-riwayat', [
             'title' => 'Riwayat Pengajuan Barang',
             'pengajuanBarangs' => $pengajuanBarangs,
         ]);
     }
 
-    // Cek ringkas: apakah nama barang sudah pernah diajukan user ini 30 hari terakhir (info saja)
-    // Filter: milik sendiri + created_at >= 30 hari + status aktif (bukan ditolak/dibatalkan)
+    // Cek ringkas: apakah nama barang sudah pernah diajukan SEMUA user 30 hari terakhir (info saja)
+    // Filter: semua user (tidak terbatas milik sendiri) + created_at >= 30 hari + status aktif (bukan ditolak/dibatalkan)
     // Cocok longgar (contains, case-insensitive) agar "kardus" ketemu "Kardus Rakha Med+"
     public function checkRiwayat(Request $request)
     {
@@ -74,11 +108,11 @@ class PengajuanBarangController extends Controller
         }
         $key = mb_strtolower($nama);
 
-        $candidates = PengajuanBarang::where('user_id', Auth::id())
+        $candidates = PengajuanBarang::with('user:id,name')
             ->where('created_at', '>=', Carbon::now()->subDays(30))
             ->whereIn('status', ['diajukan', 'diproses', 'disetujui', 'selesai', 'proses_finalisasi'])
-            ->latest()->limit(50)
-            ->get(['id', 'judul_pengajuan', 'status', 'created_at', 'rincian_barang']);
+            ->latest()->limit(100)
+            ->get(['id', 'user_id', 'judul_pengajuan', 'status', 'created_at', 'rincian_barang']);
 
         $count = 0;
         $last = null;
@@ -91,12 +125,7 @@ class PengajuanBarangController extends Controller
                 $b = mb_strtolower(trim((string) ($it['nama_barang'] ?? '')));
                 if ($a === '' && $b === '') continue;
                 // exact ATAU contains dua arah (input "kardus" vs data "kardus rakha med+")
-                // reverse-match hanya untuk nama tersimpan >=3 char agar tidak false-positive
-                $match = $a === $key || $b === $key
-                    || ($a !== '' && str_contains($a, $key))
-                    || ($b !== '' && str_contains($b, $key))
-                    || (mb_strlen($a) >= 3 && str_contains($key, $a))
-                    || (mb_strlen($b) >= 3 && str_contains($key, $b));
+                $match = $this->spbNamaCocok($a, $key) || $this->spbNamaCocok($b, $key);
                 if ($match) {
                     $count++;
                     if (!$last) {
@@ -104,6 +133,7 @@ class PengajuanBarangController extends Controller
                             'judul' => $p->judul_pengajuan,
                             'status' => $p->status,
                             'tanggal' => $p->created_at ? $p->created_at->locale('id')->isoFormat('D MMM YYYY') : null,
+                            'oleh' => $p->user->name ?? null,
                         ];
                     }
                     break;
@@ -112,6 +142,356 @@ class PengajuanBarangController extends Controller
         }
 
         return response()->json(['found' => $count > 0, 'count' => $count, 'last' => $last]);
+    }
+
+    /**
+     * Status pengajuan per NAMA barang (batch) untuk kolom Produk di popup Tabel Forecast form SPB.
+     *
+     * POST /pengajuan-barang/status-batch-names {names: [...]}
+     * - 1 query ambil SPB 30 hari terakhir semua user (limit 200), matching longgar
+     *   yang sama seperti checkRiwayat, untuk semua nama sekaligus.
+     * - Kunci map = nama persis seperti dikirim (JS mencocokkan string asli).
+     */
+    public function statusBatchNames(Request $request)
+    {
+        $names = $request->input('names', []);
+        if (is_string($names)) {
+            $names = [$names];
+        }
+        $names = collect(is_array($names) ? $names : [])
+            ->map(fn ($v) => trim((string) $v))
+            ->filter(fn ($v) => mb_strlen($v) >= 3)
+            ->unique()->take(200)->values();
+        if ($names->isEmpty()) {
+            return response()->json(['map' => new \stdClass()]);
+        }
+
+        $keys = [];
+        foreach ($names as $n) {
+            $keys[$n] = mb_strtolower($n);
+        }
+        $sorted = collect($keys)->sort()->implode('|');
+        $map = Cache::remember('spb_status_names_' . md5($sorted), 120, function () use ($names, $keys) {
+            $candidates = PengajuanBarang::with('user:id,name')
+                ->where('created_at', '>=', Carbon::now()->subDays(30))
+                ->whereIn('status', ['diajukan', 'diproses', 'disetujui', 'selesai', 'proses_finalisasi'])
+                ->latest()->limit(200)
+                ->get(['id', 'user_id', 'judul_pengajuan', 'status', 'created_at', 'rincian_barang']);
+
+            $out = [];
+            foreach ($names as $n) {
+                $out[$n] = ['found' => false, 'count' => 0, 'last' => null];
+            }
+            foreach ($candidates as $p) {
+                $items = $p->rincian_barang ?? [];
+                if (!is_array($items) || empty($items)) {
+                    continue;
+                }
+                $itemNames = [];
+                foreach ($items as $it) {
+                    if (!is_array($it)) {
+                        continue;
+                    }
+                    foreach (['deskripsi', 'nama_barang'] as $f) {
+                        $s = mb_strtolower(trim((string) ($it[$f] ?? '')));
+                        if ($s !== '') {
+                            $itemNames[] = $s;
+                        }
+                    }
+                }
+                if (empty($itemNames)) {
+                    continue;
+                }
+                foreach ($names as $n) {
+                    $key = $keys[$n];
+                    $hit = false;
+                    foreach ($itemNames as $a) {
+                        if ($this->spbNamaCocok($a, $key)) {
+                            $hit = true;
+                            break;
+                        }
+                    }
+                    if ($hit) {
+                        $out[$n]['found'] = true;
+                        $out[$n]['count']++;
+                        if (!$out[$n]['last']) {
+                            $out[$n]['last'] = [
+                                'judul' => $p->judul_pengajuan,
+                                'status' => $p->status,
+                                'tanggal' => $p->created_at ? $p->created_at->locale('id')->isoFormat('D MMM YYYY') : null,
+                                'oleh' => $p->user->name ?? null,
+                            ];
+                        }
+                    }
+                }
+            }
+            return $out;
+        });
+
+        return response()->json(['map' => $map]);
+    }
+
+    /**
+     * Status SPB per produk untuk badge di Monitoring Product (Warehouse Ops).
+     *
+     * GET /pengajuan-barang/status-batch?ids[]=1&ids[]=2
+     * - Input product_ids (bukan nama) agar tak ambigu clean vs asli; server resolve namanya sendiri.
+     * - 1 query ambil SPB 90 hari terakhir (semua user, limit 500) lalu matching in-memory
+     *   dengan logika longgar yang sama seperti checkRiwayat (exact + contains dua arah).
+     * - Angka = jumlah dokumen SPB distinct per produk (bukan qty).
+     */
+    public function statusBatch(Request $request)
+    {
+        $ids = $request->query('ids', []);
+        if (is_string($ids)) {
+            $ids = explode(',', $ids);
+        }
+        $ids = collect(is_array($ids) ? $ids : [])
+            ->map(fn ($v) => (int) $v)->filter(fn ($v) => $v > 0)->unique()->take(500)->values();
+        if ($ids->isEmpty()) {
+            return response()->json(['map' => new \stdClass()]);
+        }
+
+        $products = \App\Models\Product::whereIn('id', $ids)
+            ->get(['id', 'product_name', 'product_name_clean']);
+        if ($products->isEmpty()) {
+            return response()->json(['map' => new \stdClass()]);
+        }
+
+        $cacheKey = 'spb_status_' . now()->format('Y-m') . '_' . md5($ids->sort()->values()->implode(','));
+        $map = Cache::remember($cacheKey, 120, function () use ($products) {
+            $keys = [];
+            foreach ($products as $p) {
+                $k = [mb_strtolower(trim((string) $p->product_name))];
+                $clean = mb_strtolower(trim((string) ($p->product_name_clean ?? '')));
+                if ($clean !== '' && $clean !== $k[0]) {
+                    $k[] = $clean;
+                }
+                $keys[$p->id] = array_values(array_filter($k, fn ($s) => mb_strlen($s) >= 3));
+            }
+
+            $now = Carbon::now();
+            $docs = PengajuanBarang::with('user:id,name')
+                ->where('created_at', '>=', $now->copy()->subDays(90))
+                ->latest()->limit(500)
+                ->get(['id', 'user_id', 'judul_pengajuan', 'status', 'created_at', 'rincian_barang']);
+
+            $out = [];
+            foreach ($products as $p) {
+                $out[$p->id] = [
+                    'aktif_bulan_ini' => 0, 'selesai_bulan_ini' => 0,
+                    'total_bulan_ini' => 0, 'ditolak_90h' => false, 'last' => null,
+                ];
+            }
+
+            $matchItem = fn (string $itemName, array $prodKeys): bool =>
+                collect($prodKeys)->contains(fn ($key) => $this->spbNamaCocok($itemName, $key));
+
+            foreach ($docs as $d) {
+                $items = $d->rincian_barang ?? [];
+                if (!is_array($items) || empty($items)) {
+                    continue;
+                }
+                $isBulanIni = $d->created_at
+                    && (int) $d->created_at->format('Y') === (int) $now->format('Y')
+                    && (int) $d->created_at->format('n') === (int) $now->format('n');
+                $isAktif = in_array($d->status, ['diajukan', 'diproses', 'proses_finalisasi'], true);
+                $isSelesai = in_array($d->status, ['disetujui', 'selesai'], true);
+                $isDitolak = in_array($d->status, ['ditolak', 'dibatalkan'], true);
+
+                foreach ($products as $p) {
+                    $prodKeys = $keys[$p->id] ?? [];
+                    if (empty($prodKeys)) {
+                        continue;
+                    }
+                    $hit = false;
+                    foreach ($items as $it) {
+                        if (!is_array($it)) {
+                            continue;
+                        }
+                        $candA = (string) ($it['deskripsi'] ?? '');
+                        $candB = (string) ($it['nama_barang'] ?? '');
+                        if ($matchItem($candA, $prodKeys) || $matchItem($candB, $prodKeys)) {
+                            $hit = true;
+                            break;
+                        }
+                    }
+                    if (!$hit) {
+                        continue;
+                    }
+                    if ($isBulanIni) {
+                        $out[$p->id]['total_bulan_ini']++;
+                        if ($isAktif) {
+                            $out[$p->id]['aktif_bulan_ini']++;
+                        } elseif ($isSelesai) {
+                            $out[$p->id]['selesai_bulan_ini']++;
+                        }
+                    }
+                    if ($isDitolak) {
+                        $out[$p->id]['ditolak_90h'] = true;
+                    }
+                    if (!$out[$p->id]['last']) {
+                        $out[$p->id]['last'] = [
+                            'judul' => $d->judul_pengajuan,
+                            'status' => $d->status,
+                            'tanggal' => $d->created_at ? $d->created_at->locale('id')->isoFormat('D MMM YYYY') : null,
+                            'oleh' => $d->user->name ?? null,
+                        ];
+                    }
+                }
+            }
+
+            return $out;
+        });
+
+        return response()->json(['map' => $map]);
+    }
+
+    /**
+     * Rekomendasi qty dari forecast penjualan untuk form pengajuan barang.
+     *
+     * VITAL: seluruh angka dihitung dengan formula yang SAMA PERSIS dengan
+     * SalesForecastController::buildForecastData (satu-satunya sumber kebenaran):
+     *   avg      = total_qty_bulan_referensi / jumlah_bulan_referensi
+     *   forecast = ceil(avg * (1 + percentage/100))
+     *   buffer   = ceil(avg * (doi/30))
+     *   order    = (stok - forecast) < buffer
+     *              ? ceil((buffer - (stok - forecast)) / moq) * moq
+     *              : 0
+     *   doi      = max(0, ceil((stok / avg) * 30))
+     * Stok diambil REALTIME dari products.stock (hasil mutasi Warehouse Ops),
+     * lalu 0 bila produk tak ada di master.
+     *
+     * Perbedaan yang disengaja vs halaman forecast (terdokumentasi):
+     * - Hanya satu produk (best-match dari ketikan, exact didahulukan).
+     * - best-match produk master memakai nama EXACT agar stok tak tertukar produk lain.
+     */
+    public function checkForecast(Request $request)
+    {
+        $nama = trim((string) $request->query('nama', ''));
+        if (mb_strlen($nama) < 3) {
+            return response()->json(['found' => false]);
+        }
+        $key = mb_strtolower($nama);
+        $tahun = (int) date('Y');
+
+        // TTL pendek: angka selalu segar mengikuti setting forecast terbaru.
+        $data = Cache::remember('forecast_suggest_' . $tahun . '_' . md5($key), 120, function () use ($key, $nama, $tahun) {
+            // --- 1. Periode acuan + setting (paritas dengan buildForecastData) ---
+            $urutanBulan = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            $namaBulan = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            $bulanAktif = $namaBulan[(int) date('n')];
+
+            $setting = \App\Models\SalesForecastSetting::where('year', $tahun)->where('month', $bulanAktif)->first();
+            $activePercentage = $setting && $setting->percentage !== null ? (float) $setting->percentage : 20.00;
+            $activeRefMonths = $setting && $setting->ref_months !== null ? (int) $setting->ref_months : 6;
+            $activeRefMonths = max(1, min($activeRefMonths, 12));
+            $activeDoi = $setting && $setting->doi !== null ? (int) $setting->doi : 30;
+            $activeDoi = max(1, min($activeDoi, 365));
+            $multiplier = 1 + ($activePercentage / 100);
+
+            $indexAktif = array_search($bulanAktif, $urutanBulan);
+            if ($indexAktif !== false && $indexAktif >= $activeRefMonths) {
+                $bulanReferensi = array_slice($urutanBulan, $indexAktif - $activeRefMonths, $activeRefMonths);
+            } elseif ($indexAktif !== false && $indexAktif > 0) {
+                $bulanReferensi = array_slice($urutanBulan, 0, $indexAktif);
+            } else {
+                $bulanReferensi = array_slice($urutanBulan, 0, $activeRefMonths);
+            }
+
+            // --- 2. Ambil penjualan bulan referensi untuk kandidat yang cocok ---
+            // Escape wildcard LIKE agar ketikan user aman; limit besar supaya
+            // best-match tidak terpotong sebelum dikelompokkan per produk.
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $nama);
+            $rows = \App\Models\Sales::whereYear('date', $tahun)
+                ->whereIn('month', $bulanReferensi)
+                ->whereNotNull('product_name')->where('product_name', '!=', '')
+                ->where('product_name', 'LIKE', '%' . $escaped . '%')
+                ->select('product_name', 'month', DB::raw('SUM(qty) as total_qty'), DB::raw('MAX(unit) as satuan'))
+                ->groupBy('product_name', 'month')
+                ->limit(2000)
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return ['found' => false];
+            }
+
+            // Best-match: nama persis didahulukan; bila tak ada, pilih total terbesar.
+            $grouped = $rows->groupBy(fn($r) => mb_strtolower(trim((string) $r->product_name)));
+            $bestName = null;
+            foreach ($grouped->keys() as $candidate) {
+                if ($candidate === $key) {
+                    $bestName = $candidate;
+                    break;
+                }
+            }
+            if (!$bestName) {
+                $bestName = $grouped->map(fn($g) => $g->sum('total_qty'))->sortDesc()->keys()->first();
+            }
+            $bestRows = $grouped->get($bestName);
+            $displayName = $bestRows->first()->product_name;
+
+            // --- 3. Hitung avg / forecast / buffer (paritas dengan buildForecastData) ---
+            // Pembagi selalu JUMLAH bulan referensi (bukan bulan yang ada datanya).
+            $totalRef = $bestRows->sum('total_qty');
+            $jumlahBulan = count($bulanReferensi);
+            $avg = $jumlahBulan > 0 ? $totalRef / $jumlahBulan : 0;
+            if ($avg <= 0) {
+                return ['found' => false];
+            }
+            $forecast = (int) ceil($avg * $multiplier);
+            $bufferQty = (int) ceil($avg * ($activeDoi / 30));
+
+            // --- 4. Stok akhir REALTIME (paritas dengan buildForecastData) ---
+            // Langsung dari products.stock (update instan tiap mutasi Warehouse Ops).
+            // WAJIB nama persis di master; tanpa fallback longgar supaya stok
+            // tidak tertukar milik produk lain. Bila tak ada: stok = 0.
+            $product = \App\Models\Product::active()->where('product_name', $displayName)->first();
+            $endstock = 0;
+            $satuanStok = 'Pcs';
+            if ($product) {
+                $satuanStok = $product->unit ?: 'Pcs';
+                $endstock = (int) ($product->stock ?? 0);
+            }
+
+            // --- 5. MOQ + order (paritas dengan buildForecastData) ---
+            $moq = (float) (DB::table('sales_forecast_orders')
+                ->where('year', $tahun)->where('month', $bulanAktif)
+                ->where('product_name', $displayName)->value('moq') ?: 1);
+            $moq = max(1, $moq);
+
+            if (($endstock - $forecast) < $bufferQty) {
+                $selisih = $bufferQty - ($endstock - $forecast);
+                $orderQty = (int) (ceil($selisih / $moq) * $moq);
+            } else {
+                $orderQty = 0;
+            }
+            $doiHasil = (int) max(0, ceil(($endstock / $avg) * 30));
+
+            $satuanRow = $bestRows->whereNotNull('satuan')->where('satuan', '!=', '')->first();
+            $satuanSales = $satuanRow ? $satuanRow->satuan : ($satuanStok ?: 'Pcs');
+
+            return [
+                'found' => true,
+                'product' => $displayName,
+                'satuan_sales' => $satuanSales,
+                'satuan_stok' => $satuanStok,
+                'avg' => round($avg, 2),
+                'forecast_qty' => $forecast,
+                'buffer_qty' => $bufferQty,
+                'stok' => $endstock,
+                'doi' => $doiHasil,
+                'moq' => $moq,
+                'order_qty' => $orderQty,
+                'suggest_qty' => $orderQty > 0 ? $orderQty : $forecast,
+                'ref_months' => $activeRefMonths,
+                'percentage' => $activePercentage,
+                'bulan_aktif' => $bulanAktif,
+                'tahun' => $tahun,
+            ];
+        });
+
+        return response()->json($data);
     }
 
     // tampilkan semua pengajuan barang untuk pemantauan (akses approver/admin)
@@ -157,7 +537,7 @@ class PengajuanBarangController extends Controller
         // paginate dan return
         $pengajuanBarangs = $query->paginate(15)->appends($request->query());
 
-        return view('users.pengajuan-barang.pengajuan-barang-monitoring', [
+        return view('users.warehouse.spb.pengajuan-barang-monitoring', [
             'title' => 'Monitoring Seluruh Pengajuan Barang',
             'pengajuanBarangs' => $pengajuanBarangs,
         ]);
@@ -173,10 +553,11 @@ class PengajuanBarangController extends Controller
             $request->merge(['divisi' => $user->divisi ?: 'Umum']);
         }
 
-        // validasi input
+        // validasi input (rincian wajib minimal 1 baris terisi)
         $request->validate([
             'judul_pengajuan' => 'required|string|max:255',
             'divisi' => 'required|string|max:255',
+            'rincian_deskripsi' => 'required|array|min:1',
             'rincian_deskripsi.*' => 'required|string',
             'rincian_supplier.*' => 'nullable|string',
             'rincian_jumlah.*' => 'required|integer|min:1',
@@ -194,7 +575,7 @@ class PengajuanBarangController extends Controller
                 $supName = trim($sup ?? '');
                 if (!empty($supName) && !in_array($supName, ['-', 'Lainnya'])) {
                     if (Schema::hasTable('suppliers')) {
-                        \App\Models\Supplier::firstOrCreate(['nama_supplier' => $supName]);
+                        \App\Models\Supplier::firstOrCreate(['supplier_name' => $supName]);
                         $hasNew = true;
                     }
                 }
@@ -203,9 +584,6 @@ class PengajuanBarangController extends Controller
                 Cache::forget('supplier_list_dropdown');
             }
         }
-
-
-        $user = Auth::user();
 
         // wajib punya minimal 1 approver
         if (!$user->approver_barang_1_id && !$user->approver_barang_2_id && !$user->approver_barang_3_id && !$user->approver_barang_4_id) {
@@ -272,7 +650,7 @@ class PengajuanBarangController extends Controller
         }
         // Load relasi agar view tidak error saat menampilkan detail approver
         $pengajuanBarang->load(['user', 'approver1', 'approver2', 'approver3', 'approver4']);
-        return view('users.pengajuan-barang.pengajuan-barang-detail', compact('pengajuanBarang'));
+        return view('users.warehouse.spb.pengajuan-barang-detail', compact('pengajuanBarang'));
     }
 
     /**
@@ -393,33 +771,49 @@ class PengajuanBarangController extends Controller
     }
 
     /**
-     * Fungsi Pembantu: Mengolah rincian barang dari form ke format array (JSON)
+     * Cocok nama item SPB vs kata kunci: exact ATAU contains dua arah (case-insensitive).
+     * Reverse-match hanya untuk nama tersimpan >=3 char agar tidak false-positive.
+     * Dipakai checkRiwayat, statusBatch, dan statusBatchNames agar logikanya satu sumber.
      */
+    private function spbNamaCocok(string $itemName, string $key): bool
+    {
+        $a = mb_strtolower(trim($itemName));
+        if ($a === '' || mb_strlen($a) < 2) {
+            return false;
+        }
+        return $a === $key || str_contains($a, $key)
+            || (mb_strlen($a) >= 3 && str_contains($key, $a));
+    }
+
+    /** Mengolah rincian barang dari form ke format array (JSON). */
     private function parseRincian(Request $request)
     {
         $rincian = [];
-        if ($request->has('rincian_deskripsi')) {
-            foreach ($request->rincian_deskripsi as $index => $deskripsi) {
-                $rincian[] = [
-                    'deskripsi'  => $deskripsi,
-                    'supplier'   => $request->rincian_supplier[$index] ?? '-',
-                    'satuan'     => $request->rincian_satuan[$index] ?? 'Pcs',
-                    'jumlah'     => $request->rincian_jumlah[$index] ?? 0,
-                    'keterangan' => $request->rincian_keterangan[$index] ?? '-',
-                ];
-            }
+        $deskripsiList = $request->input('rincian_deskripsi', []);
+        if (!is_array($deskripsiList)) {
+            return $rincian;
+        }
+        foreach ($deskripsiList as $index => $deskripsi) {
+            $rincian[] = [
+                'deskripsi'  => $deskripsi,
+                'supplier'   => $request->input("rincian_supplier.{$index}", '-'),
+                'satuan'     => $request->input("rincian_satuan.{$index}", 'Pcs'),
+                'jumlah'     => $request->input("rincian_jumlah.{$index}", 0),
+                'keterangan' => $request->input("rincian_keterangan.{$index}", '-'),
+            ];
         }
         return $rincian;
     }
 
-    /**
-     * Fungsi Pembantu: Mengurus upload banyak file lampiran
-     */
+    /** Mengurus upload banyak file lampiran (input kosong dilewati). */
     private function uploadFiles(Request $request)
     {
         $pathFiles = [];
-        if ($request->hasFile('file_pendukung')) {
-            foreach ($request->file('file_pendukung') as $file) {
+        if (!$request->hasFile('file_pendukung')) {
+            return $pathFiles;
+        }
+        foreach ((array) $request->file('file_pendukung') as $file) {
+            if ($file && $file->isValid()) {
                 $pathFiles[] = $file->store('lampiran_barang', 'public');
             }
         }
@@ -610,6 +1004,7 @@ class PengajuanBarangController extends Controller
                 }
             }
         }
+        unset($item); // putus referensi foreach-by-reference agar tak bocor ke kode bawah
 
         if ($hasChanges && count($newTerminRincian) > 0) {
             $terminId = count($dataTermin) + 1;
