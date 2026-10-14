@@ -81,12 +81,14 @@
                         'selesai' => 'bg-green-500 text-white shadow-green-500/20',
                         'ditolak' => 'bg-red-500 text-white shadow-red-500/20',
                         'diproses' => 'bg-blue-500 text-white shadow-blue-500/20',
+                        'disetujui' => 'bg-teal-500 text-white shadow-teal-500/20',
                         'dibatalkan' => 'bg-slate-500 text-white shadow-slate-500/20',
                         default => 'bg-yellow-500 text-white shadow-yellow-500/20',
                     };
                     $badgeLabel = match($pengajuanBarang->status) {
                         'diajukan' => 'Diajukan',
                         'diproses' => 'Diproses',
+                        'disetujui' => 'Disetujui',
                         'selesai' => 'Selesai',
                         'ditolak' => 'Ditolak',
                         'dibatalkan' => 'Dibatalkan',

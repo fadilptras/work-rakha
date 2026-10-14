@@ -9,95 +9,69 @@
 
     @push('styles')
     <style>
-        /* == Background == */
-        .mesh-bg { background-color: #ede9fe; }
-        .btn-back-modern {
-            display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 18px 8px 8px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 9999px;
-            color: #1e293b; font-size: 0.9rem; font-weight: 700;
-            text-decoration: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; width: fit-content;
+        body { font-family: 'Outfit', sans-serif; }
+        /* == Background (sama seperti halaman form) == */
+        .mesh-bg {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;
+            background-color: #ede9fe;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.4) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            pointer-events: none;
         }
-        .btn-back-modern:hover { background: rgba(255,255,255,0.95); box-shadow: 0 10px 15px -3px rgba(99,102,241,0.15); transform: translateY(-2px); color: #4338ca; }
-        .btn-back-modern .icon-circle { width: 32px; height: 32px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #6366f1; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(0,0,0,0.06); transition: transform 0.3s ease; }
-        .btn-back-modern:hover .icon-circle { transform: translateX(-3px); background: #EEF2FF; }
-        .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,1); border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); padding: 28px; }
-        .modern-select { background: rgba(255,255,255,0.95); border: 2px solid #e2e8f0; border-radius: 14px; padding: 9px 15px; font-size: 0.85rem; color: #1e293b; font-weight: 700; outline: none; transition: all 0.2s ease; cursor: pointer; }
-        .modern-select:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.15); }
 
         .history-card-mobile {
             background: #f8fafc !important;
             border: 1px solid #cbd5e1 !important;
         }
-
-        @media (max-width: 767.98px) {
-            .glass-card {
-                padding: 16px;
-                border-radius: 18px;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                background: rgba(255, 255, 255, 0.95) !important;
-            }
-            .modern-select {
-                padding: 7px 12px;
-                font-size: 0.8rem;
-                border-radius: 10px;
-                width: auto !important;
-                flex: 1 !important;
-            }
-        }
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-x-clip text-slate-800 pb-16">
+        <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
 
-            <a href="{{ route('pengajuan_barang.index') }}" class="btn-back-modern">
-                <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                Kembali ke Form Pengajuan
-            </a>
+            <div class="w-full flex justify-start">
+                <x-ui.back-button href="{{ route('pengajuan_barang.index') }}" label="Back to Form SPB" />
+            </div>
 
-            {{-- HEADER --}}
-            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
-                <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-                <div class="relative z-10 flex items-center gap-3 md:gap-4">
-                    <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                        <i class="fas fa-history text-lg md:text-xl text-white"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h1 class="text-base md:text-xl font-black tracking-tight text-white uppercase">Monitoring Seluruh Pengajuan</h1>
-                        @if(!$isMobile)
-                        <p class="text-blue-100 text-xs md:text-sm mt-0.5 font-medium leading-relaxed w-full">
-                            Pantau status, detail, dan alur persetujuan seluruh permohonan barang di perusahaan.
-                        </p>
-                        @endif
-                    </div>
+            <div class="hidden md:block">
+                <x-ui.page-header title="Monitoring Seluruh Pengajuan" subtitle="Pantau status, detail, dan alur persetujuan seluruh permohonan barang di perusahaan." icon="fa-desktop" />
+            </div>
+
+            <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
+                <div class="relative z-10 flex-1 min-w-0">
+                    <h2 class="text-sm font-black tracking-wider uppercase leading-snug truncate">Monitoring SPB</h2>
+                    <p class="text-xs text-blue-100 font-medium leading-normal truncate mt-0.5">
+                        Seluruh pengajuan barang perusahaan.
+                    </p>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white text-base shrink-0 shadow-inner relative z-10">
+                    <i class="fas fa-desktop"></i>
                 </div>
             </div>
 
             {{-- RIWAYAT CARD --}}
-            <div class="glass-card space-y-6 mb-10">
-                <div class="flex flex-col gap-4 border-b border-slate-200 pb-4 mb-5">
+            <x-ui.glass-card class="space-y-6">
+                <div class="flex flex-col gap-4 border-b border-slate-200/60 pb-3 md:pb-4 mb-3 md:mb-4">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-list-ul"></i></div>
                             <div>
                                 <h3 class="text-lg font-black text-slate-800">Daftar Permintaan Barang</h3>
                                 @if(!$isMobile)
-                                <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 0;">Gunakan filter di bawah untuk menyaring pengajuan.</p>
+                                <p class="text-xs text-slate-500 font-semibold" style="margin-top: 0; margin-bottom: 0;">Gunakan filter di bawah untuk menyaring pengajuan.</p>
                                 @endif
                             </div>
                         </div>
 
                         {{-- Export Form --}}
                         <form action="{{ route('pengajuan_barang.export_excel') }}" method="GET" class="m-0 flex items-center gap-2">
-                            <input type="month" name="bulan" class="modern-select" style="padding: 7px 12px; font-size: 12px; height: 36px;" value="{{ request('bulan', date('Y-m')) }}" required title="Pilih Bulan Export">
-                            <button type="submit" class="inline-flex items-center gap-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-sm" style="height: 36px;" title="Export Rekap PO Excel">
+                            <input type="month" name="bulan" class="ui-input ui-input--sm" style="width:auto" value="{{ request('bulan', date('Y-m')) }}" required title="Pilih Bulan Export">
+                            <button type="submit" class="ui-export ui-export--excel" title="Export Rekap PO Excel">
                                 <i class="fas fa-file-excel"></i> Export Excel
                             </button>
                         </form>
@@ -105,27 +79,19 @@
 
                     {{-- Filter & Search --}}
                     <div class="flex justify-end mt-1">
-                        <form action="{{ route('pengajuan_barang.monitoring_all') }}" method="GET" class="flex flex-col md:flex-row items-center gap-2.5 w-full md:w-auto m-0">
-                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, judul, nomor..." class="modern-select" style="width: 100%; md:max-width: 220px;">
+                        <form action="{{ route('pengajuan_barang.monitoring_all') }}" method="GET" class="flex flex-col md:flex-row items-stretch md:items-center gap-2.5 w-full md:w-auto m-0">
+                            <x-ui.search-input name="search" value="{{ request('search') }}" placeholder="Cari nama, judul, nomor..." class="w-full md:w-72" />
                             <div class="flex items-center gap-2 w-full md:w-auto">
-                                <select name="status" class="modern-select w-full md:w-auto" onchange="this.form.submit()">
-                                    <option value="semua" {{ request('status') == 'semua' || !request('status') ? 'selected' : '' }}>Semua Status</option>
-                                    <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Appr 1</option>
-                                    <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
-                                    <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
-                                    <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
-                                    <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
-                                </select>
-                                <button type="submit" class="hidden">Cari</button>
+                                <x-ui.filter-select name="status" onchange="this.form.submit()" value="{{ request('status', 'semua') }}" :options="['semua' => 'Semua Status', 'diajukan' => 'Menunggu Appr 1', 'diproses' => 'Diproses', 'disetujui' => 'Disetujui', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak', 'dibatalkan' => 'Dibatalkan']" class="w-full md:w-56" />
                             </div>
                         </form>
                     </div>
                 </div>
 
                 {{-- Tabel Desktop --}}
-                <div class="overflow-x-auto hidden md:block rounded-2xl border border-slate-200/80" style="border-radius: 16px; overflow: hidden;">
+                <div class="overflow-x-auto hidden md:block rounded-xl border border-slate-200">
                     <table class="min-w-full text-xs">
-                        <thead class="bg-slate-50/80 text-slate-600 uppercase font-black border-b border-slate-200">
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-bold text-[10px] tracking-wider border-b border-slate-200">
                             <tr>
                                 <th class="px-6 py-4 text-left w-[10%]">Tanggal</th>
                                 <th class="px-6 py-4 text-left w-[20%]">Pemohon</th>
@@ -144,11 +110,13 @@
                                         'dibatalkan' => 'bg-slate-100 text-slate-700 border-slate-200',
                                         'diajukan' => 'bg-yellow-100 text-yellow-700 border-yellow-200',
                                         'diproses' => 'bg-blue-100 text-blue-700 border-blue-200',
+                                        'disetujui' => 'bg-teal-100 text-teal-700 border-teal-200',
                                         default => 'bg-slate-100 text-slate-700 border-slate-200',
                                     };
                                     $statusLabel = match($pengajuan->status) {
                                         'diajukan' => 'Menunggu Appr 1',
                                         'diproses' => 'Diproses',
+                                        'disetujui' => 'Disetujui',
                                         'selesai' => 'Selesai',
                                         'ditolak' => 'Ditolak',
                                         'dibatalkan' => 'Dibatalkan',
@@ -201,11 +169,13 @@
                                 'dibatalkan' => 'bg-slate-100 text-slate-700 border-slate-200',
                                 'diajukan' => 'bg-yellow-100 text-yellow-700 border-yellow-200',
                                 'diproses' => 'bg-blue-100 text-blue-700 border-blue-200',
+                                'disetujui' => 'bg-teal-100 text-teal-700 border-teal-200',
                                 default => 'bg-slate-100 text-slate-700 border-slate-200',
                             };
                             $statusLabel = match($pengajuan->status) {
                                 'diajukan' => 'Appr 1',
                                 'diproses' => 'Diproses',
+                                'disetujui' => 'Disetujui',
                                 'selesai' => 'Selesai',
                                 'ditolak' => 'Ditolak',
                                 'dibatalkan' => 'Dibatalkan',
@@ -244,7 +214,7 @@
                         {{ $pengajuanBarangs->links() }}
                     </div>
                 @endif
-            </div>
+            </x-ui.glass-card>
         </div>
     </div>
 </x-layout-users>

@@ -199,10 +199,6 @@
         .card-rose:hover { border-color: rgba(244, 63, 94, 0.3); }
         .card-rose:hover .icon-box { background: #f43f5e; color: white; box-shadow: 0 10px 20px rgba(244, 63, 94, 0.2); }
 
-        .card-amber .icon-box { background: #fffbeb; color: #f59e0b; border: 1px solid #fde68a; }
-        .card-amber:hover { border-color: rgba(245, 158, 11, 0.3); }
-        .card-amber:hover .icon-box { background: #f59e0b; color: white; box-shadow: 0 10px 20px rgba(245, 158, 11, 0.2); }
-
         .card-lime .icon-box { background: #f7fee7; color: #65a30d; border: 1px solid #d9f99d; }
         .card-lime:hover { border-color: rgba(132, 204, 22, 0.3); }
         .card-lime:hover .icon-box { background: #84cc16; color: white; box-shadow: 0 10px 20px rgba(132, 204, 22, 0.2); }
@@ -333,20 +329,20 @@
                     </div>
                 </a>
 
-                {{-- Card 4: Stock Monitoring --}}
-                <a href="{{ route('sales.monitoring.index') }}" class="module-card card-amber group title-reveal stagger-2" style="animation-delay: 0.3s;">
+                {{-- Card 4: Stock Opname --}}
+                <a href="{{ route('warehouse.stockopname.index') }}" class="module-card card-rose group title-reveal stagger-2" style="animation-delay: 0.3s;">
                     <div class="icon-box">
-                        <i class="fas fa-warehouse"></i>
+                        <i class="fas fa-clipboard-check"></i>
                     </div>
 
                     <div class="card-content">
-                        <h2 class="text-lg md:text-[19px] font-bold text-slate-800 tracking-tight group-hover:text-amber-600 transition-colors leading-tight">Stock Monitoring</h2>
+                        <h2 class="text-lg md:text-[19px] font-bold text-slate-800 tracking-tight group-hover:text-rose-600 transition-colors leading-tight">Stock Opname</h2>
                         <p class="text-slate-500 text-[13px] md:text-[15px] leading-relaxed font-medium line-clamp-2">
-                            Real-time stock levels, history & Excel import.
+                            Periodic physical count & rejected items.
                         </p>
 
-                        <div class="card-action mt-auto flex items-center gap-2 text-xs md:text-[13px] font-bold text-amber-600 opacity-80 group-hover:opacity-100 transition-all duration-300">
-                            <span>Monitor Stock</span>
+                        <div class="card-action mt-auto flex items-center gap-2 text-xs md:text-[13px] font-bold text-rose-600 opacity-80 group-hover:opacity-100 transition-all duration-300">
+                            <span>Open Opname</span>
                             <i class="fas fa-arrow-right text-[11px] transition-transform group-hover:translate-x-1.5"></i>
                         </div>
                     </div>
@@ -355,7 +351,7 @@
                         <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
                     </div>
 
-                    <div class="bg-decoration absolute -bottom-6 -right-6 text-amber-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
+                    <div class="bg-decoration absolute -bottom-6 -right-6 text-rose-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
                         <i class="fas fa-boxes-stacked"></i>
                     </div>
                 </a>
@@ -387,35 +383,8 @@
                     </div>
                 </a>
 
-                {{-- Card 6: Stock Opname --}}
-                <a href="{{ route('warehouse.stockopname.index') }}" class="module-card card-rose group title-reveal stagger-3" style="animation-delay: 0.5s;">
-                    <div class="icon-box">
-                        <i class="fas fa-clipboard-check"></i>
-                    </div>
-
-                    <div class="card-content">
-                        <h2 class="text-lg md:text-[19px] font-bold text-slate-800 tracking-tight group-hover:text-rose-600 transition-colors leading-tight">Stock Opname</h2>
-                        <p class="text-slate-500 text-[13px] md:text-[15px] leading-relaxed font-medium line-clamp-2">
-                            Periodic physical count & rejected items.
-                        </p>
-
-                        <div class="card-action mt-auto flex items-center gap-2 text-xs md:text-[13px] font-bold text-rose-600 opacity-80 group-hover:opacity-100 transition-all duration-300">
-                            <span>Open Opname</span>
-                            <i class="fas fa-arrow-right text-[11px] transition-transform group-hover:translate-x-1.5"></i>
-                        </div>
-                    </div>
-
-                    <div class="mobile-chevron">
-                        <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
-                    </div>
-
-                    <div class="bg-decoration absolute -bottom-6 -right-6 text-rose-100 text-9xl group-hover:scale-125 group-hover:-translate-x-2 group-hover:-translate-y-2 group-hover:-rotate-12 transition-all duration-700 z-[-1]">
-                        <i class="fas fa-boxes-stacked"></i>
-                    </div>
-                </a>
-
-                {{-- Card 7: Form SPB --}}
-                <a href="{{ route('pengajuan_barang.index') }}" class="module-card card-lime group title-reveal stagger-1" style="animation-delay: 0.6s;">
+                {{-- Card 6: Form SPB --}}
+                <a href="{{ route('pengajuan_barang.index', ['from' => 'dashboard']) }}" class="module-card card-lime group title-reveal stagger-1" style="animation-delay: 0.5s;">
                     <div class="icon-box">
                         <i class="fas fa-file-signature"></i>
                     </div>

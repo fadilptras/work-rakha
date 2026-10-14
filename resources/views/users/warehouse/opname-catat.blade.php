@@ -25,7 +25,7 @@
             #catatGrid { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); }
             /* Kunci tinggi kedua kartu ke viewport agar scroll halaman mentok tepat
                di bawah kartu (tanpa zona kosong): list & form scroll di dalamnya. */
-            #catatGridLeft, #catatGridRight { max-height: calc(100vh - 360px); max-height: calc(100dvh - 360px); min-height: 0; }
+            #catatGridLeft, #catatGridRight { max-height: calc(100vh - 300px); max-height: calc(100dvh - 300px); min-height: 0; }
             #catatGridLeft { display: flex; flex-direction: column; overflow: hidden; }
             #catatGridRight { position: sticky; top: 12px; overflow-y: auto; }
             #catatList { flex: 1 1 auto; min-height: 0 !important; max-height: none !important; }
@@ -105,7 +105,7 @@
                         <span class="ml-auto text-[10px] font-bold text-slate-400">Biru = sesuai · Orange = selisih · Hijau = sudah</span>
                     </div>
                     <x-ui.search-input id="catatSearch" placeholder="Cari kode / nama produk..." autocomplete="off" />
-                    <div id="catatList" class="space-y-1 overflow-y-auto flex-1 min-h-[200px] max-h-[50vh]">
+                    <div id="catatList" class="space-y-1 overflow-y-auto flex-1 min-h-[320px] max-h-[65vh]">
                         @forelse($productOptions as $o)
                             @php
                                 $st = isset($pendingSet[$o->id]) ? 'draf' : (isset($sesuaiSet[$o->id]) ? 'sesuai' : (isset($sudahSet[$o->id]) ? 'sudah' : 'belum'));
@@ -545,7 +545,7 @@
                 }
                 var top = grid.getBoundingClientRect().top;
                 if (top < 0) top = 0;
-                var avail = Math.max(240, Math.floor(window.innerHeight - top - 16));
+                var avail = Math.max(320, Math.floor(window.innerHeight - top - 16));
                 left.style.maxHeight = avail + 'px';
                 right.style.maxHeight = avail + 'px';
             }

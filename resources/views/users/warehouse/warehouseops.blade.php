@@ -66,6 +66,26 @@
             overflow-y: hidden !important;
             text-align: left !important;
         }
+        /* == Add to SPB (Monitoring Product): CSS mandiri agar tak tergantung build Tailwind == */
+        .ui-btn--spb { background: #65a30d !important; border-color: #65a30d !important; color: #fff !important; }
+        .ui-btn--spb:hover { background: #4d7c0f !important; border-color: #4d7c0f !important; color: #fff !important; }
+        .ui-btn--spb.is-in-draft { background: #047857 !important; border-color: #047857 !important; color: #fff !important; }
+        .ui-btn--spb:active { transform: scale(0.88); }
+        .spb-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; border: 1px solid; line-height: 1.5; white-space: nowrap; }
+        .spb-badge--draft { background: #f1f5f9; border-color: #94a3b8; color: #475569; }
+        .spb-badge--aktif { background: #fffbeb; border-color: #f59e0b; color: #b45309; }
+        .spb-badge--selesai { background: #ecfdf5; border-color: #34d399; color: #047857; }
+        .spb-badge--tolak { background: #fff1f2; border-color: #fb7185; color: #e11d48; }
+        #spb-floatbar { background: rgba(15, 23, 42, 0.96) !important; }
+        #spb-floatbar { position: fixed !important; bottom: 24px !important; right: 24px !important; left: auto !important; transform: none !important; z-index: 9000 !important; width: 440px !important; max-width: calc(100vw - 48px) !important; }
+        #spb-floatbar .spb-fb-icon { background: rgba(132,204,22,.18) !important; border: 1px solid rgba(132,204,22,.45) !important; color: #bef264 !important; }
+        #spb-floatbar .spb-fb-go { background: #84cc16 !important; color: #0f172a !important; }
+        #spb-floatbar .spb-fb-go:hover { background: #a3e635 !important; }
+        #spb-floatbar .spb-fb-rm { color: #94a3b8 !important; }
+        #spb-floatbar .spb-fb-rm:hover { color: #fda4af !important; }
+        #spb-floatbar .spb-fb-name { color: #f8fafc !important; }
+        #spb-floatbar .spb-fb-title { color: #ffffff !important; }
+        #spb-floatbar .spb-fb-sub { color: #cbd5e1 !important; }
     </style>
     @endpush
 
@@ -133,7 +153,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-2 md:gap-3 items-end">
                             <div class="lg:col-span-4 md:col-span-2">
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cari kode / nama barang</label>
-                                <x-ui.search-input name="q" placeholder="cth. kasa / KSA-001" value="{{ request('q') }}" autocomplete="off" class="w-full" x-data="{ search: {{ \Illuminate\Support\Js::from(request('q')) }} }" x-model="search" @input.debounce.800ms="$el.form.submit()" />
+                                <x-ui.search-input name="q" placeholder="cth. kasa / KSA-001" value="{{ request('q') }}" autocomplete="off" class="w-full" :debounce="500" />
                             </div>
                             <div class="lg:col-span-3 md:col-span-1">
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Kebutuhan</label>
@@ -183,11 +203,16 @@
                                         // Satuan tampil ikut Data Product: isi (fill) bila multi-pack.
                                         $satuan = $isSingle ? ($p->unit ?: $fillUnit) : $fillUnit;
                                         $fc = $p->forecast ?? null;
+                                        $namaAsli = $p->product_name;
+                                        $orderQty = (int) ($fc['order_qty'] ?? 0);
+                                        $forecastQty = (int) ($fc['forecast_qty'] ?? 0);
                                     @endphp
                                     <tr class="hover:bg-blue-50/60 transition-colors {{ $isHabis ? 'bg-red-50/40' : '' }}">
                                         <td class="px-4 py-3 text-center text-slate-400 font-medium">{{ $index + 1 }}</td>
                                         <td class="px-4 py-3 font-mono text-xs">{{ $p->product_code ?? '-' }}</td>
-                                        <td class="px-4 py-3 font-bold text-slate-900 text-xs">{{ $nama }}</td>
+                                        <td class="px-4 py-3 font-bold text-slate-900 text-xs">{{ $nama }}
+                                            <div class="spb-marks flex flex-wrap gap-1 mt-1" data-marks-for="{{ $p->id }}"></div>
+                                        </td>
                                         <td class="px-4 py-3 text-xs text-slate-600">{{ $p->unit ?? '-' }}@if($p->pcs_per_unit > 1) <span class="text-slate-400">· isi {{ $p->pcs_per_unit }} {{ $p->fill_unit ?? 'Pcs' }}</span>@endif</td>
                                         <td class="px-4 py-3 text-center whitespace-nowrap bg-blue-50 border-l border-blue-200" style="width:200px;">
                                             <span class="font-black text-sm {{ $isHabis ? 'text-rose-600' : '' }}">{{ number_format($stok, 0, ',', '.') }} <span class="text-xs font-bold text-slate-500">{{ $satuan }}</span></span>
@@ -202,6 +227,14 @@
                                             <div class="flex items-center justify-center gap-2">
                                                 <x-ui.icon-button action="view" icon="fa-id-card-clip" title="Buka kartu stock" data-kartu-modal data-embed-url="{{ route('warehouse.stockcard.show', $p) . '?embed=1' }}" data-nama="{{ $nama }}" data-kode="{{ $p->product_code }}" data-full-url="{{ route('warehouse.stockcard.show', $p) }}" />
                                                 <a href="{{ route('warehouse.stockcard.print', $p) }}" target="_blank" rel="noopener" class="ui-btn ui-btn--view" title="Cetak kartu stock (print browser)"><i class="fas fa-print text-[11px]"></i></a>
+                                                <button type="button" class="btn-spb ui-btn ui-btn--spb" title="Tambah ke draft SPB"
+                                                    data-spb-pid="{{ $p->id }}"
+                                                    data-spb-nama="{{ $namaAsli }}"
+                                                    data-spb-kode="{{ $p->product_code }}"
+                                                    data-spb-clean="{{ $nama }}"
+                                                    data-spb-satuan="{{ $kemasan }}"
+                                                    data-spb-order="{{ $orderQty }}"
+                                                    data-spb-forecast="{{ $forecastQty }}"><i class="fas fa-file-signature text-[11px] pointer-events-none"></i></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -215,7 +248,188 @@
                         <span class="text-[11px] text-slate-400 font-semibold whitespace-nowrap">Total SKU: <b class="text-slate-700">{{ number_format($products->count(), 0, ',', '.') }}</b></span>
                     </div>
                 </x-ui.glass-card>
+
+                {{-- Floating bar draft SPB + rincian + toast (tetap di halaman, lompat ke form bila siap) --}}
+                <div id="spb-floatbar" class="hidden fixed bottom-6 right-6 z-[9000] w-[440px] max-w-[92vw] bg-slate-900/95 backdrop-blur border border-white/10 shadow-2xl rounded-2xl px-4 py-3">
+                    <div id="spb-floatlist" class="hidden mb-2 max-h-44 overflow-y-auto divide-y divide-white/10 border-b border-white/10 pb-2"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="spb-fb-icon w-9 h-9 shrink-0 rounded-xl flex items-center justify-center"><i class="fas fa-file-signature text-sm"></i></div>
+                        <button type="button" id="spb-float-toggle" class="flex-1 min-w-0 text-left" title="Klik untuk lihat rincian draft">
+                            <p class="spb-fb-title text-[13px] font-black leading-tight">Draft SPB: <span id="spb-float-count">0</span> item <i id="spb-float-chev" class="fas fa-chevron-up text-[10px] text-slate-400 ml-1"></i></p>
+                            <p id="spb-float-sub" class="spb-fb-sub text-[11px] font-medium leading-snug truncate">Siap diajukan ke form SPB.</p>
+                        </button>
+                        <a href="{{ route('pengajuan_barang.index', ['from' => 'ops']) }}" class="spb-fb-go shrink-0 inline-flex items-center gap-1.5 h-[34px] px-4 rounded-xl text-xs font-black transition-colors">Buka Form <i class="fas fa-arrow-right text-[10px]"></i></a>
+                    </div>
+                </div>
             </div>
+            @push('scripts')
+            <script>
+                // ---- Add to SPB dari Monitoring Product (draft lokal + badge status) ----
+                (function initOpsSpb() {
+                    function boot() {
+                    try {
+                    const SPB_DRAFT_KEY = 'pengajuan_barang_draft_{{ Auth::id() }}';
+                    const SPB_STATUS_URL = '{{ route("pengajuan_barang.statusBatch") }}';
+                    const floatbar = document.getElementById('spb-floatbar');
+                    const floatCount = document.getElementById('spb-float-count');
+                    const floatSub = document.getElementById('spb-float-sub');
+                    const spbBtns = Array.from(document.querySelectorAll('.btn-spb[data-spb-pid]'));
+                    console.log('[ops-spb] init, tombol ditemukan:', spbBtns.length);
+                    if (!spbBtns.length) return;
+                    let serverMarks = {};
+
+                    function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+                    function fmt(n) { return new Intl.NumberFormat('id-ID').format(Math.round(Number(n) || 0)); }
+                    function readDraft() {
+                        try {
+                            const raw = localStorage.getItem(SPB_DRAFT_KEY);
+                            if (!raw) return null;
+                            const d = JSON.parse(raw);
+                            if (!d || !Array.isArray(d.items)) return null;
+                            return d;
+                        } catch (e) { return null; }
+                    }
+                    function draftNameSet() {
+                        const d = readDraft();
+                        const set = new Set();
+                        (d?.items || []).forEach(it => {
+                            const n = (it.deskripsi || '').trim().toLowerCase();
+                            if (n) set.add(n);
+                        });
+                        return { draft: d, set };
+                    }
+
+                    function renderMarks() {
+                        const { draft, set } = draftNameSet();
+                        const items = draft?.items || [];
+                        const n = items.length;
+                        if (floatbar) floatbar.classList.toggle('hidden', n === 0);
+                        if (floatCount) floatCount.textContent = fmt(n);
+                        if (floatSub) {
+                            const tot = items.reduce((a, it) => a + (parseFloat(it.jumlah) || 0), 0);
+                            floatSub.textContent = n
+                                ? ('Total ' + fmt(tot) + ' unit • klik untuk rincian • tersimpan otomatis.')
+                                : 'Siap diajukan ke form SPB.';
+                        }
+                        renderFloatList(items);
+                        spbBtns.forEach(btn => {
+                            const nama = (btn.dataset.spbNama || '').trim().toLowerCase();
+                            const inDraft = nama && set.has(nama);
+                            btn.classList.toggle('is-in-draft', !!inDraft);
+                            const ico = btn.querySelector('i');
+                            if (ico) { ico.classList.toggle('fa-check', !!inDraft); ico.classList.toggle('fa-file-signature', !inDraft); }
+                            btn.title = inDraft ? 'Sudah di draft SPB — klik lagi untuk batalkan' : 'Tambah ke draft SPB';
+                            const box = document.querySelector('[data-marks-for="' + btn.dataset.spbPid + '"]');
+                            if (!box) return;
+                            const info = serverMarks[btn.dataset.spbPid] || {};
+                            const tot = info.total_bulan_ini || 0;
+                            const akt = info.aktif_bulan_ini || 0;
+                            const fin = info.selesai_bulan_ini || 0;
+                            let html = '';
+                            if (inDraft) html += '<span class="spb-badge spb-badge--draft">● Draft</span>';
+                            if (akt > 0) html += '<span class="spb-badge spb-badge--aktif">⏳ ' + akt + '× proses</span>';
+                            if (fin > 0) html += '<span class="spb-badge spb-badge--selesai">✔ ' + fin + '× selesai</span>';
+                            if (tot > 0 && akt === 0 && fin === 0) html += '<span class="spb-badge spb-badge--draft">• ' + tot + '× bulan ini</span>';
+                            if (info.ditolak_90h) html += '<span class="spb-badge spb-badge--tolak">✖ riwayat</span>';
+                            box.innerHTML = html;
+                            // Keterangan lengkap: berapa kali + status + pengajuan terakhir.
+                            box.title = tot > 0
+                                ? ('Diajukan ' + tot + '× bulan ini (proses ' + akt + ', selesai ' + fin + '). Terakhir: "' + (info.last?.judul || '-') + '" • ' + (info.last?.status || '-') + ' • ' + (info.last?.tanggal || '-') + (info.last?.oleh ? ' • ' + info.last.oleh : ''))
+                                : (inDraft ? 'Ada di draft SPB, belum diajukan.' : 'Belum pernah diajukan bulan ini.');
+                        });
+                    }
+
+                    // Rincian isi draft di floating bar: nama + qty + tombol hapus per baris.
+                    function renderFloatList(items) {
+                        const list = document.getElementById('spb-floatlist');
+                        if (!list) return;
+                        if (!items.length) { list.innerHTML = ''; list.classList.add('hidden'); return; }
+                        list.innerHTML = items.map((it, i) =>
+                            '<div class="flex items-center gap-2 py-1.5">' +
+                            '<span class="spb-fb-name flex-1 min-w-0 text-[11px] font-bold truncate">' + esc(it.deskripsi || '-') + '</span>' +
+                            '<span class="shrink-0 text-[11px] font-black" style="color:#bef264;">' + esc(fmt(it.jumlah)) + ' ' + esc(it.satuan || '') + '</span>' +
+                            '<button type="button" data-spb-rm="' + i + '" class="spb-fb-rm shrink-0 w-6 h-6 rounded-lg flex items-center justify-center transition-colors" title="Hapus dari draft"><i class="fas fa-times text-[10px] pointer-events-none"></i></button>' +
+                            '</div>'
+                        ).join('');
+                    }
+
+                    async function loadServerMarks() {
+                        try {
+                            const qs = spbBtns.map(b => 'ids[]=' + encodeURIComponent(b.dataset.spbPid)).join('&');
+                            const res = await fetch(SPB_STATUS_URL + '?' + qs, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                            const json = await res.json();
+                            serverMarks = json.map || {};
+                        } catch (e) { serverMarks = {}; }
+                        renderMarks();
+                    }
+
+                    // Delegasi klik di level dokumen: tetap kena walau tombol dirender belakangan.
+                    function handleSpbClick(btn) {
+                            const namaAsli = (btn.dataset.spbNama || '').trim();
+                            if (!namaAsli) return;
+                            const order = parseFloat(btn.dataset.spbOrder) || 0;
+                            const fc = parseFloat(btn.dataset.spbForecast) || 0;
+                            let qty = order > 0 ? order : fc;
+                            let aman = false;
+                            if (!(qty > 0)) { qty = 1; aman = true; }
+                            const kode = (btn.dataset.spbKode || '').trim();
+                            const clean = (btn.dataset.spbClean || '').trim();
+                            const satuan = (btn.dataset.spbSatuan || 'Pcs').trim() || 'Pcs';
+                            let ket = 'Dari Warehouse Ops • kode ' + (kode || '-');
+                            if (clean && clean.toLowerCase() !== namaAsli.toLowerCase()) ket += ' / ' + clean;
+                            if (aman) ket += ' • Stok aman (order 0), pengajuan manual';
+
+                            const cur = readDraft() || { v: 1, judul_pengajuan: '', catatan_pemohon: '', items: [], saved_at: new Date().toISOString() };
+                            const key = namaAsli.toLowerCase();
+                            const foundIdx = (cur.items || []).findIndex(it => (it.deskripsi || '').trim().toLowerCase() === key);
+                            if (foundIdx >= 0) {
+                                // Toggle: sudah ada → batalkan (hapus dari draft, anti double).
+                                cur.items.splice(foundIdx, 1);
+                            } else {
+                                cur.items.push({ deskripsi: namaAsli, supplier: '', jumlah: String(qty), satuan: satuan, keterangan: ket });
+                            }
+                            cur.v = 1;
+                            cur.saved_at = new Date().toISOString();
+                            try { localStorage.setItem(SPB_DRAFT_KEY, JSON.stringify(cur)); } catch (e) { console.error('[ops-spb] gagal simpan draft:', e); }
+                            renderMarks();
+                    }
+                    document.addEventListener('click', function (e) {
+                        if (!e.target || !e.target.closest) return;
+                        const btn = e.target.closest('.btn-spb[data-spb-pid]');
+                        if (btn) { e.preventDefault(); handleSpbClick(btn); return; }
+                        // Hapus 1 baris dari rincian draft di floating bar.
+                        const rm = e.target.closest('[data-spb-rm]');
+                        if (rm) {
+                            e.preventDefault();
+                            const cur = readDraft();
+                            const idx = parseInt(rm.getAttribute('data-spb-rm'), 10) || 0;
+                            if (cur && cur.items && cur.items[idx]) {
+                                cur.items.splice(idx, 1);
+                                cur.saved_at = new Date().toISOString();
+                                try { localStorage.setItem(SPB_DRAFT_KEY, JSON.stringify(cur)); } catch (err) {}
+                                renderMarks();
+                            }
+                            return;
+                        }
+                        // Buka/tutup rincian draft.
+                        if (e.target.closest('#spb-float-toggle')) {
+                            const list = document.getElementById('spb-floatlist');
+                            const chev = document.getElementById('spb-float-chev');
+                            if (list) list.classList.toggle('hidden');
+                            if (chev) { chev.classList.toggle('fa-chevron-up'); chev.classList.toggle('fa-chevron-down'); }
+                        }
+                    });
+
+                    window.addEventListener('storage', (e) => { if (e.key === SPB_DRAFT_KEY) renderMarks(); });
+                    renderMarks();
+                    loadServerMarks();
+                    } catch (err) { console.error('[ops-spb] gagal init:', err); }
+                    }
+                    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+                    else boot();
+                })();
+            </script>
+            @endpush
             @elseif($tab === 'mutasi')
             {{-- TAB 2: Data Mutation (tabel + rekap SJ + export) --}}
             <div class="space-y-4 flex flex-col w-full">
@@ -248,7 +462,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-2 md:gap-3 items-end">
                             <div class="lg:col-span-4">
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cari barang / batch / keterangan</label>
-                                <x-ui.search-input name="search" placeholder="cth. kasa / B-2026 / supplier X" value="{{ request('search') }}" autocomplete="off" class="w-full" x-data="{ search: {{ \Illuminate\Support\Js::from(request('search')) }} }" x-model="search" @input.debounce.800ms="$el.form.submit()" />
+                                <x-ui.search-input name="search" placeholder="cth. kasa / B-2026 / supplier X" value="{{ request('search') }}" autocomplete="off" class="w-full" :debounce="500" />
                             </div>
                             <div class="lg:col-span-3">
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Barang</label>

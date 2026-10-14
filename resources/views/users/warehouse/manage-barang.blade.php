@@ -66,7 +66,7 @@
                     </div>
                     <div class="flex items-center gap-2.5 w-full sm:w-auto">
                         <form action="{{ route('warehouse.product.index') }}" method="GET" id="filterForm" class="flex-1 min-w-[140px] max-w-sm hidden sm:flex">
-                            <x-ui.search-input name="search" value="{{ $search }}" placeholder="Cari kode / nama produk" autocomplete="off" class="flex-1" x-data="{ search: {{ \Illuminate\Support\Js::from($search) }} }" x-model="search" @input.debounce.800ms="$el.form.submit()" />
+                            <x-ui.search-input name="search" value="{{ $search }}" placeholder="Cari kode / nama produk" autocomplete="off" class="flex-1" :debounce="500" />
                         </form>
                         @if($canManageStock)
                         <button type="button" onclick="openCreate()" class="shrink-0 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-sm">
@@ -78,7 +78,7 @@
 
                 <div class="sm:hidden px-3 pt-3">
                     <form action="{{ route('warehouse.product.index') }}" method="GET" id="filterFormMobile">
-                        <x-ui.search-input name="search" value="{{ $search }}" placeholder="Cari produk..." x-data="{ search: {{ \Illuminate\Support\Js::from($search) }} }" x-model="search" @input.debounce.800ms="$el.form.submit()" />
+                        <x-ui.search-input name="search" value="{{ $search }}" placeholder="Cari produk..." :debounce="500" />
                     </form>
                 </div>
 

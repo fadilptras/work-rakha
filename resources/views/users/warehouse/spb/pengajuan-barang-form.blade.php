@@ -9,6 +9,16 @@
         ->orWhere('approver_barang_4_id', $user->id)
         ->exists();
     $canMonitor = $isApprover || $user->role === 'admin';
+
+    // Back button: pakai asal halaman dari controller (?from=ops|dashboard), fallback role lama.
+    $backRoute = $backRoute ?? null;
+    $backText = $backText ?? null;
+    if (!$backRoute || !$backText) {
+        $isWarehouseUser = in_array(strtolower($user->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang'])
+            || \Illuminate\Support\Str::contains(strtolower($user->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing']);
+        $backRoute = $backRoute ?: ($isWarehouseUser ? route('warehouse.dashboard') : route('dashboard'));
+        $backText = $backText ?: ($isWarehouseUser ? 'Back to Warehouse Dashboard' : 'Back to Dashboard');
+    }
 @endphp
 <x-layout-users>
     <x-slot:title>{{ $title }}</x-slot:title>
@@ -18,114 +28,77 @@
     @push('styles')
     <style>
         html { scroll-behavior: smooth; }
-        /* == Background == */
-        .mesh-bg { background-color: #ede9fe; }
-        .btn-back-modern {
-            display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 18px 8px 8px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 9999px;
-            color: #1e293b; font-size: 0.9rem; font-weight: 700;
-            text-decoration: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; width: fit-content;
+        body { font-family: 'Outfit', sans-serif; }
+        /* == Background (sama seperti halaman forecast) == */
+        .mesh-bg {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;
+            background-color: #ede9fe;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.4) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            pointer-events: none;
         }
-        .btn-back-modern:hover { background: rgba(255,255,255,0.95); box-shadow: 0 10px 15px -3px rgba(59,130,246,0.15); transform: translateY(-2px); color: #1d4ed8; }
-        .btn-back-modern .icon-circle { width: 32px; height: 32px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(0,0,0,0.06); transition: transform 0.3s ease; }
-        .btn-back-modern:hover .icon-circle { transform: translateX(-3px); background: #EFF6FF; }
-        .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,1); border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); padding: 28px; }
-        .modern-label { display: block; font-size: 0.8rem; font-weight: 800; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .modern-input { width: 100%; background: rgba(255,255,255,0.95); border: 2px solid #e2e8f0; border-radius: 14px; padding: 11px 15px; font-size: 0.9rem; color: #1e293b; font-weight: 600; outline: none; transition: all 0.2s ease; }
-        .modern-input:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
-        .modern-input-readonly { width: 100%; background: rgba(241,245,249,0.6); border: 2px solid #e2e8f0; border-radius: 14px; padding: 11px 15px; font-size: 0.9rem; color: #64748b; font-weight: 700; outline: none; cursor: not-allowed; }
-        .modern-select { width: 100%; background: rgba(255,255,255,0.95); border: 2px solid #e2e8f0; border-radius: 14px; padding: 11px 15px; font-size: 0.9rem; color: #1e293b; font-weight: 600; outline: none; transition: all 0.2s ease; cursor: pointer; }
-        .modern-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
-        
+        [x-cloak] { display: none !important; }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none; margin: 0;
+        }
+        input[type=number] { -moz-appearance: textfield; }
+
         .form-section-header { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid rgba(226,232,240,0.8); margin-bottom: 24px; }
-        
-        .btn-action-primary { padding: 12px 28px; background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: #fff; font-size: 0.9rem; font-weight: 800; border: none; border-radius: 14px; cursor: pointer; box-shadow: 0 6px 20px rgba(37,99,235,0.25); transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-action-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(37,99,235,0.35); }
-        .btn-action-primary:disabled { background: #cbd5e1; color: #64748b; box-shadow: none; cursor: not-allowed; }
-        .btn-action-secondary { padding: 12px 28px; background: #ffffff; color: #475569; font-size: 0.9rem; font-weight: 800; border: 2px solid #e2e8f0; border-radius: 14px; cursor: pointer; transition: all 0.2s; }
-        .btn-action-secondary:hover { border-color: #cbd5e1; background: #f8fafc; }
 
-        /* Custom Dynamic Row Grid Layouts */
-        .rincian-row-desktop {
-            display: grid !important;
-            grid-template-columns: 3fr 3fr 2fr 3fr 40px !important;
-            gap: 12px !important;
-            padding: 12px 16px !important;
-            align-items: start !important;
-            background: #ffffff !important;
+        /* Baris atas SPB: selalu 1 baris 3 kolom (CSS mandiri, tidak tergantung hasil build Tailwind) */
+        .spb-top-row { display: grid !important; grid-template-columns: 5fr 4fr 3fr !important; gap: 12px !important; }
+        @media (min-width: 768px) {
+            .spb-top-row { gap: 20px !important; }
         }
-        .rincian-row-mobile {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 8px !important;
-            padding: 12px !important;
-            background: #f8fafc !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 14px !important;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
-            margin-bottom: 8px !important;
-        }
-        .rincian-row-mobile-second-row {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr 40px !important;
-            gap: 8px !important;
-            align-items: center !important;
-        }
-        /* Hint riwayat: selalu reservasi 1 baris agar tidak menggeser layout */
-        .riwayat-hint {
-            min-height: 16px !important;
-            line-height: 16px !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            display: block !important;
+        @media (max-width: 639.98px) {
+            .spb-top-row { grid-template-columns: 1fr 1fr 1fr !important; gap: 8px !important; }
+            .spb-top-row .ui-label { font-size: 9px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+            .spb-top-row .ui-input { font-size: 11px !important; padding-left: 8px !important; padding-right: 8px !important; height: 34px !important; }
         }
 
+        /* Tabel item SPB: hanya area ini yang scroll (halaman tidak memanjang) */
+        .spb-items-wrap { overflow: auto; max-height: 38vh; min-height: 140px; }
+        .spb-items-wrap table { border-collapse: separate; border-spacing: 0; }
+        .spb-items-wrap thead th {
+            position: sticky; top: 0; z-index: 10; background-color: #f8fafc;
+            background-clip: padding-box;
+            box-shadow: 0 1px 0 #e2e8f0;
+        }
         @media (max-width: 767.98px) {
-            .glass-card {
-                padding: 18px;
-                border-radius: 18px;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                background: rgba(255, 255, 255, 0.95) !important;
-            }
-            .modern-input, .modern-input-readonly, .modern-select {
-                padding: 9px 12px;
-                font-size: 0.85rem;
-                border-radius: 10px;
-            }
-            .modern-label {
-                font-size: 0.72rem;
-                margin-bottom: 4px;
-            }
-            .btn-action-primary, .btn-action-secondary {
-                padding: 10px 20px;
-                font-size: 0.85rem;
-                border-radius: 10px;
-                width: 100%;
-                justify-content: center;
-            }
-            .form-section-header {
-                padding-bottom: 12px;
-                margin-bottom: 20px;
-            }
+            .spb-items-wrap { max-height: 44vh; }
         }
+        /* Kotak info di dalam popup item (riwayat + forecast) */
+        .spb-info-box {
+            border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc;
+            padding: 8px 12px; font-size: 11px; font-weight: 600; line-height: 1.5;
+            color: #64748b;
+        }
+        .spb-info-box.is-warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+        .spb-info-box.is-ok { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+        .spb-info-box.is-fc { background: #f5f3ff; border-color: #ddd6fe; color: #5b21b6; }
+        /* Badge keterangan di kolom Produk popup Tabel Forecast (mandiri, ala Warehouse Ops) */
+        .fc-marks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+        .fc-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; padding: 1px 8px; border-radius: 9999px; border: 1px solid; line-height: 1.5; white-space: nowrap; }
+        .fc-badge--sudah { background: #fffbeb; border-color: #f59e0b; color: #b45309; }
+        .fc-badge--ditabel { background: #f1f5f9; border-color: #94a3b8; color: #475569; }
     </style>
     @endpush
 
-    <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-x-clip text-slate-800 pb-16">
+        <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
 
-            
-            
+            <div class="w-full flex justify-start">
+                <x-ui.back-button id="spb-back-btn" :href="$backRoute" :label="$backText" />
+            </div>
+
             @if ($errors->any())
-                <div class="mb-4 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm" role="alert">
+                <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm" role="alert">
                     <p class="font-bold mb-1 flex items-center gap-2"><i class="fas fa-exclamation-circle"></i> Terjadi Kesalahan</p>
                     <ul class="list-disc list-inside space-y-0.5 text-xs font-semibold">
                         @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
@@ -133,27 +106,19 @@
                 </div>
             @endif
 
-            <a href="{{ route('dashboard') }}" class="btn-back-modern">
-                <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                Kembali ke Dashboard
-            </a>
+            <div class="hidden md:block">
+                <x-ui.page-header title="Form Permintaan Barang (SPB)" subtitle="Ajukan permohonan barang atau perlengkapan operasional, tambahkan rincian item dengan rekomendasi qty forecast, lampirkan dokumen pendukung, dan pantau status persetujuan." icon="fa-box" />
+            </div>
 
-            {{-- HEADER --}}
-            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
-                <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-                <div class="absolute right-20 -bottom-10 w-24 h-24 bg-white/10 rounded-full blur-lg pointer-events-none"></div>
-                <div class="relative z-10 flex items-center gap-3 md:gap-4">
-                    <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                        <i class="fas fa-box text-lg md:text-xl text-white"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h1 class="text-base md:text-xl font-black tracking-tight text-white uppercase">Form Permintaan Barang</h1>
-                        @if(!$isMobile)
-                        <p class="text-blue-100 text-xs md:text-sm mt-0.5 font-medium leading-relaxed w-full">
-                            Ajukan permohonan barang atau perlengkapan operasional, tambahkan rincian item, lampirkan dokumen pendukung, dan pantau status persetujuan.
-                        </p>
-                        @endif
-                    </div>
+            <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
+                <div class="relative z-10 flex-1 min-w-0">
+                    <h2 class="text-sm font-black tracking-wider uppercase leading-snug truncate">Form SPB</h2>
+                    <p class="text-xs text-blue-100 font-medium leading-normal truncate mt-0.5">
+                        Pengajuan barang + rekomendasi forecast.
+                    </p>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white text-base shrink-0 shadow-inner relative z-10">
+                    <i class="fas fa-box"></i>
                 </div>
             </div>
 
@@ -175,15 +140,14 @@
                     @csrf
 
                     {{-- 1. INFORMASI PEMOHON --}}
-                    <div class="glass-card">
-                        {{-- Perhatikan class mb-3 md:mb-4 di ujung baris bawah ini untuk mengurangi jarak --}}
+                    <x-ui.glass-card>
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-3 md:pb-4 mb-3 md:mb-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-user-tie"></i></div>
                                 <div>
                                     <h3 class="text-lg font-black text-slate-800">1. Informasi Pemohon</h3>
                                     @if(!$isMobile)
-                                    <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Detail data karyawan yang mengajukan barang</p>
+                                    <p class="text-xs text-slate-500 font-semibold" style="margin-top: 0; margin-bottom: 0;">Detail data karyawan yang mengajukan barang</p>
                                     @endif
                                 </div>
                             </div>
@@ -200,69 +164,73 @@
                             </div>
                             @endif
                         </div>
-                        
+
                         <input type="hidden" name="divisi" value="{{ Auth::user()->divisi ?? 'Umum' }}">
-                        <div class="grid grid-cols-2 gap-3 md:gap-5">
-                            <div class="col-span-2">
-                                <label class="modern-label" for="judul-pengajuan">Judul Pengajuan <span class="text-red-500">*</span></label>
-                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="modern-input" placeholder="Pengadaan Alat dan Barang ..." value="{{ old('judul_pengajuan') }}" required>
+                        <div class="spb-top-row">
+                            <div>
+                                <label class="ui-label" for="judul-pengajuan">Judul Pengajuan <span class="text-red-500">*</span></label>
+                                <input type="text" id="judul-pengajuan" name="judul_pengajuan" class="ui-input" placeholder="Pengadaan Alat dan Barang ..." value="{{ old('judul_pengajuan') }}" required>
                             </div>
-                            <div class="col-span-2 md:col-span-1">
-                                <label class="modern-label">Tanggal Pengajuan</label>
-                                <input type="text" class="modern-input-readonly" value="{{ \Carbon\Carbon::now()->locale('id')->isoFormat('dddd, D MMMM YYYY') }}" readonly>
+                            <div>
+                                <label class="ui-label">Tanggal Pengajuan</label>
+                                <input type="text" class="ui-input !bg-slate-100 !text-slate-500 cursor-not-allowed" value="{{ \Carbon\Carbon::now()->locale('id')->isoFormat('dddd, D MMM YYYY') }}" readonly tabindex="-1">
                                 <input type="hidden" name="tanggal_pengajuan" value="{{ date('Y-m-d') }}">
                             </div>
+                            <div>
+                                <label class="ui-label">No. SPB (Otomatis)</label>
+                                <input type="text" class="ui-input !bg-slate-100 !text-slate-500 cursor-not-allowed" value="{{ $previewNomorSpb ?? '-' }}" readonly tabindex="-1">
+                            </div>
                         </div>
-                    </div>
+                    </x-ui.glass-card>
 
-                    {{-- 2. RINCIAN BARANG --}}
-<div class="glass-card">
-    {{-- Perhatikan margin-bottom di ujung baris bawah --}}
+                    {{-- 2. RINCIAN BARANG (alur: cari -> popup -> simpan ke tabel) --}}
+<x-ui.glass-card>
     <div class="flex items-center gap-3 border-b border-slate-200/60 pb-3 md:pb-4 mb-3 md:mb-4">
         <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-list-ol"></i></div>
-        <div>
+        <div class="flex-1 min-w-0">
             <h4 class="text-lg font-black text-slate-800">2. Rincian Barang yang Diajukan</h4>
                                 @if(!$isMobile)
-                                <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Tambahkan satu atau lebih item barang beserta supplier, satuan, jumlah, dan keterangan</p>
+                                <p class="text-xs text-slate-500 font-semibold" style="margin-top: 0; margin-bottom: 0;">Klik Tambah Item Barang lalu isi detail lewat popup — qty otomatis dapat rekomendasi forecast, tetap bisa diubah manual</p>
                                 @endif
                             </div>
+                            <x-ui.button id="buka-forecast-btn" variant="soft-green" size="sm" icon="fa-table" class="shrink-0" title="Lihat tabel forecast sebagai referensi"><span class="hidden sm:inline">Tabel Forecast</span><span class="sm:hidden">Forecast</span></x-ui.button>
                         </div>
-                        @if($isMobile)
-                            <div id="rincian-barang-body" class="space-y-2 mb-3">
-                                {{-- Rows appended here dynamically --}}
+
+                        {{-- Tabel item yang sudah disimpan (hanya area ini yang scroll).
+                            Tambah item lewat tombol di bawah / popup — nama dibantu datalist master. --}}
+                        <div class="mt-2 rounded-xl border border-slate-200 bg-white" style="overflow:hidden;">
+                            <div class="spb-items-wrap">
+                                <table class="w-full text-xs table-fixed" style="min-width:770px;">
+                                    <thead>
+                                        <tr class="bg-slate-50/80 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
+                                            <th class="px-3 py-2 text-left font-bold" style="width:92px;">Kode</th>
+                                            <th class="px-3 py-2 text-left font-bold">Barang</th>
+                                            <th class="px-3 py-2 text-right font-bold" style="width:130px;">Jumlah</th>
+                                            <th class="px-3 py-2 text-left font-bold" style="width:280px;">Info</th>
+                                            <th class="px-3 py-2 text-center font-bold" style="width:80px;">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rincian-barang-body" class="divide-y divide-slate-100"></tbody>
+                                </table>
                             </div>
-                        @else
-                            <div class="rounded-2xl border border-slate-200 overflow-hidden mb-5">
-                                {{-- Header: Visible as grid on desktop --}}
-                                <div class="hidden md:grid bg-slate-50 text-slate-600 uppercase font-black text-xs border-b border-slate-200 text-center" style="grid-template-columns: 3fr 3fr 2fr 3fr 40px; gap: 12px; padding: 16px;">
-                                    <div>Nama Barang</div>
-                                    <div>Supplier</div>
-                                    <div>Jumlah & Satuan</div>
-                                    <div>Keterangan</div>
-                                    <div>Aksi</div>
-                                </div>
-                                {{-- Container for rows --}}
-                                <div id="rincian-barang-body" class="bg-white divide-y divide-slate-100">
-                                    {{-- Rows appended here dynamically --}}
-                                </div>
+                            <div id="empty-barang" class="px-4 py-3 text-center bg-slate-50/50 border-t border-dashed border-slate-200">
+                                <p class="text-xs font-bold text-slate-500"><i class="fas fa-box-open text-slate-300 mr-1.5"></i>Belum ada item — klik Tambah Item Barang untuk menambahkan.</p>
                             </div>
-                        @endif
+                        </div>
                         
-                        <div class="flex items-center justify-between flex-wrap gap-2">
-                            <button id="tambah-baris-btn" type="button" class="bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 font-black py-2 px-4 rounded-xl text-xs flex items-center gap-1.5 transition">
-                                <i class="fas fa-plus"></i> Tambah Item Barang
-                            </button>
+                        <div class="mt-2 flex items-center justify-between flex-wrap gap-2">
+                            <x-ui.button id="tambah-baris-btn" variant="soft-blue" size="sm" icon="fa-plus">Tambah Item Barang</x-ui.button>
                             <span id="draft-status" class="text-[11px] font-bold text-slate-400">Draft tersimpan otomatis di perangkat ini</span>
                         </div>
 
                         {{-- Form Note / Catatan di bawah poin 2 --}}
                         <div class="mt-5 pt-4 border-t border-slate-200/80">
-                            <label for="catatan_pemohon" class="modern-label flex items-center gap-1.5 text-slate-700 font-bold mb-1.5">
-                                <i class="fas fa-sticky-note text-blue-600"></i> Catatan / Note Pengajuan <span class="text-slate-400 font-normal text-xs">(Opsional)</span>
+                            <label for="catatan_pemohon" class="ui-label !flex !items-center !gap-1.5">
+                                <i class="fas fa-sticky-note text-blue-600"></i> Catatan / Note Pengajuan <span class="text-slate-400 font-normal normal-case">(Opsional)</span>
                             </label>
-                            <textarea id="catatan_pemohon" name="catatan_pemohon" rows="3" class="modern-input w-full" placeholder="Contoh: Pemenuhan PO untuk vendor PT Maju Jaya...">{{ old('catatan_pemohon') }}</textarea>
+                            <textarea id="catatan_pemohon" name="catatan_pemohon" rows="3" class="ui-input !h-auto !py-2.5 min-h-[84px] !leading-relaxed" placeholder="Contoh: Pemenuhan PO untuk vendor PT Maju Jaya...">{{ old('catatan_pemohon') }}</textarea>
                         </div>
-                    </div>
+                    </x-ui.glass-card>
 
                     {{-- Datalist Supplier dari Database --}}
                     <datalist id="supplier-list-options">
@@ -295,45 +263,113 @@
                         <option value="roll"></option>
                     </datalist>
 
+                    {{-- Popup detail item barang (dibuka dari hasil pencarian / tombol tambah / ubah) --}}
+                    <x-ui.modal id="spb-item-modal" maxWidth="max-w-lg" title="Tambah Barang" subtitle="Isi supplier, jumlah & keterangan, lalu simpan ke tabel." icon="fa-box">
+                        <div>
+                            <label class="ui-label" for="m-spb-nama">Nama Barang <span class="text-red-500">*</span></label>
+                            <input list="barang-list-options" type="text" id="m-spb-nama" class="ui-input ui-input--sm !bg-white !text-slate-800" placeholder="Pilih / ketik nama barang…" autocomplete="off">
+                            <div id="m-spb-riwayat" class="spb-info-box mt-2" style="display:none;"></div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;">
+                            <div>
+                                <label class="ui-label" for="m-spb-kode">Kode</label>
+                                <input type="text" id="m-spb-kode" class="ui-input ui-input--sm !bg-slate-100 !text-slate-500 cursor-not-allowed text-center font-mono" placeholder="—" readonly tabindex="-1" title="Kode master terisi otomatis dari nama barang">
+                            </div>
+                            <div>
+                                <label class="ui-label" for="m-spb-supplier">Supplier</label>
+                                <input list="supplier-list-options" type="text" id="m-spb-supplier" class="ui-input ui-input--sm !bg-white !text-slate-800" placeholder="Pilih / ketik supplier…" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="ui-label" for="m-spb-jumlah">Jumlah <span class="text-red-500">*</span></label>
+                                <input type="number" id="m-spb-jumlah" class="ui-input ui-input--sm !bg-white !text-slate-800" placeholder="0" min="1">
+                            </div>
+                            <div>
+                                <label class="ui-label" for="m-spb-satuan">Satuan <span class="text-red-500">*</span></label>
+                                <input list="satuan-list-options" type="text" id="m-spb-satuan" class="ui-input ui-input--sm !bg-white !text-slate-800" placeholder="Pilih / ketik…" autocomplete="off">
+                            </div>
+                        </div>
+                        <div id="m-spb-forecast" class="spb-info-box is-fc" style="display:none;"></div>
+                        <div>
+                            <label class="ui-label" for="m-spb-ket">Keterangan Item</label>
+                            <input type="text" id="m-spb-ket" class="ui-input ui-input--sm !bg-white !text-slate-800" placeholder="Keterangan item (opsional)" autocomplete="off">
+                        </div>
+                        <p id="m-spb-error" class="hidden text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5"></p>
+                        <x-slot:footer>
+                            <x-ui.button variant="secondary" size="sm" data-modal-close>Batal</x-ui.button>
+                            <x-ui.button variant="primary" size="sm" icon="fa-check" id="m-spb-save">Simpan ke Tabel</x-ui.button>
+                        </x-slot:footer>
+                    </x-ui.modal>
+
                     {{-- 3. FILE PENDUKUNG --}}
-                    <div class="glass-card">
+                    <x-ui.glass-card>
                         <div class="form-section-header">
                             <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-paperclip"></i></div>
                             <div>
                                 <h4 class="text-lg font-black text-slate-800">3. File Pendukung (Opsional)</h4>
                                 @if(!$isMobile)
-                                <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Lampirkan nota, spesifikasi barang, atau dokumen pendukung lainnya</p>
+                                <p class="text-xs text-slate-500 font-semibold" style="margin-top: 0; margin-bottom: 0;">Lampirkan nota, spesifikasi barang, atau dokumen pendukung lainnya</p>
                                 @endif
                             </div>
                         </div>
-                        <div class="bg-blue-50/50 border border-blue-100 p-3 md:p-3.5 rounded-2xl mb-3 md:mb-4 flex gap-3">
+                        <div class="bg-blue-50/50 border border-blue-100 p-3 md:p-3.5 rounded-xl mb-3 md:mb-4 flex gap-3">
                             <i class="fas fa-info-circle text-blue-600 text-sm mt-0.5"></i>
                             <div class="text-[11px] text-blue-800 leading-normal font-semibold">
                                 Format file yang didukung: <span class="text-blue-900 font-black">JPG, JPEG, PNG, PDF, DOC, DOCX, XLS, XLSX</span>. Ukuran berkas maksimal <span class="text-blue-900 font-black">10MB</span> per file. <span class="text-blue-900 font-black">Maksimal 10 file lampiran.</span>
                             </div>
                         </div>
                         <div id="file-pendukung-container" class="space-y-3"></div>
-                        <button id="tambah-lampiran-btn" type="button" class="mt-3 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-black py-2 px-4 rounded-xl text-xs flex items-center gap-1.5 transition shadow-sm">
-                            <i class="fas fa-plus"></i> Tambah File Lampiran
-                        </button>
-                    </div>
+                        <x-ui.button id="tambah-lampiran-btn" variant="secondary" size="sm" icon="fa-plus" class="mt-3">Tambah File Lampiran</x-ui.button>
+                    </x-ui.glass-card>
 
-                    @if($isMobile)
-                        <div class="flex flex-col-reverse gap-3 pt-2">
-                            <button type="button" id="reset-form-btn" class="btn-action-secondary">Reset Formulir</button>
-                            <button type="submit" id="submit-button" class="btn-action-primary">
-                                <i class="fas fa-paper-plane"></i> Ajukan Barang Sekarang
-                            </button>
-                        </div>
-                    @else
-                        <div class="flex justify-end gap-3 pt-2">
-                            <button type="button" id="reset-form-btn" class="btn-action-secondary">Reset Formulir</button>
-                            <button type="submit" id="submit-button" class="btn-action-primary">
-                                <i class="fas fa-paper-plane"></i> Ajukan Barang Sekarang
-                            </button>
-                        </div>
-                    @endif
+                    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+                        <x-ui.button type="button" id="reset-form-btn" variant="secondary" size="md" class="w-full sm:w-auto">Reset Formulir</x-ui.button>
+                        <x-ui.button type="submit" id="submit-button" variant="primary" size="md" icon="fa-paper-plane" class="w-full sm:w-auto" style="background:linear-gradient(135deg, #1d4ed8, #3b82f6);">Ajukan Barang Sekarang</x-ui.button>
+                    </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Tabel Forecast (referensi) --}}
+    <div id="forecast-modal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                <div class="min-w-0">
+                    <h3 class="text-base font-black text-slate-800"><i class="fas fa-chart-line text-emerald-600 mr-2"></i>Tabel Forecast <span class="text-xs font-bold text-slate-400">— referensi pengajuan</span></h3>
+                    <p id="forecast-modal-meta" class="text-[11px] text-slate-500 font-semibold mt-0.5 truncate">Memuat data...</p>
+                </div>
+                <button type="button" id="tutup-forecast-btn" class="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-3" title="Tutup">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <div class="px-5 py-3 border-b border-slate-100 shrink-0">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input id="forecast-search" type="text" class="ui-input ui-input--sm !pl-8" placeholder="Cari nama produk..." autocomplete="off">
+                </div>
+            </div>
+            <div class="overflow-auto flex-1 min-h-[200px]">
+                <table class="w-full text-left border-separate border-spacing-0 whitespace-nowrap">
+                    <thead class="sticky top-0 z-10">
+                        <tr class="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                            <th class="py-3 px-4 text-left">Produk</th>
+                            <th class="py-3 px-3 text-center">Forecast</th>
+                            <th class="py-3 px-3 text-center">Order</th>
+                            <th class="py-3 px-3 text-center">Stok</th>
+                            <th class="py-3 px-3 text-center">DOI</th>
+                            <th class="py-3 px-3 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="forecast-tbody" class="divide-y divide-slate-100 text-xs text-slate-700">
+                        <tr><td colspan="6" class="py-10 text-center text-slate-400 font-semibold">Memuat data forecast...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-5 py-3 border-t border-slate-100 flex justify-between items-center shrink-0">
+                <span id="forecast-count" class="text-[11px] font-bold text-slate-400"></span>
+                <button type="button" id="tutup-forecast-btn-2" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors">Tutup</button>
             </div>
         </div>
     </div>
@@ -341,6 +377,29 @@
     @push('scripts')
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Back button ikut asal halaman: ?from=ops|dashboard diutamakan, lalu referrer, terakhir default server.
+        (function fixSpbBack() {
+            try {
+                var btn = document.getElementById('spb-back-btn');
+                if (!btn) return;
+                var opsUrl = @json(route('warehouse.index', ['tab' => 'produk']));
+                var dashUrl = @json(route('warehouse.dashboard'));
+                var params = new URLSearchParams(window.location.search);
+                var from = (params.get('from') || '').toLowerCase();
+                var setBack = function (href, label) {
+                    btn.setAttribute('href', href);
+                    var spans = btn.querySelectorAll('span');
+                    var labelEl = spans[spans.length - 1];
+                    if (labelEl) labelEl.textContent = label;
+                };
+                if (from === 'ops') { setBack(opsUrl, 'Back to Warehouse Ops'); return; }
+                if (from === 'dashboard') { setBack(dashUrl, 'Back to Warehouse Dashboard'); return; }
+                var ref = document.referrer || '';
+                if (ref.indexOf('/stock/warehouse') !== -1) { setBack(opsUrl, 'Back to Warehouse Ops'); }
+                else if (ref.indexOf('/gudang/dashboard') !== -1) { setBack(dashUrl, 'Back to Warehouse Dashboard'); }
+            } catch (e) {}
+        })();
+
         const tambahBarisBtn = document.getElementById('tambah-baris-btn');
         const rincianBarangBody = document.getElementById('rincian-barang-body');
 
@@ -350,84 +409,246 @@
             return String(val ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
         }
 
-        function addRow(deskripsi = '', supplier = '', satuan = '', jumlah = '', keterangan = '') {
-            const newRow = document.createElement('div');
-            const escDeskripsi = escapeAttr(deskripsi);
-            const escSupplier = escapeAttr(supplier);
-            const escSatuan = escapeAttr(satuan);
-            const escJumlah = escapeAttr(jumlah);
-            const escKeterangan = escapeAttr(keterangan);
+        // ===== Item barang ala Form SJ: cari -> popup -> simpan ke tabel =====
+        const emptyBarang = document.getElementById('empty-barang');
+        const barangKodeMap = @json($barangKodeMap ?? []);
 
-            if (isMobile) {
-                newRow.className = 'rincian-row-mobile';
-                newRow.innerHTML = `
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-500 uppercase">Nama Barang</label>
-                        <input list="barang-list-options" type="text" name="rincian_deskripsi[]" value="${escDeskripsi}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Pilih / Ketik Nama Barang..." required autocomplete="off">
-                        <div class="riwayat-hint text-[10px] font-semibold mt-0.5 text-slate-400 invisible truncate">&nbsp;</div>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-500 uppercase">Supplier</label>
-                        <input list="supplier-list-options" name="rincian_supplier[]" value="${escSupplier}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Pilih / Ketik Supplier..." autocomplete="off">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase">Jumlah</label>
-                            <input type="number" name="rincian_jumlah[]" value="${escJumlah}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Jumlah" min="1" required>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-500 uppercase">Satuan</label>
-                            <input list="satuan-list-options" type="text" name="rincian_satuan[]" value="${escSatuan}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Pilih / Ketik Satuan..." required autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="flex-1">
-                            <label class="text-[10px] font-bold text-slate-500 uppercase">Keterangan Item</label>
-                            <input type="text" name="rincian_keterangan[]" value="${escKeterangan}" class="modern-input !py-1.5 !px-2.5 !rounded-lg !text-xs" placeholder="Keterangan item">
-                        </div>
-                        <div class="pt-4">
-                            <button type="button" class="delete-row-btn text-red-500 hover:text-red-700 p-1.5 text-base">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            } else {
-                newRow.className = 'rincian-row-desktop';
-                newRow.innerHTML = `
-                    <div>
-                        <input list="barang-list-options" type="text" name="rincian_deskripsi[]" value="${escDeskripsi}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Pilih / Ketik Nama Barang..." required autocomplete="off">
-                        <div class="riwayat-hint text-[10px] font-semibold mt-0.5 text-slate-400 invisible truncate">&nbsp;</div>
-                    </div>
-                    <div>
-                        <input list="supplier-list-options" name="rincian_supplier[]" value="${escSupplier}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Pilih / Ketik Supplier..." autocomplete="off">
-                    </div>
-                    <div class="flex gap-1.5">
-                        <input type="number" name="rincian_jumlah[]" value="${escJumlah}" class="modern-input !py-2 !px-2.5 !rounded-xl !text-xs w-1/2" placeholder="0" min="1" required>
-                        <input list="satuan-list-options" type="text" name="rincian_satuan[]" value="${escSatuan}" class="modern-input !py-2 !px-2.5 !rounded-xl !text-xs w-1/2" placeholder="Satuan..." required autocomplete="off">
-                    </div>
-                    <div>
-                        <input type="text" name="rincian_keterangan[]" value="${escKeterangan}" class="modern-input !py-2 !px-3 !rounded-xl !text-xs" placeholder="Keterangan item">
-                    </div>
-                    <div style="display: flex; justify-content: center; align-items: center;">
-                        <button type="button" class="delete-row-btn text-slate-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-xl text-sm transition-all">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                `;
+        function kodeOf(nama) {
+            const key = (nama || '').trim();
+            if (!key || !barangKodeMap) return '';
+            if (barangKodeMap[key]) return barangKodeMap[key];
+            const lower = key.toLowerCase();
+            for (const k in barangKodeMap) {
+                if ((k || '').toLowerCase() === lower) return barangKodeMap[k];
             }
-            rincianBarangBody.appendChild(newRow);
-            newRow.querySelectorAll('input').forEach(inp => {
-                inp.addEventListener('input', savePengajuanDraft);
-                inp.addEventListener('change', savePengajuanDraft);
-            });
-            const namaInput = newRow.querySelector('input[name="rincian_deskripsi[]"]');
-            if (namaInput) {
-                namaInput.addEventListener('input', () => scheduleRiwayatCheck(namaInput));
-                namaInput.addEventListener('change', () => scheduleRiwayatCheck(namaInput));
-                if ((namaInput.value || '').trim().length >= 3) scheduleRiwayatCheck(namaInput);
+            return '';
+        }
+        let editingRow = null;
+        const modalState = { fcAuto: null, rwData: null, fcData: null };
+        const modalTimers = { rw: null, fc: null };
+
+        const mSpbNama = document.getElementById('m-spb-nama');
+        const mSpbKode = document.getElementById('m-spb-kode');
+        const mSpbSupplier = document.getElementById('m-spb-supplier');
+        const mSpbJumlah = document.getElementById('m-spb-jumlah');
+        const mSpbSatuan = document.getElementById('m-spb-satuan');
+        const mSpbKet = document.getElementById('m-spb-ket');
+        const mSpbRwBox = document.getElementById('m-spb-riwayat');
+        const mSpbFcBox = document.getElementById('m-spb-forecast');
+        const mSpbErr = document.getElementById('m-spb-error');
+        const mSpbSave = document.getElementById('m-spb-save');
+
+        function updateEmpty() {
+            if (!emptyBarang || !rincianBarangBody) return;
+            const n = rincianBarangBody.querySelectorAll('.row-spb').length;
+            emptyBarang.style.display = n ? 'none' : 'block';
+        }
+
+        function showModalErr(msg) {
+            if (!mSpbErr) return;
+            if (!msg) { mSpbErr.classList.add('hidden'); mSpbErr.textContent = ''; return; }
+            mSpbErr.textContent = msg;
+            mSpbErr.classList.remove('hidden');
+        }
+
+        function setModalBox(kind, state, html) {
+            const box = kind === 'rw' ? mSpbRwBox : mSpbFcBox;
+            if (!box) return;
+            if (!html) { box.style.display = 'none'; box.innerHTML = ''; return; }
+            box.style.display = 'block';
+            box.innerHTML = html;
+            box.classList.remove('is-warn', 'is-ok', 'is-fc');
+            if (state === 'warn') box.classList.add('is-warn');
+            else if (state === 'ok') box.classList.add('is-ok');
+            else if (state === 'fc') box.classList.add('is-fc');
+        }
+
+        function rowHidden(row, name) {
+            const el = row ? row.querySelector('input[name="' + name + '"]') : null;
+            return el ? el.value : '';
+        }
+
+        function openItemModal(prefill, row) {
+            editingRow = row || null;
+            const titleEl = document.getElementById('spb-item-modal-title');
+            if (titleEl) titleEl.textContent = editingRow ? 'Ubah Barang' : 'Tambah Barang';
+            const p = prefill || {};
+            if (mSpbNama) mSpbNama.value = p.deskripsi !== undefined ? p.deskripsi : rowHidden(editingRow, 'rincian_deskripsi[]');
+            if (mSpbSupplier) mSpbSupplier.value = p.supplier !== undefined ? p.supplier : rowHidden(editingRow, 'rincian_supplier[]');
+            if (mSpbJumlah) mSpbJumlah.value = p.jumlah !== undefined ? p.jumlah : rowHidden(editingRow, 'rincian_jumlah[]');
+            if (mSpbSatuan) mSpbSatuan.value = p.satuan !== undefined ? p.satuan : rowHidden(editingRow, 'rincian_satuan[]');
+            if (mSpbKet) mSpbKet.value = p.keterangan !== undefined ? p.keterangan : rowHidden(editingRow, 'rincian_keterangan[]');
+            if (mSpbKode) mSpbKode.value = kodeOf(mSpbNama ? mSpbNama.value : '');
+            modalState.fcAuto = null;
+            modalState.rwData = null;
+            modalState.fcData = null;
+            showModalErr('');
+            setModalBox('rw', '', '');
+            setModalBox('fc', '', '');
+            if (typeof uiModalOpen === 'function') uiModalOpen('spb-item-modal');
+            else {
+                const m = document.getElementById('spb-item-modal');
+                if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
             }
-            newRow.querySelector('.delete-row-btn').addEventListener('click', () => { newRow.remove(); savePengajuanDraft(); });
+            if (((mSpbNama && mSpbNama.value) || '').trim().length >= 3) scheduleModalChecks();
+            setTimeout(function () { if (mSpbNama) mSpbNama.focus(); }, 250);
+        }
+
+        function closeItemModal() {
+            if (typeof uiModalClose === 'function') uiModalClose('spb-item-modal');
+            else {
+                const m = document.getElementById('spb-item-modal');
+                if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+            }
+            editingRow = null;
+        }
+
+        function scheduleModalChecks() {
+            if (!mSpbNama) return;
+            clearTimeout(modalTimers.rw);
+            clearTimeout(modalTimers.fc);
+            const nama = (mSpbNama.value || '').trim();
+            if (mSpbKode) mSpbKode.value = kodeOf(nama);
+            if (nama.length < 3) {
+                setModalBox('rw', '', '');
+                setModalBox('fc', '', '');
+                modalState.fcAuto = null;
+                return;
+            }
+            modalTimers.rw = setTimeout(function () { refreshModalRiwayat(nama); }, 400);
+            modalTimers.fc = setTimeout(function () { refreshModalForecast(nama); }, 500);
+        }
+
+        function refreshModalRiwayat(nama) {
+            setModalBox('rw', '', '••• mengecek pengajuan 30 hari terakhir…');
+            fetchRiwayat(nama).then(function (r) {
+                if (((mSpbNama.value || '').trim()) !== nama) return;
+                if (r && r.found) {
+                    modalState.rwData = r;
+                    const tgl = (r.last && r.last.tanggal) ? ' • ' + r.last.tanggal : '';
+                    const st = (r.last && r.last.status) ? ' (' + r.last.status + ')' : '';
+                    setModalBox('rw', 'warn', '● Sudah pengajuan <b>' + r.count + 'x</b> dalam 30 hari terakhir' + escapeAttr(tgl + st) + ' — semua user, status aktif.');
+                } else {
+                    modalState.rwData = { found: false };
+                    setModalBox('rw', 'ok', '○ Belum ada pengajuan dalam 30 hari terakhir.');
+                }
+            }).catch(function () { setModalBox('rw', '', ''); });
+        }
+
+        function refreshModalForecast(nama) {
+            setModalBox('fc', 'fc', '••• menghitung rekomendasi forecast…');
+            fetchForecast(nama).then(function (d) {
+                if (((mSpbNama.value || '').trim()) !== nama) return;
+                if (d && d.found) {
+                    modalState.fcData = d;
+                    const satuan = d.satuan_sales || 'Pcs';
+                    const suggest = d.order_qty;
+                    if (suggest > 0) {
+                        setModalBox('fc', 'fc', '<b>Rekomendasi order: ' + fmtNum(suggest) + ' ' + escapeAttr(satuan) + '</b> — forecast ' + fmtNum(d.forecast_qty) + ', stok ' + fmtNum(d.stok) + ', DOI ' + fmtNum(d.doi) + ' hari. Angka sudah terisi otomatis, tetap bisa diedit.');
+                        const cur = ((mSpbJumlah && mSpbJumlah.value) || '').trim();
+                        if (mSpbJumlah && (cur === '' || cur === String(modalState.fcAuto || ''))) {
+                            mSpbJumlah.value = suggest;
+                            if (mSpbSatuan && !(mSpbSatuan.value || '').trim()) mSpbSatuan.value = satuan;
+                            modalState.fcAuto = String(suggest);
+                            if (mSpbJumlah) { mSpbJumlah.style.borderColor = '#10b981'; setTimeout(function () { mSpbJumlah.style.borderColor = ''; }, 1200); }
+                        }
+                    } else {
+                        setModalBox('fc', 'ok', '<b>Tidak perlu order</b> — stok ' + fmtNum(d.stok) + ' ' + escapeAttr(d.satuan_stok || 'Pcs') + ' mencukupi untuk "' + escapeAttr(d.product) + '".');
+                    }
+                } else {
+                    modalState.fcData = null;
+                    setModalBox('fc', '', 'Tidak ada data order forecast untuk "' + escapeAttr(nama) + '".');
+                }
+            }).catch(function () { setModalBox('fc', '', ''); });
+        }
+
+        function fillRowValues(tr, vals) {
+            const set = function (name, v) { const el = tr.querySelector('input[name="' + name + '"]'); if (el) el.value = v || ''; };
+            set('rincian_deskripsi[]', vals.deskripsi);
+            set('rincian_supplier[]', vals.supplier);
+            set('rincian_jumlah[]', vals.jumlah);
+            set('rincian_satuan[]', vals.satuan);
+            set('rincian_keterangan[]', vals.keterangan);
+            const kode = kodeOf(vals.deskripsi);
+            const kodeEl = tr.querySelector('.cell-kode');
+            if (kodeEl) { kodeEl.textContent = kode || '—'; kodeEl.setAttribute('title', kode || 'Kode tidak ada di master'); }
+            const namaEl = tr.querySelector('.cell-nama');
+            if (namaEl) { namaEl.textContent = vals.deskripsi || '—'; namaEl.setAttribute('title', vals.deskripsi || ''); }
+            const sub = [vals.supplier, vals.keterangan].filter(function (x) { return (x || '').trim() !== ''; }).join(' • ');
+            const subEl = tr.querySelector('.cell-sub');
+            if (subEl) { subEl.textContent = sub; subEl.setAttribute('title', sub); }
+            tr.querySelector('.qty-txt').textContent = vals.jumlah || '';
+            tr.querySelector('.cell-sat').textContent = vals.satuan || '';
+        }
+
+        // Info 1 baris: ringkas riwayat + forecast, detail penuh di tooltip
+        function renderRowInfo(tr) {
+            const box = tr.querySelector('.cell-info');
+            if (!box) return;
+            const info = tr._info || {};
+            const parts = [];
+            const full = [];
+            if (info.rw) {
+                if (info.rw.found) {
+                    const tgl = (info.rw.last && info.rw.last.tanggal) ? ' • ' + info.rw.last.tanggal : '';
+                    const st = (info.rw.last && info.rw.last.status) ? ' (' + info.rw.last.status + ')' : '';
+                    const oleh = (info.rw.last && info.rw.last.oleh) ? ' oleh ' + info.rw.last.oleh : '';
+                    const judul = (info.rw.last && info.rw.last.judul) ? ' "' + info.rw.last.judul + '"' : '';
+                    parts.push('<span class="text-amber-600 font-bold">● Sudah ' + info.rw.count + 'x</span>');
+                    full.push('Sudah diajukan ' + info.rw.count + 'x dalam 30 hari (semua user)' + judul + tgl + st + oleh);
+                } else {
+                    parts.push('<span class="text-emerald-600 font-semibold">○ Belum pernah</span>');
+                    full.push('Belum ada pengajuan siapapun (30 hari)');
+                }
+            }
+            if (info.fc && info.fc.found) {
+                const satuan = info.fc.satuan_sales || 'Pcs';
+                if (info.fc.order_qty > 0) {
+                    parts.push('<span class="text-violet-700 font-bold">Order ' + fmtNum(info.fc.order_qty) + ' ' + escapeAttr(satuan) + '</span>');
+                    full.push('Rekomendasi order ' + fmtNum(info.fc.order_qty) + ' ' + satuan + ' • forecast ' + fmtNum(info.fc.forecast_qty) + ' • stok ' + fmtNum(info.fc.stok));
+                } else {
+                    parts.push('<span class="text-slate-400 font-semibold">Stok cukup</span>');
+                    full.push('Stok mencukupi, tidak perlu order');
+                }
+            }
+            box.innerHTML = parts.length ? parts.join('<span class="text-slate-300 font-normal"> • </span>') : '<span class="text-slate-300">—</span>';
+            if (full.length) box.setAttribute('title', full.join(' | '));
+            else box.removeAttribute('title');
+        }
+
+        function addRow(deskripsi, supplier, satuan, jumlah, keterangan, info) {
+            if (!rincianBarangBody) return;
+            const tr = document.createElement('tr');
+            tr.className = 'row-spb hover:bg-blue-50/50 transition-colors bg-white';
+            tr.innerHTML =
+                '<td class="px-3 py-2.5 align-top">' +
+                    '<div class="font-mono font-bold text-slate-500 cell-kode truncate" style="font-size:11px;"></div>' +
+                '</td>' +
+                '<td class="px-3 py-2.5 align-top" style="min-width:0;">' +
+                    '<div class="font-bold text-slate-800 cell-nama leading-snug truncate"></div>' +
+                    '<div class="text-[11px] text-slate-400 font-semibold mt-0.5 cell-sub leading-snug truncate"></div>' +
+                    '<input type="hidden" name="rincian_deskripsi[]">' +
+                    '<input type="hidden" name="rincian_supplier[]">' +
+                    '<input type="hidden" name="rincian_keterangan[]">' +
+                '</td>' +
+                '<td class="px-3 py-2.5 align-top text-right whitespace-nowrap">' +
+                    '<span class="font-black text-slate-800 qty-txt"></span> <span class="text-slate-500 font-bold cell-sat"></span>' +
+                    '<input type="hidden" name="rincian_jumlah[]">' +
+                    '<input type="hidden" name="rincian_satuan[]">' +
+                '</td>' +
+                '<td class="px-3 py-2.5 align-top"><div class="cell-info whitespace-nowrap overflow-hidden text-ellipsis text-[10px] leading-relaxed"></div></td>' +
+                '<td class="px-3 py-2.5 align-top text-center whitespace-nowrap">' +
+                    '<button type="button" title="Ubah" class="btn-edit ui-btn ui-btn--edit mr-1"><i class="fas fa-pen text-[11px]"></i></button>' +
+                    '<button type="button" title="Hapus" class="btn-del ui-btn ui-btn--delete"><i class="fas fa-trash-can text-[11px]"></i></button>' +
+                '</td>';
+            fillRowValues(tr, { deskripsi: deskripsi, supplier: supplier, satuan: satuan, jumlah: jumlah, keterangan: keterangan });
+            tr._info = info || { rw: null, fc: null };
+            renderRowInfo(tr);
+            tr.querySelector('.btn-del').addEventListener('click', function () { tr.remove(); savePengajuanDraft(); updateEmpty(); });
+            tr.querySelector('.btn-edit').addEventListener('click', function () { openItemModal(null, tr); });
+            rincianBarangBody.appendChild(tr);
+            updateEmpty();
+            savePengajuanDraft();
         }
 
         // ===== Auto-save draft ala manage sales (localStorage, per-user) =====
@@ -441,6 +662,7 @@
         const catatanInput = document.getElementById('catatan_pemohon');
         const draftStatus = document.getElementById('draft-status');
         let isRestoring = false;
+        let isSubmitting = false;
 
         function updateDraftStatus(text) {
             if (draftStatus) draftStatus.textContent = text;
@@ -448,7 +670,7 @@
 
         function collectDraft() {
             const items = [];
-            rincianBarangBody.querySelectorAll('.rincian-row-desktop, .rincian-row-mobile').forEach(row => {
+            rincianBarangBody.querySelectorAll('.row-spb').forEach(row => {
                 const d = row.querySelector('input[name="rincian_deskripsi[]"]');
                 const s = row.querySelector('input[name="rincian_supplier[]"]');
                 const j = row.querySelector('input[name="rincian_jumlah[]"]');
@@ -463,6 +685,7 @@
                 });
             });
             return {
+                v: 1,
                 judul_pengajuan: judulInput ? judulInput.value : '',
                 catatan_pemohon: catatanInput ? catatanInput.value : '',
                 items: items,
@@ -485,6 +708,7 @@
                 if (!raw) return null;
                 const parsed = JSON.parse(raw);
                 if (!parsed || !Array.isArray(parsed.items)) return null;
+                if (parsed.v !== undefined && parsed.v !== 1) return null;
                 return parsed;
             } catch (e) {
                 return null;
@@ -496,62 +720,224 @@
             updateDraftStatus('Draft tersimpan otomatis di perangkat ini');
         }
 
-        // ===== Info riwayat 30 hari (milik sendiri, status aktif, info saja) =====
+        // ===== Info riwayat 30 hari (semua user, status aktif, info saja) =====
         const checkRiwayatUrl = "{{ route('pengajuan_barang.checkRiwayat') }}";
-        const riwayatTimers = new WeakMap();
 
-        function setRiwayatHint(input, state, text, fullTitle) {
-            const row = input.closest('.rincian-row-desktop, .rincian-row-mobile') || input.parentElement;
-            const hint = row ? row.querySelector('.riwayat-hint') : null;
-            if (!hint) return;
-            const base = 'riwayat-hint text-[10px] font-semibold mt-0.5 truncate ';
-            if (!text) {
-                hint.textContent = '\u00A0';
-                hint.className = base + 'text-slate-400 invisible';
-                hint.removeAttribute('title');
-                return;
-            }
-            hint.textContent = text;
-            hint.className = base
-                + (state === 'found' ? 'text-amber-600 visible' : state === 'empty' ? 'text-emerald-600 visible' : 'text-slate-400 visible');
-            hint.setAttribute('title', fullTitle || 'Filter: milik sendiri • 30 hari • status aktif');
+        function fetchRiwayat(nama) {
+            return fetch(checkRiwayatUrl + '?nama=' + encodeURIComponent(nama), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); });
         }
 
-        function checkRiwayatForInput(input) {
-            const nama = (input.value || '').trim();
-            if (nama.length < 3) {
-                setRiwayatHint(input, '', '');
-                return;
-            }
-            setRiwayatHint(input, 'checking', '••• mengecek...');
-            fetch(checkRiwayatUrl + '?nama=' + encodeURIComponent(nama), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(r => r.json())
-                .then(d => {
-                    if (d && d.found) {
-                        const tgl = (d.last && d.last.tanggal) ? d.last.tanggal : '';
-                        const st = (d.last && d.last.status) ? d.last.status : '';
-                        const short = '● Sudah pengajuan ' + d.count + 'x' + (tgl ? ' • ' + tgl : '') + (st ? ' (' + st + ')' : '');
-                        const full = 'Sudah pengajuan ' + d.count + 'x dalam 30 hari terakhir'
-                            + (tgl ? ' • terakhir ' + tgl : '') + (st ? ' (' + st + ')' : '')
-                            + ' • Filter: milik sendiri, status aktif';
-                        setRiwayatHint(input, 'found', short, full);
-                    } else {
-                        setRiwayatHint(input, 'empty', '○ Belum ada pengajuan (30 hari)', 'Belum ada pengajuan dalam 30 hari terakhir • milik sendiri • status aktif');
-                    }
-                })
-                .catch(() => setRiwayatHint(input, '', ''));
+        function recheckRowRiwayat(row) {
+            const nama = (rowHidden(row, 'rincian_deskripsi[]') || '').trim();
+            if (nama.length < 3) return Promise.resolve();
+            return fetchRiwayat(nama).then(function (r) {
+                row._info = row._info || {};
+                row._info.rw = (r && r.found) ? r : { found: false };
+                renderRowInfo(row);
+            }).catch(function () {});
         }
 
-        function scheduleRiwayatCheck(input) {
-            if (riwayatTimers.has(input)) clearTimeout(riwayatTimers.get(input));
-            riwayatTimers.set(input, setTimeout(() => checkRiwayatForInput(input), 400));
+        // ===== Angka Order dari sales forecast (sumber: kolom Order, bukan Forecast) =====
+        // Alur: ketik nama barang di popup -> fetch cek-forecast -> angka Order
+        // langsung masuk qty popup (boleh diedit) + badge info di tabel.
+        // Auto-fill tidak menimpa ketikan manual; order 0 = qty dibiarkan kosong.
+        const checkForecastUrl = "{{ route('pengajuan_barang.checkForecast') }}";
+
+        function fmtNum(n) {
+            const v = Number(n);
+            if (!isFinite(v)) return n;
+            return v.toLocaleString('id-ID');
         }
 
-        function checkAllRiwayat() {
+        function fetchForecast(nama) {
+            return fetch(checkForecastUrl + '?nama=' + encodeURIComponent(nama), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); });
+        }
+
+        function recheckRowForecast(row) {
+            const nama = (rowHidden(row, 'rincian_deskripsi[]') || '').trim();
+            if (nama.length < 3) return Promise.resolve();
+            return fetchForecast(nama).then(function (d) {
+                row._info = row._info || {};
+                row._info.fc = (d && d.found) ? d : null;
+                renderRowInfo(row);
+            }).catch(function () {});
+        }
+
+        function recheckAllRows() {
             if (!rincianBarangBody) return;
-            rincianBarangBody.querySelectorAll('input[name="rincian_deskripsi[]"]').forEach(inp => {
-                if ((inp.value || '').trim().length >= 3) scheduleRiwayatCheck(inp);
+            const rows = rincianBarangBody.querySelectorAll('.row-spb');
+            rows.forEach(function (row, i) {
+                setTimeout(function () { recheckRowRiwayat(row); }, i * 250);
+                setTimeout(function () { recheckRowForecast(row); }, i * 250 + 120);
             });
+        }
+
+        // ===== Modal tabel forecast (referensi, data live dari endpoint) =====
+        const forecastTableUrl = "{{ route('sales.forecast.data') }}";
+        const forecastModal = document.getElementById('forecast-modal');
+        const forecastTbody = document.getElementById('forecast-tbody');
+        const forecastSearch = document.getElementById('forecast-search');
+        const forecastMeta = document.getElementById('forecast-modal-meta');
+        const forecastCount = document.getElementById('forecast-count');
+        let fcTableCache = null;
+
+        function escapeHtml(s) {
+            return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function openForecastModal() {
+            if (!forecastModal) return;
+            forecastModal.classList.remove('hidden');
+            forecastModal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            if (!fcTableCache) loadForecastTable();
+            else renderForecastRows(forecastSearch ? forecastSearch.value : '');
+        }
+
+        function closeForecastModal() {
+            if (!forecastModal) return;
+            forecastModal.classList.add('hidden');
+            forecastModal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+
+        function loadForecastTable() {
+            if (!forecastTbody) return;
+            forecastTbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-slate-400 font-semibold">Memuat data forecast...</td></tr>';
+            fetch(forecastTableUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.json().then(d => ({ status: r.status, body: d })))
+                .then(({ status, body }) => {
+                    if (status === 403 || !body || body.success !== true) {
+                        const msg = (body && body.message) || 'Anda tidak memiliki akses ke data forecast.';
+                        forecastTbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-slate-400 font-semibold">' + escapeHtml(msg) + '</td></tr>';
+                        if (forecastMeta) forecastMeta.textContent = 'Akses ditolak.';
+                        return;
+                    }
+                    fcTableCache = body.data || [];
+                    const m = body.meta || {};
+                    if (forecastMeta) {
+                        forecastMeta.textContent = 'Periode ' + (m.bulan_aktif || '') + ' ' + (m.tahun || '')
+                            + ' • acuan ' + (m.ref_months || '-') + ' bln • +' + (m.percentage || 0) + '% • DOI ' + (m.doi || '-') + ' hr • stok ' + (m.label_stok || '-');
+                    }
+                    renderForecastRows(forecastSearch ? forecastSearch.value : '');
+                })
+                .catch(() => {
+                    forecastTbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-slate-400 font-semibold">Gagal memuat data. Tutup lalu buka kembali.</td></tr>';
+                });
+        }
+
+        function renderForecastRows(filter) {
+            if (!forecastTbody || !fcTableCache) return;
+            const key = (filter || '').trim().toLowerCase();
+            const rows = key ? fcTableCache.filter(d => (d.nama_produk || '').toLowerCase().includes(key)) : fcTableCache;
+            if (forecastCount) forecastCount.textContent = rows.length + ' dari ' + fcTableCache.length + ' produk';
+            if (rows.length === 0) {
+                forecastTbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-slate-400 font-semibold">Tidak ada produk yang cocok.</td></tr>';
+                return;
+            }
+            forecastTbody.innerHTML = rows.map(d =>
+                '<tr class="hover:bg-emerald-50/60 transition-colors">'
+                + '<td class="py-2.5 px-4 font-bold text-slate-800 whitespace-normal min-w-[180px]">' + escapeHtml(d.nama_produk) + '<div class="text-[10px] font-semibold text-slate-400">avg ' + fmtNum(d.avg_qty) + ' ' + escapeHtml(d.satuan_sales || '') + ' /bln</div><div class="fc-marks" data-fc-marks="' + escapeAttr(d.nama_produk) + '"></div></td>'
+                + '<td class="py-2.5 px-3 text-center font-black text-emerald-600">' + fmtNum(d.forecast_qty) + '</td>'
+                + '<td class="py-2.5 px-3 text-center font-black text-indigo-700">' + fmtNum(d.order_qty) + '</td>'
+                + '<td class="py-2.5 px-3 text-center font-bold text-orange-600">' + fmtNum(d.stok_tersedia) + '</td>'
+                + '<td class="py-2.5 px-3 text-center font-bold text-rose-600">' + fmtNum(d.doi_qty) + '</td>'
+                + '<td class="py-2.5 px-3 text-center"><button type="button" class="fc-pilih-btn text-[11px] font-black text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-3 py-1.5 transition-colors" data-produk="' + escapeAttr(d.nama_produk) + '">Pilih</button></td>'
+                + '</tr>'
+            ).join('');
+            paintFcMarks(rows);
+        }
+
+        // ===== Keterangan pengajuan di kolom Produk popup Tabel Forecast =====
+        // Badge "Sudah Nx" = pernah diajukan siapapun 30 hari terakhir (1 request batch).
+        // Badge "Di tabel" = nama sudah masuk rincian SPB (baca live, anti double).
+        const statusBatchNamesUrl = "{{ route('pengajuan_barang.statusBatchNames') }}";
+        const fcStatusCache = {};
+        let fcStatusInflight = null;
+
+        function tableNameSet() {
+            const set = new Set();
+            if (!rincianBarangBody) return set;
+            rincianBarangBody.querySelectorAll('.row-spb').forEach(function (row) {
+                const d = row.querySelector('input[name="rincian_deskripsi[]"]');
+                const n = (d ? d.value : '').trim().toLowerCase();
+                if (n) set.add(n);
+            });
+            return set;
+        }
+
+        function fcMarkHtml(nama, inTable) {
+            const info = fcStatusCache[nama];
+            let html = '';
+            if (inTable) html += '<span class="fc-badge fc-badge--ditabel">● Di tabel</span>';
+            if (info && info.found) {
+                const last = info.last || {};
+                const tip = 'Sudah diajukan ' + info.count + 'x dalam 30 hari (semua user)'
+                    + (last.judul ? ' "' + last.judul + '"' : '')
+                    + (last.tanggal ? ' • ' + last.tanggal : '')
+                    + (last.status ? ' (' + last.status + ')' : '')
+                    + (last.oleh ? ' oleh ' + last.oleh : '');
+                html += '<span class="fc-badge fc-badge--sudah" title="' + escapeAttr(tip) + '">● Sudah ' + info.count + 'x</span>';
+            }
+            return html;
+        }
+
+        function paintFcMarks(rows) {
+            if (!forecastTbody) return;
+            const inTable = tableNameSet();
+            const missing = [];
+            (rows || []).forEach(function (d) {
+                const nama = d.nama_produk || '';
+                if (!nama || fcStatusCache[nama]) return;
+                if (missing.indexOf(nama) === -1) missing.push(nama);
+            });
+            forecastTbody.querySelectorAll('[data-fc-marks]').forEach(function (box) {
+                const nama = box.getAttribute('data-fc-marks') || '';
+                box.innerHTML = fcMarkHtml(nama, inTable.has(nama.trim().toLowerCase()));
+            });
+            if (missing.length) fetchFcStatus(missing);
+        }
+
+        function fetchFcStatus(names) {
+            const fresh = names.filter(n => !fcStatusCache[n]);
+            if (!fresh.length) return;
+            const run = function (batch) {
+                const token = document.querySelector('meta[name="csrf-token"]');
+                return fetch(statusBatchNamesUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        ...(token ? { 'X-CSRF-TOKEN': token.getAttribute('content') } : {}),
+                    },
+                    body: JSON.stringify({ names: batch }),
+                }).then(r => r.json()).then(json => {
+                    const map = (json && json.map) || {};
+                    batch.forEach(n => { fcStatusCache[n] = map[n] || { found: false, count: 0, last: null }; });
+                    if (forecastModal && !forecastModal.classList.contains('hidden')) {
+                        const inTable = tableNameSet();
+                        forecastTbody.querySelectorAll('[data-fc-marks]').forEach(function (box) {
+                            const nama = box.getAttribute('data-fc-marks') || '';
+                            if (batch.indexOf(nama) !== -1) box.innerHTML = fcMarkHtml(nama, inTable.has(nama.trim().toLowerCase()));
+                        });
+                    }
+                }).catch(() => {
+                    batch.forEach(n => { fcStatusCache[n] = { found: false, count: 0, last: null }; });
+                });
+            };
+            // Antrekan berantai agar 1 request dalam penerbangan (hemat + anti race).
+            const chain = fcStatusInflight || Promise.resolve();
+            fcStatusInflight = chain.then(() => run(fresh)).finally(() => { if (fcStatusInflight) fcStatusInflight = null; });
+        }
+
+        // Pilih produk dari tabel forecast: buka popup item dengan nama terisi,
+        // info riwayat + rekomendasi forecast dimuat otomatis di dalam popup.
+        function pilihForecastProduk(namaProduk) {
+            if (!namaProduk || !rincianBarangBody) return;
+            closeForecastModal();
+            openItemModal({ deskripsi: namaProduk });
         }
 
         const oldRincianDeskripsi = @json(old('rincian_deskripsi', []));
@@ -589,30 +975,84 @@
                     if (catatanInput && draft.catatan_pemohon) catatanInput.value = draft.catatan_pemohon;
                     if (draft.items.length > 0) {
                         draft.items.forEach(it => addRow(it.deskripsi || '', it.supplier || '', it.satuan || '', it.jumlah || '', it.keterangan || ''));
-                    } else {
-                        addRow();
                     }
                     updateDraftStatus('Draft dipulihkan otomatis');
-                } else {
-                    addRow();
                 }
             }
             isRestoring = false;
             savePengajuanDraft();
-            checkAllRiwayat();
-            tambahBarisBtn.addEventListener('click', () => { addRow(); savePengajuanDraft(); });
+            updateEmpty();
+            recheckAllRows();
+            // Tombol tambah kini membuka popup, bukan menambah baris inline
+            tambahBarisBtn.addEventListener('click', () => { openItemModal(); });
         }
 
-        if (rincianBarangBody) {
-            rincianBarangBody.addEventListener('input', savePengajuanDraft);
-            rincianBarangBody.addEventListener('change', savePengajuanDraft);
-            rincianBarangBody.addEventListener('input', (e) => {
-                if (e.target && e.target.name === 'rincian_deskripsi[]') scheduleRiwayatCheck(e.target);
+        // Popup item: cek riwayat + forecast saat nama berubah, Enter = simpan
+        if (mSpbNama) {
+            mSpbNama.addEventListener('input', scheduleModalChecks);
+            mSpbNama.addEventListener('change', scheduleModalChecks);
+        }
+        [mSpbNama, mSpbSupplier, mSpbJumlah, mSpbSatuan, mSpbKet].forEach(function (el) {
+            if (!el) return;
+            el.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); if (mSpbSave) mSpbSave.click(); }
             });
-            rincianBarangBody.addEventListener('change', (e) => {
-                if (e.target && e.target.name === 'rincian_deskripsi[]') scheduleRiwayatCheck(e.target);
+        });
+        if (mSpbSave) {
+            mSpbSave.addEventListener('click', function () {
+                const deskripsi = ((mSpbNama && mSpbNama.value) || '').trim();
+                const supplier = ((mSpbSupplier && mSpbSupplier.value) || '').trim();
+                const jumlah = ((mSpbJumlah && mSpbJumlah.value) || '').trim();
+                const satuan = ((mSpbSatuan && mSpbSatuan.value) || '').trim();
+                const keterangan = ((mSpbKet && mSpbKet.value) || '').trim();
+                if (!deskripsi) { showModalErr('Nama barang wajib diisi.'); if (mSpbNama) mSpbNama.focus(); return; }
+                const q = parseFloat(jumlah);
+                if (!jumlah || !(q > 0)) { showModalErr('Jumlah wajib diisi dan lebih dari 0.'); if (mSpbJumlah) mSpbJumlah.focus(); return; }
+                if (!satuan) { showModalErr('Satuan wajib diisi.'); if (mSpbSatuan) mSpbSatuan.focus(); return; }
+                // Anti double: tolak nama yang sudah ada di baris lain (tiap barang cukup 1 baris).
+                const dupeRow = Array.from(rincianBarangBody.querySelectorAll('.row-spb')).find(row => {
+                    if (editingRow && row === editingRow) return false;
+                    const d = row.querySelector('input[name="rincian_deskripsi[]"]');
+                    return d && (d.value || '').trim().toLowerCase() === deskripsi.toLowerCase();
+                });
+                if (dupeRow) { showModalErr('"' + deskripsi + '" sudah ada di tabel — ubah baris yang ada saja, jangan tambah dobel.'); if (mSpbNama) mSpbNama.focus(); return; }
+                showModalErr('');
+                const info = { rw: modalState.rwData || null, fc: modalState.fcData || null };
+                if (editingRow) {
+                    fillRowValues(editingRow, { deskripsi: deskripsi, supplier: supplier, satuan: satuan, jumlah: jumlah, keterangan: keterangan });
+                    editingRow._info = info;
+                    renderRowInfo(editingRow);
+                } else {
+                    addRow(deskripsi, supplier, satuan, jumlah, keterangan, info);
+                }
+                savePengajuanDraft();
+                updateEmpty();
+                closeItemModal();
             });
         }
+        // Wiring modal tabel forecast
+        const bukaForecastBtn = document.getElementById('buka-forecast-btn');
+        if (bukaForecastBtn) bukaForecastBtn.addEventListener('click', openForecastModal);
+        ['tutup-forecast-btn', 'tutup-forecast-btn-2'].forEach(id => {
+            const b = document.getElementById(id);
+            if (b) b.addEventListener('click', closeForecastModal);
+        });
+        if (forecastModal) {
+            forecastModal.addEventListener('click', (e) => {
+                if (e.target === forecastModal) closeForecastModal();
+            });
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && forecastModal && !forecastModal.classList.contains('hidden')) closeForecastModal();
+        });
+        if (forecastSearch) forecastSearch.addEventListener('input', () => renderForecastRows(forecastSearch.value));
+        if (forecastTbody) {
+            forecastTbody.addEventListener('click', (e) => {
+                const b = e.target && e.target.closest ? e.target.closest('.fc-pilih-btn') : null;
+                if (b) pilihForecastProduk(b.getAttribute('data-produk') || '');
+            });
+        }
+
         if (judulInput) {
             judulInput.addEventListener('input', savePengajuanDraft);
             judulInput.addEventListener('change', savePengajuanDraft);
@@ -622,6 +1062,7 @@
             catatanInput.addEventListener('change', savePengajuanDraft);
         }
 
+        // ===== File lampiran (maks 10 file @ 10MB, dicek ulang saat submit) =====
         const tambahLampiranBtn = document.getElementById('tambah-lampiran-btn');
         const lampiranContainer = document.getElementById('file-pendukung-container');
         const submitButton = document.getElementById('submit-button');
@@ -673,8 +1114,33 @@
 
         if (tambahLampiranBtn) { tambahLampiranBtn.addEventListener('click', addLampiranInput); addLampiranInput(); }
 
+        // ===== Submit: tolak file over-limit, kunci klik ganda.
+        // Draft baru dibersihkan saat halaman benar-benar bernavigasi (submit sukses).
+        // Submit gagal / offline = tidak ada navigasi = draft utuh, tinggal coba lagi.
         if (mainForm) {
             mainForm.addEventListener('submit', function(e) {
+                if (rincianBarangBody && rincianBarangBody.querySelectorAll('.row-spb').length === 0) {
+                    e.preventDefault();
+                    alert('Belum ada item — klik Tambah Item Barang, isi detail di popup, lalu Simpan ke Tabel.');
+                    openItemModal();
+                    return false;
+                }
+                // Anti double: satu pengajuan tidak boleh memuat barang yang sama 2x.
+                // (Samakan dengan toggle Add to SPB di Warehouse Ops.)
+                const seen = {};
+                const dupes = [];
+                rincianBarangBody.querySelectorAll('input[name="rincian_deskripsi[]"]').forEach(input => {
+                    const nama = (input.value || '').trim();
+                    const key = nama.toLowerCase();
+                    if (!key) return;
+                    if (seen[key]) { if (!dupes.includes(nama)) dupes.push(nama); }
+                    else seen[key] = true;
+                });
+                if (dupes.length > 0) {
+                    e.preventDefault();
+                    alert('Ada barang yang dobel dalam pengajuan ini:\n• ' + dupes.join('\n• ') + '\n\nHapus salah satunya dulu — tiap barang cukup 1 baris (gabung qty-nya bila perlu).');
+                    return false;
+                }
                 let tooLarge = false;
                 document.querySelectorAll('input[type="file"][name="file_pendukung[]"]').forEach(input => {
                     if (input.files && input.files.length > 0) {
@@ -692,20 +1158,29 @@
                     return false;
                 }
 
-                clearPengajuanDraft();
+                isSubmitting = true;
 
-                submitButton.disabled = true;
-                submitButton.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Mengirim...`;
-                submitButton.classList.add('inline-flex', 'items-center');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Mengirim...`;
+                    submitButton.classList.add('inline-flex', 'items-center');
+                }
             });
         }
+
+        // Flush terakhir anti mati-lampu: sukses navigasi -> draft dibersihkan,
+        // selain itu (refresh/tutup/gagal) -> draft disimpan ulang.
+        window.addEventListener('pagehide', function () {
+            if (isSubmitting) clearPengajuanDraft();
+            else savePengajuanDraft();
+        });
 
         const resetBtn = document.getElementById('reset-form-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', function() {
                 mainForm.reset();
                 if (rincianBarangBody) rincianBarangBody.innerHTML = '';
-                addRow();
+                updateEmpty();
                 if (lampiranContainer) lampiranContainer.innerHTML = '';
                 addLampiranInput();
                 clearPengajuanDraft();
