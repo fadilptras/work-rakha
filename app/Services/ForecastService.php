@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\Sales;
 use App\Models\SalesForecastSetting;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -83,32 +82,18 @@ class ForecastService
 
         $groupedByProduk = $salesRaw->groupBy('product_name');
 
-        // Snapshot stok: pakai data TERAKHIR stok diupdate (bukan realtime hari ini).
+        // End Stock REALTIME: langsung dari products.stock yang di-update
+        // StockMoveService setiap ada mutasi masuk/keluar di Warehouse Ops.
+        // (Dulu pakai daily_stock_histories snapshot harian -> basi, tidak realtime.)
         $stokSaatIni = [];
         $satuanStok = [];
         $namaProdukArray = $groupedByProduk->keys()->toArray();
 
-        // Tanggal terakhir stok diupdate (global, dari daily_stock_histories).
-        $tanggalStokTerakhir = DB::table('daily_stock_histories')
-            ->whereNotNull('product_id')
-            ->max('tanggal');
-
         $products = Product::active()->whereIn('product_name', $namaProdukArray)->get();
 
         if ($products->isNotEmpty()) {
-            $snapshots = DB::table('daily_stock_histories')
-                ->whereIn('product_id', $products->pluck('id'))
-                ->whereNotNull('product_id')
-                ->when($tanggalStokTerakhir, fn ($q) => $q->where('tanggal', '<=', $tanggalStokTerakhir))
-                ->select('product_id', 'tanggal', 'stok')
-                ->orderBy('product_id')->orderByDesc('tanggal')
-                ->get();
-
-            $snapshotTerakhir = $snapshots->groupBy('product_id')->map(fn ($rows) => $rows->first());
-
             foreach ($products as $p) {
-                $snap = $snapshotTerakhir->get($p->id);
-                $stokSaatIni[$p->product_name] = $snap ? (int) $snap->stok : (int) $p->stock;
+                $stokSaatIni[$p->product_name] = (int) ($p->stock ?? 0);
                 $satuanStok[$p->product_name] = $p->unit ?? 'Pcs';
             }
         }
@@ -185,10 +170,8 @@ class ForecastService
 
         usort($stockForecast, fn ($a, $b) => $b['forecast_qty'] <=> $a['forecast_qty']);
 
-        // Label tanggal stok: menyesuaikan tanggal terakhir stok diupdate (cth: 23 Sep, 2026).
-        $labelStokRealtime = $tanggalStokTerakhir
-            ? Carbon::parse($tanggalStokTerakhir)->format('d M, Y')
-            : now()->format('d M, Y');
+        // Label tanggal stok realtime: selalu hari ini karena baca products.stock langsung.
+        $labelStokRealtime = now()->format('d M, Y');
 
         $monthTranslations = [
             'January' => 'January', 'February' => 'February', 'March' => 'March',

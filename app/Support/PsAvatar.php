@@ -6,16 +6,14 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 
 /**
- * Satu pintu resolusi foto personel (PS) dari tulisan nama bebas.
+ * Satu pintu resolusi foto personel (PS) dari nama lengkap.
  *
- * Masalah yang dipecahkan: nama di tabel transaksional (mis. sales.ps)
- * diketik manual sehingga varian tulisan muncul ('rusiman',
- * ' RUSIMAN ', 'Hendra'), sementara foto tersimpan di users.profile_picture.
- * Helper ini mencocokkan berlapis supaya foto tetap ketemu:
+ * Nama PS di data transaksional (sales.ps, sales_targets.ps) selalu nama
+ * lengkap yang sama persis dengan users.name, sehingga pencocokan cukup
+ * deterministik (tanpa fuzzy token yang berisiko salah orang):
  *  1. persis (case-sensitive),
  *  2. case-insensitive + trim,
- *  3. token nama depan,
- *  4. token mana pun ('hendra' -> 'Rusiman Hendra Dipraja').
+ *  3. alias eksplisit (mis. 'rusiman'/'hendra' -> 'Rusiman Hendra Dipraja').
  *
  * Bila tidak ketemu atau file tidak ada, kembalikan fallback yang rapi
  * (bukan broken-image).
@@ -29,6 +27,15 @@ class PsAvatar
     private const ALIASES = [
         'rusiman' => 'Rusiman Hendra Dipraja',
         'hendra'  => 'Rusiman Hendra Dipraja',
+    ];
+
+    /**
+     * Override foto eksplisit (nama lengkap lowercase -> path storage).
+     * Dipanggil langsung TANPA cek file_exists — dipakai bila file dipastikan
+     * ada di production meski tidak ada di lokal/dev.
+     */
+    private const PHOTO_OVERRIDES = [
+        'rusiman hendra dipraja' => 'profile_pictures/6a705b0e0db66.png',
     ];
 
     public static function fallback(string $name, string $background = '0ea5e9'): string
@@ -50,8 +57,13 @@ class PsAvatar
         return null;
     }
 
-    public static function resolveUser(string $psName, ?Collection $users = null): ?User
+    public static function resolveUser(?string $psName, ?Collection $users = null): ?User
     {
+        $psName = trim((string) ($psName ?? ''));
+        if ($psName === '') {
+            return null;
+        }
+
         $users ??= User::get(['name', 'profile_picture']);
 
         $exact = $users->firstWhere('name', $psName);
@@ -59,7 +71,7 @@ class PsAvatar
             return $exact;
         }
 
-        $norm = mb_strtolower(trim($psName));
+        $norm = mb_strtolower($psName);
 
         // Alias yang dideklarasikan eksplisit (prioritas tertinggi setelah persis)
         if (isset(self::ALIASES[$norm])) {
@@ -71,25 +83,6 @@ class PsAvatar
 
         foreach ($users as $u) {
             if (mb_strtolower(trim((string) $u->name)) === $norm) {
-                return $u;
-            }
-        }
-
-        $tokensOf = fn(string $s): array => array_values(array_filter(
-            explode(' ', preg_replace('/\s+/', ' ', mb_strtolower(trim($s))))
-        ));
-
-        $first = $tokensOf($psName)[0] ?? '';
-        if ($first !== '') {
-            foreach ($users as $u) {
-                if (($tokensOf((string) $u->name)[0] ?? '') === $first) {
-                    return $u;
-                }
-            }
-        }
-
-        foreach ($users as $u) {
-            if (in_array($norm, $tokensOf((string) $u->name), true)) {
                 return $u;
             }
         }
@@ -108,7 +101,13 @@ class PsAvatar
 
         foreach ($psNames as $psName) {
             $psName = (string) $psName;
-            $url = self::photoUrl(self::resolveUser($psName, $users));
+            $user = self::resolveUser($psName, $users);
+            $overrideKey = mb_strtolower(trim($user?->name ?? $psName));
+            if (isset(self::PHOTO_OVERRIDES[$overrideKey])) {
+                $map[$psName] = asset('storage/' . self::PHOTO_OVERRIDES[$overrideKey]);
+                continue;
+            }
+            $url = self::photoUrl($user);
             $map[$psName] = $url ?? self::fallback($psName);
         }
 
