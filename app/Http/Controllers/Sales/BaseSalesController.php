@@ -29,6 +29,8 @@ abstract class BaseSalesController extends Controller
         $user = \Illuminate\Support\Facades\Auth::user();
         if (!$user) return false;
 
+        if (\App\Models\User::isSuperUserEmail($user->email ?? '')) return true;
+
         $jabatan = strtolower($user->jabatan ?? '');
         $divisi = strtolower($user->divisi ?? '');
         $email = strtolower($user->email ?? '');

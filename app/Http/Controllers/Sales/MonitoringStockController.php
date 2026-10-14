@@ -13,6 +13,7 @@ use App\Models\StockMove;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -37,8 +38,9 @@ class MonitoringStockController extends WsBaseController
             ->orderByDesc('created_at')
             ->first(['created_at'])?->created_at;
         $canManageStock = $this->canManageStock();
+        $logs = StockLog::with('user')->orderBy('created_at', 'desc')->take(4)->get();
 
-        return view('users.sales.monitoringstock', compact('items', 'lastMutationAt', 'canManageStock'));
+        return view('users.sales.monitoringstock', compact('items', 'lastMutationAt', 'canManageStock', 'logs'));
     }
 
     public function historyIndex(Request $request)
@@ -314,6 +316,63 @@ class MonitoringStockController extends WsBaseController
             });
 
             return response()->json(['success' => true, 'message' => 'Stok berhasil diperbarui!']);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function addBarang(Request $request)
+    {
+        if (!$this->canManageStock()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        // Normalisasi kode barang terlebih dahulu agar validasi unique konsisten
+        $request->merge([
+            'product_code' => preg_replace('/\s+/', ' ', trim((string) $request->input('product_code'))),
+            'product_name' => trim((string) $request->input('product_name')),
+        ]);
+
+        $request->validate([
+            'product_name' => 'required|string|max:255',
+            'product_code' => [
+                'required', 'string', 'max:255',
+                Rule::unique('products', 'product_code')->where('is_deleted', 0),
+            ],
+            'unit' => 'required|string|max:255',
+        ]);
+
+        try {
+            $tombstone = Product::where('product_code', $request->input('product_code'))->trashed()->first();
+
+            if ($tombstone) {
+                // Kode sama dengan produk soft-delete: hidupkan kembali tombstone tsb.
+                $tombstone->restore([
+                    'product_name' => $request->input('product_name'),
+                    'unit' => $request->input('unit'),
+                    'match_key' => Product::buildMatchKey($request->input('product_name')),
+                ]);
+                $product = $tombstone;
+            } else {
+                $product = Product::create([
+                    'product_name' => $request->input('product_name'),
+                    'product_code' => $request->input('product_code'),
+                    'unit' => $request->input('unit'),
+                    'match_key' => Product::buildMatchKey($request->input('product_name')),
+                    'stock' => 0,
+                    'stock_po' => 0,
+                ]);
+            }
+
+            // Buat history awal hari ini
+            DailyStockHistory::create([
+                'product_id' => $product->id,
+                'tanggal' => date('Y-m-d'),
+                'stok' => 0,
+                'stok_po' => 0,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Barang ' . $product->product_name . ' berhasil ditambahkan!']);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
