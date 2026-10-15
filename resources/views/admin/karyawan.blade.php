@@ -350,14 +350,50 @@
 
                         let pendHTML = '<p class="text-gray-400 italic text-sm">Belum ada riwayat pendidikan.</p>';
                         if (user.riwayat_pendidikan && user.riwayat_pendidikan.length > 0) {
-                            pendHTML = user.riwayat_pendidikan.map(p => `
+                            pendHTML = user.riwayat_pendidikan.map(p => {
+                                const ijazahUrl = p.file_ijazah ? `${baseUrl}/${p.file_ijazah}` : null;
+                                const ijazahBtn = ijazahUrl
+                                    ? `<a href="${ijazahUrl}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-md bg-sky-600/20 border border-sky-500/40 text-sky-300 text-[11px] font-bold hover:bg-sky-600/40 hover:text-white transition-colors"><i class="fas fa-file-alt"></i> Lihat Ijazah Asli</a>`
+                                    : `<span class="block mt-1.5 text-[11px] text-gray-500 italic"><i class="fas fa-minus-circle mr-1"></i>Belum ada file ijazah</span>`;
+                                return `
                                 <div class="relative pl-6 border-l-2 border-sky-500 mb-3">
                                     <span class="absolute -left-[6px] top-1 w-2.5 h-2.5 rounded-full bg-sky-500"></span>
                                     <h5 class="font-bold text-white text-sm">${p.jenjang ?? p.tingkat} - ${p.nama_institusi}</h5>
-                                    <p class="text-sky-300 text-xs">${p.jurusan ?? '-'} (${p.tahun_lulus})</p>
-                                </div>
-                            `).join('');
+                                    <p class="text-sky-300 text-xs">${p.jurusan ?? '-'} (${p.tahun_lulus ?? '-'})</p>
+                                    ${ijazahBtn}
+                                </div>`;
+                            }).join('');
                         }
+
+                        const docItem = (path, label, icon) => {
+                            if (!path) {
+                                return `<div class="flex items-center justify-between bg-zinc-800/80 p-2.5 rounded border border-zinc-700/50">
+                                    <div><p class="text-[10px] text-gray-400 uppercase tracking-wider">${label}</p>
+                                    <p class="text-gray-500 text-xs italic mt-0.5"><i class="fas fa-minus-circle mr-1"></i>Belum diupload</p></div>
+                                    <span class="text-zinc-600 text-lg"><i class="fas ${icon}"></i></span>
+                                </div>`;
+                            }
+                            const url = `${baseUrl}/${path}`;
+                            const isPdf = path.toLowerCase().endsWith('.pdf');
+                            const badge = isPdf
+                                ? `<span class="text-[10px] font-bold bg-red-600/20 text-red-400 border border-red-500/40 px-1.5 py-0.5 rounded">PDF</span>`
+                                : `<span class="text-[10px] font-bold bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded">IMG</span>`;
+                            return `<div class="flex items-center justify-between gap-2 bg-zinc-800/80 p-2.5 rounded border border-zinc-700/50">
+                                <div class="min-w-0"><p class="text-[10px] text-gray-400 uppercase tracking-wider flex items-center gap-1.5">${label} ${badge}</p>
+                                <p class="text-emerald-400 text-xs font-bold mt-0.5"><i class="fas fa-check-circle mr-1"></i>File Tersimpan</p></div>
+                                <a href="${url}" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-sky-600 text-white text-[11px] font-bold hover:bg-sky-500 transition-colors"><i class="fas fa-eye"></i> Lihat Asli</a>
+                            </div>`;
+                        };
+
+                        const dokumenHTML = `
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                ${docItem(user.file_ktp, 'Scan KTP', 'fa-id-card')}
+                                ${docItem(user.file_npwp, 'Scan NPWP', 'fa-file-invoice')}
+                                ${docItem(user.file_bpjs_kesehatan, 'Kartu BPJS Kesehatan', 'fa-heartbeat')}
+                                ${docItem(user.file_bpjs_ketenagakerjaan, 'Kartu BPJS Ketenagakerjaan', 'fa-briefcase-medical')}
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-2 italic"><i class="fas fa-info-circle mr-1"></i>Klik "Lihat Asli" untuk membuka dokumen asli di tab baru.</p>
+                        `;
 
                         let pekjHTML = '<p class="text-gray-400 italic text-sm">Belum ada pengalaman kerja.</p>';
                         if (user.riwayat_pekerjaan && user.riwayat_pekerjaan.length > 0) {
@@ -440,6 +476,11 @@
                                             <tr><td class="text-gray-400 py-1">No. Telepon / HP</td><td class="text-white">: ${user.kontak_darurat_nomor ?? '-'}</td></tr>
                                             <tr><td class="text-gray-400 py-1">Hubungan Relasi</td><td class="text-white">: ${user.kontak_darurat_hubungan ?? '-'}</td></tr>
                                         </table>
+                                    </div>
+
+                                    <div class="col-span-1 md:col-span-2">
+                                        <h4 class="text-sm font-bold text-indigo-400 mb-3 border-b border-zinc-700 pb-1"><i class="fas fa-folder-open mr-1.5"></i>Dokumen Lampiran Asli</h4>
+                                        ${dokumenHTML}
                                     </div>
 
                                     <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
