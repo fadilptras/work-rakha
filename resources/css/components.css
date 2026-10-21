@@ -1,4 +1,8 @@
 /* UI Components — konsisten untuk Sales (referensi: users/sales/monthly.blade.php) */
+html {
+  scrollbar-gutter: stable;
+}
+
 @layer components {
   /* Back button — pill putih, hover lift */
   .ui-back {
@@ -9,9 +13,17 @@
   }
   .ui-back:hover .ui-back__icon { @apply -translate-x-0.5 bg-blue-50; }
 
-  /* Page header — monthly unified header (shadow tipis) */
+  /* Page header — monthly unified header (shadow tipis), sticky di bawah navbar */
   .ui-page-header {
     @apply bg-gradient-to-br from-[#2563eb] to-[#1e40af] rounded-2xl p-5 text-white shadow-[0_1px_6px_rgba(37,99,235,0.10)] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4;
+    position: sticky;
+    top: 72px;
+    z-index: 15;
+  }
+  @media (max-width: 767px) {
+    .ui-page-header {
+      top: 64px;
+    }
   }
   .ui-page-header::before {
     content: '';
