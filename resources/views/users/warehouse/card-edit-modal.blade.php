@@ -11,7 +11,7 @@
         <form id="kartuEditForm" method="POST" class="p-4 grid grid-cols-2 gap-2">
             @csrf
             <div><label class="ui-label">Arah</label><input type="text" id="kartuEditArah" disabled class="ui-input !bg-slate-50 text-slate-500"></div>
-            <div><label class="ui-label">Tanggal <span class="text-red-500">*</span></label><input type="date" name="tanggal" id="kartuEditTanggal" required max="{{ today()->toDateString() }}" class="ui-input !bg-white"></div>
+            <div><label class="ui-label">Tanggal <span class="text-red-500">*</span></label><input type="date" lang="id-ID" name="tanggal" id="kartuEditTanggal" required max="{{ today()->toDateString() }}" class="ui-input !bg-white"></div>
             <div><label class="ui-label">Qty <span class="text-red-500">*</span></label><input type="number" name="qty" id="kartuEditQty" min="0.01" step="any" required class="ui-input !bg-white"></div>
             <div><label class="ui-label">Batch No./SN</label><input type="text" name="batch_no" id="kartuEditBatch" maxlength="100" class="ui-input !bg-white"></div>
             <div class="col-span-2"><label class="ui-label">Keterangan <span class="text-red-500">*</span></label><input type="text" name="keterangan" id="kartuEditKeterangan" required maxlength="1000" class="ui-input !bg-white"></div>

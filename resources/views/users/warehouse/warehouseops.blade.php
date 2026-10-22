@@ -502,14 +502,11 @@
                                 </x-ui.filter-select>
                             </div>
                             <div class="lg:col-span-4 flex items-end">
-                                <x-ui.info class="w-full" icon="fa-database" label="Total Baris:" :value="number_format($kelolaMoves->total(), 0, ',', '.')" />
+                                <x-ui.info class="w-full" icon="fa-database" label="Total Baris:" :value="number_format($kelolaMoves->count(), 0, ',', '.')" />
                             </div>
                             <div class="lg:col-span-4 flex gap-2 items-end">
                                 <a href="{{ route('warehouse.export-mutasi', request()->except(['kelolaPage', 'sjPage', 'page'])) }}" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold h-[30px] px-3 rounded-lg text-xs transition-all inline-flex items-center justify-center shadow-sm leading-none" title="Export PDF rekap mutasi (filter aktif)">
                                     <i class="fas fa-file-pdf mr-1.5 text-[11px]"></i> PDF Mutasi
-                                </a>
-                                <a href="{{ route('warehouse.export-sj', request()->except(['kelolaPage', 'sjPage', 'page'])) }}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold h-[30px] px-3 rounded-lg text-xs transition-all inline-flex items-center justify-center shadow-sm leading-none" title="Export PDF rekap SJ (filter aktif)">
-                                    <i class="fas fa-file-pdf mr-1.5 text-[11px]"></i> PDF SJ
                                 </a>
                                 <a href="{{ route('warehouse.index', ['tab' => 'mutasi']) }}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold h-[30px] px-3 rounded-lg text-xs transition-all inline-flex items-center justify-center border border-slate-200 shadow-sm leading-none" title="Reset Filters">
                                     <i class="fas fa-undo text-[11px]"></i>
@@ -520,69 +517,92 @@
 
                     <div class="flex-1 bg-white manage-table-scroll">
                         <table class="w-full text-sm text-left text-slate-600 bg-white">
-                            <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200 font-bold tracking-wider">
+                            <thead class="text-[11px] text-slate-500 uppercase bg-slate-50 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
-                                    <th class="px-4 py-4 w-10 text-center">
+                                    <th class="px-3 py-3 w-10 text-center">
                                         <input type="checkbox" id="check-all-kelola" class="rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer">
                                     </th>
-                                    <th class="px-4 py-4 w-12 text-center">No</th>
-                                    <th class="px-4 py-4">Tanggal</th>
-                                    <th class="px-4 py-4">Dokumen</th>
-                                    <th class="px-4 py-4">Customer</th>
-                                    <th class="px-4 py-4">Barang</th>
-                                    <th class="px-4 py-4 text-center">Arah</th>
-                                    <th class="px-4 py-4 text-right">Qty</th>
-                                    <th class="px-4 py-4">Batch No.</th>
-                                    <th class="px-4 py-4">Expired</th>
-                                    <th class="px-4 py-4">Keterangan</th>
-                                    <th class="px-4 py-4">Petugas</th>
-                                    <th class="px-4 py-4 text-center">Aksi</th>
+                                    <th class="px-3 py-3 w-10 text-center">No</th>
+                                    <th class="px-3 py-3 whitespace-nowrap">Tanggal</th>
+                                    <th class="px-3 py-3">Dokumen</th>
+                                    <th class="px-3 py-3">Customer</th>
+                                    <th class="px-3 py-3">Barang</th>
+                                    <th class="px-3 py-3 text-right bg-blue-50/70 text-blue-700 border-l border-blue-100 w-[96px]">
+                                        <span class="inline-flex items-center justify-end gap-1.5"><i class="fas fa-arrow-down text-[9px]"></i> Masuk</span>
+                                    </th>
+                                    <th class="px-3 py-3 text-right bg-rose-50/70 text-rose-700 w-[96px]">
+                                        <span class="inline-flex items-center justify-end gap-1.5">Keluar <i class="fas fa-arrow-up text-[9px]"></i></span>
+                                    </th>
+                                    <th class="px-3 py-3 whitespace-nowrap">Batch / ED</th>
+                                    <th class="px-3 py-3">Keterangan</th>
+                                    <th class="px-3 py-3">Petugas</th>
+                                    <th class="px-3 py-3 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @forelse($kelolaMoves as $index => $m)
                                     @php $masuk = $isMasuk($m); @endphp
                                     <tr class="hover:bg-blue-50/60 transition-colors">
-                                        <td class="px-4 py-3 text-center">
+                                        <td class="px-3 py-2.5 text-center">
                                             <input type="checkbox" value="{{ $m->id }}" class="row-checkbox-kelola rounded border-slate-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer">
                                         </td>
-                                        <td class="px-4 py-3 text-center text-slate-400 font-medium">{{ $kelolaMoves->firstItem() + $index }}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap font-medium text-slate-700 text-xs">{{ $m->created_at?->format('d/m/Y H:i') ?? '-' }}</td>
-                                        <td class="px-4 py-3">
+                                        <td class="px-3 py-2.5 text-center text-slate-400 font-medium">{{ $index + 1 }}</td>
+                                        <td class="px-3 py-2.5 whitespace-nowrap font-medium text-slate-700 text-xs">{{ $m->created_at?->format('d/m/Y H:i') ?? '-' }}</td>
+                                        <td class="px-3 py-2.5">
                                             <div class="font-mono font-bold text-slate-800 text-xs">{{ $m->doc_no ?? $m->d_doc ?? '-' }}</div>
                                             @if($m->d_source === 'faktur')<div class="mt-1"><span class="inline-flex items-center px-2 py-0.5 rounded-md bg-sky-50 border border-sky-200 text-sky-700 text-[10px] font-bold">Faktur</span></div>@endif
                                             @if($m->po_no ?? $m->d_po)<div class="font-mono text-[10px] text-slate-400">PO: {{ $m->po_no ?? $m->d_po }}</div>@endif
                                             @if($m->expedition ?? $m->d_exped)<div class="text-[10px] text-slate-400"><i class="fas fa-truck text-[9px] mr-1"></i>{{ $m->expedition ?? $m->d_exped }}</div>@endif
                                         </td>
-                                        @php $pihak = $m->partner ?: ($m->cu_name ?? $m->su_name ?? 'Pemakaian Internal'); @endphp
-                                        <td class="px-4 py-3 text-xs text-slate-600 max-w-[160px] truncate" title="{{ $pihak }}{{ ($m->ship_address ?? $m->d_ship) ? ' — ' . ($m->ship_address ?? $m->d_ship) : '' }}">{{ $pihak }}</td>
-                                        <td class="px-4 py-3">
+                                        @php
+                                            $pihak = $m->cu_name ?: ($m->su_name ?: ($m->partner ?: null));
+                                            if (!$pihak) {
+                                                $pihak = ($m->purpose && strcasecmp((string) $m->purpose, 'Internal') === 0)
+                                                    ? 'Pemakaian Internal'
+                                                    : '-';
+                                            }
+                                        @endphp
+                                        <td class="px-3 py-2.5 text-xs text-slate-600 max-w-[160px] truncate" title="{{ $pihak }}{{ ($m->ship_address ?? $m->d_ship) ? ' — ' . ($m->ship_address ?? $m->d_ship) : '' }}">{{ $pihak }}</td>
+                                        <td class="px-3 py-2.5">
                                             <div class="font-bold text-slate-900 text-xs">{{ $m->product->product_name_clean ?: ($m->product->product_name ?? 'Produk Terhapus') }}</div>
                                             <div class="font-mono text-[10px] text-slate-400">{{ $m->product->product_code ?? '-' }}</div>
                                         </td>
-                                        <td class="px-4 py-3 text-center">
+                                        <td class="px-3 py-2.5 text-right align-top border-l border-blue-50">
                                             @if($masuk)
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-black"><i class="fas fa-arrow-down text-[10px]"></i> Masuk</span>
+                                                <div class="font-black text-blue-600 text-sm leading-tight">+{{ number_format($m->qty, 0, ',', '.') }}</div>
+                                                @if($m->purpose)
+                                                    <div class="mt-0.5 ml-auto max-w-[96px] truncate text-[9px] font-bold uppercase tracking-wide text-blue-400" title="{{ $m->purpose }}">{{ $m->purpose }}</div>
+                                                @endif
                                             @else
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[11px] font-black"><i class="fas fa-arrow-up text-[10px]"></i> Keluar</span>
-                                            @endif
-                                            @if($m->purpose)
-                                                <div class="mt-1"><span class="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold">{{ $m->purpose }}</span></div>
+                                                <span class="text-slate-300">&ndash;</span>
                                             @endif
                                         </td>
-                                        <td class="px-4 py-3 text-right font-black {{ $masuk ? 'text-blue-600' : 'text-red-600' }}">{{ ($masuk ? '+' : '-') . number_format($m->qty, 0, ',', '.') }}</td>
-                                        <td class="px-4 py-3 font-mono text-xs">{{ $m->batch_no ?? '-' }}</td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-xs {{ $m->expiry_date && $m->expiry_date->isPast() ? 'text-red-600 font-bold' : 'text-slate-600' }}">{{ $m->expiry_date?->format('d/m/Y') ?? '-' }}</td>
-                                        <td class="px-4 py-3 text-xs max-w-[240px] truncate" title="{{ $m->reason }}">{{ $m->reason ?: '-' }}</td>
-                                        <td class="px-4 py-3 text-xs text-slate-500">{{ $m->user->name ?? 'System' }}</td>
-                                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                                        <td class="px-3 py-2.5 text-right align-top">
+                                            @if(!$masuk)
+                                                <div class="font-black text-red-600 text-sm leading-tight">-{{ number_format($m->qty, 0, ',', '.') }}</div>
+                                                @if($m->purpose)
+                                                    <div class="mt-0.5 ml-auto max-w-[96px] truncate text-[9px] font-bold uppercase tracking-wide text-rose-400" title="{{ $m->purpose }}">{{ $m->purpose }}</div>
+                                                @endif
+                                            @else
+                                                <span class="text-slate-300">&ndash;</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-3 py-2.5 whitespace-nowrap">
+                                            <div class="font-mono text-xs text-slate-700">{{ $m->batch_no ?: '-' }}</div>
+                                            <div class="text-[10px] {{ $m->expiry_date && $m->expiry_date->isPast() ? 'text-red-600 font-bold' : 'text-slate-400' }}">
+                                                ED: {{ $m->expiry_date?->format('d/m/Y') ?? '-' }}
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-2.5 text-xs max-w-[240px] truncate" title="{{ $m->reason }}">{{ $m->reason ?: '-' }}</td>
+                                        <td class="px-3 py-2.5 text-xs text-slate-500">{{ $m->user->name ?? 'System' }}</td>
+                                        <td class="px-3 py-2.5 text-center whitespace-nowrap">
                                             @if($canManage)
                                             <div class="flex items-center justify-center gap-2">
                                                 @if($m->d_id)
                                                 <button type="button" data-doc="{{ $m->d_id }}" onclick="openDocModal(this.dataset.doc)" class="inline-flex items-center justify-center w-[30px] h-[30px] rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200" title="Detail dokumen"><i class="fas fa-eye text-xs"></i></button>
                                                 @endif
                                                 <button type="button" class="inline-flex items-center justify-center w-[30px] h-[30px] rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200" title="Edit"
-                                                    data-edit="{{ json_encode(['id' => $m->id, 'tanggal' => $m->created_at?->format('Y-m-d'), 'qty' => $m->qty, 'batch_no' => $m->batch_no, 'expiry_date' => $m->expiry_date?->format('Y-m-d'), 'doc_no' => $m->doc_no ?? $m->d_doc, 'po_no' => $m->po_no ?? $m->d_po, 'ship_address' => $m->ship_address ?? $m->d_ship, 'expedition' => $m->expedition ?? $m->d_exped, 'keterangan' => $m->reason, 'arah' => $masuk ? 'Masuk' : 'Keluar', 'pihak' => $m->partner ?: ($m->cu_name ?? $m->su_name ?? 'Pemakaian Internal'), 'barang' => ($m->product->product_name_clean ?: ($m->product->product_name ?? ''))]) }}"
+                                                    data-edit="{{ json_encode(['id' => $m->id, 'tanggal' => $m->created_at?->format('Y-m-d'), 'qty' => $m->qty, 'batch_no' => $m->batch_no, 'expiry_date' => $m->expiry_date?->format('Y-m-d'), 'doc_no' => $m->doc_no ?? $m->d_doc, 'po_no' => $m->po_no ?? $m->d_po, 'ship_address' => $m->ship_address ?? $m->d_ship, 'expedition' => $m->expedition ?? $m->d_exped, 'keterangan' => $m->reason, 'arah' => $masuk ? 'Masuk' : 'Keluar', 'pihak' => $m->cu_name ?: ($m->su_name ?: ($m->partner ?: '-')), 'barang' => ($m->product->product_name_clean ?: ($m->product->product_name ?? ''))]) }}"
                                                     @click="openEditModal(JSON.parse($el.dataset.edit))"><i class="fas fa-pen text-xs"></i></button>
                                                 <form action="{{ route('warehouse.mutation.destroy', $m->id) }}" method="POST" id="form-del-{{ $m->id }}" class="inline">
                                                     @csrf @method('DELETE')
@@ -595,7 +615,7 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="13" class="p-0"><x-ui.empty icon="fa-inbox" title="Belum ada pencatatan" message="Semua barang yang diinput dari tab Masuk / Keluar akan muncul di sini." /></td></tr>
+                                    <tr><td colspan="12" class="p-0"><x-ui.empty icon="fa-inbox" title="Belum ada pencatatan" message="Semua barang yang diinput dari tab Masuk / Keluar akan muncul di sini." /></td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -605,9 +625,10 @@
                         <button type="button" onclick="confirmBulkKelola()" id="btn-bulk-kelola" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow-sm hidden">
                             <i class="fas fa-trash-alt mr-1"></i> Batalkan (<span id="kelola-selected-count">0</span>)
                         </button>
-                        @if($kelolaMoves->hasPages())
-                        <div class="w-full sm:w-auto">{{ $kelolaMoves->links() }}</div>
-                        @endif
+                        <div class="hidden sm:flex items-center gap-1.5 text-[11px] font-medium text-slate-400 sm:ml-auto">
+                            <i class="fas fa-arrows-up-down text-[10px]"></i>
+                            <span>Scroll tabel untuk melihat semua data</span>
+                        </div>
                     </div>
                 </x-ui.glass-card>
             </div>
@@ -679,34 +700,38 @@
             <div class="grid grid-cols-12 gap-x-2 gap-y-1.5 items-end shrink-0">
                 <div class="col-span-6 md:col-span-2">
                     <label class="ui-label">Tanggal {{ $tab === 'masuk' ? 'Masuk' : 'Keluar' }} <span class="text-red-500">*</span></label>
-                    <input type="date" name="tanggal" required value="{{ today()->toDateString() }}" max="{{ today()->toDateString() }}" class="ui-input-date !h-[30px] !text-xs">
+                    <input type="date" lang="id-ID" name="tanggal" required value="{{ today()->toDateString() }}" max="{{ today()->toDateString() }}" class="ui-input-date !h-[30px] !text-xs">
                 </div>
                 @if($tab === 'masuk')
                 <div class="col-span-6 md:col-span-3">
-                    <label class="ui-label">No. SJ Supplier <span class="text-red-500">*</span></label>
-                    <input type="text" name="doc_no" required maxlength="100" placeholder="cth. SJ-SPL-001" class="ui-input ui-input--sm" autocomplete="off">
+                    <label class="ui-label">No. SJ Supplier <span class="text-slate-400 font-normal">(opsional)</span></label>
+                    <input type="text" name="doc_no" maxlength="100" placeholder="cth. SJ-SPL-001 — boleh dikosongkan" class="ui-input ui-input--sm" autocomplete="off">
                 </div>
-                <div class="col-span-12 md:col-span-4">
-                    <label class="ui-label">Supplier <span class="text-red-500">*</span></label>
-                    <select name="supplier_id" id="partner-select" required class="ui-input ui-input--sm !bg-white">
-                        <option value="">— pilih supplier —</option>
-                        @foreach($suppliers as $s)
-                            <option value="{{ $s->id }}" data-addr="{{ $supplierAddressMap[$s->id] ?? '' }}">{{ $s->supplier_name }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-span-12 md:col-span-4" id="partner-wrap">
+                    <label class="ui-label" id="partner-label">Supplier <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <input type="text" id="partner-type" autocomplete="off" spellcheck="false" placeholder="Ketik nama supplier — cth. PT Kimia Farma" class="ui-input ui-input--sm !bg-white">
+                        <select name="supplier_id" id="partner-select" class="hidden" tabindex="-1" aria-hidden="true">
+                            <option value="">— pilih supplier —</option>
+                            @foreach($suppliers as $s)
+                                <option value="{{ $s->id }}" data-addr="{{ $supplierAddressMap[$s->id] ?? '' }}">{{ $s->supplier_name }}</option>
+                            @endforeach
+                        </select>
+                        <div id="partner-suggestions" class="hidden absolute left-0 right-0 z-40 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto divide-y divide-slate-100"></div>
+                    </div>
                 </div>
                 <div class="col-span-12 md:col-span-3">
                     <label class="ui-label">No. PO Supplier</label>
-                    <input type="text" name="po_no" maxlength="100" placeholder="No. PO supplier (opsional)" class="ui-input ui-input--sm" autocomplete="off">
+                    <input type="text" name="po_no" maxlength="100" placeholder="cth. PO-2026-001 — opsional" class="ui-input ui-input--sm" autocomplete="off">
                 </div>
                 @else
                 <div class="col-span-6 md:col-span-2">
-                    <label class="ui-label">No. SJ <span class="text-red-500">*</span></label>
-                    <input type="text" name="doc_no" required maxlength="100" placeholder="cth. SJ-2026-001" class="ui-input ui-input--sm" autocomplete="off">
+                    <label class="ui-label">No. SJ <span class="text-slate-400 font-normal">(opsional)</span></label>
+                    <input type="text" name="doc_no" maxlength="100" placeholder="cth. SJ-2026-001 — boleh dikosongkan" class="ui-input ui-input--sm" autocomplete="off">
                 </div>
                 <div class="col-span-6 md:col-span-2">
                     <label class="ui-label">Keterangan <span class="text-red-500">*</span></label>
-                    <input list="purpose-options" name="purpose" id="purpose-select" required maxlength="50" placeholder="pilih / ketik sendiri…" class="ui-input ui-input--sm" autocomplete="off">
+                    <input list="purpose-options" name="purpose" id="purpose-select" required maxlength="50" placeholder="cth. Penjualan — atau ketik keterangan lain" class="ui-input ui-input--sm" autocomplete="off">
                     <datalist id="purpose-options">
                         @foreach($purposes as $p)
                             @continue(in_array($p, ['Bonus', 'Internal'], true))
@@ -716,12 +741,16 @@
                 </div>
                 <div class="col-span-12 md:col-span-3" id="partner-wrap">
                     <label class="ui-label" id="partner-label">Customer <span class="text-red-500">*</span></label>
-                    <select name="customer_id" id="partner-select" required class="ui-input ui-input--sm !bg-white">
-                        <option value="">— pilih customer —</option>
-                        @foreach($customers as $c)
-                            <option value="{{ $c->id }}" data-addr="{{ $customerAddressMap[$c->id] ?? '' }}">{{ $c->customer_name }}</option>
-                        @endforeach
-                    </select>
+                    <div class="relative">
+                        <input type="text" id="partner-type" autocomplete="off" spellcheck="false" placeholder="Ketik nama customer — cth. RS Amalia Husada" class="ui-input ui-input--sm !bg-white">
+                        <select name="customer_id" id="partner-select" class="hidden" tabindex="-1" aria-hidden="true">
+                            <option value="">— pilih customer —</option>
+                            @foreach($customers as $c)
+                                <option value="{{ $c->id }}" data-addr="{{ $customerAddressMap[$c->id] ?? '' }}">{{ $c->customer_name }}</option>
+                            @endforeach
+                        </select>
+                        <div id="partner-suggestions" class="hidden absolute left-0 right-0 z-40 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto divide-y divide-slate-100"></div>
+                    </div>
                     <select id="supplier-src" class="hidden" aria-hidden="true" tabindex="-1">
                         <option value="">— pilih supplier —</option>
                         @foreach($suppliers as $s)
@@ -740,7 +769,7 @@
                 </div>
                 <div class="col-span-12 md:col-span-3">
                     <label class="ui-label">No. PO / Referensi</label>
-                    <input type="text" name="po_no" maxlength="100" placeholder="No. PO / referensi (opsional)" class="ui-input ui-input--sm" autocomplete="off">
+                    <input type="text" name="po_no" maxlength="100" placeholder="cth. PO-REF-001 — opsional" class="ui-input ui-input--sm" autocomplete="off">
                 </div>
                 @endif
             </div>
@@ -757,7 +786,7 @@
                 <div>
                     <label class="ui-label">Alamat {{ $tab === 'masuk' ? 'Supplier' : 'Kirim' }}</label>
                     <div class="relative">
-                        <input type="text" name="ship_address" id="ship-address" maxlength="2000" placeholder="otomatis dari master, bisa diubah…" class="ui-input ui-input--sm" autocomplete="off">
+                        <input type="text" name="ship_address" id="ship-address" maxlength="2000" placeholder="cth. Jl. Sudirman No. 1, Jakarta — otomatis dari master, bisa diubah" class="ui-input ui-input--sm" autocomplete="off">
                         <p id="addr-warn" class="hidden absolute left-0 z-10 text-[10px] text-amber-600 font-bold mt-0.5" style="top:100%"><i class="fas fa-exclamation-triangle mr-1"></i>Master belum punya alamat — ketik manual atau lengkapi di master.</p>
                     </div>
                 </div>
@@ -840,18 +869,45 @@
                                 <label class="ui-label !mb-0">Qty <span class="text-red-500">*</span></label>
                                 <span id="m-stok-info" class="text-[10px] font-bold"></span>
                             </div>
-                            <input type="number" id="m-qty" min="0.01" step="any" placeholder="0" class="ui-input !bg-white !h-[38px] text-right font-bold !text-slate-800">
+                            <input type="text" id="m-qty" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0" class="ui-input !bg-white !h-[38px] text-right font-bold !text-slate-800">
                             <p id="m-batch-info" class="text-[10px] text-slate-400 font-medium mt-1.5 min-h-[14px]"></p>
                         </div>
                         <div class="grid grid-cols-2 gap-2.5">
                             <div>
                                 <label class="ui-label">No. Batch {{ $tab === 'masuk' ? '*' : '' }}</label>
-                                <input type="text" id="m-batch" list="m-batch-list" maxlength="100" placeholder="{{ $tab === 'masuk' ? 'wajib diisi' : 'opsional' }}" class="ui-input ui-input--sm !bg-white !text-slate-800" autocomplete="off">
+                                <input type="text" id="m-batch" list="m-batch-list" maxlength="100" placeholder="{{ $tab === 'masuk' ? 'cth. B-2026-001' : 'cth. B-2026-001 — opsional' }}" class="ui-input ui-input--sm !bg-white !text-slate-800" autocomplete="off">
                                 <datalist id="m-batch-list"></datalist>
                             </div>
                             <div>
-                                <label class="ui-label">Tgl Expired {{ $tab === 'masuk' ? '*' : '' }}</label>
-                                <input type="date" id="m-exp" class="ui-input ui-input--sm !bg-white !text-slate-800">
+                                <div class="flex items-center justify-between gap-1 mb-1">
+                                    <label class="ui-label !mb-0">Tgl Expired <span class="text-red-500">{{ $tab === 'masuk' ? '*' : '' }}</span></label>
+                                    <select id="m-exp-mode" title="Pilih format tanggal expired" class="h-[22px] max-w-[118px] px-1.5 rounded-md border border-slate-200 bg-white text-[10px] font-bold text-slate-600 outline-none focus:border-blue-400">
+                                        <option value="my">Bulan / Tahun</option>
+                                        <option value="dmy">Tgl / Bulan / Tahun</option>
+                                    </select>
+                                </div>
+                                <div id="m-exp-wrap" class="grid grid-cols-2 gap-1">
+                                    <select id="m-exp-day" class="hidden ui-input ui-input--sm !px-1.5 !bg-white !text-slate-800 text-[11px]">
+                                        <option value="">Tgl</option>
+                                        @for($d = 1; $d <= 31; $d++)
+                                            <option value="{{ $d }}">{{ $d }}</option>
+                                        @endfor
+                                    </select>
+                                    <select id="m-exp-month" class="ui-input ui-input--sm !px-1.5 !bg-white !text-slate-800 text-[11px]">
+                                        <option value="">Bulan</option>
+                                        @foreach(['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'] as $i => $bln)
+                                            <option value="{{ $i + 1 }}">{{ $bln }}</option>
+                                        @endforeach
+                                    </select>
+                                    <select id="m-exp-year" class="ui-input ui-input--sm !px-1.5 !bg-white !text-slate-800 text-[11px]">
+                                        <option value="">Tahun</option>
+                                        @for($y = now()->year - 20; $y <= now()->year + 30; $y++)
+                                            <option value="{{ $y }}">{{ $y }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
+                                <input type="hidden" id="m-exp" value="">
+                                <p id="m-exp-hint" class="text-[10px] text-slate-400 font-medium mt-1">Pilih bulan & tahun — otomatis akhir bulan.</p>
                             </div>
                         </div>
                         <p id="m-error" class="hidden text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5"></p>
@@ -891,6 +947,46 @@
 
         function fmt(n) { return new Intl.NumberFormat('id-ID').format(Math.round(n)); }
         function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function pad2(n) { return String(n).padStart(2, '0'); }
+
+        // Qty: teks bebas angka (tanpa spinner), koma -> titik, maksimal 1 titik desimal.
+        function sanitizeQty() {
+            if (!mQty) return;
+            const raw = mQty.value || '';
+            let clean = raw.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+            const dot = clean.indexOf('.');
+            if (dot !== -1) clean = clean.slice(0, dot + 1) + clean.slice(dot + 1).replace(/\./g, '');
+            if (clean !== raw) mQty.value = clean;
+        }
+
+        // Expired fleksibel: MM/YYYY (jadi akhir bulan), DD/MM/YYYY, atau YYYY-MM-DD.
+        function isoFrom(y, mo, d) {
+            const dt = new Date(y, mo - 1, d);
+            if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+            return y + '-' + pad2(mo) + '-' + pad2(d);
+        }
+        function parseExpiry(raw) {
+            const s = (raw || '').trim();
+            if (!s) return '';
+            let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+            if (m) return isoFrom(+m[1], +m[2], +m[3]);
+            m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+            if (m) return isoFrom(+m[3], +m[2], +m[1]);
+            m = s.match(/^(\d{1,2})[-\/](\d{4})$/);
+            if (m) {
+                const mo = +m[1];
+                if (mo < 1 || mo > 12) return null;
+                const last = new Date(+m[2], mo, 0).getDate();
+                return isoFrom(+m[2], mo, last);
+            }
+            return null;
+        }
+        function fmtExpDisplay(iso) {
+            const s = (iso || '').trim();
+            if (!s) return '';
+            const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            return m ? (m[3] + '/' + m[2] + '/' + m[1]) : s;
+        }
 
         function recalc() {
             let n = 0, q = 0;
@@ -940,6 +1036,8 @@
         const addrWarn = document.getElementById('addr-warn');
         const customerOptsHTML = partnerSel ? partnerSel.innerHTML : '';
         const supplierSrc = document.getElementById('supplier-src');
+        const partnerType = document.getElementById('partner-type');
+        const partySuggestBox = document.getElementById('partner-suggestions');
 
         function fillAddress() {
             if (!partnerSel || !shipInput || partnerSel.disabled) return;
@@ -954,6 +1052,66 @@
                 shipInput.value = '';
                 if (addrWarn) addrWarn.classList.add('hidden');
             }
+        }
+
+        // Customer/supplier: satu input teks + daftar rekomendasi saat mengetik.
+        function partyOptions() {
+            return partnerSel ? Array.from(partnerSel.options).filter(o => o.value !== '') : [];
+        }
+
+        function hidePartySuggestions() {
+            if (partySuggestBox) partySuggestBox.classList.add('hidden');
+        }
+
+        function renderPartySuggestions(keyword = '') {
+            if (!partySuggestBox || !partnerSel) return;
+            const kw = String(keyword || '').trim().toLowerCase();
+            const list = partyOptions()
+                .filter(o => !kw || o.textContent.trim().toLowerCase().includes(kw))
+                .slice(0, 20);
+            if (!list.length) {
+                partySuggestBox.innerHTML = '<div class="px-3 py-2.5 text-[11px] text-slate-400 font-semibold">Tidak ada hasil — coba kata kunci lain.</div>';
+            } else {
+                partySuggestBox.innerHTML = list.map(o =>
+                    '<button type="button" data-value="' + esc(o.value) + '" class="w-full text-left px-3 py-2 hover:bg-blue-50/70 transition-colors">' +
+                    '<span class="block text-xs font-bold text-slate-800 truncate">' + esc(o.textContent.trim()) + '</span>' +
+                    (o.dataset.addr ? '<span class="block text-[10px] text-slate-400 truncate mt-0.5">' + esc(o.dataset.addr) + '</span>' : '') +
+                    '</button>'
+                ).join('');
+            }
+            partySuggestBox.classList.remove('hidden');
+        }
+
+        function chooseParty(value) {
+            const opt = partyOptions().find(o => o.value === String(value));
+            if (!opt) return;
+            if (partnerSel) partnerSel.value = opt.value;
+            if (partnerType) partnerType.value = opt.textContent.trim();
+            hidePartySuggestions();
+            fillAddress();
+            recalc();
+        }
+
+        function syncTypeToSelect() {
+            if (!partnerType || !partnerSel) return;
+            const typed = (partnerType.value || '').trim().toLowerCase();
+            let match = '';
+            partyOptions().forEach(o => {
+                if (o.textContent.trim().toLowerCase() === typed) match = o.value;
+            });
+            if (!match && typed) {
+                const hits = partyOptions().filter(o => o.textContent.trim().toLowerCase().startsWith(typed));
+                if (hits.length === 1) match = hits[0].value;
+            }
+            if (partnerSel.value !== match) partnerSel.value = match;
+            fillAddress();
+            recalc();
+        }
+
+        function syncSelectToType() {
+            if (!partnerType || !partnerSel) return;
+            const opt = partnerSel.selectedOptions[0];
+            partnerType.value = (opt && opt.value) ? opt.textContent.trim() : '';
         }
 
         function applyPurpose() {
@@ -975,11 +1133,18 @@
             // Internal = tanpa pihak: seluruh kolom partner disembunyikan (tanpa pengganti)
             if (partnerWrap) partnerWrap.classList.toggle('hidden', isInternal);
             if (partnerSel) {
-                partnerSel.classList.toggle('hidden', isSample);
+                // Select hanya penyimpan id; yang tampil selalu satu input teks.
+                partnerSel.classList.add('hidden');
                 partnerSel.disabled = isInternal || isSample;
                 partnerSel.required = !isInternal && !isSample;
-                if (isSample) partnerSel.value = '';
+                if (isSample || isInternal) partnerSel.value = '';
             }
+            if (partnerType) {
+                partnerType.classList.toggle('hidden', isSample);
+                partnerType.disabled = isInternal || isSample;
+                partnerType.value = '';
+            }
+            hidePartySuggestions();
             if (partnerLabel) partnerLabel.classList.toggle('hidden', isSample);
             // Sample = pihak nama PS: select customer disembunyikan, tampil dropdown PS
             if (psWrap) psWrap.classList.toggle('hidden', !isSample || isInternal);
@@ -993,6 +1158,34 @@
 
         if (purposeSel) purposeSel.addEventListener('change', () => { applyPurpose(); recalc(); });
         if (partnerSel) partnerSel.addEventListener('change', () => { fillAddress(); recalc(); });
+        if (partnerType) {
+            partnerType.addEventListener('input', () => {
+                syncTypeToSelect();
+                renderPartySuggestions(partnerType.value);
+            });
+            partnerType.addEventListener('focus', () => renderPartySuggestions(partnerType.value));
+            partnerType.addEventListener('change', () => { syncTypeToSelect(); hidePartySuggestions(); });
+            partnerType.addEventListener('keydown', e => {
+                if (e.key === 'Escape') { hidePartySuggestions(); return; }
+                if (e.key === 'Enter' && partySuggestBox && !partySuggestBox.classList.contains('hidden')) {
+                    const first = partySuggestBox.querySelector('[data-value]');
+                    if (first) { e.preventDefault(); chooseParty(first.dataset.value); }
+                }
+            });
+        }
+        if (partySuggestBox) {
+            partySuggestBox.addEventListener('mousedown', e => {
+                const btn = e.target.closest('[data-value]');
+                if (!btn) return;
+                e.preventDefault();
+                chooseParty(btn.dataset.value);
+            });
+        }
+        document.addEventListener('click', e => {
+            if (!partySuggestBox || partySuggestBox.classList.contains('hidden')) return;
+            if (partySuggestBox.contains(e.target) || e.target === partnerType) return;
+            hidePartySuggestions();
+        });
 
         // ---- Search barang ----
         const searchInput = document.getElementById('product-search');
@@ -1053,10 +1246,89 @@
         const mBatchList = document.getElementById('m-batch-list');
         const mBatchInfo = document.getElementById('m-batch-info');
         const mExp = document.getElementById('m-exp');
+        const mExpMode = document.getElementById('m-exp-mode');
+        const mExpWrap = document.getElementById('m-exp-wrap');
+        const mExpDay = document.getElementById('m-exp-day');
+        const mExpMonth = document.getElementById('m-exp-month');
+        const mExpYear = document.getElementById('m-exp-year');
+        const mExpHint = document.getElementById('m-exp-hint');
         const mStok = document.getElementById('m-stok-info');
         const mErr = document.getElementById('m-error');
         const mSave = document.getElementById('m-save');
         const mTitle = document.getElementById('modal-title');
+
+        function expLastDay(y, mo) {
+            return new Date(y, mo, 0).getDate();
+        }
+
+        // Pilihan expired: bulan/tahun atau tanggal/bulan/tahun.
+        function applyExpMode() {
+            const isDmy = (mExpMode?.value || 'my') === 'dmy';
+            if (mExpDay) mExpDay.classList.toggle('hidden', !isDmy);
+            if (mExpWrap) {
+                mExpWrap.classList.toggle('grid-cols-3', isDmy);
+                mExpWrap.classList.toggle('grid-cols-2', !isDmy);
+            }
+            if (mExpHint) {
+                mExpHint.textContent = isDmy
+                    ? 'Pilih tanggal, bulan & tahun.'
+                    : 'Pilih bulan & tahun — otomatis akhir bulan.';
+            }
+        }
+
+        function refreshExpDays() {
+            if (!mExpDay) return;
+            const prev = mExpDay.value;
+            const mo = parseInt(mExpMonth?.value || '', 10);
+            const y = parseInt(mExpYear?.value || '', 10) || new Date().getFullYear();
+            const max = mo ? expLastDay(y, mo) : 31;
+            let html = '<option value="">Tgl</option>';
+            for (let d = 1; d <= max; d++) html += '<option value="' + d + '">' + d + '</option>';
+            mExpDay.innerHTML = html;
+            if (prev && parseInt(prev, 10) <= max) mExpDay.value = prev;
+        }
+
+        function syncExpHidden() {
+            if (!mExp) return;
+            const mode = mExpMode?.value || 'my';
+            const mo = parseInt(mExpMonth?.value || '', 10);
+            const y = parseInt(mExpYear?.value || '', 10);
+            const d = parseInt(mExpDay?.value || '', 10);
+            if (!mo || !y || (mode === 'dmy' && !d)) { mExp.value = ''; return; }
+            mExp.value = mode === 'dmy' ? pad2(d) + '/' + pad2(mo) + '/' + y : pad2(mo) + '/' + y;
+        }
+
+        function setExpFromIso(iso) {
+            const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || '').trim());
+            if (!m) {
+                if (mExpMode) mExpMode.value = 'my';
+                if (mExpMonth) mExpMonth.value = '';
+                if (mExpYear) mExpYear.value = '';
+                if (mExpDay) mExpDay.value = '';
+                refreshExpDays();
+                applyExpMode();
+                if (mExp) mExp.value = '';
+                return;
+            }
+            const y = parseInt(m[1], 10);
+            const mo = parseInt(m[2], 10);
+            const d = parseInt(m[3], 10);
+            if (mExpMode) mExpMode.value = d === expLastDay(y, mo) ? 'my' : 'dmy';
+            if (mExpYear) {
+                if (!Array.from(mExpYear.options).some(o => o.value === String(y))) {
+                    const o = document.createElement('option');
+                    o.value = String(y);
+                    o.textContent = String(y);
+                    mExpYear.appendChild(o);
+                }
+                mExpYear.value = String(y);
+            }
+            if (mExpMonth) mExpMonth.value = String(mo);
+            refreshExpDays();
+            if (mExpDay) mExpDay.value = String(d);
+            applyExpMode();
+            syncExpHidden();
+        }
 
         function showErr(msg) {
             if (!mErr) return;
@@ -1120,7 +1392,7 @@
                 // Auto-isi Tgl Exp dari batch terpilih bila cocok
                 const cur = (mBatch?.value || '').trim();
                 const hit = modalBatches.find(b => String(b.batch_no) === cur);
-                if (hit?.expiry_date && mExp && !mExp.value) mExp.value = hit.expiry_date;
+                if (hit?.expiry_date && !mExp?.value) setExpFromIso(hit.expiry_date);
             } catch (e) { /* biarkan FEFO otomatis */ }
         }
 
@@ -1136,11 +1408,11 @@
             if (row) {
                 if (mQty) mQty.value = row.querySelector('.input-qty')?.value || '';
                 if (mBatch) mBatch.value = row.querySelector('.input-batch')?.value || '';
-                if (mExp) mExp.value = row.querySelector('.input-ed')?.value || '';
+                setExpFromIso(row.querySelector('.input-ed')?.value || '');
             } else {
                 if (mQty) mQty.value = '';
                 if (mBatch) mBatch.value = '';
-                if (mExp) mExp.value = '';
+                setExpFromIso('');
             }
             showErr('');
             refreshModalStock();
@@ -1175,18 +1447,25 @@
             modal.querySelectorAll('[data-modal-close]').forEach(b => b.addEventListener('click', closeModal));
             document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
             // Enter di dalam popup = Simpan ke Tabel (jangan submit form utama)
-            ['m-qty', 'm-batch', 'm-exp'].forEach(id => {
+            ['m-qty', 'm-batch'].forEach(id => {
                 document.getElementById(id)?.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') { e.preventDefault(); mSave?.click(); }
                 });
             });
         }
-        if (mQty) { mQty.addEventListener('input', refreshModalStock); mQty.addEventListener('change', refreshModalStock); }
+        if (mQty) {
+            mQty.addEventListener('input', () => { sanitizeQty(); refreshModalStock(); });
+            mQty.addEventListener('change', () => { sanitizeQty(); refreshModalStock(); });
+        }
+        if (mExpMode) mExpMode.addEventListener('change', () => { applyExpMode(); syncExpHidden(); });
+        if (mExpMonth) mExpMonth.addEventListener('change', () => { refreshExpDays(); syncExpHidden(); });
+        if (mExpYear) mExpYear.addEventListener('change', () => { refreshExpDays(); syncExpHidden(); });
+        if (mExpDay) mExpDay.addEventListener('change', syncExpHidden);
         if (mBatch) {
             mBatch.addEventListener('input', () => {
                 refreshModalBatchInfo();
                 const hit = modalBatches.find(b => String(b.batch_no) === (mBatch.value || '').trim());
-                if (hit?.expiry_date && mExp) mExp.value = hit.expiry_date;
+                if (hit?.expiry_date) setExpFromIso(hit.expiry_date);
             });
             mBatch.addEventListener('change', refreshModalBatchInfo);
         }
@@ -1228,7 +1507,7 @@
             tr.querySelector('.cell-unit').textContent = c.unit;
             tr.querySelector('.batch-txt').textContent = data.batch_no || '-';
             tr.querySelector('.input-batch').value = data.batch_no || '';
-            tr.querySelector('.exp-txt').textContent = data.expiry_date || '—';
+            tr.querySelector('.exp-txt').textContent = fmtExpDisplay(data.expiry_date) || '—';
             tr.querySelector('.input-ed').value = data.expiry_date || '';
             tr.querySelector('.btn-remove').addEventListener('click', () => { tr.remove(); renumber(); recalc(); });
             tr.querySelector('.btn-edit').addEventListener('click', () => openModal(p.id, tr));
@@ -1237,11 +1516,17 @@
         }
 
         function collectModalData() {
+            const rawExp = (mExp?.value || '').trim();
+            const isoExp = parseExpiry(rawExp);
+            const expTouched = !!(mExpMonth?.value || mExpYear?.value || (mExpMode?.value === 'dmy' && mExpDay?.value));
             return {
                 product_id: mPid?.value || '',
                 qty: (mQty?.value || '').trim(),
                 batch_no: (mBatch?.value || '').trim(),
-                expiry_date: mExp?.value || '',
+                expiry_raw: rawExp,
+                expiry_date: isoExp ?? '',
+                expiry_invalid: rawExp !== '' && isoExp === null,
+                expiry_incomplete: expTouched && rawExp === '',
             };
         }
 
@@ -1252,9 +1537,15 @@
                 if (!p) { showErr('Barang tidak valid — tutup lalu pilih ulang dari pencarian.'); return; }
                 const qtyNum = parseFloat(d.qty);
                 if (!d.qty || !(qtyNum > 0)) { showErr('Qty wajib diisi dan lebih dari 0.'); mQty?.focus(); return; }
+                if (d.expiry_incomplete) {
+                    showErr('Tgl Expired belum lengkap — pilih ' + ((mExpMode?.value || 'my') === 'dmy' ? 'tanggal, bulan & tahun.' : 'bulan & tahun.'));
+                    mExpMonth?.focus();
+                    return;
+                }
+                if (d.expiry_invalid) { showErr('Tgl Expired tidak valid — pilih ulang bulan/tahun.'); mExpMonth?.focus(); return; }
                 if (TAB_ARAH === 'masuk') {
                     if (!d.batch_no) { showErr('No. Batch wajib untuk barang masuk.'); mBatch?.focus(); return; }
-                    if (!d.expiry_date) { showErr('Tgl Expired wajib untuk barang masuk.'); mExp?.focus(); return; }
+                    if (!d.expiry_date) { showErr('Tgl Expired wajib untuk barang masuk.'); mExpMonth?.focus(); return; }
                 }
                 if (TAB_ARAH !== 'masuk') {
                     const sisa = parseFloat(p.stok) || 0;
@@ -1268,7 +1559,7 @@
                     editingRow.querySelector('.input-batch').value = d.batch_no;
                     editingRow.querySelector('.batch-txt').textContent = d.batch_no || '-';
                     editingRow.querySelector('.input-ed').value = d.expiry_date;
-                    editingRow.querySelector('.exp-txt').textContent = d.expiry_date || '—';
+                    editingRow.querySelector('.exp-txt').textContent = fmtExpDisplay(d.expiry_date) || '—';
                     recalc();
                 } else {
                     addRow(d);
@@ -1310,6 +1601,7 @@
                         pSel.value = saved.customer_id;
                     }
                 }
+                if (typeof syncSelectToType === 'function') syncSelectToType();
                 const psS = form.querySelector('#ps-select');
                 if (psS && saved.ps_name) psS.value = saved.ps_name;
                 if (typeof fillAddress === 'function') {
@@ -1376,14 +1668,14 @@
                                     </div>
                                     <p class="text-xs text-slate-500 mb-4"><span class="font-bold" x-text="formData.barang"></span> · <span x-text="formData.arah"></span><span x-text="formData.pihak ? ' · ' + formData.pihak : ''"></span> — produk, arah & pihak tidak bisa diubah.</p>
                                     <div class="grid grid-cols-2 gap-4">
-                                        <div><label class="ui-label">Tanggal</label><input type="date" name="tanggal" x-model="formData.tanggal" max="{{ today()->toDateString() }}" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">Qty</label><input type="number" name="qty" x-model="formData.qty" min="0.01" step="any" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">No. Surat Jalan</label><input type="text" name="doc_no" x-model="formData.doc_no" maxlength="100" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">No. PO / Referensi</label><input type="text" name="po_no" x-model="formData.po_no" maxlength="100" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">Ekspedisi</label><input type="text" name="expedition" x-model="formData.expedition" maxlength="100" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">Alamat Kirim</label><input type="text" name="ship_address" x-model="formData.ship_address" maxlength="2000" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">Batch No.</label><input type="text" name="batch_no" x-model="formData.batch_no" maxlength="100" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">Expired Date</label><input type="date" name="expiry_date" x-model="formData.expiry_date" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Tanggal</label><input type="date" lang="id-ID" name="tanggal" x-model="formData.tanggal" max="{{ today()->toDateString() }}" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Qty</label><input type="number" name="qty" x-model="formData.qty" min="0.01" step="any" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">No. Surat Jalan</label><input type="text" name="doc_no" x-model="formData.doc_no" maxlength="100" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">No. PO / Referensi</label><input type="text" name="po_no" x-model="formData.po_no" maxlength="100" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Ekspedisi</label><input type="text" name="expedition" x-model="formData.expedition" maxlength="100" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Alamat Kirim</label><input type="text" name="ship_address" x-model="formData.ship_address" maxlength="2000" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Batch No.</label><input type="text" name="batch_no" x-model="formData.batch_no" maxlength="100" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Expired Date</label><input type="date" lang="id-ID" name="expiry_date" x-model="formData.expiry_date" class="ui-input ui-input--sm"></div>
                                         <div class="col-span-2"><label class="ui-label">Keterangan</label><input type="text" name="keterangan" x-model="formData.keterangan" maxlength="1000" required class="ui-input ui-input--sm"></div>
                                     </div>
                                     <p class="text-[11px] text-amber-600 font-medium mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">Ubah qty/tanggal/expired = reversal + mutasi koreksi baru (jejak audit utuh, stok menyesuaikan).</p>

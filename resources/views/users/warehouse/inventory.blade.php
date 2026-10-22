@@ -249,7 +249,7 @@
                                 </div>
                                 <div class="lg:col-span-2">
                                     <label class="ui-label">Expired (receipt)</label>
-                                    <input type="date" name="expiry_date" class="ui-input ui-input--sm !bg-white w-full">
+                                     <input type="date" lang="id-ID" name="expiry_date" class="ui-input ui-input--sm !bg-white w-full">
                                 </div>
                                 <div class="lg:col-span-2">
                                     <label class="ui-label">Alasan / Catatan</label>

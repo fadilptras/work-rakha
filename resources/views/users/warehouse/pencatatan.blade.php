@@ -327,11 +327,11 @@
                         </div>
                         <div class="md:col-span-2">
                             <label class="ui-label">Dari</label>
-                            <input type="date" name="kartu_from" value="{{ request('kartu_from', today()->startOfMonth()->toDateString()) }}" class="ui-input-date" onchange="this.form.submit()">
+                            <input type="date" lang="id-ID" name="kartu_from" value="{{ request('kartu_from', today()->startOfMonth()->toDateString()) }}" class="ui-input-date" onchange="this.form.submit()">
                         </div>
                         <div class="md:col-span-2">
                             <label class="ui-label">Sampai</label>
-                            <input type="date" name="kartu_to" value="{{ request('kartu_to', today()->toDateString()) }}" class="ui-input-date" onchange="this.form.submit()">
+                            <input type="date" lang="id-ID" name="kartu_to" value="{{ request('kartu_to', today()->toDateString()) }}" class="ui-input-date" onchange="this.form.submit()">
                         </div>
                         <div class="md:col-span-2 flex items-end">
                             @if($kartuProduct)
@@ -369,14 +369,14 @@
                                     </div>
                                     <p class="text-xs text-slate-500 mb-4"><span class="font-bold" x-text="formData.barang"></span> · <span x-text="formData.arah"></span><span x-text="formData.pihak ? ' · ' + formData.pihak : ''"></span> — produk, arah & pihak tidak bisa diubah.</p>
                                     <div class="grid grid-cols-2 gap-4">
-                                        <div><label class="ui-label">Tanggal</label><input type="date" name="tanggal" x-model="formData.tanggal" max="{{ today()->toDateString() }}" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">Qty</label><input type="number" name="qty" x-model="formData.qty" min="0.01" step="any" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">No. Surat Jalan</label><input type="text" name="doc_no" x-model="formData.doc_no" maxlength="100" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">No. PO / Referensi</label><input type="text" name="po_no" x-model="formData.po_no" maxlength="100" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">Ekspedisi</label><input type="text" name="expedition" x-model="formData.expedition" maxlength="100" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">Alamat Kirim</label><input type="text" name="ship_address" x-model="formData.ship_address" maxlength="2000" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">Batch No.</label><input type="text" name="batch_no" x-model="formData.batch_no" maxlength="100" class="ui-input ui-input--sm"></div>
-                                        <div><label class="ui-label">Expired Date</label><input type="date" name="expiry_date" x-model="formData.expiry_date" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Tanggal</label><input type="date" lang="id-ID" name="tanggal" x-model="formData.tanggal" max="{{ today()->toDateString() }}" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Qty</label><input type="number" name="qty" x-model="formData.qty" min="0.01" step="any" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">No. Surat Jalan</label><input type="text" name="doc_no" x-model="formData.doc_no" maxlength="100" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">No. PO / Referensi</label><input type="text" name="po_no" x-model="formData.po_no" maxlength="100" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Ekspedisi</label><input type="text" name="expedition" x-model="formData.expedition" maxlength="100" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Alamat Kirim</label><input type="text" name="ship_address" x-model="formData.ship_address" maxlength="2000" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Batch No.</label><input type="text" name="batch_no" x-model="formData.batch_no" maxlength="100" class="ui-input ui-input--sm"></div>
+                                         <div><label class="ui-label">Expired Date</label><input type="date" lang="id-ID" name="expiry_date" x-model="formData.expiry_date" class="ui-input ui-input--sm"></div>
                                         <div class="col-span-2"><label class="ui-label">Keterangan</label><input type="text" name="keterangan" x-model="formData.keterangan" maxlength="1000" required class="ui-input ui-input--sm"></div>
                                     </div>
                                     <p class="text-[11px] text-amber-600 font-medium mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">Ubah qty/tanggal/expired = reversal + mutasi koreksi baru (jejak audit utuh, stok menyesuaikan).</p>

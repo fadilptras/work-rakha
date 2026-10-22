@@ -303,7 +303,7 @@
                 </a>
 
                 {{-- Card 3: Stock Forecast --}}
-                <a href="{{ route('sales.forecast') }}" class="module-card card-indigo group title-reveal stagger-2" style="animation-delay: 0.2s;">
+                <a href="{{ route('sales.forecast', ['from' => 'warehouse']) }}" class="module-card card-indigo group title-reveal stagger-2" style="animation-delay: 0.2s;">
                     <div class="icon-box">
                         <i class="fas fa-chart-area"></i>
                     </div>

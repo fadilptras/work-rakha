@@ -59,8 +59,8 @@
         </div>
         <div class="flex items-end gap-2">
             <form method="GET" action="{{ route('warehouse.stockcard.show', $product) }}" data-remote="filter" class="flex items-end gap-2">
-                <div><label class="ui-label">Dari</label><input type="date" name="from" value="{{ $from }}" class="ui-input !bg-white"></div>
-                <div><label class="ui-label">Sampai</label><input type="date" name="to" value="{{ $to }}" class="ui-input !bg-white"></div>
+                <div><label class="ui-label">Dari</label><input type="date" lang="id-ID" name="from" value="{{ $from }}" class="ui-input !bg-white"></div>
+                <div><label class="ui-label">Sampai</label><input type="date" lang="id-ID" name="to" value="{{ $to }}" class="ui-input !bg-white"></div>
                 <div><button class="h-[34px] px-4 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">Terapkan</button></div>
             </form>
             <div class="pb-0"><x-ui.export-button variant="pdf" label="PDF" :href="route('warehouse.stockcard.export.pdf', $product) . '?from=' . $from . '&to=' . $to" title="Export PDF periode ini" /></div>
@@ -119,8 +119,8 @@
         <div class="space-y-1.5">
             @foreach($opnameMoves as $o)
                 <div class="flex items-center justify-between gap-2 text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
-                    <span class="font-medium text-slate-600 truncate">{{ $o->reason }}</span>
-                    <span class="font-bold text-slate-700 shrink-0">{{ \Carbon\Carbon::parse($o->created_at)->format('d M Y H:i') }}</span>
+                    <span class="font-medium text-slate-600 truncate">Fisik {{ $o->counted_qty }} · tercatat {{ $o->recorded_qty }} · selisih {{ $o->diff_qty > 0 ? '+' : '' }}{{ $o->diff_qty }}@if($o->note) · {{ $o->note }}@endif</span>
+                    <span class="font-bold text-slate-700 shrink-0">{{ ($o->opname_at ?? $o->opname_date)?->format('d M Y') ?? '-' }}</span>
                 </div>
             @endforeach
         </div>

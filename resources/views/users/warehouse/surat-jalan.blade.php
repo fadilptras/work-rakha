@@ -100,7 +100,7 @@
                     <div class="grid grid-cols-12 gap-2 items-end">
                         <div class="col-span-6 md:col-span-2">
                             <label class="ui-label">Tanggal Keluar <span class="text-red-500">*</span></label>
-                            <input type="date" name="tanggal" required value="{{ today()->toDateString() }}" max="{{ today()->toDateString() }}" class="ui-input-date" style="height:30px;font-size:12px;">
+                            <input type="date" lang="id-ID" name="tanggal" required value="{{ today()->toDateString() }}" max="{{ today()->toDateString() }}" class="ui-input-date" style="height:30px;font-size:12px;">
                         </div>
                         <div class="col-span-6 md:col-span-2">
                             <label class="ui-label">No. SJ</label>
@@ -245,7 +245,7 @@
                                     </div>
                                     <div>
                                         <label class="ui-label">Tgl Expired</label>
-                                        <input type="date" id="m-exp" class="ui-input ui-input--sm !bg-white !text-slate-800">
+                                         <input type="date" lang="id-ID" id="m-exp" class="ui-input ui-input--sm !bg-white !text-slate-800">
                                     </div>
                                 </div>
                                 <p id="m-error" class="hidden text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5"></p>
@@ -277,11 +277,11 @@
                         </div>
                         <div class="lg:col-span-2 col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tgl Mulai</label>
-                            <input type="date" name="date_from" value="{{ request('date_from') }}" onchange="this.form.submit()" class="ui-input ui-input--sm !bg-white w-full">
-                        </div>
-                        <div class="lg:col-span-2 col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tgl Selesai</label>
-                            <input type="date" name="date_to" value="{{ request('date_to') }}" onchange="this.form.submit()" class="ui-input ui-input--sm !bg-white w-full">
+                             <input type="date" lang="id-ID" name="date_from" value="{{ request('date_from') }}" onchange="this.form.submit()" class="ui-input ui-input--sm !bg-white w-full">
+                         </div>
+                         <div class="lg:col-span-2 col-span-1">
+                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tgl Selesai</label>
+                             <input type="date" lang="id-ID" name="date_to" value="{{ request('date_to') }}" onchange="this.form.submit()" class="ui-input ui-input--sm !bg-white w-full">
                         </div>
                         <div class="lg:col-span-3 col-span-2">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Customer</label>

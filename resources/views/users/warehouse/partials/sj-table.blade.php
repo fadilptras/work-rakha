@@ -8,11 +8,11 @@
                         </div>
                         <div class="lg:col-span-2 col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tgl Mulai</label>
-                            <input type="date" name="date_from" value="{{ request('date_from') }}" onchange="this.form.submit()" class="ui-input ui-input--sm !bg-white w-full">
-                        </div>
-                        <div class="lg:col-span-2 col-span-1">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tgl Selesai</label>
-                            <input type="date" name="date_to" value="{{ request('date_to') }}" onchange="this.form.submit()" class="ui-input ui-input--sm !bg-white w-full">
+                             <input type="date" lang="id-ID" name="date_from" value="{{ request('date_from') }}" onchange="this.form.submit()" class="ui-input ui-input--sm !bg-white w-full">
+                         </div>
+                         <div class="lg:col-span-2 col-span-1">
+                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tgl Selesai</label>
+                             <input type="date" lang="id-ID" name="date_to" value="{{ request('date_to') }}" onchange="this.form.submit()" class="ui-input ui-input--sm !bg-white w-full">
                         </div>
                         <div class="lg:col-span-3 col-span-2">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Customer</label>

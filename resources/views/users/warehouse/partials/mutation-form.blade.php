@@ -26,7 +26,7 @@
             <div class="grid grid-cols-12 gap-x-2 gap-y-1.5 items-end shrink-0">
                 <div class="col-span-6 md:col-span-2">
                     <label class="ui-label">Tanggal {{ $tab === 'masuk' ? 'Masuk' : 'Keluar' }} <span class="text-red-500">*</span></label>
-                    <input type="date" name="tanggal" required value="{{ today()->toDateString() }}" max="{{ today()->toDateString() }}" class="ui-input-date !h-[30px] !text-xs">
+                    <input type="date" lang="id-ID" name="tanggal" required value="{{ today()->toDateString() }}" max="{{ today()->toDateString() }}" class="ui-input-date !h-[30px] !text-xs">
                 </div>
                 @if($tab === 'masuk')
                 <div class="col-span-6 md:col-span-3">
@@ -197,7 +197,7 @@
                             </div>
                             <div>
                                 <label class="ui-label">Tgl Expired {{ $tab === 'masuk' ? '*' : '' }}</label>
-                                <input type="date" id="m-exp" class="ui-input ui-input--sm !bg-white !text-slate-800">
+                                 <input type="date" lang="id-ID" id="m-exp" class="ui-input ui-input--sm !bg-white !text-slate-800">
                             </div>
                         </div>
                         <p id="m-error" class="hidden text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5"></p>

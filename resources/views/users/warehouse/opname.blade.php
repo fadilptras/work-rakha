@@ -29,15 +29,15 @@
             </div>
 
             <div class="hidden md:block">
-                <x-ui.page-header title="Opname {{ $namaBulan ?? '' }}" subtitle="Opname bulan {{ $namaBulan ?? '' }}: catat draf → selesaikan jadi penyesuaian + berita acara." icon="fa-clipboard-check" :sticky="false" />
+                <x-ui.page-header title="Stock Opname — {{ $namaBulan ?? '' }}" subtitle="Pantau hasil hitung fisik, draf yang menunggu diselesaikan, dan Berita Acara bulan ini." icon="fa-clipboard-check" :sticky="false" />
             </div>
 
             {{-- Header mobile ala sales command center --}}
             <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
                 <div class="relative z-10 flex-1 min-w-0">
                     <h2 class="text-sm font-black tracking-wider uppercase leading-snug truncate">Opname {{ $namaBulan ?? '' }}</h2>
-                        <p class="text-xs text-blue-100 font-medium leading-normal truncate mt-0.5">
-                            Hitung fisik &amp; berita acara.
+                        <p class="text-xs text-blue-100 font-medium leading-normal mt-0.5">
+                            Hasil hitung fisik, draf, dan Berita Acara.
                         </p>
                 </div>
                 <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white text-base shrink-0 shadow-inner relative z-10">
@@ -55,46 +55,23 @@
                 <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-xs font-bold">{{ $errors->first() }}</div>
             @endif
 
-            {{-- Toolbar aksi + alur ala Accurate: Perintah (hitung) → Hasil (simpan) → Penyesuaian + BA --}}
-            <x-ui.glass-card class="!rounded-3xl !bg-white border-t-4 border-t-blue-500 shadow-sm">
-                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                    @if($canManage)
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <a href="{{ route('warehouse.stockopname.catat', ['bulan' => $bulan ?? now()->format('Y-m')]) }}" class="h-[38px] px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm flex items-center justify-center gap-2">
-                                <i class="fas fa-clipboard-list text-[11px]"></i> Catat Opname
-                            </a>
-                            <button type="button" onclick="uiModalOpen('modal-scrap')" class="h-[38px] px-4 rounded-lg bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 text-xs font-bold shadow-sm flex items-center justify-center gap-2">
-                                <i class="fas fa-trash-can text-[11px]"></i> Barang Rejected
-                            </button>
-                        </div>
-                    @else
-                        <p class="text-xs text-slate-400 font-medium">Hanya pengelola stok yang bisa input opname.</p>
-                    @endif
-                    <div class="flex items-center gap-1.5 sm:ml-auto text-[10px] font-black uppercase tracking-wider">
-                        <span class="flex items-center gap-1.5 text-blue-600"><span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">1</span> Hitung</span>
-                        <span class="text-slate-300">→</span>
-                        <span class="flex items-center gap-1.5 text-blue-600"><span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">2</span> Simpan</span>
-                        <span class="text-slate-300">→</span>
-                        <span class="flex items-center gap-1.5 text-slate-400"><span class="w-5 h-5 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px]">3</span> BA</span>
-                    </div>
-                </div>
-            </x-ui.glass-card>
-
             {{-- Rekap opname: kartu per-bulan, klik kartu = modal detail bulan --}}
             <x-ui.glass-card padding="none" class="!p-0 overflow-clip flex flex-col w-full max-w-full mx-auto !rounded-3xl !bg-white border border-slate-200 border-t-4 border-t-indigo-500 shadow-lg">
                 <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div><h3 class="text-sm font-bold text-slate-800 leading-tight">Rekap Opname — {{ $tahun ?? '' }}</h3>
                     <p class="text-[11px] text-slate-500 font-medium leading-tight">Januari–Desember · klik kartu bulan untuk lihat datanya.</p></div>
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                         <form method="GET" action="{{ route('warehouse.stockopname.index') }}">
                             <x-ui.filter-select name="tahun" value="{{ $tahun ?? '' }}" onchange="this.form.submit()" :options="$listTahun ?? []" class="w-28" />
                         </form>
-                        <x-ui.export-button variant="excel" href="#" title="Export Excel (segera hadir)" onclick="return false;" />
-                        <x-ui.export-button variant="pdf" href="#" title="Export PDF (segera hadir)" onclick="return false;" />
                         @if($canManage)
-                        <a href="{{ route('warehouse.stockopname.catat', ['bulan' => $bulan ?? now()->format('Y-m')]) }}" class="shrink-0 inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-sm">
-                            <i class="fas fa-plus"></i><span>Catat Opname</span>
+                        {{-- Aksi utama memakai tinggi 30px agar sejajar dengan filter & tombol export global. --}}
+                        <a href="{{ route('warehouse.stockopname.catat', ['bulan' => $bulan ?? now()->format('Y-m')]) }}" class="shrink-0 inline-flex items-center justify-center gap-1.5 h-[30px] px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold leading-none shadow-sm transition-colors">
+                            <i class="fas fa-plus text-[11px]"></i><span>Catat Opname</span>
                         </a>
+                        <button type="button" onclick="uiModalOpen('modal-scrap')" class="shrink-0 inline-flex items-center justify-center gap-1.5 h-[30px] px-3 rounded-lg bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 text-xs font-bold leading-none shadow-sm transition-colors">
+                            <i class="fas fa-trash-can text-[11px]"></i><span>Barang Rejected</span>
+                        </button>
                         @endif
                     </div>
                 </div>
@@ -102,29 +79,31 @@
                     @forelse($rekapPerBulan ?? [] as $b)
                         @php
                             $adaDraf = ($b['menunggu'] ?? 0) > 0;
-                            $lengkap = ($b['total'] ?? 0) > 0 && ($b['sudah'] ?? 0) >= ($b['total'] ?? 0) && ! $adaDraf;
-                            $terisi = ($b['sudah'] ?? 0) > 0;
+                            $selesaiN = (int) ($b['selesai'] ?? 0);
+                            $lengkap = ($b['total'] ?? 0) > 0 && $selesaiN >= ($b['total'] ?? 0) && ! $adaDraf;
+                            $terisi = $selesaiN > 0;
+                            $baBulan = $selesaiN > 0 && ! $adaDraf;
                         @endphp
-                        <button type="button" data-rekap-bulan="{{ $b['key'] }}" data-rekap-label="{{ $b['label'] }}" data-rekap-sudah="{{ $b['sudah'] ?? 0 }}" data-rekap-total="{{ $b['total'] ?? 0 }}" data-rekap-menunggu="{{ $b['menunggu'] ?? 0 }}"
+                        <button type="button" data-rekap-bulan="{{ $b['key'] }}" data-rekap-label="{{ $b['label'] }}" data-rekap-sudah="{{ $b['sudah'] ?? 0 }}" data-rekap-total="{{ $b['total'] ?? 0 }}" data-rekap-ba="{{ $baBulan ? route('warehouse.stockopname.print-bulan', ['bulan' => $b['key']]) : '' }}"
                             class="text-left bg-white border rounded-2xl p-3.5 shadow-sm hover:shadow-md transition-all {{ ($b['selected'] ?? false) ? 'border-indigo-400 ring-2 ring-indigo-200' : ($lengkap ? 'border-emerald-200' : (($terisi || $adaDraf) ? 'border-amber-200' : 'border-slate-200')) }}">
                             <div class="flex items-center justify-between gap-2">
                                 <span class="text-[11px] font-black text-slate-700 uppercase tracking-wide">{{ $b['label'] }}</span>
                                 @if($lengkap)
                                     <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">LENGKAP</span>
                                 @elseif($adaDraf)
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">SELISIH</span>
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">DRAF</span>
                                 @elseif($terisi)
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">SUDAH DIISI</span>
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">SELESAI</span>
                                 @else
                                     <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">BELUM DIISI</span>
                                 @endif
                             </div>
-                            <div class="mt-1.5 text-sm font-black {{ $lengkap ? 'text-emerald-600' : (($terisi || $adaDraf) ? 'text-amber-600' : 'text-slate-400') }}">{{ $b['sudah'] ?? 0 }}<span class="text-xs font-bold text-slate-400"> / {{ $b['total'] ?? 0 }} SKU</span></div>
+                            <div class="mt-1.5 text-sm font-black {{ $lengkap ? 'text-emerald-600' : (($terisi || $adaDraf) ? 'text-amber-600' : 'text-slate-400') }}">{{ $selesaiN }}<span class="text-xs font-bold text-slate-400"> / {{ $b['total'] ?? 0 }} SKU</span></div>
                             <div class="mt-0.5 text-[11px] text-slate-500 font-medium">
                                 @if($lengkap)
                                     Semua SKU sudah diopname & selesai.
                                 @elseif($terisi || $adaDraf)
-                                    {{ $terisi ? 'Sebagian sudah diopname' : 'Belum ada yang selesai' }}{{ ($b['entries'] ?? 0) > ($b['sudah'] ?? 0) ? ' · ' . $b['entries'] . ' entri' : '' }}@if($adaDraf)<span class="text-amber-600 font-bold"> · {{ $b['menunggu'] }} selisih menunggu</span>@endif.
+                                    {{ $terisi ? 'Sebagian sudah selesai' : 'Belum ada yang selesai' }}{{ ($b['entries'] ?? 0) > $selesaiN ? ' · ' . $b['entries'] . ' entri' : '' }}@if($adaDraf)<span class="text-amber-600 font-bold"> · {{ $b['menunggu'] }} draf menunggu Selesaikan</span>@endif.
                                 @else
                                     Belum ada opname bulan ini.
                                 @endif
@@ -156,26 +135,8 @@
         @endif
     </x-ui.modal>
 
-    {{-- Modal detail riwayat (klik baris) --}}
-    <x-ui.modal id="modal-opname-detail" title="Detail Hasil Opname" subtitle="Rincian penyesuaian per dokumen." icon="fa-circle-info" iconClass="bg-slate-600 text-white" maxWidth="max-w-md">
-        <dl class="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
-            <div><dt class="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Waktu</dt><dd id="odWaktu" class="font-bold text-slate-700 mt-0.5">-</dd></div>
-            <div><dt class="text-slate-400 font-bold uppercase text-[10px] tracking-wider">No. Dok</dt><dd id="odDok" class="font-mono font-bold text-slate-700 mt-0.5">-</dd></div>
-            <div class="col-span-2"><dt class="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Produk</dt><dd id="odProduk" class="font-bold text-slate-800 mt-0.5">-</dd></div>
-            <div><dt class="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Tercatat</dt><dd id="odTercatat" class="font-black text-slate-700 mt-0.5">-</dd></div>
-            <div><dt class="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Terhitung</dt><dd id="odTerhitung" class="font-black text-slate-700 mt-0.5">-</dd></div>
-            <div><dt class="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Selisih</dt><dd id="odSelisih" class="font-black mt-0.5">-</dd></div>
-            <div><dt class="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Oleh / Validasi</dt><dd id="odOleh" class="font-bold text-slate-700 mt-0.5">-</dd></div>
-            <div class="col-span-2"><dt class="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Catatan</dt><dd id="odCatatan" class="font-medium text-slate-600 mt-0.5">-</dd></div>
-        </dl>
-        <x-slot:footer>
-            <button type="button" data-modal-close class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50">Tutup</button>
-            <a id="odBa" href="#" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold">Cetak BA</a>
-        </x-slot:footer>
-    </x-ui.modal>
-
-    {{-- Modal data opname per-bulan: kiri daftar hasil, kanan ringkasan + aksi --}}
-    <x-ui.modal id="modal-rekap-bulan" title="Detail Opname" subtitle="Kiri: hasil per barang · Kanan: ringkasan + aksi." icon="fa-calendar-days" iconClass="bg-indigo-600 text-white" maxWidth="max-w-4xl">
+    {{-- Modal data opname per-bulan: hasil, ringkasan status, lalu aksi yang tersedia --}}
+    <x-ui.modal id="modal-rekap-bulan" title="Detail Opname" subtitle="Hasil per barang, ringkasan status, dan aksi yang bisa dilakukan." icon="fa-calendar-days" iconClass="bg-indigo-600 text-white" maxWidth="max-w-4xl">
         <div class="grid gap-3 md:grid-cols-5">
             <div class="md:col-span-3 min-w-0">
                 <div class="flex items-center gap-1.5 mb-1.5">
@@ -184,23 +145,66 @@
                 </div>
                 <div id="rbList" class="space-y-1.5 max-h-[50vh] md:max-h-[55vh] overflow-y-auto pr-0.5"></div>
             </div>
-            <div class="md:col-span-2 min-w-0">
-                <div class="flex items-center gap-1.5 mb-1.5">
-                    <span class="w-5 h-5 rounded-lg bg-emerald-600 text-white text-[10px] font-black flex items-center justify-center shrink-0">2</span>
-                    <div class="text-[11px] font-black text-slate-800 leading-tight">Ringkasan & aksi</div>
-                </div>
-                <div class="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-2">
-                    <p id="rbSummary" class="text-[11px] text-slate-500 font-medium">-</p>
-                    <div class="flex gap-2">
-                        <x-ui.export-button variant="excel" href="#" title="Export Excel (segera hadir)" onclick="return false;" />
-                        <x-ui.export-button variant="pdf" href="#" title="Export PDF (segera hadir)" onclick="return false;" />
+            <div class="md:col-span-2 min-w-0 space-y-3">
+                <div>
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="w-5 h-5 rounded-lg bg-emerald-600 text-white text-[10px] font-black flex items-center justify-center shrink-0">2</span>
+                        <div class="text-[11px] font-black text-slate-800 leading-tight">Ringkasan</div>
                     </div>
-                    @if($canManage)
-                    <a id="rbEdit" href="#" class="block text-center px-4 py-2 bg-white border border-indigo-300 text-indigo-700 rounded-xl text-xs font-bold hover:bg-indigo-50">Edit</a>
-                    <span id="rbFinishWrap" class="block">
-                        <button type="button" id="rbFinish" class="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">Selesaikan <span id="rbFinishN"></span></button>
-                    </span>
-                    @endif
+                    <div class="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-2.5">
+                        <p id="rbSummary" class="text-[11px] font-bold text-slate-700 leading-snug">-</p>
+                        <div class="grid grid-cols-2 gap-2 text-[10px] font-bold">
+                            <div class="rounded-lg bg-white border border-slate-200 px-2 py-1.5">
+                                <div class="text-slate-400 uppercase tracking-wider">Entri</div>
+                                <div id="rbTotal" class="text-xs font-black text-slate-700">-</div>
+                            </div>
+                            <div class="rounded-lg bg-white border border-slate-200 px-2 py-1.5">
+                                <div class="text-slate-400 uppercase tracking-wider">Selesai</div>
+                                <div id="rbDone" class="text-xs font-black text-slate-700">-</div>
+                            </div>
+                            <div class="rounded-lg bg-white border border-slate-200 px-2 py-1.5">
+                                <div class="text-slate-400 uppercase tracking-wider">Sesuai</div>
+                                <div id="rbSesuai" class="text-xs font-black text-sky-600">-</div>
+                            </div>
+                            <div class="rounded-lg bg-white border border-slate-200 px-2 py-1.5">
+                                <div class="text-slate-400 uppercase tracking-wider">Selisih</div>
+                                <div id="rbSelisih" class="text-xs font-black text-emerald-600">-</div>
+                            </div>
+                            <div class="rounded-lg bg-white border border-slate-200 px-2 py-1.5">
+                                <div class="text-slate-400 uppercase tracking-wider">Draf</div>
+                                <div id="rbDraf" class="text-xs font-black text-amber-600">-</div>
+                            </div>
+                            <div class="rounded-lg bg-white border border-slate-200 px-2 py-1.5">
+                                <div class="text-slate-400 uppercase tracking-wider">Berita Acara</div>
+                                <div id="rbBaStatus" class="text-xs font-black text-slate-500">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="w-5 h-5 rounded-lg bg-blue-600 text-white text-[10px] font-black flex items-center justify-center shrink-0">3</span>
+                        <div class="text-[11px] font-black text-slate-800 leading-tight">Aksi</div>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-2">
+                        @if($canManage)
+                        {{-- Aksi detail bulan: tinggi sama dengan tombol export/filter (30px). --}}
+                        <a id="rbEdit" href="#" class="flex items-center justify-center h-[30px] px-3 bg-white border border-indigo-300 text-indigo-700 rounded-lg text-xs font-bold leading-none hover:bg-indigo-50">Catat</a>
+                        <a id="rbBa" href="#" class="hidden flex items-center justify-center h-[30px] px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold leading-none">Download BA</a>
+                        {{-- Rekap periode: isi sama, hanya berbeda format file. --}}
+                        <div class="grid grid-cols-2 gap-2">
+                            <a id="rbExportExcel" href="#" class="flex items-center justify-center gap-1.5 h-[30px] px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold leading-none" title="Download rekap opname dalam format Excel">
+                                <i class="fas fa-file-excel text-[11px]"></i> Excel
+                            </a>
+                            <a id="rbExportPdf" href="#" class="flex items-center justify-center gap-1.5 h-[30px] px-3 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold leading-none" title="Download rekap opname dalam format PDF">
+                                <i class="fas fa-file-pdf text-[11px]"></i> PDF
+                            </a>
+                        </div>
+                        <span id="rbFinishWrap" class="block">
+                            <button type="button" id="rbFinish" class="inline-flex items-center justify-center w-full h-[30px] px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold leading-none">Selesaikan <span id="rbFinishN"></span></button>
+                        </span>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -210,104 +214,182 @@
     </x-ui.modal>
     <script id="rekap-bulan-data" type="application/json">@json($rekapDetailPerBulan ?? [])</script>
     <script id="catat-base-url" type="application/json">@json(route('warehouse.stockopname.catat'))</script>
+    <script id="rekap-export-excel-url" type="application/json">@json(route('warehouse.stockopname.export-rekap', ['bulan' => '__BULAN__', 'format' => 'excel']))</script>
+    <script id="rekap-export-pdf-url" type="application/json">@json(route('warehouse.stockopname.export-rekap', ['bulan' => '__BULAN__', 'format' => 'pdf']))</script>
 
     @if($canManage)
     <script>
         (function () {
-            // Halaman rekap: hanya lihat hasil. Pendataan pindah ke halaman Catat Opname.
-            function escHtml(v) {
-                return String(v === null || v === undefined ? '' : v).replace(/[&<>"']/g, function (c) {
-                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            'use strict';
+
+            // Halaman rekap hanya menampilkan hasil. Pendataan tetap di halaman Catat Opname.
+            function escHtml(value) {
+                return String(value === null || value === undefined ? '' : value).replace(/[&<>"']/g, function (char) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
                 });
             }
-            // Detail riwayat: klik baris -> modal
-            document.querySelectorAll('[data-opname-detail]').forEach(function (row) {
-                row.addEventListener('click', function () {
-                    var d = row.dataset;
-                    document.getElementById('odWaktu').textContent = d.waktu || '-';
-                    document.getElementById('odDok').textContent = d.dok || '-';
-                    document.getElementById('odProduk').textContent = d.produk || '-';
-                    document.getElementById('odTercatat').textContent = d.tercatat || '-';
-                    document.getElementById('odTerhitung').textContent = d.terhitung || '-';
-                    var s = document.getElementById('odSelisih');
-                    s.textContent = d.selisih || '-';
-                    s.className = 'font-black mt-0.5 ' + (parseFloat(d.selisih) > 0 ? 'text-emerald-600' : (parseFloat(d.selisih) < 0 ? 'text-rose-600' : 'text-slate-700'));
-                    document.getElementById('odOleh').textContent = (d.oleh || '-') + (d.validator && d.validator !== '-' ? ' / ' + d.validator : '');
-                    document.getElementById('odCatatan').textContent = d.catatan || '-';
-                    document.getElementById('odBa').href = d.ba || '#';
-                    if (window.uiModalOpen) window.uiModalOpen('modal-opname-detail');
-                });
-            });
-            // Modal data per-bulan: klik kartu bulan -> popup hasil + tombol aksi
-            document.querySelectorAll('[data-rekap-bulan]').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var key = btn.getAttribute('data-rekap-bulan');
-                    var label = btn.getAttribute('data-rekap-label') || key;
-                    var sudahAttr = parseInt(btn.getAttribute('data-rekap-sudah') || '0', 10);
-                    var total = parseInt(btn.getAttribute('data-rekap-total') || '0', 10);
-                    var catatBase = 'catat';
-                    try { catatBase = JSON.parse(document.getElementById('catat-base-url').textContent || '"catat"'); } catch (e) { catatBase = 'catat'; }
-                    var urlCatat = catatBase + '?bulan=' + encodeURIComponent(key);
-                    var urlSisa = urlCatat + '&hanya_belum=1';
-                    var all = {};
-                    try { all = JSON.parse(document.getElementById('rekap-bulan-data').textContent || '{}'); } catch (e) { all = {}; }
-                    var items = all[key] || [];
-                    var sesuai = items.filter(function (it) { return !it.pending && it.selisih !== null && Math.abs(it.selisih) < 0.005; }).length;
-                    var draf = items.filter(function (it) { return !!it.pending; }).length;
-                    var sudahDone = items.length - sesuai - draf;
-                    // Satu tombol: belum selesai = "Catat", sudah selesai = "Edit".
-                    // Bulan sebagian → buka halaman Catat dengan saringan "belum" aktif.
-                    var finished = total > 0 && sudahAttr >= total && draf <= 0;
-                    var rbEdit = document.getElementById('rbEdit');
-                    if (rbEdit) {
-                        rbEdit.href = (!finished && sudahAttr > 0 && total > 0 && sudahAttr < total) ? urlSisa : urlCatat;
-                        rbEdit.textContent = finished ? 'Edit' : 'Catat';
+
+            // Membaca data JSON yang ditempel server ke dalam <script type="application/json">.
+            function readJson(id, fallback) {
+                var el = document.getElementById(id);
+                if (!el) return fallback;
+                try {
+                    var parsed = JSON.parse(el.textContent || 'null');
+                    return parsed === null ? fallback : parsed;
+                } catch (e) {
+                    return fallback;
+                }
+            }
+
+            function setText(id, value) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = value;
+            }
+
+            // Format angka selisih: 0 tetap "0", nilai positif diberi tanda +.
+            function signedNumber(value) {
+                if (value === null || value === undefined || value === '' || isNaN(Number(value))) return '-';
+                var number = Number(value);
+                return (number > 0 ? '+' : '') + number;
+            }
+
+            function isNearZero(value) {
+                return value !== null && value !== undefined && Math.abs(Number(value)) < 0.005;
+            }
+
+            var catatBase = readJson('catat-base-url', 'catat');
+            var detailByMonth = readJson('rekap-bulan-data', {});
+            var exportUrls = {
+                excel: readJson('rekap-export-excel-url', ''),
+                pdf: readJson('rekap-export-pdf-url', '')
+            };
+
+            // URL export berisi placeholder __BULAN__ agar bisa dipakai ulang untuk semua kartu.
+            function setExportLink(id, format, key) {
+                var link = document.getElementById(id);
+                if (!link) return;
+                var base = exportUrls[format] || '';
+                link.href = base ? base.replace('__BULAN__', encodeURIComponent(key)) : '#';
+            }
+
+            // Klik kartu bulan: tampilkan rekap barang, ringkasan, dan aksi yang relevan.
+            document.querySelectorAll('[data-rekap-bulan]').forEach(function (card) {
+                card.addEventListener('click', function () {
+                    var key = card.dataset.rekapBulan;
+                    var label = card.dataset.rekapLabel || key;
+                    var savedCount = parseInt(card.dataset.rekapSudah || '0', 10) || 0;
+                    var totalSku = parseInt(card.dataset.rekapTotal || '0', 10) || 0;
+                    var baUrl = card.dataset.rekapBa || '';
+                    var catatUrl = catatBase + '?bulan=' + encodeURIComponent(key);
+                    var unfinishedUrl = catatUrl + '&hanya_belum=1';
+
+                    var items = detailByMonth[key] || [];
+                    var doneItems = items.filter(function (item) { return !item.pending; });
+                    var draftCount = items.length - doneItems.length;
+                    var sameCount = doneItems.filter(function (item) { return isNearZero(item.selisih); }).length;
+                    var diffCount = doneItems.length - sameCount;
+                    var isFinished = !!baUrl; // BA sudah terbit = periode selesai.
+
+                    // "Catat" untuk periode berjalan; "Edit" setelah BA terbit.
+                    // Jika baru sebagian yang dihitung, buka langsung saringan "belum".
+                    var editAction = document.getElementById('rbEdit');
+                    if (editAction) {
+                        var isPartial = !isFinished && savedCount > 0 && totalSku > 0 && savedCount < totalSku;
+                        editAction.href = isPartial ? unfinishedUrl : catatUrl;
+                        editAction.textContent = isFinished ? 'Edit' : 'Catat';
                     }
-                    var titleEl = document.getElementById('modal-rekap-bulan-title');
-                    if (titleEl) titleEl.textContent = 'Detail Opname — ' + label;
-                    document.getElementById('rbSummary').textContent = label + ' · ' + items.length + ' entri · ' + sesuai + ' sesuai · ' + sudahDone + ' selisih · ' + draf + ' menunggu.';
-                    // Tombol Selesaikan: arahkan ke halaman Catat (pengisian nama BA + rekap draf di sana).
-                    var rbFinishWrap = document.getElementById('rbFinishWrap');
-                    var rbFinish = document.getElementById('rbFinish');
-                    var rbFinishN = document.getElementById('rbFinishN');
-                    if (rbFinish) rbFinish.onclick = function () {
-                        if (window.uiModalClose) window.uiModalClose('modal-rekap-bulan');
-                        window.location.href = urlCatat;
-                    };
-                    if (rbFinishN) rbFinishN.textContent = '(' + draf + ')';
-                    if (rbFinishWrap) rbFinishWrap.classList.toggle('hidden', draf <= 0);
-                    var list = document.getElementById('rbList');
-                    if (!items.length) {
-                        list.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm font-medium">Belum ada opname bulan ' + label + '.</div>';
+
+                    var baAction = document.getElementById('rbBa');
+                    if (baAction) {
+                        baAction.classList.toggle('hidden', !baUrl);
+                        if (baUrl) baAction.href = baUrl;
+                        else baAction.removeAttribute('href');
+                    }
+
+                    setExportLink('rbExportExcel', 'excel', key);
+                    setExportLink('rbExportPdf', 'pdf', key);
+
+                    setText('rbTotal', items.length);
+                    setText('rbDone', doneItems.length);
+                    setText('rbSesuai', sameCount);
+                    setText('rbSelisih', diffCount);
+                    setText('rbDraf', draftCount);
+
+                    var baStatus = document.getElementById('rbBaStatus');
+                    if (baStatus) {
+                        baStatus.textContent = baUrl ? 'Tersedia' : (draftCount > 0 ? 'Menunggu' : 'Belum ada');
+                        baStatus.className = 'text-xs font-black ' + (baUrl ? 'text-blue-600' : (draftCount > 0 ? 'text-amber-600' : 'text-slate-400'));
+                    }
+
+                    var skuPart = totalSku > 0 ? ' dari ' + totalSku + ' SKU' : '';
+                    var summary;
+                    if (items.length === 0) {
+                        summary = label + ' · belum ada hasil opname pada periode ini.';
+                    } else if (draftCount > 0) {
+                        summary = label + ' · ' + items.length + skuPart + ' terhitung · '
+                            + draftCount + ' draf menunggu Selesaikan.';
                     } else {
-                        list.innerHTML = items.map(function (it) {
-                            var isSesuai = !it.pending && it.selisih !== null && Math.abs(it.selisih) < 0.005;
-                            var badge = it.pending
-                                ? '<span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">SELISIH ' + (it.selisih > 0 ? '+' : '') + it.selisih + '</span>'
-                                : (isSesuai
-                                    ? '<span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">SESUAI</span>'
-                                    : '<span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">SELISIH ' + (it.selisih > 0 ? '+' : '') + (it.selisih ?? '-') + '</span>');
-                            var border = it.pending ? 'border-amber-300 bg-amber-50/40' : (isSesuai ? 'border-sky-200' : 'border-emerald-200');
-                            var boxBg = it.pending ? 'bg-amber-50' : (isSesuai ? 'bg-sky-50' : 'bg-emerald-50');
-                            var boxTx = it.pending ? 'text-amber-500' : (isSesuai ? 'text-sky-500' : 'text-emerald-500');
-                            var boxNum = it.pending ? 'text-amber-600' : (isSesuai ? 'text-sky-600' : 'text-emerald-600');
-                            return '<div class="bg-white border ' + border + ' rounded-xl p-2">'
-                                + '<div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold text-slate-800 truncate">' + escHtml(it.produk) + '</span>' + badge + '</div>'
-                                + '<div class="grid grid-cols-3 gap-1 mt-1.5 text-center">'
-                                + '<div class="bg-slate-50 rounded-md px-1 py-1"><div class="text-[9px] font-bold text-slate-400 uppercase">Sistem</div><div class="text-xs font-black text-slate-700">' + (it.tercatat ?? '-') + '</div></div>'
-                                + '<div class="bg-slate-50 rounded-md px-1 py-1"><div class="text-[9px] font-bold text-slate-400 uppercase">Fisik</div><div class="text-xs font-black text-slate-700">' + (it.terhitung ?? '-') + '</div></div>'
-                                + '<div class="rounded-md px-1 py-1 ' + boxBg + '"><div class="text-[9px] font-bold uppercase ' + boxTx + '">Selisih</div><div class="text-xs font-black ' + boxNum + '">' + ((it.selisih !== null && it.selisih > 0 ? '+' : '') + (it.selisih ?? '-')) + '</div></div>'
-                                + '</div>'
-                                + '<div class="mt-1 text-[10px] text-slate-400 font-medium">' + escHtml(it.waktu) + ' · ' + escHtml(it.oleh) + (it.catatan && it.catatan !== '-' ? ' · ' + escHtml(it.catatan) : '') + ((it.pembuat || it.pemeriksa) ? ' · BA: ' + escHtml(it.pembuat || '-') + ' / ' + escHtml(it.pemeriksa || '-') : '') + '</div>'
-                                + '</div>';
-                        }).join('');
+                        summary = label + ' · ' + items.length + skuPart + ' terhitung · semua entri selesai'
+                            + (diffCount > 0 ? ' (' + sameCount + ' sesuai, ' + diffCount + ' selisih).' : ' dan sesuai sistem.');
                     }
+                    setText('rbSummary', summary);
+
+                    // Selesaikan di modal hanya membuka halaman Catat; proses final tetap di sana.
+                    var finishAction = document.getElementById('rbFinish');
+                    if (finishAction) {
+                        finishAction.onclick = function () {
+                            if (window.uiModalClose) window.uiModalClose('modal-rekap-bulan');
+                            window.location.href = catatUrl;
+                        };
+                    }
+                    setText('rbFinishN', '(' + draftCount + ')');
+
+                    var finishWrap = document.getElementById('rbFinishWrap');
+                    if (finishWrap) finishWrap.classList.toggle('hidden', draftCount <= 0);
+
+                    var list = document.getElementById('rbList');
+                    if (list) {
+                        if (items.length === 0) {
+                            list.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm font-medium">Belum ada opname bulan ' + escHtml(label) + '.</div>';
+                        } else {
+                            list.innerHTML = items.map(function (item) {
+                                var isSame = !item.pending && isNearZero(item.selisih);
+                                var badge = item.pending
+                                    ? '<span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">DRAF ' + signedNumber(item.selisih) + '</span>'
+                                    : (isSame
+                                        ? '<span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">SESUAI</span>'
+                                        : '<span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">SELISIH ' + signedNumber(item.selisih) + '</span>');
+                                var border = item.pending ? 'border-amber-300 bg-amber-50/40' : (isSame ? 'border-sky-200' : 'border-emerald-200');
+                                var boxBg = item.pending ? 'bg-amber-50' : (isSame ? 'bg-sky-50' : 'bg-emerald-50');
+                                var boxText = item.pending ? 'text-amber-500' : (isSame ? 'text-sky-500' : 'text-emerald-500');
+                                var boxNumber = item.pending ? 'text-amber-600' : (isSame ? 'text-sky-600' : 'text-emerald-600');
+                                var note = item.catatan && item.catatan !== '-' ? ' · ' + escHtml(item.catatan) : '';
+                                var baNames = (item.pembuat || item.pemeriksa)
+                                    ? ' · BA: ' + escHtml(item.pembuat || '-') + ' / ' + escHtml(item.pemeriksa || '-')
+                                    : '';
+
+                                return '<div class="bg-white border ' + border + ' rounded-xl p-2">'
+                                    + '<div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold text-slate-800 truncate">' + escHtml(item.produk) + '</span>' + badge + '</div>'
+                                    + '<div class="grid grid-cols-3 gap-1 mt-1.5 text-center">'
+                                    + '<div class="bg-slate-50 rounded-md px-1 py-1"><div class="text-[9px] font-bold text-slate-400 uppercase">Sistem</div><div class="text-xs font-black text-slate-700">' + (item.tercatat ?? '-') + '</div></div>'
+                                    + '<div class="bg-slate-50 rounded-md px-1 py-1"><div class="text-[9px] font-bold text-slate-400 uppercase">Fisik</div><div class="text-xs font-black text-slate-700">' + (item.terhitung ?? '-') + '</div></div>'
+                                    + '<div class="rounded-md px-1 py-1 ' + boxBg + '"><div class="text-[9px] font-bold uppercase ' + boxText + '">Selisih</div><div class="text-xs font-black ' + boxNumber + '">' + signedNumber(item.selisih) + '</div></div>'
+                                    + '</div>'
+                                    + '<div class="mt-1 text-[10px] text-slate-400 font-medium">' + escHtml(item.waktu) + ' · ' + escHtml(item.oleh) + note + baNames + '</div>'
+                                    + '</div>';
+                            }).join('');
+                        }
+                    }
+
                     if (window.uiModalOpen) window.uiModalOpen('modal-rekap-bulan');
                 });
             });
-            // Buka kembali modal scrap bila validasi rejected gagal
+
+            // Buka kembali modal rejected bila validasi server gagal.
             @if($errors->any() && old('qty'))
-                window.addEventListener('DOMContentLoaded', function () { if (window.uiModalOpen) window.uiModalOpen('modal-scrap'); });
+                window.addEventListener('DOMContentLoaded', function () {
+                    if (window.uiModalOpen) window.uiModalOpen('modal-scrap');
+                });
             @endif
         })();
     </script>
