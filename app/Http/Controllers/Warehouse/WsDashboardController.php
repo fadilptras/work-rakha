@@ -14,10 +14,6 @@ class WsDashboardController extends WsBaseController
 
     public function dashboard()
     {
-        if (!$this->hasAnySalesAccess()) {
-            abort(403, 'Anda tidak memiliki hak akses ke Dashboard Gudang.');
-        }
-
         // KPI ringkas (aman bila tabel masih kosong).
         $totalSku = Product::active()->count();
         $stokHabis = Product::active()->where('stock', '<=', 0)->count();

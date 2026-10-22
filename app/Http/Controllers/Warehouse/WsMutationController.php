@@ -7,6 +7,7 @@ use App\Models\ProductBatch;
 use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\StockMove;
+use App\Models\StockOpname;
 use App\Models\User;
 use App\Models\WsMutation;
 use Illuminate\Http\Request;
@@ -211,19 +212,17 @@ class WsMutationController extends WsBaseController
         // Penanda form Ops (mandiri) vs form SJ/Pencatatan (terhubung arsip SJ).
         $fromOps = ($validated['asal'] ?? '') === 'ops';
 
-        // No. dokumen: form Ops selalu manual (keluar & masuk);
-        // selain itu keluar = otomatis atomik "SJ.YYYYMMDD.NOURUT", masuk = no. supplier manual.
+        // No. dokumen: form Ops opsional (boleh kosong).
+        // Form keluar non-Ops tetap nomor otomatis atomik "SJ.YYYYMMDD.NOURUT".
         if ($arah === 'keluar' && !$fromOps) {
             $docNo = app(\App\Services\DocumentNumberService::class)->nextSj();
         } else {
             $docNo = trim((string) ($validated['doc_no'] ?? ''));
-            if ($docNo === '') {
-                return back()->with('error', $arah === 'keluar' ? 'No. SJ wajib diisi.' : 'No. SJ Supplier wajib diisi.')->withInput();
-            }
         }
-        if (WsMutation::where('direction', $direction)->where('doc_no', $docNo)->exists()) {
+        if ($docNo !== '' && WsMutation::where('direction', $direction)->where('doc_no', $docNo)->exists()) {
             return back()->with('error', "No. SJ '{$docNo}' sudah dipakai dokumen lain.")->withInput();
         }
+        $docNo = $docNo !== '' ? $docNo : null;
 
         // Aturan pasangan per keterangan: dropdown hanya saran, boleh ketik sendiri.
         // Nilai persis 'Retur Supplier' & 'Internal' tetap punya aturan pasangan khusus.
@@ -291,7 +290,7 @@ class WsMutationController extends WsBaseController
                         throw new \InvalidArgumentException("Baris #" . ($i + 1) . ": Expired Date wajib untuk barang masuk.");
                     }
                     $reason = $ket !== '' ? $ket : ('Pencatatan ' . $arah . ' ' . $validated['tanggal']);
-                    $reason = "[{$docNo}] " . $reason;
+                    $reason = ($docNo ? "[{$docNo}] " : '') . $reason;
                     $move = $svc->createMove([
                         'product_id' => $pid,
                         'qty' => $qty,
@@ -323,7 +322,8 @@ class WsMutationController extends WsBaseController
             return back()->with('error', 'Gagal menyimpan dokumen: ' . $e->getMessage())->withInput();
         }
 
-            $msg = "Dokumen {$docNo} tersimpan ({$count} baris). Stok & kartu stock ter-update.";
+            $docLabel = $docNo ?: 'tanpa No. SJ';
+            $msg = "Dokumen {$docLabel} tersimpan ({$count} baris). Stok & kartu stock ter-update.";
             // Form SJ/Pencatatan keluar -> mendarat di tab arsip Surat Jalan;
             // form Ops (keluar/masuk) -> kembali ke tab Ops masing-masing.
             if ($arah === 'keluar' && !$fromOps) {
@@ -588,8 +588,20 @@ class WsMutationController extends WsBaseController
     }
 
     /**
+     * Rekap mutasi Ops tidak menampilkan baris hasil Stock Opname.
+     * Baris opname ditandai prefix "Opname:" pada reason.
+     */
+    protected function excludeOpnameMoves($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('stock_moves.reason')
+                ->orWhere('stock_moves.reason', 'not like', 'Opname:%');
+        });
+    }
+
+    /**
      * Filter layar mutasi (tab kelola, tab Ops mutasi, export PDF).
-     * Tanpa kelola_arah — panggil applyArahScope sendiri bila perlu.
+     * Tanpa kelola_arah �?" panggil applyArahScope sendiri bila perlu.
      */
     protected function applyMoveFilters($query, Request $request)
     {
@@ -720,7 +732,8 @@ class WsMutationController extends WsBaseController
         $ringkasan = collect();
         $kelolaMoves = collect();
         if ($tab === 'mutasi') {
-            $base = $this->applyMoveFilters($this->baseMoveQuery(), $request);
+            // Data Stock Opname tidak ditampilkan di tabel Data Mutation Ops.
+            $base = $this->applyMoveFilters($this->excludeOpnameMoves($this->baseMoveQuery()), $request);
 
             [$qtyMasuk, $qtyKeluar, $trxMasuk, $trxKeluar, $perBarang] = $this->moveStats($base, $isMasuk);
             $produkAktif = count($perBarang);
@@ -729,23 +742,21 @@ class WsMutationController extends WsBaseController
             if (in_array($request->get('kelola_arah'), ['masuk', 'keluar'], true)) {
                 $this->applyArahScope($kq, $request->get('kelola_arah'));
             }
+            // Tanpa pagination: semua baris dimuat, tabel scroll dengan tinggi tetap.
             $kelolaMoves = $kq->orderByDesc('stock_moves.created_at')->orderByDesc('stock_moves.id')
-                ->paginate(30, ['stock_moves.*', 'd.id as d_id', 'd.doc_no as d_doc', 'd.purpose as d_purpose', 'd.ship_address as d_ship', 'd.expedition as d_exped', 'd.po_no as d_po', 'cu.customer_name as cu_name', 'su.supplier_name as su_name', 'd.source as d_source', 'd.status as d_status'], 'kelolaPage')->withQueryString();
+                ->get(['stock_moves.*', 'd.id as d_id', 'd.doc_no as d_doc', 'd.purpose as d_purpose', 'd.ship_address as d_ship', 'd.expedition as d_exped', 'd.po_no as d_po', 'cu.customer_name as cu_name', 'su.supplier_name as su_name', 'd.source as d_source', 'd.status as d_status']);
         }
 
         // ---- Tab form: data pendukung ----
         $productOptions = Product::active()
             ->orderByRaw('LOWER(COALESCE(NULLIF(TRIM(product_name_clean), ""), product_name))')
             ->get(['id', 'product_code', 'product_name', 'product_name_clean', 'unit', 'stock']);
-        // ID produk yang sudah diopname bulan berjalan (1 query agregat).
+        // ID produk yang sudah selesai diopname bulan berjalan.
         $opnamedIds = [];
         try {
-            $opnamedIds = StockMove::where('type', StockMove::TYPE_ADJUSTMENT)
-                ->where('status', StockMove::STATUS_DONE)
-                ->where('reason', 'like', 'Opname:%')
-                ->whereYear('created_at', now()->year)
-                ->whereMonth('created_at', now()->month)
-                ->distinct()->pluck('product_id')->all();
+            $opnamedIds = StockOpname::where('period', now()->format('Y-m'))
+                ->where('status', StockOpname::STATUS_DONE)
+                ->distinct()->pluck('product_id')->map(fn ($id) => (int) $id)->all();
         } catch (\Throwable $e) {
             $opnamedIds = [];
         }
@@ -889,7 +900,8 @@ class WsMutationController extends WsBaseController
             abort(403, 'Unauthorized');
         }
 
-        $q = $this->applyMoveFilters($this->baseMoveQuery(), $request);
+        // Samakan dengan layar Data Mutation Ops: tanpa baris hasil Stock Opname.
+        $q = $this->applyMoveFilters($this->excludeOpnameMoves($this->baseMoveQuery()), $request);
         if (in_array($request->get('kelola_arah'), ['masuk', 'keluar'], true)) {
             $this->applyArahScope($q, $request->get('kelola_arah'));
         }

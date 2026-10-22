@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Warehouse;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\StockMove;
+use App\Models\StockOpname;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -97,6 +98,22 @@ class WsBaseController extends Controller
             ->merge($db)->unique(fn ($v) => strtolower(trim((string) $v)))->values()->all();
     }
 
+    /** Net mutasi done antara dua waktu (eksklusif awal, eksklusif akhir). */
+    protected function netMovesBetween(int $productId, $fromAt, string $to): float
+    {
+        $fromAt = $fromAt ?: \Carbon\Carbon::parse($to)->startOfDay();
+
+        $net = DB::table('stock_moves')
+            ->where('product_id', $productId)
+            ->where('status', 'done')
+            ->where('created_at', '>', $fromAt)
+            ->where('created_at', '<', $to)
+            ->selectRaw(\App\Services\StockOpnameService::signedNetSql().' as net')
+            ->value('net');
+
+        return round((float) ($net ?? 0), 2);
+    }
+
     /**
      * Data kartu satu produk: saldo awal (opname terakhir)
      * + mutasi done per periode + Masuk/Keluar/Sisa.
@@ -107,49 +124,58 @@ class WsBaseController extends Controller
         $to = $request->get('to', today()->toDateString());
         $hasBatchCol = Schema::hasColumn('stock_moves', 'batch_no');
 
-        // Saldo awal: opname terakhir sebelum periode; tanpa opname = data terakhir tersedia.
+        // Saldo awal: hasil opname bulan berjalan (jika ada) atau opname terakhir
+        // sebelum periode. Mutasi sebelum tanggal opname tetap tersimpan sebagai
+        // riwayat, tetapi tidak dihitung lagi agar saldo tidak dobel.
         $saldoAwal = 0;
         $saldoLabel = 'Stock awal';
         $tanpaOpname = true;
         $opnameMoves = collect();
-        if (Schema::hasTable('stock_moves')) {
-            $lastOpname = DB::table('stock_moves')
-                ->where('product_id', $product->id)
-                ->where('status', 'done')
-                ->where('type', 'adjustment')
-                ->where('reason', 'like', 'Opname:%')
-                ->whereDate('created_at', '<', $from)
-                ->orderByDesc('id')
+        $rowFrom = $from;
+        $excludeBefore = null;
+        if (Schema::hasTable('stock_opnames')) {
+            $fromMonth = substr($from, 0, 7);
+            $inMonth = StockOpname::where('product_id', $product->id)
+                ->where('period', $fromMonth)
+                ->where('status', StockOpname::STATUS_DONE)
+                ->orderByDesc('opname_at')
                 ->first();
-            if ($lastOpname) {
-                // Stok saat opname = stok kini - mutasi done setelahnya.
-                $after = DB::table('stock_moves')
-                    ->where('product_id', $product->id)
-                    ->where('status', 'done')
-                    ->where('id', '>', $lastOpname->id)
-                    ->selectRaw("SUM(CASE WHEN (type = 'receipt') OR (type = 'adjustment' AND to_location = 'Stock' AND from_location <> 'Stock') THEN qty WHEN (type = 'transfer') THEN 0 ELSE -qty END) as net")
-                    ->value('net');
-                $saldoAwal = max(0, round((float) $product->stock - (float) ($after ?? 0), 2));
-                $saldoLabel = 'Saldo opname ' . \Carbon\Carbon::parse($lastOpname->created_at)->format('d M Y');
+
+            if ($inMonth) {
+                // Hasil opname bulan ini menjadi saldo awal periode.
+                $saldoAwal = (float) $inMonth->counted_qty;
+                $saldoLabel = 'Saldo opname ' . ($inMonth->opname_date?->format('d M Y') ?? '-');
                 $tanpaOpname = false;
+                $excludeBefore = $inMonth->opname_at ?: $inMonth->opname_date?->copy()->endOfDay();
+                $rowFrom = $excludeBefore?->toDateTimeString() ?? $from;
             } else {
-                // Tanpa opname: awal = stok kini - net mutasi done sejak awal periode.
-                // Dijelaskan sebagai data terakhir (posisi akhir periode) karena belum ada opname.
-                $netSejakAwal = DB::table('stock_moves')
-                    ->where('product_id', $product->id)
-                    ->where('status', 'done')
-                    ->whereDate('created_at', '>=', $from)
-                    ->selectRaw("SUM(CASE WHEN (type = 'receipt') OR (type = 'adjustment' AND to_location = 'Stock' AND from_location <> 'Stock') THEN qty WHEN (type = 'transfer') THEN 0 ELSE -qty END) as net")
-                    ->value('net');
-                $saldoAwal = max(0, round((float) $product->stock - (float) ($netSejakAwal ?? 0), 2));
-                $saldoLabel = 'Stock awal (belum opname — data terakhir ' . \Carbon\Carbon::parse($to)->format('d M Y') . ')';
+                $last = StockOpname::where('product_id', $product->id)
+                    ->where('status', StockOpname::STATUS_DONE)
+                    ->where('period', '<', $fromMonth)
+                    ->orderByDesc('opname_at')
+                    ->first();
+
+                if ($last) {
+                    $net = $this->netMovesBetween($product->id, $last->opname_at, $from);
+                    $saldoAwal = max(0, round((float) $last->counted_qty + $net, 2));
+                    $saldoLabel = 'Saldo opname ' . ($last->opname_date?->format('d M Y') ?? '-');
+                    $tanpaOpname = false;
+                } else {
+                    $netSejakAwal = DB::table('stock_moves')
+                        ->where('product_id', $product->id)
+                        ->where('status', 'done')
+                        ->whereDate('created_at', '>=', $from)
+                        ->selectRaw(\App\Services\StockOpnameService::signedNetSql().' as net')
+                        ->value('net');
+                    $saldoAwal = max(0, round((float) $product->stock - (float) ($netSejakAwal ?? 0), 2));
+                    $saldoLabel = 'Stock awal (belum opname — data terakhir ' . \Carbon\Carbon::parse($to)->format('d M Y') . ')';
+                }
             }
-            $opnameMoves = DB::table('stock_moves')
-                ->where('product_id', $product->id)
-                ->where('status', 'done')
-                ->where('type', 'adjustment')
-                ->where('reason', 'like', 'Opname:%')
-                ->orderByDesc('id')->limit(3)->get();
+
+            $opnameMoves = StockOpname::where('product_id', $product->id)
+                ->where('status', StockOpname::STATUS_DONE)
+                ->orderByDesc('opname_at')
+                ->limit(3)->get();
         }
 
         $moves = collect();
@@ -158,8 +184,9 @@ class WsBaseController extends Controller
                 ->leftJoin('users as u', 'u.id', '=', 'm.user_id')
                 ->where('m.product_id', $product->id)
                 ->where('m.status', 'done')
-                ->whereDate('m.created_at', '>=', $from)
+                ->whereDate('m.created_at', '>=', $rowFrom)
                 ->whereDate('m.created_at', '<=', $to)
+                ->when($excludeBefore, fn ($q) => $q->where('m.created_at', '>', $excludeBefore))
                 ->orderBy('m.created_at')->orderBy('m.id')
                 ->get([
                     'm.id', 'm.qty', 'm.type', 'm.from_location', 'm.to_location',

@@ -7,7 +7,9 @@ use App\Models\ProductBatch;
 use App\Models\StockMove;
 use App\Models\User;
 use App\Models\Warehouse;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 /**
@@ -56,7 +58,7 @@ class StockMoveService
 
             // Backdate created_at (update() tak mempan: tak fillable + auto-touch).
             if (! empty($data['occurred_at'])) {
-                $when = \Carbon\Carbon::parse($data['occurred_at'])->setTimeFrom(now());
+                $when = Carbon::parse($data['occurred_at'])->setTimeFrom(now());
                 $move->timestamps = false;
                 $move->created_at = $when;
                 $move->updated_at = $when;
@@ -68,13 +70,13 @@ class StockMoveService
     }
 
     /** Validasi waiting/ready -> done + terapkan stok. */
-    public function validateMove(StockMove $move, ?User $validator = null): StockMove
+    public function validateMove(StockMove $move, ?User $validator = null, bool $allowNegative = false): StockMove
     {
         if (! in_array($move->status, [StockMove::STATUS_WAITING, StockMove::STATUS_READY], true)) {
             throw new InvalidArgumentException('Hanya mutasi menunggu/siap yang bisa divalidasi.');
         }
 
-        return DB::transaction(function () use ($move, $validator) {
+        return DB::transaction(function () use ($move, $validator, $allowNegative) {
             $product = Product::lockForUpdate()->find($move->product_id);
             if (! $product) {
                 throw new InvalidArgumentException('Produk mutasi sudah tidak ada.');
@@ -82,10 +84,10 @@ class StockMoveService
 
             match ($move->type) {
                 StockMove::TYPE_RECEIPT => $this->applyReceipt($product, $move),
-                StockMove::TYPE_DELIVERY => $this->applyDelivery($product, $move),
+                StockMove::TYPE_DELIVERY => $this->applyDelivery($product, $move, $allowNegative),
                 StockMove::TYPE_TRANSFER => null, // relokasi: angka global tetap
-                StockMove::TYPE_ADJUSTMENT => $this->applyAdjustment($product, $move),
-                StockMove::TYPE_SCRAP => $this->applyDelivery($product, $move),
+                StockMove::TYPE_ADJUSTMENT => $this->applyAdjustment($product, $move, $allowNegative),
+                StockMove::TYPE_SCRAP => $this->applyDelivery($product, $move, $allowNegative),
                 default => throw new InvalidArgumentException('Tipe mutasi tidak dikenal.'),
             };
 
@@ -170,7 +172,7 @@ class StockMoveService
         $product->increment('stock', (float) $move->qty);
 
         $batchNo = $move->batch_no ?: null;
-        if ($batchNo === null && \Illuminate\Support\Facades\Schema::hasColumn('product_batches', 'batch_no')) {
+        if ($batchNo === null && Schema::hasColumn('product_batches', 'batch_no')) {
             // Nomor sementara, dikoreksi ke PB-{id} setelah create.
             $batchNo = null;
         }
@@ -186,35 +188,35 @@ class StockMoveService
 
         // Nomor batch otomatis bila kosong.
         if (empty($batch->batch_no)) {
-            $auto = 'PB-' . $batch->id;
+            $auto = 'PB-'.$batch->id;
             $batch->update(['batch_no' => $auto]);
-            if (empty($move->batch_no) && \Illuminate\Support\Facades\Schema::hasColumn('stock_moves', 'batch_no')) {
+            if (empty($move->batch_no) && Schema::hasColumn('stock_moves', 'batch_no')) {
                 $move->update(['batch_no' => $auto]);
             }
         }
     }
 
-    protected function applyDelivery(Product $product, StockMove $move): void
+    protected function applyDelivery(Product $product, StockMove $move, bool $allowNegative = false): void
     {
         $qty = (float) $move->qty;
-        if ((float) $product->stock < $qty) {
+        if (! $allowNegative && (float) $product->stock < $qty) {
             throw new InvalidArgumentException("Stok {$product->product_name} tidak cukup (tersedia {$product->stock}, diminta {$qty}).");
         }
         $product->decrement('stock', $qty);
         $used = $this->deductBatchesFefo($product->id, $qty);
         // Simpan batch FEFO terpakai ke move.
-        if (! empty($used) && empty($move->batch_no) && \Illuminate\Support\Facades\Schema::hasColumn('stock_moves', 'batch_no')) {
+        if (! empty($used) && empty($move->batch_no) && Schema::hasColumn('stock_moves', 'batch_no')) {
             $move->update(['batch_no' => implode(', ', $used)]);
         }
     }
 
-    protected function applyAdjustment(Product $product, StockMove $move): void
+    protected function applyAdjustment(Product $product, StockMove $move, bool $allowNegative = false): void
     {
         // To Stock = tambah, from Stock = kurang.
         if ($move->to_location === StockMove::LOC_STOCK && $move->from_location !== StockMove::LOC_STOCK) {
             $this->applyReceipt($product, $move);
         } else {
-            $this->applyDelivery($product, $move);
+            $this->applyDelivery($product, $move, $allowNegative);
         }
     }
 
@@ -231,8 +233,9 @@ class StockMoveService
             $take = min((float) $batch->qty_current, $remaining);
             $batch->decrement('qty_current', $take);
             $remaining -= $take;
-            $used[] = $batch->batch_no ?? ('PB-' . $batch->id);
+            $used[] = $batch->batch_no ?? ('PB-'.$batch->id);
         }
+
         // Sisa tanpa batch (stok lama) dibiarkan.
         return array_values(array_unique(array_filter($used)));
     }
