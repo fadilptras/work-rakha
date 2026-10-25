@@ -26,6 +26,16 @@
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
+        /* == Sticky table header (selaras halaman Manage/Monitoring) == */
+        .pricing-table-scroll { overflow: auto; max-height: 70vh; }
+        .pricing-table-scroll thead th {
+            position: sticky; top: 0; z-index: 20;
+            background-color: #f8fafc;
+            background-clip: padding-box;
+            box-shadow: 0 1px 0 #e2e8f0, 0 6px 10px -6px rgba(15, 23, 42, .18);
+        }
+        .pricing-table-scroll thead th.bg-blue-50\/60 { background-color: #eff6ff; }
+
         /* == Hide Scrollbar for Single Row Action Bar == */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -197,7 +207,7 @@
                         </div>
                     </div>
 
-                    <div class="desktop-block overflow-x-auto flex-1 bg-white">
+                    <div class="desktop-block pricing-table-scroll flex-1 bg-white">
                         <table class="w-full text-left text-slate-600">
                             <thead class="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200 font-bold tracking-wider">
                                 <tr>
@@ -384,7 +394,7 @@
 
                         </div>
                     </div>
-                    <div class="desktop-block overflow-x-auto flex-1 bg-white border-t border-slate-200">
+                    <div class="desktop-block pricing-table-scroll flex-1 bg-white border-t border-slate-200">
                         <table class="w-full min-w-[1172px] text-left border-collapse whitespace-nowrap table-fixed">
                                     <colgroup>
                                         <col style="width:56px">
@@ -527,7 +537,7 @@
                     </div>
 
                     {{-- FIX: Hapus whitespace-nowrap pada tag table utama agar nama panjang bisa wrap --}}
-                    <div class="desktop-block overflow-x-auto flex-1 bg-white">
+                    <div class="desktop-block pricing-table-scroll flex-1 bg-white">
                         <table class="w-full text-left border-collapse table-fixed min-w-[900px]">
                             <colgroup>
                                 <col class="w-[16%]">

@@ -21,6 +21,16 @@
             pointer-events: none;
         }
 
+        /* == Sticky table header == */
+        .sph-table-scroll { overflow: auto; max-height: 65vh; }
+        .sph-table-scroll thead th {
+            position: sticky; top: 0; z-index: 20;
+            background-color: #f8fafc;
+            background-clip: padding-box;
+            box-shadow: 0 1px 0 #e2e8f0, 0 6px 10px -6px rgba(15, 23, 42, .18);
+        }
+        .sph-table-scroll thead th.bg-blue-50\/40 { background-color: #eff6ff; }
+
         /* == Header Style == */
         .page-header {
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
@@ -148,7 +158,7 @@
                         <span class="text-sm font-black text-blue-600">{{ count($sph->items ?? []) }}</span>
                     </div>
                 </div>
-                <div class="overflow-x-auto flex-1">
+                <div class="sph-table-scroll flex-1">
                     <table class="w-full text-left border-collapse whitespace-nowrap">
                         <thead>
                             <tr class="bg-slate-50 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200">
