@@ -2,15 +2,19 @@
     $agent = new \Jenssegers\Agent\Agent();
     $isMobile = $agent->isMobile();
 
-    // Logic Tombol Back Dinamis & Cek Role Gudang / Purchasing
-    $user = Auth::user();
-    $jabatan = strtolower($user->jabatan ?? '');
-    $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
-    $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing') || \Illuminate\Support\Str::contains($jabatan, 'purchasing');
-    $isRestrictedViewOnly = $isAdminGudang || $isLegalPurchasing;
-    
-    $backRoute = $isRestrictedViewOnly ? route('warehouse.dashboard') : route('sales.index');
-    $backText = $isRestrictedViewOnly ? 'Back to Dashboard Gudang' : 'Back to Sales Dashboard';
+    // Logic Tombol Back Dinamis: pakai asal halaman dari controller (?from=warehouse|sales), fallback role lama.
+    $backRoute = $backRoute ?? null;
+    $backText = $backText ?? null;
+    if (!$backRoute || !$backText) {
+        $user = Auth::user();
+        $jabatan = strtolower($user->jabatan ?? '');
+        $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
+        $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing') || \Illuminate\Support\Str::contains($jabatan, 'purchasing');
+        $isRestrictedViewOnly = $isAdminGudang || $isLegalPurchasing;
+
+        $backRoute = $backRoute ?: ($isRestrictedViewOnly ? route('warehouse.dashboard') : route('sales.index'));
+        $backText = $backText ?: ($isRestrictedViewOnly ? 'Back to Dashboard Gudang' : 'Back to Sales Dashboard');
+    }
 @endphp
 <x-layout-users :title="$title ?? 'Sales Forecast'">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -193,9 +197,11 @@
 
         <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
             
+            @if(($backRoute ?? null) && $backRoute !== route('sales.index'))
             <div class="w-full flex justify-start">
-                <x-ui.back-button :href="$backRoute" :label="$backText" />
-            </div>  
+                <x-ui.back-button id="forecast-back-btn" :href="$backRoute" :label="$backText" />
+            </div>
+            @endif
 
             <div class="hidden md:block">
                 <x-ui.page-header title="Sales Forecast & Stock Estimation" :subtitle="'Estimating future stock requirements based on the average sales performance from the last ' . $activeRefMonths . ' months (' . implode(', ', array_map(fn($b) => $monthTranslations[$b] ?? $b, $bulanReferensi)) . ').'" icon="fa-chart-area" />
@@ -217,7 +223,10 @@
                 <div class="flex flex-col md:flex-row md:items-center md:flex-nowrap justify-between gap-4 mb-6">
                     
                     <form method="GET" action="{{ route('sales.forecast') }}" id="filterForm" class="flex flex-col md:flex-row md:flex-nowrap items-stretch md:items-center gap-3 w-full md:w-auto" onsubmit="return false;">
-                        <x-ui.search-input id="searchInput" onkeyup="handleSearchInput()" oninput="handleSearchInput()" onkeydown="if(event.key==='Enter'){event.preventDefault();}" placeholder="Search Product Name" class="w-full md:w-72 shrink-0" autocomplete="off" />
+                        @if(request()->filled('from'))
+                            <input type="hidden" name="from" value="{{ request('from') }}">
+                        @endif
+                        <x-ui.search-input id="searchInput" oninput="handleSearchInput()" onkeydown="if(event.key==='Enter'){event.preventDefault();}" placeholder="Search Product Name" class="w-full md:w-72 shrink-0" autocomplete="off" />
 
                         <div class="flex items-center gap-2 shrink-0">
                             <x-ui.filter-select name="bulan_akhir" onchange="this.form.submit()" value="{{ $bulanAktif ?? '' }}" :options="collect($bulanTersediaUrut)->mapWithKeys(fn($b) => [$b => $monthTranslations[$b] ?? $b])->toArray()" class="flex-1 md:w-36" />
@@ -296,7 +305,7 @@
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-orange-600 leading-tight bg-orange-50/60 col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
                                         <span class="inline-flex items-center justify-center gap-1 cursor-help">End Stock</span><br><span class="text-[8px] font-medium normal-case tracking-normal opacity-70">({{ $labelStokRealtime }})</span>
                                         <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="col-tooltip-popup">
-                                            <span class="font-bold text-orange-200">End Stock</span> - stock on {{ $labelStokRealtime }}.@if($realEx)<br><span class="text-orange-100">Real: {{ number_format($realEx['stok_tersedia'],0,',','.') }} {{ $realEx['satuan_stok'] }}</span>@endif<br><span class="opacity-80">Source: latest daily snapshot as of last stock update.</span>
+                                            <span class="font-bold text-orange-200">End Stock</span> - realtime stock per {{ $labelStokRealtime }} (auto-update tiap mutasi Warehouse Ops).@if($realEx)<br><span class="text-orange-100">Real: {{ number_format($realEx['stok_tersedia'],0,',','.') }} {{ $realEx['satuan_stok'] }}</span>@endif<br><span class="opacity-80">Source: products.stock realtime.</span>
                                         </div>
                                     </th>
                                     <th class="py-4 px-3 text-center border-l border-slate-100 text-rose-600 leading-tight bg-rose-50/60 col-tooltip" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @click="open = !open">
@@ -642,6 +651,28 @@
 
     @push('scripts')
     <script>
+        // Back button ikut asal halaman: ?from=warehouse|sales diutamakan, lalu referrer, terakhir default server.
+        (function fixForecastBack() {
+            try {
+                var btn = document.getElementById('forecast-back-btn');
+                if (!btn) return;
+                var whUrl = @json(route('warehouse.dashboard'));
+                var salesUrl = @json(route('sales.index'));
+                var params = new URLSearchParams(window.location.search);
+                var from = (params.get('from') || '').toLowerCase();
+                var setBack = function (href, label) {
+                    btn.setAttribute('href', href);
+                    var spans = btn.querySelectorAll('span');
+                    var labelEl = spans[spans.length - 1];
+                    if (labelEl) labelEl.textContent = label;
+                };
+                if (from === 'warehouse') { setBack(whUrl, 'Back to Warehouse Dashboard'); return; }
+                if (from === 'sales') { setBack(salesUrl, 'Back to Sales Dashboard'); return; }
+                var ref = document.referrer || '';
+                if (ref.indexOf('/gudang/dashboard') !== -1) { setBack(whUrl, 'Back to Warehouse Dashboard'); }
+                else if (ref.indexOf('/sales') !== -1 && ref.indexOf('/sales/forecast') === -1) { setBack(salesUrl, 'Back to Sales Dashboard'); }
+            } catch (e) {}
+        })();
         function handleSearchInput() {
             const searchEl = document.getElementById("searchInput");
             if (!searchEl) return;
@@ -708,12 +739,6 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             applyZebra();
-            // Backup wiring: tombol clear internal komponen ui-search me-dispatch event 'input',
-            // jadi pastikan filter jalan walau atribut inline ter-strip suatu saat.
-            const searchEl = document.getElementById("searchInput");
-            if (searchEl) {
-                searchEl.addEventListener("input", handleSearchInput);
-            }
         });
         if (document.readyState !== "loading") applyZebra();
 

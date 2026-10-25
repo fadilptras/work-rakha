@@ -182,14 +182,6 @@
     <div class="flex flex-col flex-1 min-h-screen analytics-bg relative overflow-x-clip">
         <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
 
-            <!-- Back Button -->
-            <div class="w-full flex justify-start pt-1 pb-1 shrink-0">
-                <a href="{{ route('sales.index') }}" class="btn-back-modern">
-                    <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                    Kembali ke Dashboard
-                </a>
-            </div>
-
             {{-- HEADER & TABS --}}
             <div class="relative z-10 w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-5 md:p-6 shadow-2xl border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-6">
                 <div class="flex items-center gap-4">

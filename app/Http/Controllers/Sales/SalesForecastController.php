@@ -38,8 +38,28 @@ class SalesForecastController extends BaseSalesController
         [$stockForecast, $bulanReferensi, $bulanAktif, $labelStokRealtime, $activePercentage, $activeRefMonths, $monthTranslations, $activeDoi] =
             $this->buildForecastData($tahun, $request->input('bulan_akhir'));
 
+        // Back button berbasis asal halaman (?from=warehouse|sales), fallback role lama.
+        $backFrom = strtolower(trim((string) $request->input('from', '')));
+        if ($backFrom === 'warehouse') {
+            $backRoute = route('warehouse.dashboard');
+            $backText = 'Back to Warehouse Dashboard';
+        } elseif ($backFrom === 'sales') {
+            $backRoute = route('sales.index');
+            $backText = 'Back to Sales Dashboard';
+        } else {
+            $u = Auth::user();
+            $jab = strtolower($u->jabatan ?? '');
+            $restricted = \Illuminate\Support\Str::contains($jab, 'admin gudang') || $jab === 'gudang'
+                || \Illuminate\Support\Str::contains($jab, 'legal & purchasing') || \Illuminate\Support\Str::contains($jab, 'purchasing');
+            $backRoute = $restricted ? route('warehouse.dashboard') : route('sales.index');
+            $backText = $restricted ? 'Back to Dashboard Gudang' : 'Back to Sales Dashboard';
+        }
+
         return view('users.sales.forecast', [
             'title' => 'Sales Forecast & Stock Estimation',
+            'backRoute' => $backRoute,
+            'backText' => $backText,
+            'backFrom' => $backFrom,
             'stockForecast' => $stockForecast,
             'bulanReferensi' => $bulanReferensi,
             'bulanTersediaUrut' => $bulanTersediaUrut,

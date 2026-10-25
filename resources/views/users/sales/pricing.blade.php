@@ -82,10 +82,6 @@
         {{-- MAIN WRAPPER: selaras manage (p-4 sm:p-6 lg:px-8) --}}
         <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
             
-            <div class="w-full flex justify-start">
-                <x-ui.back-button href="{{ route('sales.index') }}" label="Back to Sales Dashboard" />
-            </div>
-
             <div class="hidden md:block">
                 <x-ui.page-header title="Product Price & SPH Form" subtitle="Manage official catalog pricing, create quotation forms, and inspect SPH history records." icon="fa-tags">
                     <x-slot:controls>

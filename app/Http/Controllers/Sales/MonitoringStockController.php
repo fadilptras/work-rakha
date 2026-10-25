@@ -32,9 +32,10 @@ class MonitoringStockController extends WsBaseController
         $items = Product::active()
             ->orderByRaw('LOWER(COALESCE(NULLIF(TRIM(product_name_clean), ""), product_name))')
             ->get();
-        // Waktu update terakhir dari DATA MUTASI (bukan log manual/excel):
-        // mutasi Surat Jalan hanya menulis stock_moves, bukan stock_logs.
+        // Last update mengikuti input mutasi terakhir barang masuk / keluar
+        // (bukan log upload Excel maupun penyesuaian stok).
         $lastMutationAt = StockMove::where('status', StockMove::STATUS_DONE)
+            ->whereIn('type', [StockMove::TYPE_RECEIPT, StockMove::TYPE_DELIVERY])
             ->orderByDesc('created_at')
             ->first(['created_at'])?->created_at;
         $canManageStock = $this->canManageStock();

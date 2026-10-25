@@ -8,6 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('sales_targets')) {
+            return;
+        }
         Schema::create('sales_targets', function (Blueprint $table) {
             $table->id();
             $table->unsignedSmallInteger('tahun');           // contoh: 2026

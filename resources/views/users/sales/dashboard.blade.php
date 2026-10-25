@@ -251,11 +251,8 @@
             </div>
 
             {{-- Kartu Utama --}}
-            @if(isset($hasAnyAccess) && $hasAnyAccess)
-            {{-- Mengatur lg:grid-cols berdasarkan akses --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 {{ (isset($hasFullAccess) && $hasFullAccess) ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-3 md:gap-5 relative z-10">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 relative z-10">
                 
-                @if(isset($hasFullAccess) && $hasFullAccess)
                 {{-- Kartu 1: Data Management --}}
                 <a href="{{ route('sales.manage') }}" class="module-card card-green group title-reveal stagger-1">
                     <div class="icon-box">
@@ -309,7 +306,6 @@
                         <i class="fas fa-chart-pie"></i>
                     </div>
                 </a>
-                @endif
 
                 {{-- Kartu 3: Monthly Monitoring --}}
                 <a href="{{ route('sales.monthly') }}" class="module-card card-purple group title-reveal stagger-3">
@@ -394,7 +390,7 @@
 
 
                 {{-- Kartu 6: Sales Forecast --}}
-                <a href="{{ route('sales.forecast') }}" class="module-card card-slate group title-reveal stagger-3" style="animation-delay: 0.6s;">
+                <a href="{{ route('sales.forecast', ['from' => 'sales']) }}" class="module-card card-slate group title-reveal stagger-3" style="animation-delay: 0.6s;">
                     <div class="icon-box">
                         <i class="fas fa-chart-area"></i>
                     </div>
@@ -475,17 +471,6 @@
                 </a>
 
             </div>
-            @else
-            <div class="glass-card text-center w-full title-reveal py-10 md:py-12 flex flex-col items-center justify-center mx-4 md:mx-0">
-                <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mb-4 md:mb-6 border border-rose-100">
-                    <i class="fas fa-lock text-2xl md:text-3xl"></i>
-                </div>
-                <h2 class="text-xl md:text-2xl font-black text-slate-800 mb-2 md:mb-3 tracking-tight">Access Restricted</h2>
-                <p class="text-slate-500 font-medium text-xs md:text-base max-w-2xl mx-auto leading-relaxed">
-                    Sorry, you do not have permission to view the Sales Command Center. This feature is only available for Marketing & Operations Division and Top Management members.
-                </p>
-            </div>
-            @endif
             
         </div>
     </div>

@@ -1,6 +1,14 @@
 @php
     $agent = new \Jenssegers\Agent\Agent();
     $isMobile = $agent->isMobile();
+    $sales = $sales ?? new \Illuminate\Pagination\LengthAwarePaginator([], 0, 30);
+    $listBulan = $listBulan ?? [];
+    $listTahun = $listTahun ?? [];
+    $listCustomer = $listCustomer ?? [];
+    $listProduk = $listProduk ?? [];
+    $listPs = $listPs ?? [];
+    $listSatuan = $listSatuan ?? [];
+    $listUserPs = $listUserPs ?? [];
 @endphp
 <x-layout-users title="{{ $title ?? 'Manage Sales Data' }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -166,10 +174,6 @@
     <div class="mesh-bg flex flex-col flex-1 min-h-screen relative overflow-x-clip text-slate-800">
         <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start" x-data="manageData()">
 
-        <div class="w-full flex justify-start mb-3 md:mb-4">
-            <x-ui.back-button href="{{ route('sales.index') }}" label="Back to Sales Dashboard" />
-        </div>
-
         <div class="hidden md:block">
             <x-ui.page-header title="Manage Sales Data" subtitle="One hub for all sales data. Manual input, import from Excel, and manage data history." icon="fa-database">
                 <x-slot:controls>
@@ -223,7 +227,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-2 md:gap-3 items-end">
                         <div class="lg:col-span-3 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">General Search</label>
-                            <x-ui.search-input name="search" placeholder="Search Name" value="{{ request('search') }}" autocomplete="off" class="w-full" x-data="{ search: '{!! request('search') !!}' }" x-model="search" @input.debounce.1200ms="document.getElementById('filterForm').submit()" />
+                            <x-ui.search-input name="search" placeholder="Search Name" value="{{ request('search') }}" autocomplete="off" class="w-full" :debounce="500" />
                         </div>
 
                         <div class="lg:col-span-3 md:col-span-1">
@@ -251,12 +255,12 @@
 
                         <div class="lg:col-span-2 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Month</label>
-                            <x-ui.filter-select name="bulan" onchange="document.getElementById('filterForm').submit()" value="{{ request('bulan') }}" placeholder="All" :options="$listBulan" class="w-full" />
+                            <x-ui.filter-select name="bulan" onchange="document.getElementById('filterForm').submit()" value="{{ request('bulan') }}" placeholder="All" :options="$listBulan ?? []" class="w-full" />
                         </div>
                         
                         <div class="lg:col-span-2 md:col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Year</label>
-                            <x-ui.filter-select name="tahun" onchange="document.getElementById('filterForm').submit()" value="{{ request('tahun') }}" placeholder="All" :options="$listTahun" class="w-full" />
+                            <x-ui.filter-select name="tahun" onchange="document.getElementById('filterForm').submit()" value="{{ request('tahun') }}" placeholder="All" :options="$listTahun ?? []" class="w-full" />
                         </div>
 
                         <div class="lg:col-span-3 md:col-span-1 flex items-end">
@@ -494,7 +498,7 @@
                             </div>
                             <div id="price-history-body" class="overflow-y-auto divide-y divide-slate-100"></div>
                             <div class="px-4 py-2 border-t border-slate-100 bg-slate-50/60 shrink-0">
-                                <p class="text-[10px] text-slate-400 font-semibold">6 transaksi terakhir. Klik <span class="text-blue-600 font-bold">Pakai</span> untuk mengisi HNA.</p>
+                                <p class="text-[10px] text-slate-400 font-semibold">6 transaksi terakhir. Klik <span class="text-blue-600 font-bold">Pakai</span> untuk mengisi HNA, satuan &amp; diskon.</p>
                             </div>
                         </div>
                     </div>
@@ -899,7 +903,6 @@
                 });
                 
                 const formData = {
-                    tanggal: form.querySelector('input[name="tanggal"]').value,
                     ps: form.querySelector('input[name="ps"]').value,
                     nama_customer: form.querySelector('input[name="nama_customer"]').value,
                     products: products
@@ -915,7 +918,6 @@
                 try {
                     isRestoring = true;
                     const formData = JSON.parse(saved);
-                    if (formData.tanggal) form.querySelector('input[name="tanggal"]').value = formData.tanggal;
                     form.querySelector('input[name="ps"]').value = formData.ps || '';
                     form.querySelector('input[name="nama_customer"]').value = formData.nama_customer || '';
                     
@@ -977,19 +979,19 @@
                         '<input type="hidden" name="nama_produk[]">' +
                         '<input type="hidden" name="satuan[]">' +
                     '</td>' +
-                    '<td class="px-3 py-2 align-top text-right whitespace-nowrap">' +
+                    '<td class="px-3 py-2 align-middle text-right whitespace-nowrap">' +
                         '<span class="font-black text-slate-800 qty-txt"></span>' +
                         '<input type="hidden" name="qty[]">' +
                     '</td>' +
-                    '<td class="px-3 py-2 align-top text-right whitespace-nowrap">' +
+                    '<td class="px-3 py-2 align-middle text-right whitespace-nowrap">' +
                         '<span class="font-bold text-slate-600 hna-txt"></span>' +
                         '<input type="hidden" name="hna[]">' +
                     '</td>' +
-                    '<td class="px-3 py-2 align-top text-center whitespace-nowrap">' +
+                    '<td class="px-3 py-2 align-middle text-center whitespace-nowrap">' +
                         '<span class="font-bold text-slate-500 disc-txt"></span>' +
                         '<input type="hidden" name="diskon[]">' +
                     '</td>' +
-                    '<td class="px-3 py-2 align-top text-right whitespace-nowrap">' +
+                    '<td class="px-3 py-2 align-middle text-right whitespace-nowrap">' +
                         '<span class="font-black text-blue-700 nett-txt"></span>' +
                         '<input type="hidden" name="harga_nett[]" class="input-harga-nett">' +
                     '</td>' +
@@ -1138,7 +1140,7 @@
                             '<div class="text-[11px] font-black text-slate-700">Rp ' + formatRupiah(r.base_price) + (disc > 0 ? ' <span class="text-amber-600 font-bold">-' + disc + '%</span>' : '') + '</div>' +
                             '<div class="text-[10px] text-slate-400 font-semibold mt-0.5">' + escHtml(r.date) + ' · ' + escHtml(r.qty) + ' ' + escHtml(r.unit) + ' · Nett Rp ' + formatRupiah(r.net_price) + '</div>' +
                         '</div>' +
-                        '<button type="button" data-hna="' + r.base_price + '" class="hist-use shrink-0 text-[10px] font-black text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2.5 py-1.5 transition-colors">Pakai</button>' +
+                        '<button type="button" data-hna="' + r.base_price + '" data-satuan="' + escHtml(r.unit) + '" data-diskon="' + (parseFloat(r.discount) || 0) + '" class="hist-use shrink-0 text-[10px] font-black text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-2.5 py-1.5 transition-colors">Pakai</button>' +
                     '</div>';
                 }).join('');
             }
@@ -1204,18 +1206,20 @@
                 if (!btn || !mHnaDisplay) return;
                 mHnaRaw.value = btn.getAttribute('data-hna') || '0';
                 mHnaDisplay.value = mHnaRaw.value !== '0' ? formatRupiah(mHnaRaw.value) : '';
+                if (mSatuan) mSatuan.value = btn.getAttribute('data-satuan') || '';
+                if (mDiskon) mDiskon.value = btn.getAttribute('data-diskon') || '';
                 refreshModalNett();
                 if (mQty) mQty.focus();
             });
 
             if (form) {
                 form.addEventListener('input', function(e) {
-                    if (e.target.name === 'tanggal' || e.target.name === 'ps' || e.target.name === 'nama_customer') {
+                    if (e.target.name === 'ps' || e.target.name === 'nama_customer') {
                         saveFormToLocalStorage();
                     }
                 });
                 form.addEventListener('change', function(e) {
-                    if (e.target.name === 'tanggal' || e.target.name === 'ps' || e.target.name === 'nama_customer') {
+                    if (e.target.name === 'ps' || e.target.name === 'nama_customer') {
                         saveFormToLocalStorage();
                     }
                 });

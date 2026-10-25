@@ -16,6 +16,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Idempoten: tabel sudah ada (beserta datanya) — lewati pembuatan dan
+        // migrasi data agar tidak duplikat.
+        if (Schema::hasTable('sales_closings')) {
+            return;
+        }
+
         Schema::create('sales_closings', function (Blueprint $table) {
             $table->id();
             $table->string('type', 20)->default('sales');

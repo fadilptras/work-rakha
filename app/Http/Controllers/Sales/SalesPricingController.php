@@ -33,20 +33,17 @@ class SalesPricingController extends BaseSalesController
         $hasFullAccess = $this->hasFullSalesAccess();
 
         // Daftar nama produk untuk rekomendasi (datalist) form Tambah Barang di halaman pricing.
-        // Nama diambil dari kolom kurasi products (product_name_clean) yang BELUM
-        // terdaftar di product_prices aktif, supaya tidak bentrok dengan katalog jual.
+        // Satu jalur: pakai nama bersih bila ada, fallback ke nama barang.
         $catalogNames = ProductPrice::active()
             ->whereNotNull('product_name')
             ->pluck('product_name');
 
         $nameSuggestions = Product::active()
-            ->whereNotNull('product_name_clean')
-            ->where('product_name_clean', '!=', '')
-            ->whereNotIn('product_name_clean', $catalogNames)
-            ->distinct()
-            ->orderBy('product_name_clean')
-            ->pluck('product_name_clean')
+            ->get(['product_name', 'product_name_clean'])
+            ->map(fn ($p) => trim((string) ($p->product_name_clean ?: $p->product_name)))
+            ->filter(fn ($n) => $n !== '' && !$catalogNames->contains($n))
             ->unique()
+            ->sort()
             ->values();
 
         return view('users.sales.pricing', compact('title', 'products', 'hasFullAccess', 'nameSuggestions'));

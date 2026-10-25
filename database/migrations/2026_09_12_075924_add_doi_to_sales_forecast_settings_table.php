@@ -11,6 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('sales_forecast_settings', 'doi')) {
+            return;
+        }
         Schema::table('sales_forecast_settings', function (Blueprint $table) {
             $table->unsignedSmallInteger('doi')->default(30)->after('ref_months');
         });

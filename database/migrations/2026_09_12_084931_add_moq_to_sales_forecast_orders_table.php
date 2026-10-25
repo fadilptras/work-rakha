@@ -11,6 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('sales_forecast_orders', 'moq')) {
+            return;
+        }
         Schema::table('sales_forecast_orders', function (Blueprint $table) {
             $table->decimal('moq', 12, 2)->default(1)->after('suggested_qty');
         });

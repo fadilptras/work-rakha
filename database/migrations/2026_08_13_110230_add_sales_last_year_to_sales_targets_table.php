@@ -11,6 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('sales_targets', 'sales_last_year_amount')) {
+            return;
+        }
         Schema::table('sales_targets', function (Blueprint $table) {
             $table->decimal('sales_last_year_amount', 15, 2)->nullable()->after('target_amount');
         });

@@ -17,7 +17,9 @@ class SalesDataController extends BaseSalesController
         if (!$this->hasFullSalesAccess()) abort(403, 'Anda tidak memiliki hak akses ke halaman Kelola Data Sales.');
         $query = $this->filteredQuery($request);
 
-        $sales = $query->paginate(30)->withQueryString();
+        // Tabel Data History menampilkan seluruh baris sekaligus (tanpa batas 30 + infinite scroll).
+        $totalBaris = (clone $query)->count();
+        $sales = $query->paginate(max(1, $totalBaris), ['*'], 'page', 1)->withQueryString();
 
         // data untuk filter
         $bulanAda = Sales::whereNotNull('month')->distinct()->pluck('month')->toArray();

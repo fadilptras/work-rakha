@@ -11,6 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('sales_outlet_closings')) {
+            return;
+        }
         Schema::create('sales_outlet_closings', function (Blueprint $table) {
             $table->id();
             $table->integer('year');

@@ -4,10 +4,8 @@
         $fillUnit = $item->fill_unit ?: 'Pcs';
         $pcsPerUnit = (int) ($item->pcs_per_unit ?? 0);
 
-        // Packaging type single (tanpa isian) -> stock/po tampil dalam unit itu sendiri.
-        // Multi-pack (pcs_per_unit > 1) -> tampil dalam fill_unit (isi per kemasan).
-        $isSingle = $pcsPerUnit <= 1;
-        $displayUnit = $isSingle ? ($unit ?: $fillUnit) : $fillUnit;
+        // Stok diinput per pack, jadi tampilkan langsung dalam unit pack.
+        $displayUnit = $unit ?: $fillUnit;
 
         return [
             'id' => $item->id,
@@ -21,32 +19,13 @@
             'fill_unit' => $fillUnit,
         ];
     });
-
-    $user = Auth::user();
-    $backRoute = route('dashboard');
-    $backText = 'Back to Dashboard';
-    if ($user) {
-        $jabatan = strtolower($user->jabatan ?? '');
-        $divisi = strtolower($user->divisi ?? '');
-        $isTopManagement = \Illuminate\Support\Str::contains($jabatan, 'direktur') || $divisi === 'top management';
-        $isMarketing = in_array($divisi, ['marketing dan operasional']);
-        $isAdminGudang = \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang';
-        $isLegalPurchasing = \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing') || \Illuminate\Support\Str::contains($jabatan, 'purchasing');
-
-        if ($isTopManagement || $isMarketing) {
-            $backRoute = route('sales.index');
-            $backText = 'Back to Sales Dashboard';
-        } elseif ($isAdminGudang || $isLegalPurchasing) {
-            $backRoute = route('warehouse.dashboard');
-            $backText = 'Back to Dashboard Gudang';
-        }
-    }
 @endphp
 <x-layout-users title="Stock Monitoring">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @push('styles')
     <style>
         [x-cloak] { display: none !important; }
+        .swal2-container { z-index: 100000 !important; }
 
         .mesh-bg { 
             position: fixed;
@@ -102,14 +81,9 @@
                 </div>
             @endif
 
-            <!-- Back Button -->
-            <div class="w-full flex justify-start">
-                <x-ui.back-button :href="$backRoute" :label="$backText" />
-            </div>
-
             <!-- Page Title Card (Desktop Style) -->
             <div class="hidden md:block">
-                <x-ui.page-header title="Stock Monitoring" subtitle="Monitor physical stock levels — stok otomatis via Surat Jalan & halaman gudang." icon="fa-boxes-stacked" />
+                <x-ui.page-header title="Stock Monitoring" subtitle="Monitor physical stock levels, adjust quantities and units, and synchronize data with Accurate reports." icon="fa-boxes-stacked" />
             </div>
 
             <!-- Page Title Card (Mobile Style - Icon Moved to Right) -->
@@ -172,9 +146,6 @@
                                         <span x-text="item.stokSistem"></span>
                                         <span class="text-xs font-bold text-slate-500" x-text="item.satuan"></span>
                                     </div>
-                                    <template x-if="item.pcs_per_unit > 1 && item.packaging">
-                                        <div class="text-[11px] font-black text-emerald-600" x-text="'= ' + Math.floor(item.stokSistem / item.pcs_per_unit).toLocaleString('id-ID') + ' ' + item.packaging"></div>
-                                    </template>
                                     <div class="text-[10px] text-blue-500 font-bold" x-text="'PO: ' + item.po + ' ' + item.satuan"></div>
                                 </div>
                             </div>
@@ -210,9 +181,6 @@
                                     </td>
                                     <td class="px-3 py-2.5 text-center whitespace-nowrap bg-blue-50/60 border-l border-blue-100" style="width:200px;">
                                         <span class="font-black text-sm md:text-base" :class="{'text-rose-600': item.stokSistem === 0}"><span x-text="item.stokSistem"></span> <span class="text-xs font-bold text-slate-500" x-text="item.satuan"></span></span>
-                                        <template x-if="item.pcs_per_unit > 1 && item.packaging">
-                                            <span><span class="text-xs font-bold text-slate-400"> = </span><span class="font-black text-sm md:text-base text-emerald-600"><span x-text="Math.floor(item.stokSistem / item.pcs_per_unit).toLocaleString('id-ID')"></span> <span x-text="item.packaging"></span></span><span x-show="item.stokSistem % item.pcs_per_unit > 0" class="text-xs font-bold text-slate-500" x-text="'+' + (item.stokSistem % item.pcs_per_unit) + ' ' + item.satuan"></span></span>
-                                        </template>
                                     </td>
                                     <td class="px-3 py-2.5 text-center text-slate-600 font-medium whitespace-nowrap hidden md:table-cell">
                                         <template x-if="item.packaging">
@@ -239,6 +207,220 @@
             </x-ui.glass-card>
         </div>
 
+        <!-- Add Item Modal -->
+        <div x-show="showAddBarangModal" x-cloak class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div @click.away="showAddBarangModal = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all flex flex-col" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-plus-circle text-blue-500 mr-2"></i> Add New Item</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">Register a new item to the database for filtering and updating.</p>
+                    </div>
+                    <button @click="showAddBarangModal = false" class="text-slate-400 hover:text-red-500 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form @submit.prevent="saveNewBarang()" class="p-6 space-y-4">
+                    <div>
+                        <label class="ui-label">Item Name <span class="text-red-500">*</span></label>
+                        <input type="text" x-model="addNama" required placeholder="Enter item name..." class="ui-input !bg-white">
+                    </div>
+                    <div>
+                        <label class="ui-label">Item Code <span class="text-red-500">*</span></label>
+                        <input type="text" x-model="addKode" required placeholder="Enter item code (Accurate)..." class="ui-input !bg-white">
+                    </div>
+                    <div>
+                        <label class="ui-label">Unit <span class="text-red-500">*</span></label>
+                        <select x-model="addSatuan" required class="ui-input !bg-white">
+                            <option value="" disabled selected>-- Select Unit --</option>
+                            <option value="pcs">pcs</option>
+                            <option value="box">box</option>
+                            <option value="botol">botol</option>
+                            <option value="galon">galon</option>
+                            <option value="Jerigen">Jerigen</option>
+                            <option value="karton">karton</option>
+                            <option value="pack">pack</option>
+                            <option value="paket">paket</option>
+                            <option value="polybag">polybag</option>
+                            <option value="pouches">pouches</option>
+                            <option value="roll">roll</option>
+                        </select>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex justify-end gap-2">
+                        <button type="button" @click="showAddBarangModal = false" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/20">
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Excel Import Preview Modal -->
+        <div x-show="showPreviewModal" x-cloak class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden transform transition-all flex flex-col" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-file-excel text-emerald-500 mr-2"></i> Accurate Import Preview</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5" x-text="`File: ${previewFilename} (${previewTercetakDate || '-'})`"></p>
+                    </div>
+                    <button @click="showPreviewModal = false" class="text-slate-400 hover:text-red-500 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto space-y-4 flex-1" @scroll.passive="previewScrollHandler($event)">
+                    <x-ui.search-input x-model="previewSearchQuery" placeholder="Search items in details..." class="w-full max-w-md" />
+                    <div class="overflow-hidden border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-x-auto">
+                        <table class="w-full text-sm text-left table-fixed min-w-[600px]">
+                            <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3 text-xs uppercase tracking-wider w-[280px] max-w-[280px] whitespace-normal">Item</th>
+                                    <th class="px-4 py-3 text-center text-xs uppercase tracking-wider w-24">Current Stock</th>
+                                    <th class="px-4 py-3 text-center text-xs uppercase tracking-wider w-32">Excel Stock (Accurate)</th>
+                                    <th class="px-4 py-3 text-center text-xs uppercase tracking-wider w-28">Unit</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <template x-for="item in displayedPreviewItems" :key="item.id">
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="px-4 py-3 w-[280px] max-w-[280px] whitespace-normal">
+                                            <div class="font-extrabold text-slate-800 text-xs sm:text-sm" x-text="item.nama"></div>
+                                            <div class="text-[9px] text-slate-400 font-bold tracking-wider uppercase mt-0.5" x-text="item.kode"></div>
+                                        </td>
+                                        <td class="px-4 py-3 text-center text-slate-600 font-bold text-xs sm:text-sm" x-text="item.stok_db"></td>
+                                        <td class="px-4 py-3 text-center">
+                                            <input type="text" inputmode="numeric" pattern="[0-9]*" x-model.number="item.stok_excel" class="mx-auto block w-20 text-center text-xs sm:text-sm font-black text-emerald-700 border border-slate-300 rounded-md focus:border-emerald-500 focus:ring-0 px-1.5 py-1 bg-slate-50/50 focus:bg-white transition-colors" placeholder="0">
+                                        </td>
+                                        <td class="px-4 py-3 text-center align-middle">
+                                            <select x-model="item.satuan" class="mx-auto block w-24 text-center text-xs font-bold text-slate-700 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-0 px-1 py-1 bg-slate-50/50 focus:bg-white transition-colors">
+                                                <option value="pcs">pcs</option>
+                                                <option value="box">box</option>
+                                                <option value="botol">botol</option>
+                                                <option value="galon">galon</option>
+                                                <option value="Jerigen">Jerigen</option>
+                                                <option value="karton">karton</option>
+                                                <option value="pack">pack</option>
+                                                <option value="paket">paket</option>
+                                                <option value="polybag">polybag</option>
+                                                <option value="pouches">pouches</option>
+                                                <option value="roll">roll</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                        <div x-show="previewItems.length === 0" x-cloak class="px-6 py-10 text-center">
+                            <i class="fas fa-search text-3xl text-slate-300 mb-3"></i>
+                            <p class="text-sm font-bold text-slate-600">Tidak ada item yang bisa dipratinjau.</p>
+                            <p class="text-xs text-slate-400 font-medium mt-1 leading-relaxed">
+                                Excel terbaca, tetapi tidak ada kode/nama barang yang cocok dengan data di sistem.
+                                <br>Pastikan barang sudah terdaftar lewat menu <b>&quot;Add Item Data&quot;</b> atau nama/kode barang di Excel sama persis dengan master barang.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
+                    <span class="text-xs font-bold text-slate-500" x-text="`Total: ${filteredPreviewItems.length} products ready to be updated.`"></span>
+                    <div class="flex gap-2">
+                        <button @click="showPreviewModal = false" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button @click="submitImportedData()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5">
+                            <i class="fas fa-check-circle"></i> Update Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Details Modal -->
+        <div x-show="showLogDetailsModal" x-cloak class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div @click.away="showLogDetailsModal = false" class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden transform transition-all flex flex-col" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
+                <div class="px-4 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800"><i class="fas fa-info-circle text-blue-500 mr-1.5"></i> Stock Update Details</h3>
+                        <p class="text-[11px] text-slate-500 font-medium mt-0.5" x-text="'Update log history info #' + (selectedLog ? selectedLog.id : '')"></p>
+                    </div>
+                    <button @click="showLogDetailsModal = false" class="text-slate-400 hover:text-red-500 transition-colors">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+                <div class="p-4 overflow-y-auto space-y-3 flex-1" x-show="selectedLog">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                        <div>
+                            <span class="text-slate-400 font-semibold block uppercase text-[10px] tracking-wider">Time</span>
+                            <span class="font-bold text-slate-700 mt-0.5 block" x-text="selectedLog ? selectedLog.tanggal : ''"></span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-semibold block uppercase text-[10px] tracking-wider">Editor</span>
+                            <span class="font-bold text-slate-700 mt-0.5 block" x-text="selectedLog ? selectedLog.editor : ''"></span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-semibold block uppercase text-[10px] tracking-wider">Source</span>
+                            <span class="font-bold text-slate-700 mt-0.5 block" x-text="selectedLog ? selectedLog.sumber : ''"></span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-semibold block uppercase text-[10px] tracking-wider">Excel File</span>
+                            <span class="font-bold text-slate-700 mt-0.5 block truncate" :title="selectedLog ? selectedLog.nama_file : ''" x-text="selectedLog ? selectedLog.nama_file : ''"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <x-ui.search-input x-model="logDetailsSearchQuery" placeholder="Search items in details..." class="w-full sm:w-64" />
+                    </div>
+                    <div class="overflow-y-auto overflow-x-auto max-h-80 border border-slate-200 rounded-xl bg-white shadow-sm">
+                        <table class="w-full text-xs text-left min-w-[450px]">
+                            <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-2.5 text-[10px] uppercase tracking-wider">Item Name</th>
+                                    <th class="px-4 py-2.5 text-center text-[10px] uppercase tracking-wider w-36 leading-tight whitespace-nowrap">Stock<br><span class="text-[9px] text-slate-400 font-medium lowercase">(old &rarr; new)</span></th>
+                                    <th class="px-4 py-2.5 text-center text-[10px] uppercase tracking-wider w-36 leading-tight whitespace-nowrap">PO Stock<br><span class="text-[9px] text-slate-400 font-medium lowercase">(old &rarr; new)</span></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <template x-for="detail in filteredSelectedLogDetails" :key="detail.kode + detail.nama">
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="px-4 py-2 whitespace-normal">
+                                            <div class="text-[9px] font-bold text-blue-500 uppercase" x-text="detail.kode"></div>
+                                            <div class="text-xs font-bold text-slate-800 leading-normal" x-text="detail.nama"></div>
+                                        </td>
+                                        <td class="px-4 py-2 text-center whitespace-nowrap">
+                                            <div class="flex items-center justify-center gap-1.5 text-xs text-slate-700">
+                                                <span class="text-slate-400 font-medium" x-text="detail.old_stok"></span>
+                                                <span class="text-slate-300 font-medium">&rarr;</span>
+                                                <span class="font-bold" :class="{'text-emerald-600': detail.new_stok > detail.old_stok,'text-rose-600': detail.new_stok < detail.old_stok,'text-slate-700': detail.new_stok === detail.old_stok}" x-text="detail.new_stok"></span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-2 text-center whitespace-nowrap">
+                                            <div class="flex items-center justify-center gap-1.5 text-xs text-slate-700">
+                                                <span class="text-slate-400 font-medium" x-text="detail.old_stok_po"></span>
+                                                <span class="text-slate-300 font-medium">&rarr;</span>
+                                                <span class="font-bold" :class="{'text-emerald-600': detail.new_stok_po > detail.old_stok_po,'text-rose-600': detail.new_stok_po < detail.old_stok_po,'text-slate-700': detail.new_stok_po === detail.old_stok_po}" x-text="detail.new_stok_po"></span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0" x-show="selectedLog">
+                    <div>
+                        <span class="text-[11px] font-semibold text-slate-500">Status: </span>
+                        <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md" :class="{'bg-emerald-100 text-emerald-700': selectedLog && selectedLog.status === 'success','bg-amber-100 text-amber-700': selectedLog && selectedLog.status === 'undone'}" x-text="selectedLog ? (selectedLog.status === 'success' ? 'Active' : 'Undone') : ''"></span>
+                    </div>
+                    <div class="flex gap-2.5">
+                        <button @click="showLogDetailsModal = false" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-50 transition-colors">
+                            Close
+                        </button>
+                        <button type="button" x-show="selectedLog && selectedLog.status === 'success'" @click="undoLog(selectedLog.id); showLogDetailsModal = false" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-colors shadow-sm shadow-red-500/30 flex items-center gap-1.5">
+                            <i class="fas fa-undo"></i> Undo Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script id="mapped-items-data" type="application/json">@json($mappedItems)</script>
@@ -247,10 +429,28 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('stockManager', () => ({
+                showAddBarangModal: false,
+                showLogDetailsModal: false,
+                showPreviewModal: false,
+                syncOpen: false,
                 searchQuery: '',
+                previewSearchQuery: '',
+                isLoadingHistory: false,
+                isParsing: false,
                 limit: 50,
+                previewLimit: 50,
                 items: JSON.parse(document.getElementById('mapped-items-data').textContent),
+                previewItems: [],
+                previewTercetakDate: '',
+                previewFilename: '',
+                selectedLog: null,
+                selectedLogDetails: [],
+                logDetailsSearchQuery: '',
+                addNama: '',
+                addKode: '',
+                addSatuan: '',
                 scrollTimeout: null,
+                previewScrollTimeout: null,
 
                 scrollHandler(e) {
                     if (this.scrollTimeout) return;
@@ -274,9 +474,38 @@
                     }, 50);
                 },
 
+                previewScrollHandler(e) {
+                    if (this.previewScrollTimeout) return;
+                    this.previewScrollTimeout = setTimeout(() => {
+                        const el = e.target;
+                        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 250) {
+                            this.previewLimit += 50;
+                        }
+                        this.previewScrollTimeout = null;
+                    }, 50);
+                },
+
+                showToast(message, icon = 'error') {
+                    let title = 'Notification';
+                    if (icon === 'success') title = 'Success!';
+                    if (icon === 'error') title = 'Failed!';
+                    if (icon === 'warning') title = 'Warning!';
+                    Swal.fire({
+                        title: title,
+                        text: message,
+                        icon: icon,
+                        confirmButtonColor: icon === 'success' ? '#10b981' : (icon === 'warning' ? '#f59e0b' : '#ef4444')
+                    });
+                },
+
                 init() {
+                    // Default card Sync Center tertutup saat halaman dibuka
+                    this.syncOpen = false;
                     this.$watch('searchQuery', () => {
                         this.limit = 50;
+                    });
+                    this.$watch('previewSearchQuery', () => {
+                        this.previewLimit = 50;
                     });
 
                     window.addEventListener('scroll', () => {
@@ -302,6 +531,244 @@
 
                 get displayedItems() {
                     return this.filteredItems.slice(0, this.limit);
+                },
+
+                get filteredSelectedLogDetails() {
+                    if (this.logDetailsSearchQuery.trim() === '') {
+                        return this.selectedLogDetails;
+                    }
+                    return this.selectedLogDetails.filter(detail =>
+                        detail.nama.toLowerCase().includes(this.logDetailsSearchQuery.toLowerCase()) ||
+                        detail.kode.toLowerCase().includes(this.logDetailsSearchQuery.toLowerCase())
+                    );
+                },
+
+                get filteredPreviewItems() {
+                    if (this.previewSearchQuery.trim() === '') {
+                        return this.previewItems;
+                    }
+                    return this.previewItems.filter(item =>
+                        item.nama.toLowerCase().includes(this.previewSearchQuery.toLowerCase()) ||
+                        item.kode.toLowerCase().includes(this.previewSearchQuery.toLowerCase())
+                    );
+                },
+
+                get displayedPreviewItems() {
+                    return this.filteredPreviewItems.slice(0, this.previewLimit);
+                },
+
+                openAddBarangModal() {
+                    this.addNama = '';
+                    this.addKode = '';
+                    this.addSatuan = '';
+                    this.showAddBarangModal = true;
+                },
+
+                saveNewBarang() {
+                    fetch('{{ route('sales.monitoring.add_barang') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            product_name: this.addNama,
+                            product_code: this.addKode,
+                            unit: this.addSatuan
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Success!',
+                                text: data.message,
+                                icon: 'success',
+                                confirmButtonColor: '#3b82f6'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Failed!',
+                                text: data.message || 'Failed to add new item',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Connection error while adding item.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    });
+                },
+
+                showInfoAccurateImport() {
+                    Swal.fire({
+                        title: 'Usage Information',
+                        text: 'The Add Item Data feature is used to register new items from Accurate so their codes are registered in the system. This is required so their stock can be automatically updated when you import Accurate Excel reports.',
+                        icon: 'info',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                },
+
+                undoLog(logId) {
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'Stock updates in this log will be undone (reverted to the stock before update)!',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, Undo!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch(`/sales/stock/undo/${logId}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    this.showToast('Stock update log successfully undone!', 'success');
+                                    setTimeout(() => window.location.reload(), 1500);
+                                } else {
+                                    this.showToast(data.message || 'Failed to undo log');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                this.showToast('Connection error occurred');
+                            });
+                        }
+                    });
+                },
+
+                showLogDetails(logId) {
+                    this.logDetailsSearchQuery = '';
+                    fetch(`/sales/stock/log/${logId}/details`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.selectedLog = data.log;
+                            this.selectedLogDetails = data.details;
+                            this.showLogDetailsModal = true;
+                        } else {
+                            this.showToast(data.message || 'Failed to fetch log details');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.showToast('Connection error occurred');
+                    });
+                },
+
+                uploadExcelForPreview(event) {
+                    const fileInput = event.target.querySelector('input[type="file"]');
+                    if (!fileInput || !fileInput.files[0]) {
+                        this.showToast('Please select an Excel file first.', 'warning');
+                        return;
+                    }
+                    this.isParsing = true;
+                    const formData = new FormData();
+                    formData.append('file', fileInput.files[0]);
+                    fetch('{{ route('sales.monitoring.parse_import') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: formData
+                    })
+                    .then(async response => {
+                        const isJson = response.headers.get('content-type')?.includes('application/json');
+                        const data = isJson ? await response.json() : null;
+                        if (!response.ok) {
+                            throw new Error(data?.message || `Error ${response.status}: Failed to read Excel file.`);
+                        }
+                        return data;
+                    })
+                    .then(data => {
+                        this.previewItems = data.items;
+                        this.previewTercetakDate = data.tercetak_date;
+                        this.previewFilename = data.original_filename;
+                        this.previewSearchQuery = '';
+                        this.previewLimit = 50;
+                        this.showPreviewModal = true;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.showToast(error.message || 'Connection error while reading Excel file.');
+                    })
+                    .finally(() => {
+                        this.isParsing = false;
+                    });
+                },
+
+                submitImportedData() {
+                    if (this.previewItems.length === 0) {
+                        return;
+                    }
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "Stock data in the database will be updated according to this preview!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#10b981',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: 'Yes, Update Data!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch('{{ route('sales.monitoring.save_import') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    items: this.previewItems,
+                                    original_filename: this.previewFilename,
+                                    tercetak_date: this.previewTercetakDate
+                                })
+                            })
+                            .then(async response => {
+                                const isJson = response.headers.get('content-type')?.includes('application/json');
+                                const data = isJson ? await response.json() : null;
+                                if (!response.ok) {
+                                    throw new Error(data?.message || `Error ${response.status}: Failed to save stock data.`);
+                                }
+                                return data;
+                            })
+                            .then(data => {
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: data.message || 'Stock data updated successfully!',
+                                    icon: 'success',
+                                    confirmButtonColor: '#10b981'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: error.message || 'Connection error while saving changes.',
+                                    icon: 'error',
+                                    confirmButtonColor: '#ef4444'
+                                });
+                            });
+                        }
+                    });
                 },
             }));
         });
