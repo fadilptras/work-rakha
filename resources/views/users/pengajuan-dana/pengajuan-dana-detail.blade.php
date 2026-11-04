@@ -71,6 +71,9 @@
     </style>
     @endpush
 
+    @if($isMobile)
+        @include('users.pengajuan-dana.mobile.detail')
+    @else
     <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
@@ -78,9 +81,14 @@
             {{-- 1. NAVIGASI (BACK & DOWNLOAD) --}}
             <div class="flex justify-between items-center mb-6 relative z-10">
                 @if(request('from') === 'monitoring')
-                    <a href="{{ route('pengajuan_dana.monitoring_all') }}" class="btn-back-modern">
+                    <a href="{{ request('src') === 'sales' ? route('pengajuan_dana.monitoring_all', ['from' => 'sales']) : route('pengajuan_dana.monitoring_all') }}" class="btn-back-modern">
                         <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                         Kembali ke Monitoring
+                    </a>
+                @elseif(request('from') === 'sales')
+                    <a href="{{ route('pengajuan_dana.history', ['from' => 'sales']) }}" class="btn-back-modern">
+                        <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
+                        Kembali ke Riwayat
                     </a>
                 @elseif(Auth::id() != $pengajuanDana->user_id)
                     <a href="{{ route('notifikasi.index') }}" class="btn-back-modern">
@@ -114,10 +122,11 @@
                             <i class="fas fa-hand-holding-usd text-lg md:text-xl text-white"></i>
                         </div>
                         <div class="flex-1">
-                            <h1 class="text-sm md:text-xl font-black tracking-tight text-white uppercase leading-snug">{{ $pengajuanDana->judul_pengajuan }}</h1>
+                            <h1 class="text-base md:text-xl font-black tracking-tight text-white uppercase leading-snug">{{ $pengajuanDana->judul_pengajuan }}</h1>
                             <p class="text-blue-100 text-[10px] md:text-xs mt-0.5 font-semibold leading-relaxed w-full">
                                 Diajukan {{ $pengajuanDana->created_at->locale('id')->isoFormat('dddd, D MMMM YYYY') }}
                             </p>
+                            <span class="inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/20 text-white border border-white/30">{{ \App\Models\PengajuanDana::TIPE_LIST[$pengajuanDana->tipe_expend] ?? $pengajuanDana->tipe_expend }}</span>
                         </div>
                     </div>
                     
@@ -140,7 +149,7 @@
                                 'diproses' => 'Diproses',
                                 'dibatalkan' => 'Dibatalkan',
                                 'disetujui' => 'Menunggu Approver 4',
-                                'diajukan' => 'Diajukan',
+                                'diajukan' => 'Menunggu Approver 1',
                                 default => 'Menunggu',
                             };
                         @endphp
@@ -171,7 +180,7 @@
                             </div>
                             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                                 <span class="text-slate-500 font-semibold">Divisi</span>
-                                <span class="font-bold text-slate-800 text-right">{{ $pengajuanDana->user->divisi }}</span>
+                                <span class="font-bold text-slate-800 text-right">{{ $pengajuanDana->divisi ?? $pengajuanDana->user->divisi ?? '-' }}</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-slate-500 font-semibold">ID Pengajuan</span>
@@ -583,6 +592,9 @@
                     <p class="text-xs text-red-600 mb-4 font-semibold">Tindakan ini tidak dapat diurungkan. Pengajuan dana akan dibatalkan secara permanen.</p>
                     <form action="{{ route('pengajuan_dana.cancel', $pengajuanDana) }}" method="POST" onsubmit="confirmSubmit(event, 'Apakah Anda benar-benar yakin ingin membatalkan pengajuan dana ini?');">
                         @csrf
+                        @if(request('from') === 'sales')
+                        <input type="hidden" name="from" value="sales">
+                        @endif
                         <button type="submit" class="bg-white border border-red-200 text-red-600 hover:bg-red-600 hover:text-white font-black py-2.5 px-6 rounded-xl text-xs uppercase transition shadow-sm">
                             Batalkan Pengajuan
                         </button>
@@ -594,4 +606,5 @@
 
         </div>
     </div>
+    @endif
 </x-layout-users>

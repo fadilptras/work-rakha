@@ -16,11 +16,14 @@ class PengajuanDanaController extends Controller
 {
     public function index(Request $request)
     {
-        $totalPengajuan = Auth::user()->pengajuanDanas()->count();
+        $user = Auth::user();
+        $totalPengajuan = $user ? $user->pengajuanDanas()->count() : 0;
+        $batasEntertain = PengajuanDana::batasEntertainForUser($user);
 
         return view('users.pengajuan-dana.pengajuan-dana-form', [
             'title' => 'Pengajuan Dana',
             'totalPengajuan' => $totalPengajuan,
+            'batasEntertain' => $batasEntertain,
         ]);
     }
 
@@ -33,6 +36,9 @@ class PengajuanDanaController extends Controller
             } else {
                 $query->where('status', $request->status);
             }
+        }
+        if ($request->filled('tipe') && $request->tipe != 'semua' && in_array($request->tipe, array_keys(PengajuanDana::TIPE_LIST))) {
+            $query->where('tipe_expend', $request->tipe);
         }
         $pengajuanDanas = $query->paginate(15)->appends($request->query());
 
@@ -54,7 +60,9 @@ class PengajuanDanaController extends Controller
             ->orWhere('approver_dana_4_id', $user->id)
             ->exists();
 
-        if (!($isApprover || $user->role === 'admin')) {
+        $isSuperUser = $user && (method_exists($user, 'isSuperUser') ? $user->isSuperUser() : \App\Models\User::isSuperUserEmail($user->email ?? ''));
+
+        if (!($isApprover || $user->role === 'admin' || $isSuperUser)) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
@@ -77,6 +85,11 @@ class PengajuanDanaController extends Controller
             } else {
                 $query->where('status', $request->status);
             }
+        }
+
+        // Filter tipe expense (sama seperti riwayat)
+        if ($request->filled('tipe') && $request->tipe != 'semua' && in_array($request->tipe, array_keys(PengajuanDana::TIPE_LIST))) {
+            $query->where('tipe_expend', $request->tipe);
         }
         
         // Pencarian
@@ -128,23 +141,45 @@ class PengajuanDanaController extends Controller
 
     public function store(Request $request)
     {
+        $tipeAllowed = array_keys(PengajuanDana::TIPE_LIST);
+
+        // Normalisasi tipe_expend: bisa string tunggal (backward compat) atau array (multi expend)
+        $rawTipe = $request->input('tipe_expend', PengajuanDana::TIPE_UMUM);
+        $tipeList = is_array($rawTipe) ? array_values(array_unique($rawTipe)) : [$rawTipe];
+        $tipeList = array_values(array_filter($tipeList, fn($t) => in_array($t, $tipeAllowed)));
+        if (empty($tipeList)) {
+            $tipeList = [PengajuanDana::TIPE_UMUM];
+        }
+
+        // Backward compat: form lama tanpa tipe_expend + input flat -> anggap UMUM
+        $isLegacyFlat = $request->has('rincian_deskripsi') && !$request->has('rincian');
+        if ($isLegacyFlat) {
+            $tipeList = [PengajuanDana::TIPE_UMUM];
+        }
+
+        // UMUM bersifat eksklusif: tidak bisa digabung dengan tipe expend
+        if (in_array(PengajuanDana::TIPE_UMUM, $tipeList) && count($tipeList) > 1) {
+            return redirect()->back()->withInput()->with('error', 'Tipe Umum tidak bisa diajukan barengan dengan tipe Expense (ATK / Up Country / Entertain).');
+        }
+
+        // Bersihkan format Rp per tipe (nested rincian[TIPE][jumlah][]) + legacy flat
+        if (is_array($request->input('rincian'))) {
+            $rincianInput = $request->input('rincian');
+            foreach ($rincianInput as $t => $rows) {
+                if (isset($rows['jumlah']) && is_array($rows['jumlah'])) {
+                    foreach ($rows['jumlah'] as $i => $jumlah) {
+                        $rincianInput[$t]['jumlah'][$i] = preg_replace('/[^0-9]/', '', (string)$jumlah);
+                    }
+                }
+            }
+            $request->merge(['rincian' => $rincianInput]);
+        }
         if ($request->has('rincian_jumlah') && is_array($request->rincian_jumlah)) {
             $cleanedRincian = [];
             foreach ($request->rincian_jumlah as $jumlah) {
                 $cleanedRincian[] = preg_replace('/[^0-9]/', '', (string)$jumlah);
             }
             $request->merge(['rincian_jumlah' => $cleanedRincian]);
-        }
-
-        if ($request->has('jumlah_dana_total') && $request->jumlah_dana_total !== null) {
-            $cleanedTotal = preg_replace('/[^0-9]/', '', (string)$request->jumlah_dana_total);
-            $request->merge(['jumlah_dana_total' => $cleanedTotal]);
-        }
-
-        // Fallback: Hitung total otomatis dari rincian_jumlah jika jumlah_dana_total kosong atau 0
-        if ((!$request->filled('jumlah_dana_total') || (int)$request->jumlah_dana_total <= 0) && $request->has('rincian_jumlah')) {
-            $totalFromRincian = array_sum(array_map('intval', (array)$request->rincian_jumlah));
-            $request->merge(['jumlah_dana_total' => (string)$totalFromRincian]);
         }
 
         // Clean up file_pendukung: buang file input yang kosong (unselected) sebelum validasi
@@ -158,21 +193,32 @@ class PengajuanDanaController extends Controller
             $request->files->set('file_pendukung', $filteredFiles);
         }
 
-        $validatedData = $request->validate([
+        $rules = [
             'judul_pengajuan' => 'required|string|max:255',
             'divisi' => 'required|string|max:255',
             'nama_bank' => 'required|string|max:255',
             'nama_bank_lainnya' => 'required_if:nama_bank,other|nullable|string|max:255',
             'no_rekening' => 'required|string|max:255',
             'nama_rek' => 'required|string|max:255',
-            'jumlah_dana_total' => 'required|numeric|min:1',
-            'rincian_deskripsi' => 'required|array|min:1',
-            'rincian_deskripsi.*' => 'required|string|max:1000',
-            'rincian_jumlah' => 'required|array|min:1',
-            'rincian_jumlah.*' => 'required|numeric|min:1',
             'file_pendukung' => 'nullable|array',
             'file_pendukung.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx|max:10240',
-        ], [
+        ];
+        if ($isLegacyFlat) {
+            $rules['jumlah_dana_total'] = 'required|numeric|min:1';
+            $rules['rincian_deskripsi'] = 'required|array|min:1';
+            $rules['rincian_deskripsi.*'] = 'required|string|max:1000';
+            $rules['rincian_jumlah'] = 'required|array|min:1';
+            $rules['rincian_jumlah.*'] = 'required|numeric|min:1';
+        } else {
+            foreach ($tipeList as $t) {
+                $rules["rincian.{$t}.deskripsi"] = 'required|array|min:1';
+                $rules["rincian.{$t}.deskripsi.*"] = 'required|string|max:1000';
+                $rules["rincian.{$t}.jumlah"] = 'required|array|min:1';
+                $rules["rincian.{$t}.jumlah.*"] = 'required|numeric|min:1';
+            }
+        }
+
+        $validatedData = $request->validate($rules, [
             'judul_pengajuan.required' => 'Judul pengajuan wajib diisi.',
             'nama_bank.required' => 'Nama bank wajib dipilih.',
             'nama_bank_lainnya.required_if' => 'Nama bank lainnya wajib diisi jika memilih Lainnya.',
@@ -187,10 +233,37 @@ class PengajuanDanaController extends Controller
             'file_pendukung.*.mimes' => 'Format file lampiran tidak didukung.',
         ]);
 
-        $rincian = [];
-        if (!empty($validatedData['rincian_deskripsi'])) {
+        // Susun rincian + total per tipe (satu row DB per tipe)
+        $perTipe = [];
+        if ($isLegacyFlat) {
+            $rincian = [];
             foreach ($validatedData['rincian_deskripsi'] as $key => $deskripsi) {
                 $rincian[] = ['deskripsi' => $deskripsi, 'jumlah' => $validatedData['rincian_jumlah'][$key] ?? 0];
+            }
+            $total = (int)($validatedData['jumlah_dana_total'] ?? array_sum(array_map('intval', $validatedData['rincian_jumlah'])));
+            $perTipe[PengajuanDana::TIPE_UMUM] = ['rincian' => $rincian, 'total' => $total];
+        } else {
+            foreach ($tipeList as $t) {
+                $deskripsiList = $request->input("rincian.{$t}.deskripsi", []);
+                $jumlahList = $request->input("rincian.{$t}.jumlah", []);
+                $rincian = [];
+                foreach ((array)$deskripsiList as $key => $deskripsi) {
+                    if (trim((string)$deskripsi) === '' && ((int)($jumlahList[$key] ?? 0)) <= 0) {
+                        continue;
+                    }
+                    $rincian[] = ['deskripsi' => $deskripsi, 'jumlah' => (int)($jumlahList[$key] ?? 0)];
+                }
+                if (empty($rincian)) {
+                    return redirect()->back()->withInput()->with('error', 'Rincian untuk tipe ' . PengajuanDana::TIPE_LIST[$t] . ' minimal 1 item.');
+                }
+                $perTipe[$t] = ['rincian' => $rincian, 'total' => array_sum(array_column($rincian, 'jumlah'))];
+                if ($perTipe[$t]['total'] <= 0) {
+                    return redirect()->back()->withInput()->with('error', 'Total untuk tipe ' . PengajuanDana::TIPE_LIST[$t] . ' minimal Rp 1.');
+                }
+                $batasEntertain = PengajuanDana::batasEntertainForUser(Auth::user());
+                if ($t === PengajuanDana::TIPE_ENTERTAIN && $perTipe[$t]['total'] > $batasEntertain) {
+                    return redirect()->back()->withInput()->with('error', 'Total pengajuan Entertain maksimal Rp ' . number_format($batasEntertain, 0, ',', '.') . '. Kurangi item/nominalnya.');
+                }
             }
         }
 
@@ -210,7 +283,7 @@ class PengajuanDanaController extends Controller
         $app4 = $user->approver_dana_4_id;
 
         if (!$app1 && !$app2 && !$app3 && !$app4) {
-            return redirect()->route('pengajuan_dana.index')->with('error', 'Alur persetujuan untuk akun Anda belum lengkap diatur. Harap hubungi Admin.');
+            return redirect()->route('pengajuan_dana.index', $request->input('from') === 'sales' ? ['from' => 'sales'] : [])->with('error', 'Alur persetujuan untuk akun Anda belum lengkap diatur. Harap hubungi Admin.');
         }
 
         $st1 = $app1 ? 'menunggu' : 'skipped';
@@ -218,53 +291,64 @@ class PengajuanDanaController extends Controller
         $st3 = $app3 ? 'menunggu' : 'skipped';
         $st4 = $app4 ? 'menunggu' : 'skipped';
 
-        $pengajuanDana = PengajuanDana::create([
-            'user_id' => $user->id,
-            'judul_pengajuan' => $validatedData['judul_pengajuan'],
-            'divisi' => $validatedData['divisi'],
-            'nama_bank' => $validatedData['nama_bank'] === 'other' ? ($validatedData['nama_bank_lainnya'] ?? $request->input('nama_bank_lainnya')) : $validatedData['nama_bank'],
-            'no_rekening' => $validatedData['no_rekening'],
-            'nama_rek' => $validatedData['nama_rek'],
-            'total_dana' => $validatedData['jumlah_dana_total'],
-            'rincian_dana' => $rincian,
-            'lampiran' => $pathFiles,
-            
-            'status' => 'diajukan',
-            
-            'approver_dana_1_id' => $app1, 'approver_1_status' => $st1,
-            'approver_dana_2_id' => $app2, 'approver_2_status' => $st2,
-            'approver_dana_3_id' => $app3, 'approver_3_status' => $st3,
-            'approver_dana_4_id' => $app4, 'approver_4_status' => $st4,
-        ]);
+        $namaBankFinal = $validatedData['nama_bank'] === 'other' ? ($validatedData['nama_bank_lainnya'] ?? $request->input('nama_bank_lainnya')) : $validatedData['nama_bank'];
+        $created = [];
+        foreach ($perTipe as $tipe => $data) {
+            $pengajuanDana = PengajuanDana::create([
+                'user_id' => $user->id,
+                'judul_pengajuan' => $validatedData['judul_pengajuan'],
+                'divisi' => $validatedData['divisi'],
+                'tipe_expend' => $tipe,
+                'nama_bank' => $namaBankFinal,
+                'no_rekening' => $validatedData['no_rekening'],
+                'nama_rek' => $validatedData['nama_rek'],
+                'total_dana' => $data['total'],
+                'rincian_dana' => $data['rincian'],
+                'lampiran' => $pathFiles,
 
-        $firstApprover = null;
-        $firstStage = null;
-        if ($pengajuanDana->approverDana1 && $st1 === 'menunggu') {
-            $firstApprover = $pengajuanDana->approverDana1;
-            $firstStage = 1;
-        } elseif ($pengajuanDana->approverDana2 && $st2 === 'menunggu') {
-            $firstApprover = $pengajuanDana->approverDana2;
-            $firstStage = 2;
-        } elseif ($pengajuanDana->approverDana3 && $st3 === 'menunggu') {
-            $firstApprover = $pengajuanDana->approverDana3;
-            $firstStage = 3;
-        } elseif ($pengajuanDana->approverDana4 && $st4 === 'menunggu') {
-            $firstApprover = $pengajuanDana->approverDana4;
-            $firstStage = 4;
-        }
-        
-        // Sesuaikan status awal berdasarkan siapa approver pertamanya
-        if ($firstStage == 3) {
-            $pengajuanDana->update(['status' => 'proses_pembayaran']);
-        } elseif ($firstStage == 4) {
-            $pengajuanDana->update(['status' => 'disetujui']);
+                'status' => 'diajukan',
+
+                'approver_dana_1_id' => $app1, 'approver_1_status' => $st1,
+                'approver_dana_2_id' => $app2, 'approver_2_status' => $st2,
+                'approver_dana_3_id' => $app3, 'approver_3_status' => $st3,
+                'approver_dana_4_id' => $app4, 'approver_4_status' => $st4,
+            ]);
+
+            $firstApprover = null;
+            $firstStage = null;
+            if ($pengajuanDana->approverDana1 && $st1 === 'menunggu') {
+                $firstApprover = $pengajuanDana->approverDana1;
+                $firstStage = 1;
+            } elseif ($pengajuanDana->approverDana2 && $st2 === 'menunggu') {
+                $firstApprover = $pengajuanDana->approverDana2;
+                $firstStage = 2;
+            } elseif ($pengajuanDana->approverDana3 && $st3 === 'menunggu') {
+                $firstApprover = $pengajuanDana->approverDana3;
+                $firstStage = 3;
+            } elseif ($pengajuanDana->approverDana4 && $st4 === 'menunggu') {
+                $firstApprover = $pengajuanDana->approverDana4;
+                $firstStage = 4;
+            }
+
+            // Sesuaikan status awal berdasarkan siapa approver pertamanya
+            if ($firstStage == 3) {
+                $pengajuanDana->update(['status' => 'proses_pembayaran']);
+            } elseif ($firstStage == 4) {
+                $pengajuanDana->update(['status' => 'disetujui']);
+            }
+
+            if ($firstApprover) {
+                Notification::send($firstApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
+            }
+            $created[] = $pengajuanDana;
         }
 
-        if ($firstApprover) {
-            Notification::send($firstApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
-        }
+        $labels = array_map(fn($t) => PengajuanDana::TIPE_LIST[$t], array_keys($perTipe));
+        $pesan = count($created) > 1
+            ? 'Pengajuan dana berhasil dikirim untuk ' . count($created) . ' tipe (' . implode(', ', $labels) . ')!'
+            : 'Pengajuan dana (' . $labels[0] . ') berhasil dikirim!';
 
-        return redirect()->route('pengajuan_dana.index')->with('success', 'Pengajuan dana berhasil dikirim!');
+        return redirect()->route('pengajuan_dana.index', $request->input('from') === 'sales' ? ['from' => 'sales'] : [])->with('success', $pesan);
     }
 
     public function approve(Request $request, PengajuanDana $pengajuanDana)
@@ -377,7 +461,7 @@ class PengajuanDanaController extends Controller
 
 
 
-    public function cancel(PengajuanDana $pengajuanDana)
+    public function cancel(Request $request, PengajuanDana $pengajuanDana)
     {
         $pengajuanDana->update(['status' => 'dibatalkan']);
 
@@ -397,7 +481,7 @@ class PengajuanDanaController extends Controller
             Notification::send($currentApprover, new PengajuanDanaNotification($pengajuanDana, 'dibatalkan'));
         }
 
-        return redirect()->route('pengajuan_dana.index')->with('success', 'Pengajuan dana telah berhasil dibatalkan.');
+        return redirect()->route('pengajuan_dana.index', $request->input('from') === 'sales' ? ['from' => 'sales'] : [])->with('success', 'Pengajuan dana telah berhasil dibatalkan.');
     }
 
     public function downloadPDF(PengajuanDana $pengajuanDana)

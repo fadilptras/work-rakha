@@ -97,26 +97,29 @@
     </style>
     @endpush
 
+    @if($isMobile)
+        @include('users.pengajuan-dana.mobile.riwayat')
+    @else
     <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
 
             {{-- TOMBOL KEMBALI --}}
-            <a href="{{ route('pengajuan_dana.index') }}" class="btn-back-modern">
+            <a href="{{ request('from') === 'sales' ? route('pengajuan_dana.index', ['from' => 'sales']) : route('pengajuan_dana.index') }}" class="btn-back-modern">
                 <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                 Kembali ke Form Pengajuan
             </a>
 
             {{-- HEADER HALAMAN --}}
-            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
+            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
                 <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-                
-                <div class="relative z-10 flex items-center gap-3 md:gap-5">
-                    <div class="h-10 w-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                        <i class="fas fa-history text-lg md:text-2xl text-white"></i>
+
+                <div class="relative z-10 flex items-center gap-3 md:gap-4">
+                    <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
+                        <i class="fas fa-history text-lg md:text-xl text-white"></i>
                     </div>
                     <div>
-                        <h1 class="text-base md:text-2xl font-black tracking-tight text-white uppercase">Riwayat Pengajuan Dana</h1>
+                        <h1 class="text-base md:text-xl font-black tracking-tight text-white uppercase">Riwayat Pengajuan Dana</h1>
                         @if(!$isMobile)
                         <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
                             Pantau status, detail, dan alur persetujuan permohonan dana operasional yang telah Anda ajukan.
@@ -124,6 +127,22 @@
                         @endif
                     </div>
                 </div>
+            </div>
+
+            {{-- TABS TIPE --}}
+            @php
+                $tipeAktif = request('tipe', 'semua');
+                $tabParams = array_filter(['status' => request('status'), 'from' => request('from')]);
+            @endphp
+            <div class="flex flex-wrap gap-2 mb-4">
+                <a href="{{ route('pengajuan_dana.history', $tabParams + ['tipe' => 'semua']) }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-black transition-all {{ $tipeAktif === 'semua' ? 'bg-teal-600 text-white border-teal-600 shadow-md' : 'bg-white text-slate-600 border-slate-300 hover:border-teal-400' }}">
+                    Semua Tipe
+                </a>
+                @foreach(\App\Models\PengajuanDana::TIPE_LIST as $tKey => $tLabel)
+                <a href="{{ route('pengajuan_dana.history', $tabParams + ['tipe' => $tKey]) }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-black transition-all {{ $tipeAktif === $tKey ? 'bg-teal-600 text-white border-teal-600 shadow-md' : 'bg-white text-slate-600 border-slate-300 hover:border-teal-400' }}">
+                    {{ $tLabel }}
+                </a>
+                @endforeach
             </div>
 
             {{-- RIWAYAT CARD --}}
@@ -140,9 +159,15 @@
                     </div>
                     
                     {{-- Filter Form --}}
-                    <form action="{{ route('pengajuan_dana.history') }}" method="GET" class="flex items-center justify-between md:justify-end gap-2.5 w-full md:w-auto m-0">
+                    <form action="{{ route('pengajuan_dana.history') }}" method="GET" class="flex flex-wrap items-center justify-between md:justify-end gap-2.5 w-full md:w-auto m-0">
+                        @if(request('from') === 'sales')
+                        <input type="hidden" name="from" value="sales">
+                        @endif
+                        @if(request()->filled('tipe'))
+                        <input type="hidden" name="tipe" value="{{ request('tipe') }}">
+                        @endif
                         <label class="text-[11px] font-black text-slate-500 uppercase tracking-wider mt-0.5 whitespace-nowrap">Status Filter:</label>
-                        <select name="status" class="modern-select" onchange="this.form.submit()">
+                        <select name="status" class="modern-select flex-1 min-w-[160px] md:flex-none" onchange="this.form.submit()">
                             <option value="semua" {{ request('status') == 'semua' || !request('status') ? 'selected' : '' }}>Semua Status</option>
                             <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Approver 1</option>
                             <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
@@ -181,7 +206,7 @@
                                         default => 'bg-slate-100 text-slate-700 border-slate-200',
                                     };
                                     $statusLabel = match($pengajuan->status) {
-                                        'diajukan' => 'Diajukan',
+                                        'diajukan' => 'Menunggu Approver 1',
                                         'diproses' => 'Diproses',
                                         'disetujui' => 'Menunggu Approver 4',
                                         'proses_pembayaran' => 'Proses Pembayaran',
@@ -193,7 +218,10 @@
                                 @endphp
                                 <tr class="hover:bg-slate-50/50 transition">
                                     <td class="px-6 py-4.5 text-slate-500 font-extrabold">{{ $pengajuan->created_at->locale('id')->isoFormat('D MMMM YYYY') }}</td>
-                                    <td class="px-6 py-4.5 text-slate-800 font-bold leading-normal">{{ $pengajuan->judul_pengajuan }}</td>
+                                    <td class="px-6 py-4.5 text-slate-800 font-bold leading-normal">
+                                        <div>{{ $pengajuan->judul_pengajuan }}</div>
+                                        <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-200">{{ \App\Models\PengajuanDana::TIPE_LIST[$pengajuan->tipe_expend] ?? $pengajuan->tipe_expend }}</span>
+                                    </td>
                                     <td class="px-6 py-4.5 font-black font-mono text-slate-700 text-sm">Rp {{ number_format($pengajuan->total_dana, 0, ',', '.') }}</td>
                                     <td class="px-6 py-4.5">
                                         <span class="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border {{ $statusClass }} shadow-sm">
@@ -201,7 +229,7 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4.5 text-center">
-                                        <a href="{{ route('pengajuan_dana.show', $pengajuan->id) }}" class="inline-flex items-center gap-1 text-xs text-blue-600 font-black hover:underline bg-blue-50/70 border border-blue-100 px-3.5 py-2 rounded-xl transition hover:bg-blue-100 shadow-sm">
+                                        <a href="{{ request('from') === 'sales' ? route('pengajuan_dana.show', ['pengajuanDana' => $pengajuan->id, 'from' => 'sales']) : route('pengajuan_dana.show', $pengajuan->id) }}" class="inline-flex items-center gap-1 text-xs text-blue-600 font-black hover:underline bg-blue-50/70 border border-blue-100 px-3.5 py-2 rounded-xl transition hover:bg-blue-100 shadow-sm">
                                             Detail <i class="fas fa-chevron-right text-[8px] ml-0.5"></i>
                                         </a>
                                     </td>
@@ -235,10 +263,10 @@
                                 default => 'bg-slate-100 text-slate-700 border-slate-200',
                             };
                             $statusLabel = match($pengajuan->status) {
-                                'diajukan' => 'Diajukan',
+                                'diajukan' => 'Menunggu Approver 1',
                                 'diproses' => 'Diproses',
                                 'disetujui' => 'Menunggu Approver 4',
-                                'proses_pembayaran' => 'Pembayaran',
+                                        'proses_pembayaran' => 'Proses Pembayaran',
                                 'selesai' => 'Selesai',
                                 'ditolak' => 'Ditolak',
                                 'dibatalkan' => 'Dibatalkan',
@@ -247,7 +275,10 @@
                         @endphp
                         <div class="history-card-mobile rounded-2xl p-4 border shadow-sm space-y-3">
                             <div class="flex justify-between items-start gap-2">
-                                <div class="font-bold text-slate-800 text-sm leading-snug">{{ $pengajuan->judul_pengajuan }}</div>
+                                <div class="font-bold text-slate-800 text-sm leading-snug">
+                                    <div>{{ $pengajuan->judul_pengajuan }}</div>
+                                    <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-200">{{ \App\Models\PengajuanDana::TIPE_LIST[$pengajuan->tipe_expend] ?? $pengajuan->tipe_expend }}</span>
+                                </div>
                                 <span class="inline-block px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border {{ $statusClass }}">
                                     {{ $statusLabel }}
                                 </span>
@@ -257,7 +288,7 @@
                             </div>
                             <div class="flex justify-between items-center pt-3 border-t border-slate-100">
                                 <div class="text-[11px] text-slate-500 font-bold">Total: <span class="text-slate-800 text-xs font-black font-mono">Rp {{ number_format($pengajuan->total_dana, 0, ',', '.') }}</span></div>
-                                <a href="{{ route('pengajuan_dana.show', $pengajuan->id) }}" class="text-xs text-blue-600 font-bold hover:underline">
+                                <a href="{{ request('from') === 'sales' ? route('pengajuan_dana.show', ['pengajuanDana' => $pengajuan->id, 'from' => 'sales']) : route('pengajuan_dana.show', $pengajuan->id) }}" class="text-xs text-blue-600 font-bold hover:underline">
                                     Detail <i class="fas fa-chevron-right text-[8px] ml-0.5"></i>
                                 </a>
                             </div>
@@ -280,4 +311,5 @@
             </div>
         </div>
     </div>
+    @endif
 </x-layout-users>

@@ -17,11 +17,82 @@ class PengajuanDana extends Model
      *
      * @var array<int, string>
      */
+    public const TIPE_UMUM = 'UMUM';
+    public const TIPE_ATK = 'ATK';
+    public const TIPE_UP_COUNTRY = 'UP_COUNTRY';
+    public const TIPE_ENTERTAIN = 'ENTERTAIN';
+
+    public const TIPE_LIST = [
+        self::TIPE_UMUM => 'Umum',
+        self::TIPE_ATK => 'ATK',
+        self::TIPE_UP_COUNTRY => 'Up Country',
+        self::TIPE_ENTERTAIN => 'Entertain',
+    ];
+
+    public const TIPE_EXPEND = [
+        self::TIPE_ATK,
+        self::TIPE_UP_COUNTRY,
+        self::TIPE_ENTERTAIN,
+    ];
+
+    // Batas maksimal total per pengajuan untuk tipe Entertain (dalam Rupiah)
+    public const BATAS_ENTERTAIN = 500000;
+    public const BATAS_ENTERTAIN_ARIEF = 1000000;
+
+    /**
+     * Cek apakah user adalah Arief Natanael.
+     * Mengidentifikasi berdasarkan email spesifik, variasi nama lengkap/parsial, dsb.
+     *
+     * @param mixed $user
+     * @return bool
+     */
+    public static function isAriefNatanael($user = null): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        $email = strtolower(trim((string) ($user->email ?? '')));
+        $nama = strtolower(trim((string) ($user->name ?? '')));
+
+        if ($email === 'paladin_arief@yahoo.com') {
+            return true;
+        }
+
+        if (\Illuminate\Support\Str::contains($nama, 'arief natanael') || \Illuminate\Support\Str::contains($nama, 'arief natanel')) {
+            return true;
+        }
+
+        if (\Illuminate\Support\Str::contains($email, 'arief') && \Illuminate\Support\Str::contains($nama, 'arief')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Dapatkan batas maksimal dana Entertain untuk user tertentu (Arief Natanael: Rp 1.000.000, lainnya: Rp 500.000).
+     *
+     * @param mixed $user
+     * @return int
+     */
+    public static function batasEntertainForUser($user = null): int
+    {
+        $user = $user ?? auth()->user();
+
+        if (self::isAriefNatanael($user)) {
+            return self::BATAS_ENTERTAIN_ARIEF;
+        }
+
+        return self::BATAS_ENTERTAIN;
+    }
+
     protected $fillable = [
-        // isi form 
+        // isi form
         'user_id',
         'judul_pengajuan',
         'divisi',
+        'tipe_expend',
         'nama_bank',
         'no_rekening',
         'total_dana',

@@ -132,4 +132,8 @@
 
 @include('pdf.partials.signature-block', ['approvers' => $approvers])
 
+<div style="text-align: right; margin-top: 30px; font-family: 'Times New Roman', Times, serif; font-size: 10px; font-weight: bold;">
+    FORM-HR-07-003/Rev.01
+</div>
+
 @endsection

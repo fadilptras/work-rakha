@@ -53,11 +53,14 @@
     </style>
     @endpush
 
+    @if($isMobile)
+        @include('users.pengajuan-dana.mobile.monitoring')
+    @else
     <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
 
         <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
 
-            <a href="{{ route('pengajuan_dana.index') }}" class="btn-back-modern">
+            <a href="{{ request('from') === 'sales' ? route('pengajuan_dana.index', ['from' => 'sales']) : route('pengajuan_dana.index') }}" class="btn-back-modern">
                 <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
                 Kembali ke Form Pengajuan
             </a>
@@ -98,13 +101,22 @@
                     {{-- Filter & Search --}}
                     <div class="flex justify-end mt-1">
                         <form action="{{ route('pengajuan_dana.monitoring_all') }}" method="GET" class="flex flex-col md:flex-row items-center gap-2.5 w-full md:w-auto m-0">
+                            @if(request('from') === 'sales')
+                            <input type="hidden" name="from" value="sales">
+                            @endif
                             <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, judul..." class="modern-select" style="width: 100%; md:max-width: 220px;">
                             <div class="flex items-center gap-2 w-full md:w-auto">
+                                <select name="tipe" class="modern-select w-full md:w-auto" onchange="this.form.submit()">
+                                    <option value="semua" {{ request('tipe') == 'semua' || !request('tipe') ? 'selected' : '' }}>Semua Tipe</option>
+                                    @foreach(\App\Models\PengajuanDana::TIPE_LIST as $tKey => $tLabel)
+                                    <option value="{{ $tKey }}" {{ request('tipe') == $tKey ? 'selected' : '' }}>{{ $tLabel }}</option>
+                                    @endforeach
+                                </select>
                                 <select name="status" class="modern-select w-full md:w-auto" onchange="this.form.submit()">
                                     <option value="semua" {{ request('status') == 'semua' || !request('status') ? 'selected' : '' }}>Semua Status</option>
-                                    <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Persetujuan</option>
+                                    <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Approver 1</option>
                                     <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses (Belum Selesai)</option>
-                                    <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Selesai Disetujui</option>
+                                    <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Menunggu Approver 4</option>
                                     <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                                     <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                                 </select>
@@ -140,10 +152,10 @@
                                         default => 'bg-slate-100 text-slate-700 border-slate-200',
                                     };
                                     $statusLabel = match($pengajuan->status) {
-                                        'diajukan' => 'Menunggu',
+                                        'diajukan' => 'Menunggu Approver 1',
                                         'diproses' => 'Diproses',
-                                        'proses_pembayaran' => 'Proses Bayar',
-                                        'disetujui' => 'Disetujui',
+                                        'proses_pembayaran' => 'Proses Pembayaran',
+                                        'disetujui' => 'Menunggu Approver 4',
                                         'ditolak' => 'Ditolak',
                                         'dibatalkan' => 'Dibatalkan',
                                         default => ucfirst($pengajuan->status),
@@ -165,7 +177,7 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4.5 text-center">
-                                        <a href="{{ route('pengajuan_dana.show', ['pengajuanDana' => $pengajuan->id, 'from' => 'monitoring']) }}" class="inline-flex items-center gap-1 text-xs text-blue-600 font-black hover:underline bg-blue-50/70 border border-blue-100 px-3.5 py-2 rounded-xl transition hover:bg-blue-100 shadow-sm">
+                                        <a href="{{ request('from') === 'sales' ? route('pengajuan_dana.show', ['pengajuanDana' => $pengajuan->id, 'from' => 'monitoring', 'src' => 'sales']) : route('pengajuan_dana.show', ['pengajuanDana' => $pengajuan->id, 'from' => 'monitoring']) }}" class="inline-flex items-center gap-1 text-xs text-blue-600 font-black hover:underline bg-blue-50/70 border border-blue-100 px-3.5 py-2 rounded-xl transition hover:bg-blue-100 shadow-sm">
                                             Detail <i class="fas fa-chevron-right text-[8px] ml-0.5"></i>
                                         </a>
                                     </td>
@@ -198,10 +210,10 @@
                                 default => 'bg-slate-100 text-slate-700 border-slate-200',
                             };
                             $statusLabel = match($pengajuan->status) {
-                                'diajukan' => 'Menunggu',
+                                'diajukan' => 'Menunggu Approver 1',
                                 'diproses' => 'Diproses',
-                                'proses_pembayaran' => 'Proses Bayar',
-                                'disetujui' => 'Disetujui',
+                                'proses_pembayaran' => 'Proses Pembayaran',
+                                'disetujui' => 'Menunggu Approver 4',
                                 'ditolak' => 'Ditolak',
                                 'dibatalkan' => 'Dibatalkan',
                                 default => ucfirst($pengajuan->status),
@@ -220,7 +232,7 @@
                             </div>
                             <div class="flex justify-between items-center pt-3 border-t border-slate-100">
                                 <div class="text-[11px] text-blue-600 font-black">Rp {{ number_format($pengajuan->total_dana, 0, ',', '.') }}</div>
-                                <a href="{{ route('pengajuan_dana.show', ['pengajuanDana' => $pengajuan->id, 'from' => 'monitoring']) }}" class="text-xs text-blue-600 font-bold hover:underline">
+                                <a href="{{ request('from') === 'sales' ? route('pengajuan_dana.show', ['pengajuanDana' => $pengajuan->id, 'from' => 'monitoring', 'src' => 'sales']) : route('pengajuan_dana.show', ['pengajuanDana' => $pengajuan->id, 'from' => 'monitoring']) }}" class="text-xs text-blue-600 font-bold hover:underline">
                                     Detail <i class="fas fa-chevron-right text-[8px] ml-0.5"></i>
                                 </a>
                             </div>
@@ -242,4 +254,5 @@
             </div>
         </div>
     </div>
+    @endif
 </x-layout-users>

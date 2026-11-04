@@ -21,16 +21,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Drop foreign keys dulu sebelum drop kolom
-        Schema::table('pengajuan_dana', function (Blueprint $table) {
-            $table->dropForeign(['atasan_id']);
-            $table->dropForeign(['direktur_id']);
-
-            // finance_id mungkin sudah ada — cek dan drop jika ada
-            if (Schema::hasColumn('pengajuan_dana', 'finance_id')) {
-                $table->dropForeign(['finance_id']);
+        // 1. Drop foreign keys lama — hanya bila masih ada (DB lama).
+        foreach (['atasan_id', 'direktur_id', 'finance_id'] as $column) {
+            if (! $this->foreignKeyExists('pengajuan_dana', $column)) {
+                continue;
             }
-        });
+            Schema::table('pengajuan_dana', function (Blueprint $table) use ($column) {
+                $table->dropForeign('pengajuan_dana_'.$column.'_foreign');
+            });
+        }
 
         // 2. Drop kolom lama yang tidak ada di spec baru
         Schema::table('pengajuan_dana', function (Blueprint $table) {
@@ -53,45 +52,28 @@ return new class extends Migration
             }
         });
 
-        // 3. Perbaiki enum status dan status_atasan via raw SQL
-        \DB::statement("ALTER TABLE pengajuan_dana MODIFY COLUMN status ENUM('diajukan','diproses_appr_2','disetujui','proses_pembayaran','selesai','ditolak','dibatalkan') NOT NULL DEFAULT 'diajukan'");
-        \DB::statement("ALTER TABLE pengajuan_dana MODIFY COLUMN status_atasan ENUM('menunggu','disetujui','ditolak','skipped') NOT NULL DEFAULT 'menunggu'");
+        // 3. Enum & lampiran — DILEWATI (superseded): skema DB saat ini sudah lebih baru
+        // (status memakai 'diproses' yang dipakai kode; status_atasan sudah tidak ada;
+        // lampiran sudah TEXT). Menjalankan MODIFY lama akan merusak data.
+        // \DB::statement("ALTER TABLE pengajuan_dana MODIFY COLUMN status ...");
+        // \DB::statement("ALTER TABLE pengajuan_dana MODIFY COLUMN status_atasan ...");
+        // \DB::statement("ALTER TABLE pengajuan_dana MODIFY COLUMN lampiran TEXT NULL");
 
-        // Ubah lampiran dari varchar menjadi text
-        \DB::statement("ALTER TABLE pengajuan_dana MODIFY COLUMN lampiran TEXT NULL");
+        // 4. Kolom era approver_1_id/finance_id — DILEWATI (superseded): kode saat ini
+        // memakai approver_dana_*_id. Menambah kolom lama hanya membuat kolom mati.
+        // Lihat App\Models\PengajuanDana dan PengajuanDanaPolicy.
 
-        // 4. Tambah kolom baru sesuai spec
-        Schema::table('pengajuan_dana', function (Blueprint $table) {
-            // finance
-            $table->unsignedBigInteger('finance_id')->nullable()->after('user_id');
-            $table->timestamp('finance_processed_at')->nullable()->after('finance_id');
+        // 5. FK constraints era lama — DILEWATI dengan alasan yang sama seperti langkah 4.
+    }
 
-            // Nama pemilik rekening
-            $table->string('nama_rek', 100)->nullable()->after('no_rekening');
-
-            // Approver 1
-            $table->unsignedBigInteger('approver_1_id')->nullable()->after('catatan_atasan');
-            $table->enum('approver_1_status', ['menunggu', 'disetujui', 'ditolak', 'skipped'])->nullable()->after('approver_1_id');
-            $table->text('approver_1_catatan')->nullable()->after('approver_1_status');
-            $table->timestamp('approver_1_approved_at')->nullable()->after('approver_1_catatan');
-
-            // Approver 2
-            $table->unsignedBigInteger('approver_2_id')->nullable()->after('approver_1_approved_at');
-            $table->enum('approver_2_status', ['menunggu', 'disetujui', 'ditolak', 'skipped'])->nullable()->after('approver_2_id');
-            $table->text('approver_2_catatan')->nullable()->after('approver_2_status');
-            $table->timestamp('approver_2_approved_at')->nullable()->after('approver_2_catatan');
-
-            // Payment & finance note
-            $table->enum('payment_status', ['menunggu', 'diproses', 'selesai', 'skipped'])->nullable()->after('approver_2_approved_at');
-            $table->text('catatan_finance')->nullable()->after('payment_status');
-        });
-
-        // 5. Tambah FK constraints
-        Schema::table('pengajuan_dana', function (Blueprint $table) {
-            $table->foreign('finance_id')->references('id')->on('users')->nullOnDelete();
-            $table->foreign('approver_1_id')->references('id')->on('users')->nullOnDelete();
-            $table->foreign('approver_2_id')->references('id')->on('users')->nullOnDelete();
-        });
+    protected function foreignKeyExists(string $table, string $column): bool
+    {
+        return \DB::selectOne(
+            "SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
+             AND COLUMN_NAME = ? AND REFERENCED_TABLE_NAME IS NOT NULL LIMIT 1",
+            [$table, $column]
+        ) !== null;
     }
 
     /**

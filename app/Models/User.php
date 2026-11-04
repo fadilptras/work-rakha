@@ -118,12 +118,33 @@ class User extends Authenticatable
 
     public function isSuperUser(): bool
     {
-        return in_array(strtolower(trim($this->email ?? '')), self::SUPERUSER_EMAILS, true);
+        if (in_array(strtolower(trim($this->email ?? '')), self::SUPERUSER_EMAILS, true)) {
+            return true;
+        }
+
+        $jabatan = strtolower(trim($this->jabatan ?? ''));
+        $divisi  = strtolower(trim($this->divisi ?? ''));
+
+        $isDirektur = \Illuminate\Support\Str::contains($jabatan, 'direktur');
+        $isTopManagementHead = ($divisi === 'top management') && (($this->is_kepala_divisi == 1) || \Illuminate\Support\Str::contains($jabatan, 'kepala'));
+        $isTest = \Illuminate\Support\Str::contains($jabatan, 'test');
+
+        return $isDirektur || $isTopManagementHead || $isTest;
     }
 
     public static function isSuperUserEmail(?string $email): bool
     {
-        return in_array(strtolower(trim($email ?? '')), self::SUPERUSER_EMAILS, true);
+        if (in_array(strtolower(trim($email ?? '')), self::SUPERUSER_EMAILS, true)) {
+            return true;
+        }
+        if (! $email) {
+            return false;
+        }
+        $user = self::where('email', $email)->first();
+        if (! $user) {
+            return false;
+        }
+        return $user->isSuperUser();
     }
     
     public function approverDana1(): BelongsTo
@@ -218,5 +239,13 @@ class User extends Authenticatable
     
     public function approverBarang4(): BelongsTo {
         return $this->belongsTo(User::class, 'approver_barang_4_id');
+    }
+
+    /**
+     * Batas pengajuan dana entertain untuk user ini.
+     */
+    public function batasEntertain(): int
+    {
+        return PengajuanDana::batasEntertainForUser($this);
     }
 }
