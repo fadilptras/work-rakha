@@ -32,7 +32,9 @@ class PengajuanDanaController extends Controller
         $query = Auth::user()->pengajuanDanas()->latest();
         if ($request->filled('status') && $request->status != 'semua') {
             if ($request->status == 'diproses') {
-                $query->whereIn('status', ['diajukan', 'diproses', 'proses_pembayaran', 'disetujui']);
+                $query->where('status', 'diproses');
+            } elseif ($request->status == 'disetujui') {
+                $query->whereIn('status', ['disetujui', 'proses_pembayaran']);
             } else {
                 $query->where('status', $request->status);
             }
@@ -81,7 +83,9 @@ class PengajuanDanaController extends Controller
         // Filter status
         if ($request->filled('status') && $request->status != 'semua') {
             if ($request->status == 'diproses') {
-                $query->whereIn('status', ['diajukan', 'diproses', 'proses_pembayaran', 'disetujui']);
+                $query->where('status', 'diproses');
+            } elseif ($request->status == 'disetujui') {
+                $query->whereIn('status', ['disetujui', 'proses_pembayaran']);
             } else {
                 $query->where('status', $request->status);
             }
@@ -331,8 +335,8 @@ class PengajuanDanaController extends Controller
             }
 
             // Sesuaikan status awal berdasarkan siapa approver pertamanya
-            if ($firstStage == 3) {
-                $pengajuanDana->update(['status' => 'proses_pembayaran']);
+            if ($firstStage == 2 || $firstStage == 3) {
+                $pengajuanDana->update(['status' => 'diproses']);
             } elseif ($firstStage == 4) {
                 $pengajuanDana->update(['status' => 'disetujui']);
             }
@@ -381,7 +385,7 @@ class PengajuanDanaController extends Controller
             "approver_{$currentStage}_approved_at" => Carbon::now(),
         ];
 
-        if ($currentStage == 3 && $request->hasFile('bukti_transfer')) {
+        if ($request->hasFile('bukti_transfer')) {
             $path = $request->file('bukti_transfer')->store('bukti_transfer', 'public');
             $updateData['bukti_transfer'] = $path;
         }
@@ -403,8 +407,9 @@ class PengajuanDanaController extends Controller
 
         if ($nextApprover) {
             $status = 'diproses';
-            if ($nextStage == 3) $status = 'proses_pembayaran';
-            if ($nextStage == 4) $status = 'disetujui';
+            if ($nextStage == 4) {
+                $status = 'disetujui'; // Menunggu Pembayaran oleh Approver 4
+            }
 
             $pengajuanDana->update(['status' => $status]);
             Notification::send($nextApprover, new PengajuanDanaNotification($pengajuanDana, 'baru'));
@@ -412,7 +417,7 @@ class PengajuanDanaController extends Controller
         } else {
             $pengajuanDana->update(['status' => 'selesai']);
             
-            $notificationType = $currentStage == 3 ? 'bukti_transfer' : 'disetujui_final';
+            $notificationType = $request->hasFile('bukti_transfer') ? 'bukti_transfer' : 'disetujui_final';
             Notification::send($pengajuanDana->user, new PengajuanDanaNotification($pengajuanDana, $notificationType));
 
             // Kirim notifikasi selesai ke seluruh approver

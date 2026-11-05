@@ -142,12 +142,13 @@
                                 <span class="inline-flex items-center whitespace-nowrap font-bold bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full text-xs">Selesai</span>
                             @elseif ($pengajuan->status == 'ditolak')
                                 <span class="inline-flex items-center whitespace-nowrap font-bold bg-red-500/10 text-red-400 px-2 py-1 rounded-full text-xs">Ditolak</span>
-                            @elseif ($pengajuan->status == 'proses_pembayaran')
-                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-xs">Proses Bayar</span>
-                            @elseif ($pengajuan->status == 'disetujui')
-                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-teal-500/10 text-teal-400 px-2 py-1 rounded-full text-xs">Menunggu Approver 4</span>
+                            @elseif ($pengajuan->status == 'disetujui' || $pengajuan->status == 'proses_pembayaran')
+                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-teal-500/10 text-teal-400 px-2 py-1 rounded-full text-xs">Menunggu Pembayaran</span>
                             @elseif ($pengajuan->status == 'diproses')
-                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded-full text-xs">Diproses</span>
+                                @php
+                                    $adminDiproses = ($pengajuan->approver_2_status === 'menunggu') ? 'Menunggu Appr 2' : (($pengajuan->approver_3_status === 'menunggu') ? 'Menunggu Appr 3' : 'Diproses');
+                                @endphp
+                                <span class="inline-flex items-center whitespace-nowrap font-bold bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded-full text-xs">{{ $adminDiproses }}</span>
                             @elseif ($pengajuan->status == 'dibatalkan')
                                 <span class="inline-flex items-center whitespace-nowrap font-bold bg-zinc-500/10 text-zinc-400 px-2 py-1 rounded-full text-xs">Dibatalkan</span>
                             @else

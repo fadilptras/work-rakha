@@ -136,19 +136,21 @@
                             $statusClass = match($pengajuanDana->status) {
                                 'selesai' => 'bg-green-500 text-white shadow-green-500/20',
                                 'ditolak' => 'bg-red-500 text-white shadow-red-500/20',
-                                'proses_pembayaran' => 'bg-blue-500 text-white shadow-blue-500/20',
+                                'proses_pembayaran', 'disetujui' => 'bg-teal-500 text-white shadow-teal-500/20',
                                 'diproses' => 'bg-indigo-500 text-white shadow-indigo-500/20',
                                 'dibatalkan' => 'bg-slate-500 text-white shadow-slate-500/20',
-                                'disetujui' => 'bg-teal-500 text-white shadow-teal-500/20',
                                 default => 'bg-yellow-500 text-white shadow-yellow-500/20',
                             };
                             $statusText = match($pengajuanDana->status) {
                                 'selesai' => 'Selesai',
                                 'ditolak' => 'Ditolak',
-                                'proses_pembayaran' => 'Proses Pembayaran',
-                                'diproses' => 'Diproses',
                                 'dibatalkan' => 'Dibatalkan',
-                                'disetujui' => 'Menunggu Approver 4',
+                                'disetujui', 'proses_pembayaran' => 'Menunggu Pembayaran',
+                                'diproses' => ($pengajuanDana->approver_2_status === 'menunggu')
+                                    ? 'Menunggu Approver 2'
+                                    : (($pengajuanDana->approver_3_status === 'menunggu')
+                                        ? 'Menunggu Approver 3'
+                                        : 'Diproses'),
                                 'diajukan' => 'Menunggu Approver 1',
                                 default => 'Menunggu',
                             };
@@ -332,7 +334,7 @@
                                     };
                                     
                                     $textF = match($sF) {
-                                        'disetujui' => 'Selesai',
+                                        'disetujui' => empty($pengajuanDana->approver_dana_4_id) ? 'Selesai' : 'Disetujui',
                                         default => ucfirst($sF)
                                     };
                                 @endphp
@@ -377,6 +379,7 @@
                                     
                                     $text4 = match($s4) {
                                         'disetujui' => 'Selesai',
+                                        'menunggu' => 'Menunggu Pembayaran',
                                         default => ucfirst($s4)
                                     };
                                 @endphp
@@ -540,12 +543,14 @@
                                 elseif ($user->id == $pengajuanDana->approver_dana_2_id && $pengajuanDana->approver_2_status == 'menunggu') $currentStage = 2;
                                 elseif ($user->id == $pengajuanDana->approver_dana_3_id && $pengajuanDana->approver_3_status == 'menunggu') $currentStage = 3;
                                 elseif ($user->id == $pengajuanDana->approver_dana_4_id && $pengajuanDana->approver_4_status == 'menunggu') $currentStage = 4;
+
+                                $isFinalOrPaymentStage = ($currentStage == 4) || ($currentStage == 3 && empty($pengajuanDana->approver_dana_4_id));
                             @endphp
 
-                            @if($currentStage == 3)
+                            @if($isFinalOrPaymentStage)
                             <div>
                                 <label class="block text-xs font-black text-green-800 mb-1">
-                                    Berkas Bukti Transfer <span class="font-semibold text-green-600">(Opsional)</span>
+                                    Berkas Bukti Transfer <span class="font-semibold text-green-600">(Opsional / Lampirkan jika sudah ditransfer)</span>
                                 </label>
                                 <input type="file" name="bukti_transfer" class="block w-full text-xs text-slate-500
                                     file:mr-4 file:py-2 file:px-4
@@ -563,7 +568,7 @@
                                 class="w-full p-3 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-xs font-semibold"
                                 placeholder="Tulis catatan persetujuan jika perlu..."></textarea>
                             <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-md shadow-green-200 flex items-center justify-center gap-2">
-                                <i class="fas fa-check-circle"></i> Setujui Pengajuan
+                                <i class="fas fa-check-circle"></i> {{ $isFinalOrPaymentStage ? 'Selesaikan & Konfirmasi Pembayaran' : 'Setujui Pengajuan' }}
                             </button>
                         </form>
                         

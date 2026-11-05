@@ -65,8 +65,8 @@
         : route('pengajuan_dana.show', $id);
     $mDot = fn($st) => match($st) {
         'selesai' => '#16a34a', 'ditolak' => '#dc2626', 'dibatalkan' => '#64748b',
-        'diajukan' => '#ca8a04', 'diproses' => '#4f46e5', 'disetujui' => '#0d9488',
-        'proses_pembayaran' => '#2563eb', default => '#64748b',
+        'diajukan' => '#ca8a04', 'diproses' => '#4f46e5', 'disetujui', 'proses_pembayaran' => '#0d9488',
+        default => '#64748b',
     };
     $mPill = fn($st) => match($st) {
         'selesai' => 'background:#dcfce7;color:#15803d;border-color:#bbf7d0;',
@@ -74,14 +74,23 @@
         'dibatalkan' => 'background:#f1f5f9;color:#475569;border-color:#e2e8f0;',
         'diajukan' => 'background:#fef9c3;color:#a16207;border-color:#fde68a;',
         'diproses' => 'background:#e0e7ff;color:#4338ca;border-color:#c7d2fe;',
-        'disetujui' => 'background:#ccfbf1;color:#0f766e;border-color:#99f6e4;',
-        'proses_pembayaran' => 'background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe;',
+        'disetujui', 'proses_pembayaran' => 'background:#ccfbf1;color:#0f766e;border-color:#99f6e4;',
         default => 'background:#f1f5f9;color:#475569;border-color:#e2e8f0;',
     };
-    $mLabel = fn($st) => match($st) {
-        'diajukan' => 'Diajukan', 'diproses' => 'Diproses', 'disetujui' => 'Menunggu Approver 4',
-        'proses_pembayaran' => 'Pembayaran', 'selesai' => 'Selesai', 'ditolak' => 'Ditolak',
-        'dibatalkan' => 'Dibatalkan', default => ucfirst($st),
+    $mLabel = function($p) {
+        return match($p->status) {
+            'diajukan' => 'Approver 1',
+            'diproses' => ($p->approver_2_status === 'menunggu')
+                ? 'Approver 2'
+                : (($p->approver_3_status === 'menunggu')
+                    ? 'Approver 3'
+                    : 'Diproses'),
+            'disetujui', 'proses_pembayaran' => 'Menunggu Pembayaran',
+            'selesai' => 'Selesai',
+            'ditolak' => 'Ditolak',
+            'dibatalkan' => 'Dibatalkan',
+            default => ucfirst($p->status),
+        };
     };
 @endphp
 
@@ -118,9 +127,8 @@
             <select name="status" class="modern-select" style="width:100%;" onchange="this.form.submit()">
                 <option value="semua" {{ request('status') == 'semua' || !request('status') ? 'selected' : '' }}>Semua Status</option>
                 <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Approver 1</option>
-                <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
-                <option value="proses_pembayaran" {{ request('status') == 'proses_pembayaran' ? 'selected' : '' }}>Proses Pembayaran</option>
-                <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Menunggu Approver 4</option>
+                <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Menunggu Approver 2 / 3</option>
+                <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Menunggu Pembayaran</option>
                 <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
                 <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                 <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
@@ -132,7 +140,7 @@
             <a href="{{ $mShowUrl($pengajuan->id) }}" class="m-item" style="border-top-color:{{ $mDot($pengajuan->status) }};">
                 <div class="m-item-h">
                     <div class="m-item-t">{{ $pengajuan->judul_pengajuan }}</div>
-                    <span class="m-pill" style="{{ $mPill($pengajuan->status) }}">{{ $mLabel($pengajuan->status) }}</span>
+                    <span class="m-pill" style="{{ $mPill($pengajuan->status) }}">{{ $mLabel($pengajuan) }}</span>
                 </div>
                 <div class="m-chips">
                     <span class="m-tipe">{{ \App\Models\PengajuanDana::TIPE_LIST[$pengajuan->tipe_expend] ?? $pengajuan->tipe_expend }}</span>

@@ -76,12 +76,13 @@
                                 <span class="status status-selesai">Selesai</span>
                             @elseif ($pengajuan->status == 'ditolak')
                                 <span class="status status-ditolak">Ditolak</span>
-                            @elseif ($pengajuan->status == 'proses_pembayaran')
-                                <span class="status status-proses">Proses Bayar</span>
-                            @elseif ($pengajuan->status == 'disetujui')
-                                <span class="status status-proses">Menunggu Approver 4</span>
+                            @elseif ($pengajuan->status == 'disetujui' || $pengajuan->status == 'proses_pembayaran')
+                                <span class="status status-proses">Menunggu Pembayaran</span>
                             @elseif ($pengajuan->status == 'diproses')
-                                <span class="status status-proses">Diproses</span>
+                                @php
+                                    $pdfDiproses = ($pengajuan->approver_2_status === 'menunggu') ? 'Menunggu Appr 2' : (($pengajuan->approver_3_status === 'menunggu') ? 'Menunggu Appr 3' : 'Diproses');
+                                @endphp
+                                <span class="status status-proses">{{ $pdfDiproses }}</span>
                             @elseif ($pengajuan->status == 'dibatalkan')
                                 <span class="status status-dibatalkan">Dibatalkan</span>
                             @else

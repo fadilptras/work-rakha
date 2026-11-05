@@ -80,9 +80,17 @@
         default => ['#eab308', 'background:#fef9c3;color:#a16207;border-color:#fde68a;'],
     };
     $mStatusText = match($pengajuanDana->status) {
-        'selesai' => 'Selesai', 'ditolak' => 'Ditolak', 'proses_pembayaran' => 'Proses Pembayaran',
-        'diproses' => 'Diproses', 'dibatalkan' => 'Dibatalkan', 'disetujui' => 'Menunggu Approver 4',
-        'diajukan' => 'Diajukan', default => 'Menunggu',
+        'selesai' => 'Selesai',
+        'ditolak' => 'Ditolak',
+        'dibatalkan' => 'Dibatalkan',
+        'disetujui', 'proses_pembayaran' => 'Menunggu Pembayaran',
+        'diproses' => ($pengajuanDana->approver_2_status === 'menunggu')
+            ? 'Menunggu Approver 2'
+            : (($pengajuanDana->approver_3_status === 'menunggu')
+                ? 'Menunggu Approver 3'
+                : 'Diproses'),
+        'diajukan' => 'Menunggu Approver 1',
+        default => 'Menunggu',
     };
     $mBack = request('from') === 'monitoring'
         ? [request('src') === 'sales' ? route('pengajuan_dana.monitoring_all', ['from' => 'sales']) : route('pengajuan_dana.monitoring_all'), 'Monitoring']
@@ -226,6 +234,7 @@
             elseif ($mUser->id == $pengajuanDana->approver_dana_2_id && $pengajuanDana->approver_2_status == 'menunggu') $mStage = 2;
             elseif ($mUser->id == $pengajuanDana->approver_dana_3_id && $pengajuanDana->approver_3_status == 'menunggu') $mStage = 3;
             elseif ($mUser->id == $pengajuanDana->approver_dana_4_id && $pengajuanDana->approver_4_status == 'menunggu') $mStage = 4;
+            $mIsPaymentStage = ($mStage == 4) || ($mStage == 3 && empty($pengajuanDana->approver_dana_4_id));
         @endphp
         <div class="m-card">
             <div class="m-card-h">
@@ -235,14 +244,14 @@
             <div class="m-card-b flex flex-col gap-2">
                 <form action="{{ route('pengajuan_dana.approve', $pengajuanDana) }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-2 m-0">
                     @csrf
-                    @if($mStage == 3)
+                    @if($mIsPaymentStage)
                     <div>
                         <label style="font-size:11px;font-weight:900;color:#15803d;">Bukti Transfer (Opsional)</label>
                         <input type="file" name="bukti_transfer" style="font-size:11px;margin-top:4px;" accept=".pdf,.jpg,.jpeg,.png">
                     </div>
                     @endif
                     <textarea name="catatan_persetujuan" rows="2" class="m-ta" placeholder="Catatan persetujuan (opsional)..."></textarea>
-                    <button type="submit" class="m-act m-ok"><i class="fas fa-check-circle"></i> Setujui</button>
+                    <button type="submit" class="m-act m-ok"><i class="fas fa-check-circle"></i> {{ $mIsPaymentStage ? 'Selesaikan & Konfirmasi Pembayaran' : 'Setujui' }}</button>
                 </form>
                 <form action="{{ route('pengajuan_dana.reject', $pengajuanDana) }}" method="POST" class="flex flex-col gap-2 m-0">
                     @csrf

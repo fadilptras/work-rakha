@@ -316,12 +316,15 @@
                     <label class="block text-sm font-medium text-zinc-400 mb-1">Status Final Pengajuan</label>
                      @if ($pengajuanDana->status == 'selesai')
                         <p class="text-xl font-bold flex items-center text-emerald-400"><i class="fas fa-check-circle mr-2"></i> SELESAI</p>
-                    @elseif ($pengajuanDana->status == 'disetujui')
-                        <p class="text-xl font-bold flex items-center text-teal-400"><i class="fas fa-check-double mr-2"></i> MENUNGGU APPROVER 4</p>
+                    @elseif ($pengajuanDana->status == 'disetujui' || $pengajuanDana->status == 'proses_pembayaran')
+                        <p class="text-xl font-bold flex items-center text-teal-400"><i class="fas fa-money-check-alt mr-2"></i> MENUNGGU PEMBAYARAN</p>
                     @elseif ($pengajuanDana->status == 'ditolak')
                         <p class="text-xl font-bold flex items-center text-red-400"><i class="fas fa-times-circle mr-2"></i> DITOLAK</p>
-                    @elseif ($pengajuanDana->status == 'proses_pembayaran' || $pengajuanDana->status == 'diproses')
-                        <p class="text-xl font-bold flex items-center text-blue-400"><i class="fas fa-sync-alt fa-spin mr-2"></i> DIPROSES</p>
+                    @elseif ($pengajuanDana->status == 'diproses')
+                        @php
+                            $diprosesText = ($pengajuanDana->approver_2_status === 'menunggu') ? 'MENUNGGU APPROVER 2' : (($pengajuanDana->approver_3_status === 'menunggu') ? 'MENUNGGU APPROVER 3' : 'DIPROSES');
+                        @endphp
+                        <p class="text-xl font-bold flex items-center text-indigo-400"><i class="fas fa-sync-alt fa-spin mr-2"></i> {{ $diprosesText }}</p>
                     @elseif ($pengajuanDana->status == 'dibatalkan')
                         <p class="text-xl font-bold flex items-center text-zinc-400"><i class="fas fa-ban mr-2"></i> DIBATALKAN</p>
                     @else 

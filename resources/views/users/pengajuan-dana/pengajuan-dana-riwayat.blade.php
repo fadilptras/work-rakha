@@ -9,56 +9,22 @@
 
     @push('styles')
     <style>
-        /* == Background == */
-        .mesh-bg { background-color: #ede9fe; }
-
-        /* == Modern Back Button == */
-        .btn-back-modern {
-            display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 18px 8px 8px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            border-radius: 9999px;
-            color: #1e293b;
-            font-size: 0.9rem; font-weight: 700;
-            text-decoration: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            margin-bottom: 24px;
-            width: fit-content;
-        }
-        .btn-back-modern:hover { 
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
-            transform: translateY(-2px);
-            color: #1d4ed8;
-        }
-        .btn-back-modern .icon-circle {
-            width: 32px; height: 32px;
-            background: #fff;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: #3b82f6;
-            font-size: 0.85rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-            transition: transform 0.3s ease;
-        }
-        .btn-back-modern:hover .icon-circle {
-            transform: translateX(-3px);
-            background: #EFF6FF;
+        body { font-family: 'Outfit', sans-serif; }
+        /* == Background (sama seperti halaman form) == */
+        .mesh-bg {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;
+            background-color: #ede9fe;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.4) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            pointer-events: none;
         }
 
-        /* == Glass Cards == */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 1);
-            border-radius: 24px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
-            padding: 28px;
+        .history-card-mobile {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
         }
 
         .modern-select {
@@ -72,60 +38,39 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
         }
-
-        .history-card-mobile {
-            background: #f8fafc !important;
-            border: 1px solid #cbd5e1 !important;
-        }
-
-        @media (max-width: 767.98px) {
-            .glass-card {
-                padding: 16px;
-                border-radius: 18px;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                background: rgba(255, 255, 255, 0.95) !important;
-            }
-            .modern-select {
-                padding: 7px 12px;
-                font-size: 0.8rem;
-                border-radius: 10px;
-                width: auto !important;
-                flex: 1 !important;
-            }
-        }
     </style>
     @endpush
 
     @if($isMobile)
         @include('users.pengajuan-dana.mobile.riwayat')
     @else
-    <div class="flex flex-col flex-1 min-h-screen mesh-bg relative overflow-hidden">
+    <div class="flex flex-col flex-1 min-h-screen relative overflow-x-clip text-slate-800 pb-16">
+        <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
 
-            {{-- TOMBOL KEMBALI --}}
-            <a href="{{ request('from') === 'sales' ? route('pengajuan_dana.index', ['from' => 'sales']) : route('pengajuan_dana.index') }}" class="btn-back-modern">
-                <div class="icon-circle"><i class="fas fa-arrow-left"></i></div>
-                Kembali ke Form Pengajuan
-            </a>
+            @php
+                $fromSales = request('from') === 'sales';
+                $backRoute = $fromSales ? route('pengajuan_dana.index', ['from' => 'sales']) : route('pengajuan_dana.index');
+                $backText = 'Kembali ke Form Pengajuan';
+            @endphp
+            <div class="w-full flex justify-start">
+                <x-ui.back-button :href="$backRoute" :label="$backText" />
+            </div>
 
-            {{-- HEADER HALAMAN --}}
-            <div class="relative z-10 w-full bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl md:rounded-3xl p-5 md:p-6 shadow-xl mb-4 md:mb-6 overflow-hidden border border-white/20">
-                <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+            <div class="hidden md:block">
+                <x-ui.page-header title="Riwayat Pengajuan Dana" subtitle="Pantau status, detail, dan alur persetujuan permohonan dana operasional yang telah Anda ajukan." icon="fa-history" />
+            </div>
 
-                <div class="relative z-10 flex items-center gap-3 md:gap-4">
-                    <div class="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/20 flex-shrink-0">
-                        <i class="fas fa-history text-lg md:text-xl text-white"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-base md:text-xl font-black tracking-tight text-white uppercase">Riwayat Pengajuan Dana</h1>
-                        @if(!$isMobile)
-                        <p class="text-blue-100 text-xs md:text-sm mt-1 font-medium leading-relaxed max-w-xl">
-                            Pantau status, detail, dan alur persetujuan permohonan dana operasional yang telah Anda ajukan.
-                        </p>
-                        @endif
-                    </div>
+            <div class="block md:hidden rounded-2xl px-5 py-6 text-white shadow-md flex items-center justify-between gap-4 relative overflow-hidden" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
+                <div class="relative z-10 flex-1 min-w-0">
+                    <h2 class="text-sm font-black tracking-wider uppercase leading-snug truncate">Riwayat Dana</h2>
+                    <p class="text-xs text-blue-100 font-medium leading-normal truncate mt-0.5">
+                        Status & alur persetujuan pengajuan.
+                    </p>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-white text-base shrink-0 shadow-inner relative z-10">
+                    <i class="fas fa-history"></i>
                 </div>
             </div>
 
@@ -134,7 +79,7 @@
                 $tipeAktif = request('tipe', 'semua');
                 $tabParams = array_filter(['status' => request('status'), 'from' => request('from')]);
             @endphp
-            <div class="flex flex-wrap gap-2 mb-4">
+            <div class="flex flex-wrap gap-2">
                 <a href="{{ route('pengajuan_dana.history', $tabParams + ['tipe' => 'semua']) }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-black transition-all {{ $tipeAktif === 'semua' ? 'bg-teal-600 text-white border-teal-600 shadow-md' : 'bg-white text-slate-600 border-slate-300 hover:border-teal-400' }}">
                     Semua Tipe
                 </a>
@@ -146,14 +91,14 @@
             </div>
 
             {{-- RIWAYAT CARD --}}
-            <div class="glass-card space-y-6 mb-10">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4 mb-5">
+            <x-ui.glass-card class="space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/60 pb-3 md:pb-4 mb-3 md:mb-4">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-list-ul"></i></div>
                         <div>
                             <h3 class="text-lg font-black text-slate-800">Daftar Pengajuan Anda</h3>
                             @if(!$isMobile)
-                            <p class="text-xs text-slate-500 font-semibold" style="margin-top: 8px; margin-bottom: 8px;">Gunakan filter di sebelah kanan untuk menyaring status pengajuan.</p>
+                            <p class="text-xs text-slate-500 font-semibold" style="margin-top: 0; margin-bottom: 0;">Gunakan filter di sebelah kanan untuk menyaring status pengajuan.</p>
                             @endif
                         </div>
                     </div>
@@ -170,9 +115,8 @@
                         <select name="status" class="modern-select flex-1 min-w-[160px] md:flex-none" onchange="this.form.submit()">
                             <option value="semua" {{ request('status') == 'semua' || !request('status') ? 'selected' : '' }}>Semua Status</option>
                             <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Approver 1</option>
-                            <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
-                            <option value="proses_pembayaran" {{ request('status') == 'proses_pembayaran' ? 'selected' : '' }}>Proses Pembayaran</option>
-                            <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Menunggu Approver 4</option>
+                            <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Menunggu Approver 2 / 3</option>
+                            <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>Menunggu Pembayaran</option>
                             <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
                             <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                             <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
@@ -181,9 +125,9 @@
                 </div>
 
                 {{-- Tabel Riwayat Desktop --}}
-                <div class="overflow-x-auto hidden md:block rounded-2xl border border-slate-200/80" style="border-radius: 16px; overflow: hidden;">
+                <div class="overflow-x-auto hidden md:block rounded-xl border border-slate-200">
                     <table class="min-w-full text-xs">
-                        <thead class="bg-slate-50/80 text-slate-600 uppercase font-black border-b border-slate-200">
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-bold text-[10px] tracking-wider border-b border-slate-200">
                             <tr>
                                 <th class="px-6 py-4 text-left w-[15%]">Tanggal</th>
                                 <th class="px-6 py-4 text-left w-[45%]">Judul Pengajuan</th>
@@ -207,9 +151,12 @@
                                     };
                                     $statusLabel = match($pengajuan->status) {
                                         'diajukan' => 'Menunggu Approver 1',
-                                        'diproses' => 'Diproses',
-                                        'disetujui' => 'Menunggu Approver 4',
-                                        'proses_pembayaran' => 'Proses Pembayaran',
+                                        'diproses' => ($pengajuan->approver_2_status === 'menunggu')
+                                            ? 'Menunggu Approver 2'
+                                            : (($pengajuan->approver_3_status === 'menunggu')
+                                                ? 'Menunggu Approver 3'
+                                                : 'Diproses'),
+                                        'disetujui', 'proses_pembayaran' => 'Menunggu Pembayaran',
                                         'selesai' => 'Selesai',
                                         'ditolak' => 'Ditolak',
                                         'dibatalkan' => 'Dibatalkan',
@@ -264,9 +211,12 @@
                             };
                             $statusLabel = match($pengajuan->status) {
                                 'diajukan' => 'Menunggu Approver 1',
-                                'diproses' => 'Diproses',
-                                'disetujui' => 'Menunggu Approver 4',
-                                        'proses_pembayaran' => 'Proses Pembayaran',
+                                'diproses' => ($pengajuan->approver_2_status === 'menunggu')
+                                    ? 'Menunggu Approver 2'
+                                    : (($pengajuan->approver_3_status === 'menunggu')
+                                        ? 'Menunggu Approver 3'
+                                        : 'Diproses'),
+                                'disetujui', 'proses_pembayaran' => 'Menunggu Pembayaran',
                                 'selesai' => 'Selesai',
                                 'ditolak' => 'Ditolak',
                                 'dibatalkan' => 'Dibatalkan',
@@ -307,8 +257,7 @@
                         {{ $pengajuanDanas->links() }}
                     </div>
                 @endif
-
-            </div>
+            </x-ui.glass-card>
         </div>
     </div>
     @endif
