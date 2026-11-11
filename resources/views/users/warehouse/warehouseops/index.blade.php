@@ -29,18 +29,18 @@
             transform: rotate(30deg); pointer-events: none;
         }
 
-        @php
-            $isOpsFormTab = in_array($tab, ['keluar', 'masuk']);
-        @endphp
-        @if(!$isOpsFormTab)
-        /* Root container Warehouse Operations: Fit 1 Layar Penuh pada desktop untuk tab Data Product, Monitor, & Mutasi */
+        /* Root container Warehouse Operations: Fit Layar Penuh pada desktop, tanpa scroll jendela luar */
         @media (min-width: 768px) {
             html.is-tab-frame,
             html.is-tab-frame body {
                 overflow: hidden !important;
+                height: 100% !important;
+                max-height: 100% !important;
             }
             body:not(.is-tab-frame) {
-                overflow-y: hidden !important;
+                overflow: hidden !important;
+                height: 100dvh !important;
+                max-height: 100dvh !important;
             }
             .warehouse-ops-root {
                 height: calc(100dvh - var(--app-topbar-h, 104px)) !important;
@@ -67,51 +67,23 @@
                 overflow-x: auto !important;
             }
         }
-        @else
-        /* Tab Keluar & Masuk: Boleh scroll halaman jika perlu, tapi tabel rincian dibuat lebih tinggi & terukur */
-        @media (min-width: 768px) {
-            html.is-tab-frame,
-            html.is-tab-frame body {
-                overflow-y: auto !important;
-                overflow-x: hidden !important;
-            }
-            body:not(.is-tab-frame) {
-                overflow-y: auto !important;
-                overflow-x: hidden !important;
-            }
-            .warehouse-ops-root {
-                min-height: calc(100dvh - var(--app-topbar-h, 104px)) !important;
-                height: auto !important;
-                max-height: none !important;
-                overflow-y: auto !important;
-                overflow-x: hidden !important;
-            }
-            html.is-tab-frame .warehouse-ops-root {
-                min-height: 100% !important;
-                height: auto !important;
-                max-height: none !important;
-                overflow-y: auto !important;
-                overflow-x: hidden !important;
-            }
-        }
-        @endif
         @media (max-width: 767px) {
             .manage-table-scroll { overflow: auto; max-height: 55vh; }
             .sj-items-wrap { overflow: auto; max-height: 38vh; min-height: 140px; }
         }
 
-        /* Tabel Rincian Barang Form Masuk & Keluar: Lebih tinggi & scroll internal (tidak melar kebawah tak terhingga) */
+        /* Tabel Rincian Barang Form Masuk & Keluar: Nyaman & terukur (tidak melar keluar container) */
         .ops-form-items-scroll {
-            min-height: 320px !important;
-            max-height: 480px !important;
+            min-height: 260px !important;
+            max-height: 380px !important;
             flex: none !important;
             overflow-y: auto !important;
             overflow-x: auto !important;
         }
         @media (max-width: 767px) {
             .ops-form-items-scroll {
-                min-height: 240px !important;
-                max-height: 52vh !important;
+                min-height: 200px !important;
+                max-height: 48vh !important;
             }
         }
         .manage-table-scroll table { border-collapse: separate; border-spacing: 0; }
@@ -273,10 +245,10 @@
     </style>
     @endpush
 
-    <div class="warehouse-ops-root flex flex-col w-full relative text-slate-800 {{ $isOpsFormTab ? 'is-form-tab' : 'overflow-hidden' }}">
+    <div class="warehouse-ops-root flex flex-col w-full relative overflow-hidden text-slate-800">
         <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 pt-3 sm:pt-3.5 space-y-3 flex-1 min-h-0 flex flex-col items-stretch {{ $isOpsFormTab ? 'overflow-visible pb-10' : 'overflow-hidden pb-3 sm:pb-3.5' }}">
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 pt-3 sm:pt-3.5 space-y-3 flex-1 min-h-0 flex flex-col items-stretch {{ in_array($tab, ['keluar', 'masuk']) ? 'overflow-y-auto pb-4' : 'overflow-hidden pb-3 sm:pb-3.5' }}">
             {{-- Header & Navigasi Tab --}}
             <div class="hidden md:block shrink-0">
                 <x-ui.page-header title="Warehouse Operations" subtitle="Product data, mutasi, input keluar & masuk dalam satu halaman." icon="fa-warehouse" :sticky="false">

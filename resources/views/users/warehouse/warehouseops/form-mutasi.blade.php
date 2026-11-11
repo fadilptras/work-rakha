@@ -200,12 +200,12 @@
                             </thead>
                             <tbody id="rows-container" class="divide-y divide-slate-100"></tbody>
                         </table>
-                        <div id="empty-barang" class="px-4 py-12 text-center bg-slate-50/50 border-t border-dashed border-slate-200">
-                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-500 mb-2.5">
-                                <i class="fas fa-box-open text-xl"></i>
+                        <div id="empty-barang" class="px-4 py-7 text-center bg-slate-50/50 border-t border-dashed border-slate-200">
+                            <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-500 mb-2">
+                                <i class="fas fa-box-open text-lg"></i>
                             </div>
                             <p class="text-xs font-bold text-slate-600">Belum ada barang di daftar rincian</p>
-                            <p class="text-[11px] text-slate-400 mt-1 max-w-sm mx-auto">Ketik nama atau kode barang pada kolom pencarian di atas, lalu klik produk untuk mengisi Qty, Batch & Tanggal Expired.</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5 max-w-sm mx-auto">Ketik nama atau kode barang pada kolom pencarian di atas untuk menambahkan.</p>
                         </div>
                     </div>
                 </div>

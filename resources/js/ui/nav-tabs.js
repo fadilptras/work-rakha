@@ -460,11 +460,7 @@ function initTabbar() {
             }
         }
 
-        if (targetPath === initialPath) {
-            window.scrollTo(0, initialScrollY);
-        } else {
-            window.scrollTo(0, 0);
-        }
+        window.scrollTo(0, 0);
 
         currentPath = targetPath;
         persist(capTabs(tabs, maxTabs, currentPath), currentPath);
