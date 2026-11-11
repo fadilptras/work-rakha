@@ -29,28 +29,20 @@
     </script>
     @stack('styles')
     <style>
-        html { margin: 0 !important; padding: 0 !important; height: 100% !important; background-color: #ede9fe; }
-        body { margin: 0 !important; padding: 0 !important; height: 100% !important; }
-        @media (min-width: 768px) {
-            body {
-                overflow: hidden !important;
-                height: 100dvh !important;
-                max-height: 100dvh !important;
-            }
-            #app-shell {
-                height: 100dvh !important;
-                max-height: 100dvh !important;
-                overflow: hidden !important;
-            }
-        }
-        html.is-tab-frame,
-        html.is-tab-frame body {
+        html { margin: 0 !important; padding: 0 !important; background-color: #ede9fe; }
+        body { margin: 0 !important; padding: 0 !important; }
+        html.is-tab-frame {
             height: 100% !important;
-            max-height: 100% !important;
-            overflow: hidden !important;
+            min-height: 100% !important;
+        }
+        html.is-tab-frame body {
             background-color: #ede9fe !important;
             margin: 0 !important;
             padding: 0 !important;
+            min-height: 100% !important;
+            height: auto !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
         }
         html.is-tab-frame #sidebar,
         html.is-tab-frame #sidebar-submenu,
@@ -59,26 +51,21 @@
         html.is-tab-frame #app-topbar { display: none !important; }
         html.is-tab-frame #app-shell {
             padding-left: 0 !important;
-            height: 100% !important;
-            max-height: 100% !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
+            min-height: 100% !important;
+            height: auto !important;
         }
         html.is-tab-frame #app-main {
-            height: 100% !important;
-            max-height: 100% !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-            flex: 1 1 0% !important;
+            min-height: 100% !important;
+            height: auto !important;
+            overflow-y: visible !important;
         }
-        .ui-tab-pane { width: 100%; height: 100%; min-height: 0; }
-        #tab-pane-initial { display: flex; flex-direction: column; flex: 1 1 0% !important; min-height: 0 !important; height: 100% !important; max-height: 100% !important; overflow: hidden !important; }
+        .ui-tab-pane { width: 100%; }
+        #tab-pane-initial { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
         .ui-tab-frame {
             width: 100% !important;
-            height: 100% !important;
-            max-height: 100% !important;
-            min-height: 0 !important;
-            flex: 1 1 0% !important;
+            height: calc(100dvh - var(--app-topbar-h, 74px)) !important;
+            min-height: calc(100vh - var(--app-topbar-h, 74px)) !important;
+            flex: 1 1 auto;
             border: 0;
             display: block;
             background-color: #ede9fe;

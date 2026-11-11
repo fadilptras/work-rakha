@@ -1,5 +1,5 @@
 {{-- Form input Barang Masuk / Keluar tab Warehouse Ops (inline, tanpa partial) --}}
-<div class="w-full flex-1 min-h-0 flex flex-col space-y-3">
+<div class="w-full flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden">
     {{-- Pengingat opname: menetap sampai semua SKU diopname bulan ini --}}
     @if(($belumOpnameOps ?? 0) > 0)
     <div class="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-2.5 flex flex-col sm:flex-row sm:items-center gap-2 shadow-sm shrink-0" role="alert">
@@ -43,8 +43,8 @@
     @if(!$canManage)
         <x-ui.glass-card class="border-t-4 border-t-red-400 text-sm text-slate-600">Akun Anda tidak memiliki akses input barang. Hubungi pengelola stok.</x-ui.glass-card>
     @else
-    <x-ui.glass-card class="w-full flex-1 min-h-0 flex flex-col border-t-4 border-t-blue-500 shadow-sm !rounded-2xl !p-4 sj-form-card">
-        <form action="{{ route('warehouse.mutation.store') }}" method="POST" id="pencatatan-form" data-clearable class="min-h-0 flex-1 flex flex-col">
+    <x-ui.glass-card class="w-full flex-1 min-h-0 flex flex-col border-t-4 border-t-blue-500 shadow-sm !rounded-2xl !p-4 sj-form-card overflow-hidden">
+        <form action="{{ route('warehouse.mutation.store') }}" method="POST" id="pencatatan-form" data-clearable class="min-h-0 flex-1 flex flex-col overflow-hidden">
             @csrf
             {{-- Penanda form Ops (mandiri, terpisah dari form Surat Jalan) --}}
             <input type="hidden" name="asal" value="ops">
@@ -166,7 +166,7 @@
                     </div>
                 </div>
             </div>
-            <div class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2 flex-1 min-h-0 flex flex-col">
+            <div class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2 flex-1 min-h-0 flex flex-col overflow-hidden">
                 <div class="flex items-center gap-2 shrink-0">
                     <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider whitespace-nowrap">Rincian Barang {{ $tab === 'masuk' ? 'Masuk' : 'Keluar' }}</h4>
                     <div class="flex-1 h-px bg-slate-100"></div>
@@ -183,8 +183,8 @@
                 </div>
 
                 {{-- Tabel barang yang sudah disimpan (scroll internal, header sticky) --}}
-                <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
-                    <div class="sj-items-wrap ops-form-items-scroll">
+                <div class="border border-slate-200 rounded-xl overflow-hidden bg-white flex-1 min-h-0 flex flex-col">
+                    <div class="sj-items-wrap overflow-auto flex-1 min-h-0">
                         <table class="w-full text-xs min-w-[760px] table-bordered">
                             <thead>
                                 <tr class="bg-slate-50/80 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
@@ -195,18 +195,15 @@
                                     <th class="px-3 py-2 text-center w-20 font-bold">Satuan</th>
                                     <th class="px-3 py-2 text-left w-32 font-bold">No. Batch</th>
                                     <th class="px-3 py-2 text-center w-32 font-bold">Tgl Exp</th>
+
                                     <th class="px-3 py-2 text-center w-24 font-bold">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="rows-container" class="divide-y divide-slate-100"></tbody>
                         </table>
-                        <div id="empty-barang" class="px-4 py-7 text-center bg-slate-50/50 border-t border-dashed border-slate-200">
-                            <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-500 mb-2">
-                                <i class="fas fa-box-open text-lg"></i>
-                            </div>
-                            <p class="text-xs font-bold text-slate-600">Belum ada barang di daftar rincian</p>
-                            <p class="text-[11px] text-slate-400 mt-0.5 max-w-sm mx-auto">Ketik nama atau kode barang pada kolom pencarian di atas untuk menambahkan.</p>
-                        </div>
+                    <div id="empty-barang" class="px-4 py-3 text-center bg-slate-50/50 border-t border-dashed border-slate-200">
+                        <p class="text-xs font-bold text-slate-500"><i class="fas fa-box-open text-slate-300 mr-1.5"></i>Belum ada barang — cari di atas lalu klik untuk menambahkan.</p>
+                    </div>
                     </div>
                 </div>
             </div>
