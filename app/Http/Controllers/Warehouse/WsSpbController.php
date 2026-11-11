@@ -14,6 +14,9 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use App\Exports\SingleSpbExport;
+use App\Exports\RekapPengajuanBarangExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class WsSpbController extends Controller
 {
@@ -66,13 +69,13 @@ class WsSpbController extends Controller
             $backRoute = route('warehouse.index', ['tab' => 'produk']);
             $backText = 'Back to Warehouse Ops';
         } elseif ($backFrom === 'dashboard') {
-            $backRoute = route('warehouse.dashboard');
+            $backRoute = route('warehouse.index');
             $backText = 'Back to Warehouse Dashboard';
         } else {
             $u = Auth::user();
             $isWh = in_array(strtolower($u->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang'])
                 || \Illuminate\Support\Str::contains(strtolower($u->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing']);
-            $backRoute = $isWh ? route('warehouse.dashboard') : route('dashboard');
+            $backRoute = $isWh ? route('warehouse.index') : route('dashboard');
             $backText = $isWh ? 'Back to Warehouse Dashboard' : 'Back to Dashboard';
         }
 
@@ -171,12 +174,13 @@ class WsSpbController extends Controller
             $keys[$n] = mb_strtolower($n);
         }
         $sorted = collect($keys)->sort()->implode('|');
-        $map = Cache::remember('spb_status_names_' . md5($sorted), 120, function () use ($names, $keys) {
+        $version = Cache::get('spb_status_cache_version', 1);
+        $map = Cache::remember('spb_status_names_v' . $version . '_' . md5($sorted), 120, function () use ($names, $keys) {
             $candidates = PengajuanBarang::with('user:id,name')
                 ->where('created_at', '>=', Carbon::now()->subDays(30))
                 ->whereIn('status', ['diajukan', 'diproses', 'disetujui', 'selesai', 'proses_finalisasi'])
                 ->latest()->limit(200)
-                ->get(['id', 'user_id', 'judul_pengajuan', 'status', 'created_at', 'rincian_barang']);
+                ->get(['id', 'user_id', 'judul_pengajuan', 'status', 'status_monitoring', 'data_termin', 'created_at', 'rincian_barang']);
 
             $out = [];
             foreach ($names as $n) {
@@ -217,7 +221,7 @@ class WsSpbController extends Controller
                         if (!$out[$n]['last']) {
                             $out[$n]['last'] = [
                                 'judul' => $p->judul_pengajuan,
-                                'status' => $p->status,
+                                'status' => $p->isSelesai() ? 'selesai' : $p->status,
                                 'tanggal' => $p->created_at ? $p->created_at->locale('id')->isoFormat('D MMM YYYY') : null,
                                 'oleh' => $p->user->name ?? null,
                             ];
@@ -258,7 +262,8 @@ class WsSpbController extends Controller
             return response()->json(['map' => new \stdClass()]);
         }
 
-        $cacheKey = 'spb_status_' . now()->format('Y-m') . '_' . md5($ids->sort()->values()->implode(','));
+        $version = Cache::get('spb_status_cache_version', 1);
+        $cacheKey = 'spb_status_v' . $version . '_' . now()->format('Y-m') . '_' . md5($ids->sort()->values()->implode(','));
         $map = Cache::remember($cacheKey, 120, function () use ($products) {
             $keys = [];
             foreach ($products as $p) {
@@ -274,7 +279,7 @@ class WsSpbController extends Controller
             $docs = PengajuanBarang::with('user:id,name')
                 ->where('created_at', '>=', $now->copy()->subDays(90))
                 ->latest()->limit(500)
-                ->get(['id', 'user_id', 'judul_pengajuan', 'status', 'created_at', 'rincian_barang']);
+                ->get(['id', 'user_id', 'judul_pengajuan', 'status', 'status_monitoring', 'data_termin', 'created_at', 'rincian_barang']);
 
             $out = [];
             foreach ($products as $p) {
@@ -295,9 +300,9 @@ class WsSpbController extends Controller
                 $isBulanIni = $d->created_at
                     && (int) $d->created_at->format('Y') === (int) $now->format('Y')
                     && (int) $d->created_at->format('n') === (int) $now->format('n');
-                $isAktif = in_array($d->status, ['diajukan', 'diproses', 'proses_finalisasi'], true);
-                $isSelesai = in_array($d->status, ['disetujui', 'selesai'], true);
+                $isSelesai = $d->isSelesai();
                 $isDitolak = in_array($d->status, ['ditolak', 'dibatalkan'], true);
+                $isAktif = !$isSelesai && !$isDitolak && in_array($d->status, ['diajukan', 'diproses', 'disetujui', 'proses_finalisasi'], true);
 
                 foreach ($products as $p) {
                     $prodKeys = $keys[$p->id] ?? [];
@@ -333,7 +338,7 @@ class WsSpbController extends Controller
                     if (!$out[$p->id]['last']) {
                         $out[$p->id]['last'] = [
                             'judul' => $d->judul_pengajuan,
-                            'status' => $d->status,
+                            'status' => $isSelesai ? 'selesai' : $d->status,
                             'tanggal' => $d->created_at ? $d->created_at->locale('id')->isoFormat('D MMM YYYY') : null,
                             'oleh' => $d->user->name ?? null,
                         ];
@@ -494,12 +499,15 @@ class WsSpbController extends Controller
         return response()->json($data);
     }
 
-    // tampilkan semua pengajuan barang untuk pemantauan (akses approver/admin)
+    // tampilkan semua pengajuan barang untuk pemantauan (akses approver/admin/superuser/purchasing/warehouse)
     public function monitoringAll(Request $request)
     {
         $user = Auth::user();
-        
-        // cek hak akses (hanya approver & admin)
+        $isSuperUser = $user && (method_exists($user, 'isSuperUser') ? $user->isSuperUser() : User::isSuperUserEmail($user->email ?? ''));
+        $isWarehouseOrPurchasing = in_array(strtolower($user->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang', 'purchasing', 'gudang', 'logistik'])
+            || \Illuminate\Support\Str::contains(strtolower($user->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing', 'purchasing']);
+
+        // cek hak akses
         $isApprover = \App\Models\User::query()
             ->where('approver_barang_1_id', $user->id)
             ->orWhere('approver_barang_2_id', $user->id)
@@ -507,7 +515,7 @@ class WsSpbController extends Controller
             ->orWhere('approver_barang_4_id', $user->id)
             ->exists();
 
-        if (!($isApprover || $user->role === 'admin')) {
+        if (!($isApprover || $user->role === 'admin' || $isSuperUser || $isWarehouseOrPurchasing)) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
@@ -632,6 +640,7 @@ class WsSpbController extends Controller
             $firstApprover->notify(new PengajuanBarangNotification($pengajuan, 'baru'));
         }
 
+        Cache::put('spb_status_cache_version', time());
         return redirect()->route('pengajuan_barang.index')->with('success', 'Pengajuan berhasil dikirim.');
     }
 
@@ -693,6 +702,7 @@ class WsSpbController extends Controller
                 'status' => 'ditolak'
             ]);
             $pengajuan->user->notify(new PengajuanBarangNotification($pengajuan, 'ditolak'));
+            Cache::put('spb_status_cache_version', time());
             return redirect()->back()->with('success', 'Pengajuan barang telah ditolak.');
         }
 
@@ -742,6 +752,7 @@ class WsSpbController extends Controller
             }
         }
 
+        Cache::put('spb_status_cache_version', time());
         return redirect()->back()->with('success', 'Status pengajuan barang berhasil diperbarui.');
     }
 
@@ -751,6 +762,10 @@ class WsSpbController extends Controller
     public function download(PengajuanBarang $pengajuanBarang)
     {
         $user = Auth::user();
+        $isSuperUser = $user && (method_exists($user, 'isSuperUser') ? $user->isSuperUser() : User::isSuperUserEmail($user->email ?? ''));
+        $isWarehouseOrPurchasing = in_array(strtolower($user->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang', 'purchasing', 'gudang', 'logistik'])
+            || \Illuminate\Support\Str::contains(strtolower($user->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing', 'purchasing']);
+
         $isOwner = $user->id === $pengajuanBarang->user_id;
         $isApprover = in_array($user->id, [
             $pengajuanBarang->approver_barang_1_id,
@@ -758,7 +773,7 @@ class WsSpbController extends Controller
             $pengajuanBarang->approver_barang_3_id,
             $pengajuanBarang->approver_barang_4_id,
         ]);
-        if (!($isOwner || $isApprover || $user->role === 'admin')) {
+        if (!($isOwner || $isApprover || $user->role === 'admin' || $isSuperUser || $isWarehouseOrPurchasing)) {
             abort(403, 'Anda tidak memiliki akses ke pengajuan ini.');
         }
         $pengajuanBarang->load(['user', 'approver1', 'approver2', 'approver3', 'approver4']);
@@ -768,6 +783,94 @@ class WsSpbController extends Controller
         $filename = 'SPB_' . $pengajuanBarang->nomor_surat . '_' . ($pengajuanBarang->user->name ?? 'Unknown') . '_' . $pengajuanBarang->judul_pengajuan . '.pdf';
         $filename = str_replace(['/', '\\'], '-', $filename);
         return $pdf->download($filename);
+    }
+
+    /**
+     * Download Excel untuk Satu Pengajuan Barang (Single SPB)
+     */
+    public function exportSingleExcel(PengajuanBarang $pengajuanBarang)
+    {
+        $user = Auth::user();
+        $isSuperUser = $user && (method_exists($user, 'isSuperUser') ? $user->isSuperUser() : User::isSuperUserEmail($user->email ?? ''));
+        $isWarehouseOrPurchasing = in_array(strtolower($user->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang', 'purchasing', 'gudang', 'logistik'])
+            || \Illuminate\Support\Str::contains(strtolower($user->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing', 'purchasing']);
+
+        $isOwner = $user->id === $pengajuanBarang->user_id;
+        $isApprover = in_array($user->id, [
+            $pengajuanBarang->approver_barang_1_id,
+            $pengajuanBarang->approver_barang_2_id,
+            $pengajuanBarang->approver_barang_3_id,
+            $pengajuanBarang->approver_barang_4_id,
+        ]);
+        if (!($isOwner || $isApprover || $user->role === 'admin' || $isSuperUser || $isWarehouseOrPurchasing)) {
+            abort(403, 'Anda tidak memiliki akses ke pengajuan ini.');
+        }
+
+        $pengajuanBarang->loadMissing(['user', 'approver1', 'approver2', 'approver3', 'approver4']);
+        $cleanNomor = preg_replace('/[^A-Za-z0-9\-]/', '_', $pengajuanBarang->nomor_surat ?? 'SPB');
+        $cleanUser = preg_replace('/[^A-Za-z0-9\-]/', '_', $pengajuanBarang->user->name ?? 'User');
+        $fileName = 'SPB_' . $cleanNomor . '_' . $cleanUser . '.xlsx';
+
+        return Excel::download(new SingleSpbExport($pengajuanBarang), $fileName);
+    }
+
+    /**
+     * Download Rekap Excel Seluruh Pengajuan Barang
+     */
+    public function exportAllExcel(Request $request)
+    {
+        $user = Auth::user();
+        $isSuperUser = $user && (method_exists($user, 'isSuperUser') ? $user->isSuperUser() : User::isSuperUserEmail($user->email ?? ''));
+        $isWarehouseOrPurchasing = in_array(strtolower($user->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang', 'purchasing', 'gudang', 'logistik'])
+            || \Illuminate\Support\Str::contains(strtolower($user->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing', 'purchasing']);
+
+        $isApprover = \App\Models\User::query()
+            ->where('approver_barang_1_id', $user->id)
+            ->orWhere('approver_barang_2_id', $user->id)
+            ->orWhere('approver_barang_3_id', $user->id)
+            ->orWhere('approver_barang_4_id', $user->id)
+            ->exists();
+
+        $canAccessAll = ($user->role === 'admin' || $isSuperUser || $isApprover || $isWarehouseOrPurchasing) && !$request->boolean('user_only');
+
+        $bulan = $request->input('bulan'); // YYYY-MM (opsional)
+        $status = $request->input('status');
+        $search = trim((string) $request->input('search', ''));
+
+        $query = PengajuanBarang::with(['user', 'approver1', 'approver2', 'approver3', 'approver4'])
+            ->latest();
+
+        if (!$canAccessAll) {
+            $query->where('user_id', $user->id);
+        }
+
+        $periodText = $canAccessAll ? 'Semua Periode' : 'Pengajuan Saya';
+        if (!empty($bulan)) {
+            $year = (int) substr($bulan, 0, 4);
+            $month = (int) substr($bulan, 5, 2);
+            $query->whereYear('created_at', $year)->whereMonth('created_at', $month);
+            $periodText = Carbon::createFromDate($year, $month, 1)->locale('id')->isoFormat('MMMM YYYY');
+        }
+
+        if (!empty($status) && $status !== 'semua') {
+            $query->where('status', $status);
+        }
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('judul_pengajuan', 'like', "%{$search}%")
+                  ->orWhere('nomor_surat', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $items = $query->get();
+        $cleanPeriod = !empty($bulan) ? str_replace('-', '', $bulan) : Carbon::now()->format('Ymd');
+        $fileName = ($canAccessAll ? 'REKAP_SELURUH_SPB_' : 'REKAP_SPB_SAYA_') . $cleanPeriod . '.xlsx';
+
+        return Excel::download(new RekapPengajuanBarangExport($items, $periodText), $fileName);
     }
 
     /**
@@ -846,6 +949,7 @@ class WsSpbController extends Controller
             'status_appr_4' => $pengajuanBarang->status_appr_4 === 'menunggu' ? 'dibatalkan' : $pengajuanBarang->status_appr_4,
         ]);
 
+        Cache::put('spb_status_cache_version', time());
         return redirect()->back()->with('success', 'Pengajuan barang berhasil dibatalkan.');
     }
 
@@ -929,7 +1033,37 @@ class WsSpbController extends Controller
         }
 
         // Jika tombol "Tandai Selesai" diklik atau status monitoring diset Selesai
-        if ($request->filled('tandai_selesai') || in_array(strtolower($statusMonitoring), ['selesai', 'barang diterima', 'selesai / barang diterima'])) {
+        $stLower = strtolower(trim((string) $statusMonitoring));
+        $isFinished = $request->filled('tandai_selesai')
+            || in_array($stLower, [
+                'selesai', 'barang diterima', 'selesai / barang diterima',
+                'barang diterima & selesai', 'barang diterima dan selesai',
+                'selesai & barang diterima', 'barang sampai', 'barang sudah sampai', 'sampai'
+            ], true)
+            || str_contains($stLower, 'selesai')
+            || (str_contains($stLower, 'barang') && (str_contains($stLower, 'terima') || str_contains($stLower, 'sampai')));
+
+        // Periksa juga jika ada data_termin, apakah seluruh termin kini sudah berstatus selesai/diterima
+        if (!$isFinished && !empty($dataTermin)) {
+            $allDone = true;
+            foreach ($dataTermin as $term) {
+                $tSt = strtolower(trim((string) ($term['status_monitoring'] ?? '')));
+                $tDone = in_array($tSt, [
+                    'selesai', 'barang diterima', 'selesai / barang diterima',
+                    'barang diterima & selesai', 'barang diterima dan selesai',
+                    'selesai & barang diterima', 'barang sampai', 'barang sudah sampai', 'sampai'
+                ], true) || str_contains($tSt, 'selesai') || (str_contains($tSt, 'barang') && (str_contains($tSt, 'terima') || str_contains($tSt, 'sampai')));
+                if (!$tDone) {
+                    $allDone = false;
+                    break;
+                }
+            }
+            if ($allDone) {
+                $isFinished = true;
+            }
+        }
+
+        if ($isFinished) {
             $updateData['status'] = 'selesai';
             $updateData['status_monitoring'] = 'Selesai / Barang Diterima';
             $updateData['status_appr_4'] = 'selesai';
@@ -937,6 +1071,9 @@ class WsSpbController extends Controller
         }
 
         $pengajuan->update($updateData);
+
+        // Invalidate SPB status batch cache
+        Cache::put('spb_status_cache_version', time());
 
         // --- BLOK NOTIFIKASI ---
         if (isset($updateData['status']) && $updateData['status'] === 'selesai') {
@@ -1042,6 +1179,7 @@ class WsSpbController extends Controller
                 'riwayat_monitoring' => $riwayatGlobal,
             ]);
 
+            Cache::put('spb_status_cache_version', time());
             return redirect()->back()->with('success', 'Termin ' . $terminId . ' berhasil dibuat.');
         }
 
@@ -1095,6 +1233,7 @@ class WsSpbController extends Controller
         $pengajuan->data_termin = [$terminBaru];
         $pengajuan->save();
         
+        Cache::put('spb_status_cache_version', time());
         return redirect()->back()->with('success', 'Data lama berhasil dimigrasikan ke Termin 1. Silakan lanjutkan pelacakan termin.');
     }
 }

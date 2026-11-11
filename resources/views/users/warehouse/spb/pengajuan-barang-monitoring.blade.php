@@ -32,11 +32,7 @@
     <div class="flex flex-col flex-1 min-h-screen relative overflow-x-clip text-slate-800 pb-16">
         <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
-
-            <div class="w-full flex justify-start">
-                <x-ui.back-button href="{{ route('pengajuan_barang.index') }}" label="Back to Form SPB" />
-            </div>
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
 
             <div class="hidden md:block">
                 <x-ui.page-header title="Monitoring Seluruh Pengajuan" subtitle="Pantau status, detail, dan alur persetujuan seluruh permohonan barang di perusahaan." icon="fa-desktop" />
@@ -68,13 +64,19 @@
                             </div>
                         </div>
 
-                        {{-- Export Form --}}
-                        <form action="{{ route('pengajuan_barang.export_excel') }}" method="GET" class="m-0 flex items-center gap-2">
-                            <input type="month" name="bulan" class="ui-input ui-input--sm" style="width:auto" value="{{ request('bulan', date('Y-m')) }}" required title="Pilih Bulan Export">
-                            <button type="submit" class="ui-export ui-export--excel" title="Export Rekap PO Excel">
-                                <i class="fas fa-file-excel"></i> Export Excel
-                            </button>
-                        </form>
+                        {{-- Export Toolbar --}}
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a href="{{ route('pengajuan_barang.export_all_excel', request()->query()) }}" class="ui-export ui-export--excel" title="Export Rekap Seluruh Pengajuan Barang ke Excel">
+                                <i class="fas fa-file-excel"></i> Export Rekap Seluruh SPB
+                            </a>
+
+                            <form action="{{ route('pengajuan_barang.export_excel') }}" method="GET" class="m-0 flex items-center gap-2">
+                                <input type="month" name="bulan" class="ui-input ui-input--sm" style="width:auto" value="{{ request('bulan', date('Y-m')) }}" required title="Pilih Bulan Export Rekap PO">
+                                <button type="submit" class="ui-export" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;" title="Export Rekap Purchase Order (PO) Bulanan">
+                                    <i class="fas fa-calendar-alt text-slate-500"></i> Rekap PO Bulanan
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
                     {{-- Filter & Search --}}
@@ -140,9 +142,17 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4.5 text-center">
-                                        <a href="{{ route('pengajuan_barang.show', ['pengajuanBarang' => $pengajuan->id, 'from' => 'monitoring']) }}" class="inline-flex items-center gap-1 text-xs text-blue-600 font-black hover:underline bg-blue-50/70 border border-blue-100 px-3.5 py-2 rounded-xl transition hover:bg-blue-100 shadow-sm">
-                                            Detail <i class="fas fa-chevron-right text-[8px] ml-0.5"></i>
-                                        </a>
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <a href="{{ route('pengajuan_barang.download', $pengajuan) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition shadow-sm" title="Download Surat SPB (PDF)">
+                                                <i class="fas fa-file-pdf text-xs"></i>
+                                            </a>
+                                            <a href="{{ route('pengajuan_barang.export_single_excel', $pengajuan) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-sm" title="Download Excel SPB Ini">
+                                                <i class="fas fa-file-excel text-xs"></i>
+                                            </a>
+                                            <a href="{{ route('pengajuan_barang.show', ['pengajuanBarang' => $pengajuan->id, 'from' => 'monitoring']) }}" class="inline-flex items-center gap-1 text-xs text-blue-600 font-black hover:underline bg-blue-50/70 border border-blue-100 px-3 py-1.5 rounded-xl transition hover:bg-blue-100 shadow-sm">
+                                                Detail <i class="fas fa-chevron-right text-[8px] ml-0.5"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -195,9 +205,17 @@
                             </div>
                             <div class="flex justify-between items-center pt-3 border-t border-slate-100">
                                 <div class="text-[11px] text-slate-500 font-bold">Total: <span class="text-slate-800 text-xs font-black">{{ count($pengajuan->rincian_barang ?? []) }} item</span></div>
-                                <a href="{{ route('pengajuan_barang.show', ['pengajuanBarang' => $pengajuan->id, 'from' => 'monitoring']) }}" class="text-xs text-blue-600 font-bold hover:underline">
-                                    Detail <i class="fas fa-chevron-right text-[8px] ml-0.5"></i>
-                                </a>
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('pengajuan_barang.download', $pengajuan) }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded-lg hover:bg-red-100 transition" title="Download Surat SPB (PDF)">
+                                        <i class="fas fa-file-pdf"></i> PDF
+                                    </a>
+                                    <a href="{{ route('pengajuan_barang.export_single_excel', $pengajuan) }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg hover:bg-emerald-100 transition" title="Download Excel SPB Ini">
+                                        <i class="fas fa-file-excel"></i> Excel
+                                    </a>
+                                    <a href="{{ route('pengajuan_barang.show', ['pengajuanBarang' => $pengajuan->id, 'from' => 'monitoring']) }}" class="text-xs text-blue-600 font-bold hover:underline">
+                                        Detail <i class="fas fa-chevron-right text-[8px] ml-0.5"></i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     @empty

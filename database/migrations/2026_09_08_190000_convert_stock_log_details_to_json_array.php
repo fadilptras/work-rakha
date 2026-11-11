@@ -16,6 +16,15 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Idempoten: bila format JSON sudah dipakai (kolom items ada dan kolom
+        // per-produk lama sudah tidak ada), konversi sudah terjadi — lewati agar
+        // data tidak di-drop dan di-rebuild sia-sia.
+        if (Schema::hasColumn('stock_log_details', 'items')
+            && ! Schema::hasColumn('stock_log_details', 'product_id')
+            && ! Schema::hasColumn('stock_log_details', 'barang_id')) {
+            return;
+        }
+
         // Kumpulkan data lama lalu kelompokkan per stock_log_id (urutan id dipertahankan).
         $groups = DB::table('stock_log_details')
             ->orderBy('id')

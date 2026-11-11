@@ -3,12 +3,15 @@
     $isMobile = $agent->isMobile();
 
     $user = Auth::user();
+    $isSuperUser = $user && (method_exists($user, 'isSuperUser') ? $user->isSuperUser() : \App\Models\User::isSuperUserEmail($user->email ?? ''));
+    $isWarehouseOrPurchasing = in_array(strtolower($user->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang', 'purchasing', 'gudang', 'logistik'])
+        || \Illuminate\Support\Str::contains(strtolower($user->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing', 'purchasing']);
     $isApprover = \App\Models\User::where('approver_barang_1_id', $user->id)
         ->orWhere('approver_barang_2_id', $user->id)
         ->orWhere('approver_barang_3_id', $user->id)
         ->orWhere('approver_barang_4_id', $user->id)
         ->exists();
-    $canMonitor = $isApprover || $user->role === 'admin';
+    $canMonitor = $isApprover || $user->role === 'admin' || $isSuperUser || $isWarehouseOrPurchasing;
 
     // Back button: pakai asal halaman dari controller (?from=ops|dashboard), fallback role lama.
     $backRoute = $backRoute ?? null;
@@ -16,7 +19,7 @@
     if (!$backRoute || !$backText) {
         $isWarehouseUser = in_array(strtolower($user->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang'])
             || \Illuminate\Support\Str::contains(strtolower($user->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing']);
-        $backRoute = $backRoute ?: ($isWarehouseUser ? route('warehouse.dashboard') : route('dashboard'));
+        $backRoute = $backRoute ?: ($isWarehouseUser ? route('warehouse.index') : route('dashboard'));
         $backText = $backText ?: ($isWarehouseUser ? 'Back to Warehouse Dashboard' : 'Back to Dashboard');
     }
 @endphp
@@ -91,11 +94,7 @@
     <div class="flex flex-col flex-1 min-h-screen relative overflow-x-clip text-slate-800 pb-16">
         <div class="mesh-bg"></div>
 
-        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
-
-            <div class="w-full flex justify-start">
-                <x-ui.back-button id="spb-back-btn" :href="$backRoute" :label="$backText" />
-            </div>
+        <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-5 space-y-4 md:space-y-5 flex-1 flex flex-col items-stretch justify-start">
 
             @if ($errors->any())
                 <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm" role="alert">
@@ -133,6 +132,9 @@
                     <a href="{{ route('pengajuan_barang.history') }}" class="text-sm text-blue-600 font-bold hover:underline flex items-center justify-center gap-2 bg-blue-50 px-5 py-2.5 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-full">
                         <i class="fas fa-history"></i> Lihat Riwayat Pengajuan
                     </a>
+                    <a href="{{ $canMonitor ? route('pengajuan_barang.export_all_excel') : route('pengajuan_barang.export_all_excel', ['user_only' => 1]) }}" class="text-sm text-emerald-800 font-bold hover:underline flex items-center justify-center gap-2 bg-white px-5 py-2.5 rounded-full border border-emerald-300 transition-all hover:bg-emerald-50 shadow-sm w-full" title="Export Rekap SPB ke Excel">
+                        <i class="fas fa-file-excel text-emerald-600"></i> Export Rekap Excel
+                    </a>
                 </div>
                 @endif
 
@@ -152,7 +154,7 @@
                                 </div>
                             </div>
                             @if(!$isMobile)
-                            <div class="w-full flex justify-end gap-2 sm:w-auto">
+                            <div class="w-full flex flex-wrap justify-end items-center gap-2 sm:w-auto">
                                 @if($canMonitor)
                                 <a href="{{ route('pengajuan_barang.monitoring_all') }}" class="text-xs text-emerald-700 font-bold hover:underline flex items-center gap-1.5 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-200 transition-all hover:bg-emerald-100 shadow-sm w-fit">
                                     <i class="fas fa-desktop"></i> Monitoring Seluruh Pengajuan
@@ -160,6 +162,9 @@
                                 @endif
                                 <a href="{{ route('pengajuan_barang.history') }}" class="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 transition-all hover:bg-blue-100 shadow-sm w-fit">
                                     <i class="fas fa-history"></i> Lihat Riwayat Pengajuan
+                                </a>
+                                <a href="{{ $canMonitor ? route('pengajuan_barang.export_all_excel') : route('pengajuan_barang.export_all_excel', ['user_only' => 1]) }}" class="text-xs text-emerald-800 font-bold hover:underline flex items-center gap-1.5 bg-white px-4 py-2 rounded-full border border-emerald-300 transition-all hover:bg-emerald-50 shadow-sm w-fit" title="Download Rekap SPB ke Excel">
+                                    <i class="fas fa-file-excel text-emerald-600"></i> Export Rekap Excel
                                 </a>
                             </div>
                             @endif
@@ -383,7 +388,7 @@
                 var btn = document.getElementById('spb-back-btn');
                 if (!btn) return;
                 var opsUrl = @json(route('warehouse.index', ['tab' => 'produk']));
-                var dashUrl = @json(route('warehouse.dashboard'));
+                var dashUrl = @json(route('warehouse.index'));
                 var params = new URLSearchParams(window.location.search);
                 var from = (params.get('from') || '').toLowerCase();
                 var setBack = function (href, label) {
@@ -393,10 +398,10 @@
                     if (labelEl) labelEl.textContent = label;
                 };
                 if (from === 'ops') { setBack(opsUrl, 'Back to Warehouse Ops'); return; }
-                if (from === 'dashboard') { setBack(dashUrl, 'Back to Warehouse Dashboard'); return; }
+                if (from === 'dashboard' || from === 'warehouse' || from === 'ops') { btn.closest('.w-full.flex.justify-start')?.remove(); return; }
                 var ref = document.referrer || '';
                 if (ref.indexOf('/stock/warehouse') !== -1) { setBack(opsUrl, 'Back to Warehouse Ops'); }
-                else if (ref.indexOf('/gudang/dashboard') !== -1) { setBack(dashUrl, 'Back to Warehouse Dashboard'); }
+                else if (ref.indexOf('/gudang/dashboard') !== -1 || ref.indexOf('/stock/warehouse') !== -1) { btn.closest('.w-full.flex.justify-start')?.remove(); return; }
             } catch (e) {}
         })();
 

@@ -54,25 +54,35 @@ return new class extends Migration
         // Data riwayat lama tidak memiliki mapping kode -> kosongkan agar FK ke products valid.
         DB::statement('UPDATE daily_stock_histories SET product_id = NULL WHERE product_id IS NOT NULL AND product_id NOT IN (SELECT id FROM products)');
 
-        DB::statement('ALTER TABLE daily_stock_histories ADD CONSTRAINT daily_stock_histories_product_id_foreign FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE');
-        DB::statement('ALTER TABLE daily_stock_histories ADD UNIQUE KEY daily_stock_histories_product_id_tanggal_unique (product_id, tanggal)');
+        if (! $fkExists('daily_stock_histories', 'daily_stock_histories_product_id_foreign')) {
+            DB::statement('ALTER TABLE daily_stock_histories ADD CONSTRAINT daily_stock_histories_product_id_foreign FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE');
+        }
+        if (! $indexExists('daily_stock_histories', 'daily_stock_histories_product_id_tanggal_unique')) {
+            DB::statement('ALTER TABLE daily_stock_histories ADD UNIQUE KEY daily_stock_histories_product_id_tanggal_unique (product_id, tanggal)');
+        }
 
         // ================= stock_log_details =================
-        $fkSld = 'stock_log_details_barang_id_foreign';
+        // Catatan: skema akhir memakai format JSON (kolom items) tanpa barang_id/
+        // product_id — lewati seluruh bagian ini bila kedua kolom sudah tidak ada.
+        $sldCols = array_column(DB::select('SHOW COLUMNS FROM stock_log_details'), 'Field');
+        if (in_array('barang_id', $sldCols, true) || in_array('product_id', $sldCols, true)) {
+            $fkSld = 'stock_log_details_barang_id_foreign';
 
-        if ($fkExists('stock_log_details', $fkSld)) {
-            DB::statement("ALTER TABLE stock_log_details DROP FOREIGN KEY $fkSld");
+            if ($fkExists('stock_log_details', $fkSld)) {
+                DB::statement("ALTER TABLE stock_log_details DROP FOREIGN KEY $fkSld");
+            }
+
+            if (in_array('barang_id', $sldCols, true)) {
+                DB::statement('ALTER TABLE stock_log_details CHANGE COLUMN barang_id product_id BIGINT UNSIGNED NULL');
+            }
+
+            // Data riwayat lama tidak memiliki mapping kode -> kosongkan agar FK ke products valid.
+            DB::statement('UPDATE stock_log_details SET product_id = NULL WHERE product_id IS NOT NULL AND product_id NOT IN (SELECT id FROM products)');
+
+            if (! $fkExists('stock_log_details', 'stock_log_details_product_id_foreign')) {
+                DB::statement('ALTER TABLE stock_log_details ADD CONSTRAINT stock_log_details_product_id_foreign FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE');
+            }
         }
-
-        $cols = array_column(DB::select('SHOW COLUMNS FROM stock_log_details'), 'Field');
-        if (in_array('barang_id', $cols)) {
-            DB::statement('ALTER TABLE stock_log_details CHANGE COLUMN barang_id product_id BIGINT UNSIGNED NULL');
-        }
-
-        // Data riwayat lama tidak memiliki mapping kode -> kosongkan agar FK ke products valid.
-        DB::statement('UPDATE stock_log_details SET product_id = NULL WHERE product_id IS NOT NULL AND product_id NOT IN (SELECT id FROM products)');
-
-        DB::statement('ALTER TABLE stock_log_details ADD CONSTRAINT stock_log_details_product_id_foreign FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE');
     }
 
     public function down(): void

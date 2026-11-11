@@ -50,16 +50,39 @@
             overflow-x: auto !important;
             overflow-y: hidden !important;
         }
+    
+        /* == Pembatas tabel yang jelas (Grid / Bordered) == */
+        .table-bordered {
+            width: 100%;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+        .table-bordered th,
+        .table-bordered td {
+            border-right: 1px solid #cbd5e1 !important;
+            border-bottom: 1px solid #cbd5e1 !important;
+        }
+        .table-bordered th:last-child,
+        .table-bordered td:last-child {
+            border-right: none !important;
+        }
+        .table-bordered thead th {
+            border-bottom: 2px solid #94a3b8 !important;
+            background-color: #f1f5f9;
+        }
+        .table-bordered tbody tr:last-child td {
+            border-bottom: none !important;
+        }
+        .table-bordered tbody tr:hover td:not([class*="bg-"]) {
+            background-color: rgba(239, 246, 255, 0.65) !important;
+        }
     </style>
     @endpush
 
     <div class="flex flex-col flex-1 relative overflow-x-clip text-slate-800">
         <div class="mesh-bg"></div>
         <div class="relative z-10 w-full max-w-none mx-0 px-4 sm:px-6 lg:px-8 pt-3 pb-4 flex flex-col gap-3">
-
-            <div class="w-full flex justify-start">
-                <x-ui.back-button href="{{ route('warehouse.dashboard') }}" label="Back to Warehouse Dashboard" />
-            </div>
 
             <x-ui.page-header title="Delivery Notes" subtitle="Record outgoing goods + delivery note archive & PDF." icon="fa-truck" :sticky="false" class="!p-3 md:!px-4 md:!py-3">
                 <x-slot:controls>
@@ -80,8 +103,12 @@
                 <x-ui.glass-card class="border-t-4 border-t-red-400 text-sm text-slate-600">Akun Anda tidak memiliki akses input barang. Hubungi pengelola stok.</x-ui.glass-card>
             @else
             <x-ui.glass-card class="w-full border-t-4 border-t-blue-500 shadow-lg" style="border-radius:16px;padding:16px;">
-                <form action="{{ route('warehouse.mutation.store') }}" method="POST" id="pencatatan-form" data-clearable>
+                <form action="{{ $isEdit ? route('warehouse.mutation.doc.update', $editDoc) : route('warehouse.mutation.store') }}" method="POST" id="pencatatan-form" data-clearable>
                     @csrf
+                    @if($isEdit)
+                        @method('PUT')
+                        <input type="hidden" name="asal" value="{{ request('asal') }}">
+                    @endif
                     @if ($errors->any())
                         <div class="mb-2 bg-red-50 border border-red-200 text-red-700 p-2.5 rounded-xl text-xs" role="alert">
                             <p class="font-bold mb-0.5 flex items-center gap-2"><i class="fas fa-exclamation-circle"></i> Gagal menyimpan</p>
@@ -100,15 +127,15 @@
                     <div class="grid grid-cols-12 gap-2 items-end">
                         <div class="col-span-6 md:col-span-2">
                             <label class="ui-label">Tanggal Keluar <span class="text-red-500">*</span></label>
-                            <input type="date" lang="id-ID" name="tanggal" required value="{{ today()->toDateString() }}" max="{{ today()->toDateString() }}" class="ui-input-date" style="height:30px;font-size:12px;">
+                            <input type="date" lang="id-ID" name="tanggal" required value="{{ old('tanggal', $isEdit ? $editDoc->mutation_date?->toDateString() : today()->toDateString()) }}" max="{{ today()->toDateString() }}" class="ui-input-date" style="height:30px;font-size:12px;">
                         </div>
                         <div class="col-span-6 md:col-span-2">
-                            <label class="ui-label">No. SJ</label>
-                            <input type="text" value="{{ $sjPreviewNo ?? '' }}" readonly tabindex="-1" title="Nomor otomatis saat disimpan" class="ui-input ui-input--sm !bg-slate-100 !text-slate-500 cursor-not-allowed">
+                            <label class="ui-label">No. SJ <span class="text-slate-400 font-normal">(Opsional)</span></label>
+                            <input type="text" name="{{ $isEdit ? 'doc_no' : '' }}" value="{{ old('doc_no', $sjPreviewNo ?? '') }}" {{ $isEdit ? '' : 'readonly tabindex=-1' }} title="{{ $isEdit ? 'Nomor dokumen bisa diubah' : 'Nomor otomatis saat disimpan' }}" class="ui-input ui-input--sm {{ $isEdit ? '' : '!bg-slate-100 !text-slate-500 cursor-not-allowed' }}">
                         </div>
                         <div class="col-span-6 md:col-span-2">
                             <label class="ui-label">Keterangan <span class="text-red-500">*</span></label>
-                            <input list="purpose-options" name="purpose" id="purpose-select" required maxlength="50" placeholder="pilih / ketik sendiri…" class="ui-input ui-input--sm" autocomplete="off">
+                            <input list="purpose-options" name="purpose" id="purpose-select" required maxlength="50" value="{{ old('purpose', $isEdit ? $editDoc->purpose : '') }}" placeholder="Pilih / Ketik Keterangan (Penjualan / Sample / Retur Barang)" class="ui-input ui-input--sm !bg-white" autocomplete="off">
                             <datalist id="purpose-options">
                                 @foreach($purposes as $p)
                                     <option value="{{ $p }}"></option>
@@ -116,31 +143,45 @@
                             </datalist>
                         </div>
                         <div class="col-span-12 md:col-span-3" id="partner-wrap">
-                            <label class="ui-label" id="partner-label">Customer <span class="text-red-500">*</span></label>
-                            <select name="customer_id" id="partner-select" required class="ui-input ui-input--sm !bg-white">
-                                <option value="">— pilih customer —</option>
-                                @foreach($customers as $c)
-                                    <option value="{{ $c->id }}" data-addr="{{ $customerAddressMap[$c->id] ?? '' }}">{{ $c->customer_name }}</option>
-                                @endforeach
-                            </select>
+                            <label class="ui-label" id="partner-label">Customer <span class="text-slate-400 font-normal">(Opsional)</span></label>
+                            <div class="relative">
+                                <input type="text" name="partner_name" id="partner-type" autocomplete="off" spellcheck="false" value="{{ old('partner_name', $isEdit ? ($editDoc->customer?->customer_name ?? $editDoc->supplier?->supplier_name ?? '') : '') }}" placeholder="Ketik Nama Customer (Opsional / Lain-lain)" class="ui-input ui-input--sm !bg-white">
+                                <select name="customer_id" id="partner-select" class="hidden" tabindex="-1" aria-hidden="true">
+                                    <option value="">— Pilih Customer —</option>
+                                    @foreach($customers as $c)
+                                        <option value="{{ $c->id }}" data-addr="{{ $customerAddressMap[$c->id] ?? '' }}" @selected($isEdit && (int) $editDoc->customer_id === (int) $c->id)>{{ $c->customer_name }}</option>
+                                    @endforeach
+                                </select>
+                                <div id="partner-suggestions" class="hidden absolute left-0 right-0 z-40 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto divide-y divide-slate-100"></div>
+                            </div>
                             <select id="supplier-src" class="hidden" aria-hidden="true" tabindex="-1">
-                                <option value="">— pilih supplier —</option>
+                                <option value="">— Pilih Supplier —</option>
                                 @foreach($suppliers as $s)
-                                    <option value="{{ $s->id }}" data-addr="{{ $supplierAddressMap[$s->id] ?? '' }}">{{ $s->supplier_name }}</option>
+                                    <option value="{{ $s->id }}" data-addr="{{ $supplierAddressMap[$s->id] ?? '' }}" @selected($isEdit && (int) $editDoc->supplier_id === (int) $s->id)>{{ $s->supplier_name }}</option>
                                 @endforeach
                             </select>
+                            <div id="partner-none" class="hidden">
+                                <label class="ui-label">Nama PS <span class="text-red-500">*</span></label>
+                                <select name="ps_name" id="ps-select" class="ui-input ui-input--sm !bg-white">
+                                    <option value="">— Pilih Nama PS —</option>
+                                    @foreach($psList ?? [] as $ps)
+                                        <option value="{{ $ps }}" @selected($isEdit && ($editPsName ?? '') === $ps)>{{ $ps }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <p class="text-[10px] text-slate-400 font-medium mt-0.5">Opsional — boleh dikosongkan. Nama baru otomatis disimpan ke master.</p>
                         </div>
                         <div class="col-span-12 md:col-span-3">
-                            <label class="ui-label">No. PO / Referensi</label>
-                            <input type="text" name="po_no" maxlength="100" placeholder="No. PO / referensi (opsional)" class="ui-input ui-input--sm" autocomplete="off">
+                            <label class="ui-label">No. PO / Referensi <span class="text-slate-400 font-normal">(Opsional)</span></label>
+                            <input type="text" name="po_no" maxlength="100" value="{{ old('po_no', $isEdit ? $editDoc->po_no : '') }}" placeholder="Contoh: PO-REF-001 (Opsional)" class="ui-input ui-input--sm" autocomplete="off">
                         </div>
                     </div>
 
                     {{-- Baris 2: Ekspedisi + Alamat Kirim dalam 1 baris --}}
                     <div class="mt-2 sj-exp-addr">
                         <div style="min-width:0;">
-                            <label class="ui-label">Ekspedisi</label>
-                            <input list="expedition-options" name="expedition" maxlength="100" placeholder="cth. JNE / GoSend (opsional)" class="ui-input ui-input--sm" autocomplete="off">
+                            <label class="ui-label">Ekspedisi <span class="text-slate-400 font-normal">(Opsional)</span></label>
+                            <input list="expedition-options" name="expedition" maxlength="100" value="{{ old('expedition', $isEdit ? $editDoc->expedition : '') }}" placeholder="Contoh: JNE / GoSend (Opsional)" class="ui-input ui-input--sm" autocomplete="off">
                             <datalist id="expedition-options">
                                 @foreach($expeditions as $e)
                                     <option value="{{ $e }}"></option>
@@ -148,9 +189,9 @@
                             </datalist>
                         </div>
                         <div style="min-width:0;">
-                            <label class="ui-label">Alamat Kirim</label>
+                            <label class="ui-label">Alamat Kirim <span class="text-slate-400 font-normal">(Opsional)</span></label>
                             <div class="relative">
-                                <input type="text" name="ship_address" id="ship-address" maxlength="2000" placeholder="otomatis dari master, bisa diubah…" class="ui-input ui-input--sm" autocomplete="off">
+                                <input type="text" name="ship_address" id="ship-address" maxlength="2000" value="{{ old('ship_address', $isEdit ? $editDoc->ship_address : '') }}" placeholder="Contoh: Jl. Sudirman No. 1, Jakarta (Dapat Disesuaikan)" class="ui-input ui-input--sm" autocomplete="off">
                                 <p id="addr-warn" class="hidden absolute left-0 z-10 text-[10px] text-amber-600 font-bold mt-0.5" style="top:100%"><i class="fas fa-exclamation-triangle mr-1"></i>Master belum punya alamat — ketik manual atau lengkapi di master.</p>
                             </div>
                         </div>
@@ -167,7 +208,7 @@
                         <div class="relative mt-2">
                             <div class="relative">
                                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-blue-300 text-xs pointer-events-none"></i>
-                                <input type="text" id="product-search" placeholder="Cari barang (nama / kode) — klik hasil untuk isi Qty, Batch & Exp…" title="Ketik nama / kode barang, lalu klik hasilnya untuk isi Qty, Batch & Exp lewat popup." class="ui-search !bg-white hover:!bg-white !text-slate-700" style="height:32px;padding-left:36px;" autocomplete="off">
+                                <input type="text" id="product-search" placeholder="Cari Nama atau Kode Barang (Klik Hasil Untuk Memilih)..." title="Ketik nama atau kode barang, lalu klik hasilnya untuk mengisi Qty, Batch & Exp lewat popup." class="ui-search !bg-white hover:!bg-white !text-slate-700" style="height:32px;padding-left:36px;" autocomplete="off">
                             </div>
                             <div id="product-search-results" class="hidden absolute left-0 right-0 z-30 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-64 overflow-y-auto divide-y divide-slate-100"></div>
                         </div>
@@ -175,7 +216,7 @@
                         {{-- Hanya tabel ini yang scroll (tinggi dibatasi .sj-items-wrap) --}}
                         <div class="mt-2 border border-slate-200 rounded-xl bg-white" style="overflow:hidden;">
                             <div class="sj-items-wrap">
-                                <table class="w-full text-xs" style="min-width:760px;">
+                                <table class="w-full text-xs table-bordered" style="min-width:880px;">
                                     <thead>
                                         <tr class="bg-slate-50/80 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
                                             <th class="px-3 py-2 text-center w-12 font-bold">No</th>
@@ -185,6 +226,7 @@
                                             <th class="px-3 py-2 text-center w-20 font-bold">Satuan</th>
                                             <th class="px-3 py-2 text-left w-32 font-bold">No. Batch</th>
                                             <th class="px-3 py-2 text-center w-32 font-bold">Tgl Exp</th>
+                                            <th class="px-3 py-2 text-left w-40 font-bold">Keterangan</th>
                                             <th class="px-3 py-2 text-center w-24 font-bold">Aksi</th>
                                         </tr>
                                     </thead>
@@ -206,7 +248,7 @@
                                     <span class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm"><i class="fas fa-box text-xs"></i></span>
                                     <div class="min-w-0">
                                         <h5 id="modal-title" class="font-bold text-sm text-slate-800 leading-tight">Tambah Barang</h5>
-                                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">Isi Qty & Batch, lalu simpan ke tabel.</p>
+                                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">Isi Jumlah Qty, No. Batch & Tgl Expired, lalu simpan ke tabel.</p>
                                     </div>
                                 </div>
                                 <button type="button" data-modal-close class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors shrink-0" title="Tutup"><i class="fas fa-times text-xs"></i></button>
@@ -239,15 +281,16 @@
                                 </div>
                                 <div class="grid grid-cols-2 gap-2.5">
                                     <div>
-                                        <label class="ui-label">No. Batch</label>
-                                        <input type="text" id="m-batch" list="m-batch-list" maxlength="100" placeholder="opsional" class="ui-input ui-input--sm !bg-white !text-slate-800" autocomplete="off">
+                                        <label class="ui-label">No. Batch <span class="text-slate-400 font-normal">(Opsional)</span></label>
+                                        <input type="text" id="m-batch" list="m-batch-list" maxlength="100" placeholder="Contoh: B-2026-001 (Opsional)" class="ui-input ui-input--sm !bg-white !text-slate-800" autocomplete="off">
                                         <datalist id="m-batch-list"></datalist>
                                     </div>
                                     <div>
-                                        <label class="ui-label">Tgl Expired</label>
+                                        <label class="ui-label">Tgl Expired <span class="text-slate-400 font-normal">(Opsional)</span></label>
                                          <input type="date" lang="id-ID" id="m-exp" class="ui-input ui-input--sm !bg-white !text-slate-800">
                                     </div>
                                 </div>
+
                                 <p id="m-error" class="hidden text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5"></p>
                             </div>
                             <div class="px-5 py-3.5 bg-slate-50/80 border-t border-slate-100 flex gap-2 justify-end shrink-0">
@@ -259,7 +302,7 @@
 
                     <div class="mt-3 pt-3 border-t border-slate-100 flex justify-end">
                         <button type="submit" id="simpan-mutasi-btn" class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all w-full sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed" style="height:34px;">
-                            <i class="fas fa-save text-[11px]"></i> Buat Surat Jalan
+                            <i class="fas fa-save text-[11px]"></i> {{ $isEdit ? 'Simpan Perubahan' : 'Buat Surat Jalan' }}
                         </button>
                     </div>
                 </form>
@@ -272,8 +315,8 @@
                     @if(request('tab'))<input type="hidden" name="tab" value="{{ request('tab') }}">@endif
                     <div class="grid grid-cols-2 lg:grid-cols-12 gap-2 md:gap-3 items-end">
                         <div class="lg:col-span-3 col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cari SJ / customer / supplier</label>
-                            <x-ui.search-input name="search" placeholder="cth. SJ-001 / RSUD / PT…" value="{{ request('search') }}" autocomplete="off" class="w-full" />
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cari No. SJ / Customer / Supplier</label>
+                            <x-ui.search-input name="search" placeholder="Contoh: SJ-2026-001 / RSUD / PT..." value="{{ request('search') }}" autocomplete="off" class="w-full" />
                         </div>
                         <div class="lg:col-span-2 col-span-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tgl Mulai</label>
@@ -286,11 +329,11 @@
                         <div class="lg:col-span-3 col-span-2">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Customer</label>
                             <select name="customer_id" onchange="this.form.submit()" class="ui-input ui-input--sm !bg-white w-full">
-                                <option value="">Semua</option>
+                                <option value="">Semua Customer</option>
                                 @foreach($customers as $c)
                                     <option value="{{ $c->id }}" {{ (string) request('customer_id') === (string) $c->id ? 'selected' : '' }}>{{ $c->customer_name }}</option>
                                 @endforeach
-                                <option value="__other" {{ request('customer_id') === '__other' ? 'selected' : '' }}>Bukan customer</option>
+                                <option value="__other" {{ request('customer_id') === '__other' ? 'selected' : '' }}>Bukan Customer</option>
                             </select>
                         </div>
                         <div class="lg:col-span-2 col-span-2 flex flex-row gap-2 items-end">
@@ -303,7 +346,7 @@
                 </form>
 
                 <div class="flex-1 bg-white manage-table-scroll">
-                    <table class="w-full text-sm text-left text-slate-600 bg-white">
+                    <table class="w-full text-sm text-left text-slate-600 bg-white table-bordered">
                         <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200 font-bold tracking-wider">
                             <tr>
                                 <th class="px-4 py-4 w-12 text-center">No</th>
@@ -352,9 +395,16 @@
                                     </td>
                                     <td class="px-4 py-3 text-xs text-slate-600 font-semibold whitespace-nowrap">{{ $d->creator?->name ?? '-' }}</td>
                                     <td class="px-4 py-3 text-center">
-                                        <a href="{{ route('warehouse.sj.print', $d->id) }}" class="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 h-[30px] px-3 rounded-lg text-[11px] font-bold transition-colors whitespace-nowrap" title="Cetak / unduh PDF surat jalan">
-                                            <i class="fas fa-print text-[10px]"></i> PDF
-                                        </a>
+                                        <div class="inline-flex items-center gap-1.5">
+                                            @if($canManage)
+                                            <a href="{{ route('warehouse.mutation.doc.edit', $d->id) }}" class="inline-flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 h-[30px] px-3 rounded-lg text-[11px] font-bold transition-colors whitespace-nowrap" title="Edit dokumen">
+                                                <i class="fas fa-pen text-[10px]"></i> Edit
+                                            </a>
+                                            @endif
+                                            <a href="{{ route('warehouse.sj.print', $d->id) }}" class="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 h-[30px] px-3 rounded-lg text-[11px] font-bold transition-colors whitespace-nowrap" title="Cetak / unduh PDF surat jalan">
+                                                <i class="fas fa-print text-[10px]"></i> PDF
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -392,6 +442,8 @@
         const TAB_ARAH = 'keluar';
         const DRAFT_KEY = 'pencatatan_draft_v3_' + TAB_ARAH;
         const BATCH_URL = '{{ route("warehouse.mutation.batches") }}';
+        const IS_EDIT = {{ $isEdit ? 'true' : 'false' }};
+        const EDIT_LINES = {!! $isEdit ? json_encode($editLines) : '[]' !!};
         let isRestoring = false, isSubmitting = false;
         let editingRow = null;
         let modalBatches = [];
@@ -412,7 +464,7 @@
         }
 
         function saveDraft() {
-            if (!form || isRestoring) return;
+            if (!form || isRestoring || IS_EDIT) return;
             const rows = [];
             container.querySelectorAll('.row-barang').forEach(row => {
                 rows.push({
@@ -420,13 +472,13 @@
                     qty: row.querySelector('.input-qty')?.value || '',
                     batch_no: row.querySelector('.input-batch')?.value || '',
                     expiry_date: row.querySelector('.input-ed')?.value || '',
-                    keterangan: '',
+                    keterangan: row.querySelector('.input-note')?.value || '',
                 });
             });
-            const partnerSel = form.querySelector('#partner-select');
             localStorage.setItem(DRAFT_KEY, JSON.stringify({
                 tanggal: form.querySelector('input[name="tanggal"]')?.value || '',
                 doc_no: form.querySelector('input[name="doc_no"]')?.value || '',
+                partner_name: form.querySelector('#partner-type')?.value || '',
                 customer_id: form.querySelector('select[name="customer_id"]')?.value || '',
                 supplier_id: form.querySelector('select[name="supplier_id"]')?.value || '',
                 po_no: form.querySelector('input[name="po_no"]')?.value || '',
@@ -446,6 +498,10 @@
         const addrWarn = document.getElementById('addr-warn');
         const customerOptsHTML = partnerSel ? partnerSel.innerHTML : '';
         const supplierSrc = document.getElementById('supplier-src');
+        const partnerType = document.getElementById('partner-type');
+        const partySuggestBox = document.getElementById('partner-suggestions');
+        const psWrap = document.getElementById('partner-none');
+        const psSel = document.getElementById('ps-select');
 
         function fillAddress() {
             if (!partnerSel || !shipInput || partnerSel.disabled) return;
@@ -456,35 +512,140 @@
                 if (addrWarn) addrWarn.classList.add('hidden');
             } else if (partnerSel.value) {
                 if (addrWarn) addrWarn.classList.remove('hidden');
-            } else {
-                shipInput.value = '';
-                if (addrWarn) addrWarn.classList.add('hidden');
+            } else if (addrWarn) {
+                addrWarn.classList.add('hidden');
             }
         }
 
+        function partyOptions() {
+            return partnerSel ? Array.from(partnerSel.options).filter(o => o.value !== '') : [];
+        }
+
+        function hidePartySuggestions() {
+            if (partySuggestBox) partySuggestBox.classList.add('hidden');
+        }
+
+        function renderPartySuggestions(keyword = '') {
+            if (!partySuggestBox || !partnerSel) return;
+            const kw = String(keyword || '').trim().toLowerCase();
+            const list = partyOptions()
+                .filter(o => !kw || o.textContent.trim().toLowerCase().includes(kw))
+                .slice(0, 20);
+            if (!list.length) {
+                partySuggestBox.innerHTML = '<div class="px-3 py-2.5 text-[11px] text-slate-400 font-semibold">Tidak ada hasil — nama baru akan disimpan otomatis.</div>';
+            } else {
+                partySuggestBox.innerHTML = list.map(o =>
+                    '<button type="button" data-value="' + esc(o.value) + '" class="w-full text-left px-3 py-2 hover:bg-blue-50/70 transition-colors">' +
+                    '<span class="block text-xs font-bold text-slate-800 truncate">' + esc(o.textContent.trim()) + '</span>' +
+                    (o.dataset.addr ? '<span class="block text-[10px] text-slate-400 truncate mt-0.5">' + esc(o.dataset.addr) + '</span>' : '') +
+                    '</button>'
+                ).join('');
+            }
+            partySuggestBox.classList.remove('hidden');
+        }
+
+        function chooseParty(value) {
+            const opt = partyOptions().find(o => o.value === String(value));
+            if (!opt) return;
+            if (partnerSel) partnerSel.value = opt.value;
+            if (partnerType) partnerType.value = opt.textContent.trim();
+            hidePartySuggestions();
+            fillAddress();
+            recalc();
+        }
+
+        function syncTypeToSelect() {
+            if (!partnerType || !partnerSel) return;
+            const typed = (partnerType.value || '').trim().toLowerCase();
+            let match = '';
+            // Hanya cocokkan jika namanya persis sama (agar tidak membajak input nama baru)
+            partyOptions().forEach(o => {
+                if (o.textContent.trim().toLowerCase() === typed) match = o.value;
+            });
+            if (partnerSel.value !== match) partnerSel.value = match;
+            fillAddress();
+            recalc();
+        }
+
+        let lastPartyMode = null;
         function applyPurpose() {
             if (!purposeSel || !partnerSel) return;
-            const v = purposeSel.value;
-            if (v === 'Retur Supplier' && supplierSrc) {
+            const v = (purposeSel.value || '').trim();
+            const lower = v.toLowerCase();
+            const isReturn = (lower === 'retur barang' || lower === 'return barang' || lower === 'retur' || lower === 'return' || lower === 'retur supplier');
+            const partyMode = isReturn ? 'supplier' : 'customer';
+            const modeChanged = lastPartyMode !== null && lastPartyMode !== partyMode;
+            lastPartyMode = partyMode;
+            if (isReturn && supplierSrc) {
                 partnerSel.name = 'supplier_id';
                 partnerSel.innerHTML = supplierSrc.innerHTML;
-                if (partnerLabel) partnerLabel.innerHTML = 'Supplier <span class="text-red-500">*</span>';
+                if (partnerLabel) partnerLabel.innerHTML = 'Supplier <span class="text-slate-400 font-normal">(Opsional)</span>';
             } else {
                 partnerSel.name = 'customer_id';
                 partnerSel.innerHTML = customerOptsHTML;
-                if (partnerLabel) partnerLabel.innerHTML = 'Customer <span class="text-red-500">*</span>';
+                if (partnerLabel) partnerLabel.innerHTML = 'Customer <span class="text-slate-400 font-normal">(Opsional)</span>';
             }
-            const isInternal = v === 'Internal';
-            // Internal = tanpa pihak: seluruh kolom partner disembunyikan (tanpa pengganti)
+            if (modeChanged) {
+                partnerSel.value = '';
+                if (partnerType) partnerType.value = '';
+            }
+            const isInternal = lower === 'internal';
+            const isSample = (lower === 'sample' || lower === 'saple' || lower === 'sampel');
             if (partnerWrap) partnerWrap.classList.toggle('hidden', isInternal);
-            partnerSel.disabled = isInternal;
-            partnerSel.required = !isInternal;
+            if (partnerSel) {
+                partnerSel.classList.add('hidden');
+                partnerSel.disabled = isInternal || isSample;
+                partnerSel.required = false;
+                if (isSample || isInternal) partnerSel.value = '';
+            }
+            if (partnerType) {
+                partnerType.classList.toggle('hidden', isSample);
+                partnerType.disabled = isInternal || isSample;
+                if (isInternal || isSample) partnerType.value = '';
+            }
+            hidePartySuggestions();
+            if (partnerLabel) partnerLabel.classList.toggle('hidden', isSample);
+            if (psWrap) psWrap.classList.toggle('hidden', !isSample || isInternal);
+            if (psSel) {
+                psSel.required = isSample && !isInternal;
+                if (!isSample) psSel.value = '';
+            }
             if (isInternal && shipInput) { shipInput.value = ''; }
-            if (addrWarn && (isInternal || !partnerSel.value)) addrWarn.classList.add('hidden');
+            if (addrWarn && (isInternal || isSample || !partnerSel.value)) addrWarn.classList.add('hidden');
         }
 
-        if (purposeSel) purposeSel.addEventListener('change', () => { applyPurpose(); recalc(); });
+        if (purposeSel) {
+            purposeSel.addEventListener('input', () => { applyPurpose(); recalc(); });
+            purposeSel.addEventListener('change', () => { applyPurpose(); recalc(); });
+        }
         if (partnerSel) partnerSel.addEventListener('change', () => { fillAddress(); recalc(); });
+        if (partnerType) {
+            partnerType.addEventListener('input', () => {
+                syncTypeToSelect();
+                renderPartySuggestions(partnerType.value);
+            });
+            partnerType.addEventListener('focus', () => renderPartySuggestions(partnerType.value));
+            partnerType.addEventListener('change', () => { syncTypeToSelect(); hidePartySuggestions(); });
+            partnerType.addEventListener('keydown', e => {
+                if (e.key === 'Escape') { hidePartySuggestions(); return; }
+                if (e.key === 'Enter' && partySuggestBox && !partySuggestBox.classList.contains('hidden')) {
+                    const first = partySuggestBox.querySelector('[data-value]');
+                    if (first) { e.preventDefault(); chooseParty(first.dataset.value); }
+                }
+            });
+        }
+        if (partySuggestBox) {
+            partySuggestBox.addEventListener('click', e => {
+                const btn = e.target.closest('[data-value]');
+                if (btn) chooseParty(btn.dataset.value);
+            });
+        }
+        document.addEventListener('click', e => {
+            if (partySuggestBox && !partySuggestBox.classList.contains('hidden') &&
+                !partySuggestBox.contains(e.target) && e.target !== partnerType) {
+                hidePartySuggestions();
+            }
+        });
 
         // ---- Search barang ----
         const searchInput = document.getElementById('product-search');
@@ -545,16 +706,22 @@
         const mBatchList = document.getElementById('m-batch-list');
         const mBatchInfo = document.getElementById('m-batch-info');
         const mExp = document.getElementById('m-exp');
+        const mNote = document.getElementById('m-note');
         const mStok = document.getElementById('m-stok-info');
         const mErr = document.getElementById('m-error');
         const mSave = document.getElementById('m-save');
         const mTitle = document.getElementById('modal-title');
 
-        function showErr(msg) {
+        function showErr(msg, targetEl = null) {
+            if (mQty) mQty.classList.remove('!border-red-500', '!ring-2', '!ring-red-200');
             if (!mErr) return;
             if (!msg) { mErr.classList.add('hidden'); mErr.innerHTML = ''; return; }
             mErr.innerHTML = '<i class="fas fa-exclamation-circle mr-1.5"></i>' + esc(msg);
             mErr.classList.remove('hidden');
+            if (targetEl) {
+                targetEl.classList.add('!border-red-500', '!ring-2', '!ring-red-200');
+                try { targetEl.focus(); } catch (e) {}
+            }
         }
 
         function stokPill(txt, tone) {
@@ -629,10 +796,12 @@
                 if (mQty) mQty.value = row.querySelector('.input-qty')?.value || '';
                 if (mBatch) mBatch.value = row.querySelector('.input-batch')?.value || '';
                 if (mExp) mExp.value = row.querySelector('.input-ed')?.value || '';
+                if (mNote) mNote.value = row.querySelector('.input-note')?.value || '';
             } else {
                 if (mQty) mQty.value = '';
                 if (mBatch) mBatch.value = '';
                 if (mExp) mExp.value = '';
+                if (mNote) mNote.value = '';
             }
             showErr('');
             refreshModalStock();
@@ -673,7 +842,17 @@
                 });
             });
         }
-        if (mQty) { mQty.addEventListener('input', refreshModalStock); mQty.addEventListener('change', refreshModalStock); }
+        if (mQty) {
+            mQty.addEventListener('input', () => {
+                mQty.classList.remove('!border-red-500', '!ring-2', '!ring-red-200');
+                showErr('');
+                refreshModalStock();
+            });
+            mQty.addEventListener('change', () => {
+                mQty.classList.remove('!border-red-500', '!ring-2', '!ring-red-200');
+                refreshModalStock();
+            });
+        }
         if (mBatch) {
             mBatch.addEventListener('input', () => {
                 refreshModalBatchInfo();
@@ -708,6 +887,8 @@
                 '<input type="hidden" name="batch_no[]" class="input-batch"></td>' +
                 '<td class="px-4 py-3 text-center text-slate-500 cell-exp"><span class="exp-txt"></span>' +
                 '<input type="hidden" name="expiry_date[]" class="input-ed"></td>' +
+                '<td class="px-4 py-3 text-slate-500 text-[11px] cell-note"><span class="note-txt"></span>' +
+                '<input type="hidden" name="keterangan[]" class="input-note"></td>' +
                 '<td class="px-4 py-3 text-center whitespace-nowrap">' +
                 '<button type="button" title="Ubah" class="btn-edit inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 h-[26px] rounded-lg transition-colors mr-1"><i class="fas fa-pen text-[10px]"></i></button>' +
                 '<button type="button" title="Hapus" class="btn-remove inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-2 h-[26px] rounded-lg transition-colors"><i class="fas fa-trash-alt text-[10px]"></i></button></td>';
@@ -722,6 +903,8 @@
             tr.querySelector('.input-batch').value = data.batch_no || '';
             tr.querySelector('.exp-txt').textContent = data.expiry_date || '—';
             tr.querySelector('.input-ed').value = data.expiry_date || '';
+            tr.querySelector('.note-txt').textContent = data.keterangan || '—';
+            tr.querySelector('.input-note').value = data.keterangan || '';
             tr.querySelector('.btn-remove').addEventListener('click', () => { tr.remove(); renumber(); recalc(); });
             tr.querySelector('.btn-edit').addEventListener('click', () => openModal(p.id, tr));
             container.appendChild(tr);
@@ -734,35 +917,84 @@
                 qty: (mQty?.value || '').trim(),
                 batch_no: (mBatch?.value || '').trim(),
                 expiry_date: mExp?.value || '',
+                keterangan: (mNote?.value || '').trim(),
             };
         }
 
+        let isModalSaving = false;
         if (mSave) {
             mSave.addEventListener('click', () => {
-                const d = collectModalData();
-                const p = productOptions.find(x => String(x.id) === String(d.product_id));
-                if (!p) { showErr('Barang tidak valid — tutup lalu pilih ulang dari pencarian.'); return; }
-                const qtyNum = parseFloat(d.qty);
-                if (!d.qty || !(qtyNum > 0)) { showErr('Qty wajib diisi dan lebih dari 0.'); mQty?.focus(); return; }
-                if (TAB_ARAH !== 'masuk') {
-                    const sisa = parseFloat(p.stok) || 0;
-                    if (qtyNum > sisa) { showErr('Qty melebihi sisa stok (' + fmt(sisa) + '). Kurangi qty atau pilih barang lain.'); mQty?.focus(); return; }
+                if (isModalSaving) return;
+                isModalSaving = true;
+                try {
+                    const d = collectModalData();
+                    const p = productOptions.find(x => String(x.id) === String(d.product_id));
+                    if (!p) { showErr('Barang tidak valid — tutup lalu pilih ulang dari pencarian.'); return; }
+                    const qtyNum = parseFloat(d.qty);
+                    if (!d.qty || isNaN(qtyNum) || qtyNum <= 0) {
+                        showErr('Jumlah Qty wajib diisi angka lebih dari 0.', mQty);
+                        mQty?.focus();
+                        return;
+                    }
+                    if (TAB_ARAH !== 'masuk' && !IS_EDIT) {
+                        const sisa = parseFloat(p.stok) || 0;
+                        if (qtyNum > sisa) {
+                            showErr('Qty (' + qtyNum + ') melebihi sisa stok (' + fmt(sisa) + '). Kurangi qty atau pilih barang lain.', mQty);
+                            mQty?.focus();
+                            return;
+                        }
+                    }
+                    showErr('');
+                    if (editingRow) {
+                        // update baris yang sedang diubah
+                        editingRow.querySelector('.input-qty').value = d.qty;
+                        editingRow.querySelector('.qty-txt').textContent = d.qty;
+                        editingRow.querySelector('.input-batch').value = d.batch_no;
+                        editingRow.querySelector('.batch-txt').textContent = d.batch_no || '-';
+                        editingRow.querySelector('.input-ed').value = d.expiry_date;
+                        editingRow.querySelector('.exp-txt').textContent = d.expiry_date || '—';
+                        editingRow.querySelector('.input-note').value = d.keterangan;
+                        editingRow.querySelector('.note-txt').textContent = d.keterangan || '—';
+                        recalc();
+                    } else {
+                        // Cek apakah barang dengan batch yang sama persis sudah ada di tabel (mencegah baris ganda)
+                        const existingRow = Array.from(container.querySelectorAll('.row-barang')).find(tr => {
+                            const rPid = tr.querySelector('.input-barang')?.value;
+                            const rBatch = (tr.querySelector('.input-batch')?.value || '').trim();
+                            return String(rPid) === String(d.product_id) && rBatch.toLowerCase() === d.batch_no.toLowerCase();
+                        });
+
+                        if (existingRow) {
+                            const oldQty = parseFloat(existingRow.querySelector('.input-qty')?.value || 0);
+                            const mergedQty = Math.round((oldQty + qtyNum) * 100) / 100;
+                            if (TAB_ARAH !== 'masuk' && !IS_EDIT) {
+                                const sisa = parseFloat(p.stok) || 0;
+                                if (mergedQty > sisa) {
+                                    showErr('Barang ini sudah ada di tabel (Qty: ' + oldQty + '). Total jika digabung (' + mergedQty + ') melebihi stok (' + fmt(sisa) + ').');
+                                    mQty?.focus();
+                                    return;
+                                }
+                            }
+                            existingRow.querySelector('.input-qty').value = mergedQty;
+                            existingRow.querySelector('.qty-txt').textContent = mergedQty;
+                            if (d.expiry_date) {
+                                existingRow.querySelector('.input-ed').value = d.expiry_date;
+                                existingRow.querySelector('.exp-txt').textContent = d.expiry_date || '—';
+                            }
+                            if (d.keterangan && existingRow.querySelector('.input-note')) {
+                                existingRow.querySelector('.input-note').value = d.keterangan;
+                                existingRow.querySelector('.note-txt').textContent = d.keterangan || '—';
+                            }
+                            recalc();
+                        } else {
+                            addRow(d);
+                        }
+                    }
+                    closeModal();
+                    searchInput?.focus();
+                } finally {
+                    setTimeout(() => { isModalSaving = false; }, 300);
                 }
-                showErr('');
-                if (editingRow) {
-                    // update baris yang sedang diubah
-                    editingRow.querySelector('.input-qty').value = d.qty;
-                    editingRow.querySelector('.qty-txt').textContent = d.qty;
-                    editingRow.querySelector('.input-batch').value = d.batch_no;
-                    editingRow.querySelector('.batch-txt').textContent = d.batch_no || '-';
-                    editingRow.querySelector('.input-ed').value = d.expiry_date;
-                    editingRow.querySelector('.exp-txt').textContent = d.expiry_date || '—';
-                    recalc();
-                } else {
-                    addRow(d);
-                }
-                closeModal();
-                searchInput?.focus();
             });
         }
 
@@ -773,54 +1005,161 @@
             });
         }
 
-        // restore draft (kunci draft sama seperti sebelumnya: pencatatan_draft_v3_keluar)
+        // restore draft (form baru) atau isi baris dokumen (mode edit)
         try {
             isRestoring = true;
-            const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
-            const setVal = (sel, v) => { const el = form.querySelector(sel); if (el && v) el.value = v; };
-            if (saved) {
-                setVal('input[name="tanggal"]', saved.tanggal);
-                setVal('input[name="doc_no"]', saved.doc_no);
-                setVal('input[name="po_no"]', saved.po_no);
-                setVal('input[name="expedition"]', saved.expedition);
-                setVal('#ship-address', saved.ship_address);
-                const purEl = form.querySelector('#purpose-select');
-                if (purEl && saved.purpose) purEl.value = saved.purpose;
-                if (typeof applyPurpose === 'function') applyPurpose();
-                const pSel = form.querySelector('#partner-select');
-                if (pSel && !pSel.disabled) {
-                    // Kembalikan pasangan sesuai purpose tersimpan (jangan tertukar customer/supplier)
-                    if (saved.purpose === 'Retur Supplier' && saved.supplier_id) {
-                        pSel.name = 'supplier_id';
-                        pSel.value = saved.supplier_id;
-                    } else if (saved.purpose !== 'Retur Supplier' && saved.customer_id) {
-                        pSel.name = 'customer_id';
-                        pSel.value = saved.customer_id;
+            if (IS_EDIT) {
+                applyPurpose();
+                EDIT_LINES.forEach(r => addRow(r));
+                syncTypeToSelect();
+            } else {
+                const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+                const setVal = (sel, v) => { const el = form.querySelector(sel); if (el && v) el.value = v; };
+                if (saved) {
+                    setVal('input[name="tanggal"]', saved.tanggal);
+                    setVal('input[name="doc_no"]', saved.doc_no);
+                    setVal('input[name="po_no"]', saved.po_no);
+                    setVal('input[name="expedition"]', saved.expedition);
+                    setVal('#ship-address', saved.ship_address);
+                    const purEl = form.querySelector('#purpose-select');
+                    if (purEl && saved.purpose) purEl.value = saved.purpose;
+                    applyPurpose();
+                    const pSel = form.querySelector('#partner-select');
+                    if (pSel && !pSel.disabled) {
+                        if ((saved.purpose === 'Retur Barang' || saved.purpose === 'Retur Supplier') && saved.supplier_id) {
+                            pSel.name = 'supplier_id';
+                            pSel.value = saved.supplier_id;
+                        } else if (saved.purpose !== 'Retur Barang' && saved.purpose !== 'Retur Supplier' && saved.customer_id) {
+                            pSel.name = 'customer_id';
+                            pSel.value = saved.customer_id;
+                        }
                     }
+                    if (partnerType && saved.partner_name) partnerType.value = saved.partner_name;
+                    syncTypeToSelect();
+                    if (shipInput && !shipInput.value) fillAddress();
                 }
-                if (typeof fillAddress === 'function') {
-                    const shipEl = form.querySelector('#ship-address');
-                    if (shipEl && !shipEl.value) fillAddress();
-                }
+                if (saved?.rows?.length) { saved.rows.forEach(r => addRow(r)); }
             }
-            if (saved?.rows?.length) { saved.rows.forEach(r => addRow(r)); }
         } catch (e) { /* mulai kosong, user cari dulu */ }
         finally { isRestoring = false; recalc(); }
 
-        // Submit: tolak bila tabel masih kosong + kunci klik ganda (mutasi stok tidak boleh duplikat).
+        function showFormAlert(title, message, targetEl = null) {
+            if (targetEl) {
+                targetEl.classList.add('!border-red-500', '!ring-2', '!ring-red-200');
+                try { targetEl.focus(); } catch (e) {}
+                const removeError = () => {
+                    targetEl.classList.remove('!border-red-500', '!ring-2', '!ring-red-200');
+                    targetEl.removeEventListener('input', removeError);
+                    targetEl.removeEventListener('change', removeError);
+                };
+                targetEl.addEventListener('input', removeError);
+                targetEl.addEventListener('change', removeError);
+            }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: title || 'Peringatan Formulir',
+                    text: message,
+                    confirmButtonColor: '#3b82f6',
+                    confirmButtonText: 'Periksa Formulir',
+                    customClass: {
+                        popup: '!rounded-2xl',
+                        confirmButton: '!rounded-xl !px-5 !py-2 !font-bold !text-xs'
+                    }
+                });
+            } else {
+                alert(message);
+            }
+        }
+
+        // Submit: tolak bila form kosong / tidak cocok + kunci klik ganda (mutasi stok tidak boleh duplikat).
         // Draft TIDAK dihapus di sini: sukses -> redirect + dibersihkan halaman tujuan,
         // gagal/offline -> tidak navigasi -> draft utuh, tinggal perbaiki & kirim ulang.
         // Tombol dibuka lagi otomatis bila ternyata tidak jadi navigasi (mis. offline).
         form.addEventListener('submit', function(e) {
-            if (container.querySelectorAll('.row-barang').length === 0) {
+            // 1. Validasi Tanggal
+            const tglInput = form.querySelector('input[name="tanggal"]');
+            if (!tglInput || !tglInput.value) {
+                e.preventDefault();
+                showFormAlert('Tanggal Belum Diisi', 'Tanggal mutasi wajib diisi.', tglInput);
+                return;
+            }
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (tglInput.value > todayStr) {
+                e.preventDefault();
+                showFormAlert('Tanggal Tidak Cocok', 'Tanggal mutasi tidak boleh melebihi tanggal hari ini (' + todayStr + ').', tglInput);
+                return;
+            }
+
+            // 2. Validasi Keterangan Mutasi Keluar
+            const purEl = form.querySelector('#purpose-select');
+            if (purEl && !purEl.value) {
+                e.preventDefault();
+                showFormAlert('Keterangan Belum Dipilih', 'Keterangan barang keluar wajib dipilih (Penjualan / Sample / Retur Barang).', purEl);
+                return;
+            }
+            if (purEl && purEl.value === 'Sample') {
+                const psEl = form.querySelector('#ps-select');
+                const pType = form.querySelector('#partner-type');
+                const pSel = form.querySelector('#partner-select');
+                const hasPartner = (pType && pType.value.trim() !== '') || (pSel && pSel.value !== '');
+                const hasPs = psEl && psEl.value.trim() !== '';
+                if (!hasPartner && !hasPs) {
+                    e.preventDefault();
+                    showFormAlert('Data Sample Belum Lengkap', 'Untuk transaksi Sample, harap pilih Nama PS atau masukkan Customer penerima.', psEl || pType);
+                    return;
+                }
+            }
+
+            // 3. Validasi Tabel Rincian Barang
+            const rows = container.querySelectorAll('.row-barang');
+            if (rows.length === 0) {
                 e.preventDefault();
                 if (searchInput) {
                     searchInput.focus();
                     renderSearch(searchInput.value || 'a');
                 }
-                alert('Belum ada barang — cari barang di atas, klik, isi Qty di popup, lalu Simpan ke Tabel.');
+                showFormAlert('Barang Masih Kosong', 'Belum ada barang di tabel — cari barang di atas, klik barang, isi Qty di popup, lalu Simpan ke Tabel.', searchInput);
                 return;
             }
+
+            // 4. Validasi keabsahan data tiap baris barang di tabel
+            let rowErrorMsg = null;
+            let rowErrorEl = null;
+            for (let i = 0; i < rows.length; i++) {
+                const tr = rows[i];
+                const qInput = tr.querySelector('.input-qty');
+                const qVal = parseFloat(qInput?.value);
+                const nama = tr.querySelector('.cell-nama')?.textContent?.trim() || ('Baris ke-' + (i + 1));
+                if (!qInput || isNaN(qVal) || qVal <= 0) {
+                    rowErrorMsg = 'Qty untuk barang "' + nama + '" tidak boleh kosong atau <= 0. Silakan klik ikon ubah (pensil) pada baris tersebut.';
+                    rowErrorEl = tr;
+                    break;
+                }
+                if (TAB_ARAH !== 'masuk' && !IS_EDIT) {
+                    const pid = tr.querySelector('.input-barang')?.value;
+                    const p = productOptions.find(x => String(x.id) === String(pid));
+                    if (p) {
+                        const sisa = parseFloat(p.stok) || 0;
+                        if (qVal > sisa) {
+                            rowErrorMsg = 'Qty barang "' + nama + '" (' + qVal + ') melebihi sisa stok di gudang (' + fmt(sisa) + '). Silakan sesuaikan jumlahnya.';
+                            rowErrorEl = tr;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (rowErrorMsg) {
+                e.preventDefault();
+                if (rowErrorEl) {
+                    rowErrorEl.classList.add('!bg-red-50');
+                    setTimeout(() => rowErrorEl.classList.remove('!bg-red-50'), 3000);
+                }
+                showFormAlert('Qty Tidak Cocok', rowErrorMsg);
+                return;
+            }
+
             if (isSubmitting) { e.preventDefault(); return; }
             isSubmitting = true;
             const submitBtn = document.getElementById('simpan-mutasi-btn');
@@ -836,9 +1175,21 @@
             }
         });
 
+        // Cegah klik ganda langsung pada tombol simpan
+        const submitBtnEl = document.getElementById('simpan-mutasi-btn');
+        if (submitBtnEl) {
+            submitBtnEl.addEventListener('click', function(e) {
+                if (isSubmitting) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+            });
+        }
+
         // Flush terakhir anti mati-lampu (draft selalu disimpan ulang saat pergi).
         window.addEventListener('pagehide', saveDraft);
-        form.querySelectorAll('input[name="tanggal"], input[name="doc_no"], #partner-select, input[name="po_no"], #purpose-select, #ship-address, input[name="expedition"]').forEach(el => {
+        form.querySelectorAll('input[name="tanggal"], input[name="doc_no"], #partner-type, input[name="po_no"], #purpose-select, #ship-address, input[name="expedition"], #ps-select').forEach(el => {
             el.addEventListener('input', saveDraft);
             el.addEventListener('change', saveDraft);
         });

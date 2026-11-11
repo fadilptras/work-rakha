@@ -10,7 +10,7 @@
     .ba-identitas td { font-size: 10pt; padding: 1px 4px; vertical-align: top; }
     .ba-lampiran { text-align: center; font-size: 10pt; margin: 6px 0; }
     table.export-table th, table.export-table td { border: 1px solid #000; }
-    table.export-table th { font-size: 8pt; padding: 4px 3px; background-color: #f1f5f9; color: #1e293b; font-weight: bold; }
+    table.export-table th { font-size: 8pt; padding: 4px 3px; background-color: #f1f5f9; color: #1e293b; font-weight: bold; text-align: center; }
     table.export-table td { font-size: 8pt; padding: 3px 4px; }
     table.export-table td.num { text-align: right; }
     table.export-table td.ctr { text-align: center; }
@@ -57,16 +57,20 @@
         </tr>
     </thead>
     <tbody>
-        @foreach($items as $i => $it)
+        @forelse($items as $i => $it)
         <tr>
             <td class="ctr">{{ $i + 1 }}</td>
             <td class="lft">{{ $it['produk'] }}</td>
-            <td class="num">{{ $it['tercatat'] !== null ? $it['tercatat'] : '-' }}</td>
-            <td class="num">{{ $it['terhitung'] !== null ? $it['terhitung'] : '-' }}</td>
-            <td class="num">{{ $it['selisih'] !== null ? ($it['selisih'] > 0 ? '+' : '') . $it['selisih'] : '-' }}</td>
-            <td class="lft">{{ $it['catatan'] ?: '-' }}</td>
+            <td class="ctr">{{ $it['tercatat'] !== null ? $it['tercatat'] : '-' }}</td>
+            <td class="ctr">{{ $it['terhitung'] !== null ? $it['terhitung'] : '-' }}</td>
+            <td class="ctr">{{ $it['selisih'] !== null ? ($it['selisih'] > 0 ? '+' : '') . $it['selisih'] : '-' }}</td>
+            <td class="ctr">{{ $it['catatan'] ?: '-' }}</td>
         </tr>
-        @endforeach
+        @empty
+        <tr>
+            <td class="ctr" colspan="6">Tidak ada selisih — seluruh hasil hitung fisik sesuai dengan catatan sistem.</td>
+        </tr>
+        @endforelse
     </tbody>
 </table>
 

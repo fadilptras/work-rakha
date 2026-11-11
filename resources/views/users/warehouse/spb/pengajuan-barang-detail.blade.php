@@ -63,12 +63,28 @@
                     </a>
                 @endif
 
-                @if(Auth::id() == $pengajuanBarang->user_id || Auth::user()->role === 'admin')
-                    <a href="{{ route('pengajuan_barang.download', $pengajuanBarang) }}" 
-                       class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-black text-white bg-red-600 rounded-full shadow-md hover:bg-red-700 hover:shadow-lg transition-all duration-300">
-                        <i class="fas fa-file-pdf"></i>
-                        <span>Cetak PDF</span>
-                    </a>
+                @php
+                    $currentUser = Auth::user();
+                    $isSuperUser = $currentUser && (method_exists($currentUser, 'isSuperUser') ? $currentUser->isSuperUser() : \App\Models\User::isSuperUserEmail($currentUser->email ?? ''));
+                    $isWarehouseOrPurchasing = in_array(strtolower($currentUser->divisi ?? ''), ['finance dan gudang', 'fianance dan gudang', 'purchasing', 'gudang', 'logistik'])
+                        || \Illuminate\Support\Str::contains(strtolower($currentUser->jabatan ?? ''), ['admin gudang', 'gudang', 'legal', 'legal & purchasing', 'purchasing']);
+                    $isApprover = in_array($currentUser->id, [$pengajuanBarang->approver_barang_1_id, $pengajuanBarang->approver_barang_2_id, $pengajuanBarang->approver_barang_3_id, $pengajuanBarang->approver_barang_4_id]);
+                    $canDownload = $currentUser->id == $pengajuanBarang->user_id || $currentUser->role === 'admin' || $isSuperUser || $isWarehouseOrPurchasing || $isApprover;
+                @endphp
+                @if($canDownload)
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('pengajuan_barang.export_single_excel', $pengajuanBarang) }}" 
+                           class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-black text-white bg-emerald-600 rounded-full shadow-md hover:bg-emerald-700 hover:shadow-lg transition-all duration-300"
+                           title="Download Rekap Excel SPB Ini">
+                            <i class="fas fa-file-excel"></i>
+                            <span>Export Excel</span>
+                        </a>
+                        <a href="{{ route('pengajuan_barang.download', $pengajuanBarang) }}" 
+                           class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-black text-white bg-red-600 rounded-full shadow-md hover:bg-red-700 hover:shadow-lg transition-all duration-300">
+                            <i class="fas fa-file-pdf"></i>
+                            <span>Cetak PDF</span>
+                        </a>
+                    </div>
                 @endif
             </div>
 

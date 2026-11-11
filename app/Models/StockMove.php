@@ -11,19 +11,28 @@ class StockMove extends Model
     use HasFactory;
 
     public const TYPE_RECEIPT = 'receipt';
+
     public const TYPE_DELIVERY = 'delivery';
+
     public const TYPE_TRANSFER = 'transfer';
+
     public const TYPE_ADJUSTMENT = 'adjustment';
+
     public const TYPE_SCRAP = 'scrap';
 
     public const STATUS_WAITING = 'waiting';
+
     public const STATUS_READY = 'ready';
+
     public const STATUS_DONE = 'done';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     // Lokasi virtual (bukan rak fisik).
     public const LOC_STOCK = 'Stock';
+
     public const LOC_ADJUSTMENT = 'Adjustment';
+
     public const LOC_SCRAP = 'Scrap';
 
     protected $fillable = [
@@ -68,6 +77,26 @@ class StockMove extends Model
     public function scopeOpen($query)
     {
         return $query->whereIn('status', [self::STATUS_WAITING, self::STATUS_READY]);
+    }
+
+    /**
+     * Baris yang tampil di UI operasional.
+     * Baris batal, reversal audit, dan penanda lama "[dibatalkan]" disembunyikan.
+     */
+    public function scopeVisible($query)
+    {
+        $table = $query->getModel()->getTable();
+
+        return $query
+            ->where("{$table}.status", '!=', self::STATUS_CANCELLED)
+            ->where(function ($q) use ($table) {
+                $q->whereNull("{$table}.ref_type")
+                    ->orWhere("{$table}.ref_type", '!=', 'stock_move_reversal');
+            })
+            ->where(function ($q) use ($table) {
+                $q->whereNull("{$table}.reason")
+                    ->orWhere("{$table}.reason", 'not like', '%[dibatalkan]%');
+            });
     }
 
     public static array $typeLabels = [

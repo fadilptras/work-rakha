@@ -1,6 +1,6 @@
 @extends('pdf.layouts.export-document')
 
-@section('title', 'Berita Acara Stock Opname ' . ($move->doc_no ?? $move->id))
+@section('title', 'Berita Acara Stock Opname ' . ($opname->period ?? ''))
 @section('form-title', 'BERITA ACARA STOCK OPNAME')
 @section('page-orientation', 'portrait')
 
@@ -10,7 +10,7 @@
 
 @section('extra-style')
     table.export-table th, table.export-table td { border: 1px solid #000; }
-    table.export-table th { font-size: 8pt; padding: 4px 3px; background-color: #f1f5f9; color: #1e293b; font-weight: bold; }
+    table.export-table th { font-size: 8pt; padding: 4px 3px; background-color: #f1f5f9; color: #1e293b; font-weight: bold; text-align: center; }
     table.export-table td { font-size: 8pt; padding: 3px 4px; }
     table.export-table td.num { text-align: right; }
     table.export-table td.ctr { text-align: center; }
@@ -25,7 +25,7 @@
     <tr>
         <td style="width:15%">Tanggal</td>
         <td style="width:2%">:</td>
-        <td style="width:38%">{{ $move->created_at ? $move->created_at->translatedFormat('d F Y H:i') : '-' }}</td>
+        <td style="width:38%">{{ $opname->opname_at ? $opname->opname_at->translatedFormat('d F Y') : '-' }}</td>
         <td style="width:15%">Dicetak oleh</td>
         <td style="width:2%">:</td>
         <td>{{ $printedBy ?? '-' }}</td>
@@ -33,10 +33,10 @@
     <tr>
         <td>Produk</td>
         <td>:</td>
-        <td><b>{{ $move->product->product_code ?? '-' }} — {{ $move->product->product_name ?? '-' }}</b></td>
+        <td><b>{{ $opname->product->product_code ?? '-' }} — {{ $opname->product->product_name ?? '-' }}</b></td>
         <td>Divalidasi oleh</td>
         <td>:</td>
-        <td>{{ $move->validator->name ?? $move->user->name ?? '-' }}</td>
+        <td>{{ $opname->validator->name ?? $opname->creator->name ?? '-' }}</td>
     </tr>
 </table>
 @endsection
@@ -52,9 +52,9 @@
     </thead>
     <tbody>
         <tr>
-            <td class="num">{{ $tercatat !== null ? $tercatat : '-' }}</td>
-            <td class="num">{{ $terhitung !== null ? $terhitung : '-' }}</td>
-            <td class="num">{{ $selisih !== null ? ($selisih > 0 ? '+' : '') . $selisih : '-' }}</td>
+            <td class="ctr">{{ $tercatat !== null ? $tercatat : '-' }}</td>
+            <td class="ctr">{{ $terhitung !== null ? $terhitung : '-' }}</td>
+            <td class="ctr">{{ $selisih !== null ? ($selisih > 0 ? '+' : '') . $selisih : '-' }}</td>
         </tr>
     </tbody>
 </table>

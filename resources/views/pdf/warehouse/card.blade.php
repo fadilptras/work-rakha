@@ -90,22 +90,47 @@
             <td>-</td>
             <td>-</td>
             <td>-</td>
-            <td style="font-weight: bold;">{{ $saldoLabel }}</td>
+            <td style="font-weight: bold;">
+                {{ $saldoLabelPdf ?? $saldoLabel }}
+                @if(!empty($saldoSubtext))
+                    <div style="font-size: 8.5px; font-weight: normal; color: #64748b; margin-top: 2px;">{{ $saldoSubtext }}</div>
+                @endif
+            </td>
             <td class="num">-</td>
             <td class="num">-</td>
             <td class="num" style="font-weight: bold;">{{ $fmt($saldoAwal) }}</td>
         </tr>
         @forelse($rows as $i => $r)
-            @php $m = $r['move']; @endphp
-            <tr>
-                <td>{{ $i + 1 }}</td>
-                <td>{{ \Carbon\Carbon::parse($m->created_at)->format('d/m/Y') }}</td>
-                <td>{{ $m->batch_no ?? '-' }}</td>
-                <td>{{ $m->reason ?: ($m->ref_type ? $m->ref_type . ($m->ref_id ? ' #' . $m->ref_id : '') : '-') }}</td>
-                <td class="num">{{ $r['masuk'] > 0 ? $fmt($r['masuk']) : '-' }}</td>
-                <td class="num">{{ $r['keluar'] > 0 ? $fmt($r['keluar']) : '-' }}</td>
-                <td class="num" style="font-weight: bold;">{{ $fmt($r['sisa']) }}</td>
-            </tr>
+            @if(!empty($r['is_saldo_row']))
+                <tr style="background-color: #eff6ff; font-weight: bold;">
+                    <td>{{ $i + 1 }}</td>
+                    <td>{{ \Carbon\Carbon::parse($r['tanggal_date'])->format('d/m/Y') }}</td>
+                    <td>{{ $r['batch_no'] ?? '-' }}</td>
+                    <td>
+                        <div style="font-weight: bold; color: #1e3a8a;">{{ $r['label'] }}</div>
+                        @if(!empty($r['subtext']))
+                            <div style="font-size: 7pt; font-weight: normal; color: #475569; margin-top: 1.5px;">{{ $r['subtext'] }}</div>
+                        @endif
+                    </td>
+                    <td class="num">-</td>
+                    <td class="num">-</td>
+                    <td class="num" style="font-weight: bold; color: #1e3a8a;">{{ $fmt($r['sisa']) }}</td>
+                </tr>
+            @else
+                @php 
+                    $m = $r['move']; 
+                    $ketDisplay = $r['keterangan'] ?? ($m->reason ?: ($m->ref_type ? $m->ref_type . ($m->ref_id ? ' #' . $m->ref_id : '') : '-'));
+                @endphp
+                <tr>
+                    <td>{{ $i + 1 }}</td>
+                    <td>{{ \Carbon\Carbon::parse($m->created_at)->format('d/m/Y') }}</td>
+                    <td>{{ trim((string)($m->batch_no ?? '')) !== '' ? $m->batch_no : '-' }}</td>
+                    <td>{{ $ketDisplay }}</td>
+                    <td class="num">{{ $r['masuk'] > 0 ? $fmt($r['masuk']) : '-' }}</td>
+                    <td class="num">{{ $r['keluar'] > 0 ? $fmt($r['keluar']) : '-' }}</td>
+                    <td class="num" style="font-weight: bold;">{{ $fmt($r['sisa']) }}</td>
+                </tr>
+            @endif
         @empty
             <tr><td colspan="7">Belum ada mutasi pada periode ini.</td></tr>
         @endforelse

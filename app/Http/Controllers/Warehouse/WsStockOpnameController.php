@@ -9,25 +9,26 @@ use App\Models\StockOpname;
 use App\Services\DocumentNumberService;
 use App\Services\StockMoveService;
 use App\Services\StockOpnameService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
- * Opname & Rejected: hitung fisik berkala + catat barang rusak.
- * Alur: Rekap → Catat (simpan draf) → Selesaikan (stok diset + BA).
+ * Controller Stock Opname: Pencatatan hitung fisik berkala, Berita Acara, dan penolakan barang (Scrap).
  */
 class WsStockOpnameController extends WsBaseController
 {
-    /** Toleransi wajar: di atas max(5 pcs, 10% tercatat) wajib catatan + hitung ulang. */
+    /** Toleransi wajar selisih fisik: batas minimal 5 pcs atau 10% dari stok tercatat. */
     public const TOL_ABS = 5;
-
     public const TOL_PCT = 0.10;
 
     /**
-     * Halaman Rekap Opname: kartu per-bulan + popup detail per bulan.
+     * Halaman Rekapitulasi Opname: ringkasan status bulanan dan popup rincian opname.
      */
     public function opnameIndex(Request $request, StockOpnameService $opnames)
     {
@@ -45,7 +46,7 @@ class WsStockOpnameController extends WsBaseController
         if (! preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan)) {
             $bulan = now()->format('Y-m');
         }
-        $namaBulan = \Carbon\Carbon::parse($bulan . '-01')->locale('id')->translatedFormat('F Y');
+        $namaBulan = Carbon::parse($bulan . '-01')->locale('id')->translatedFormat('F Y');
         $listTahun = [(string) $tahun => (string) $tahun];
 
         $productOptions = Product::active()
@@ -59,7 +60,7 @@ class WsStockOpnameController extends WsBaseController
         $listBulan = [];
         for ($m = 1; $m <= 12; $m++) {
             $key = sprintf('%04d-%02d', $tahun, $m);
-            $listBulan[$key] = \Carbon\Carbon::parse($key . '-01')->locale('id')->translatedFormat('F Y');
+            $listBulan[$key] = Carbon::parse($key . '-01')->locale('id')->translatedFormat('F Y');
         }
 
         if (Schema::hasTable('stock_opnames')) {
@@ -72,6 +73,25 @@ class WsStockOpnameController extends WsBaseController
             foreach ($listBulan as $key => $label) {
                 $inMonth = $rows->get($key, collect());
                 $stats = $this->statsFromRows($inMonth);
+                $monthCutoff = Carbon::parse($key . '-01')->endOfMonth()->endOfDay();
+                $monthDoneDate = $inMonth->where('status', StockOpname::STATUS_DONE)
+                    ->filter(fn ($o) => empty($o->note) || ! str_contains(strtolower($o->note), 'stok awal'))
+                    ->max('opname_date');
+                $isMonthFinished = $stats['menunggu'] === 0 && $stats['tersimpan'] > 0;
+                $effectiveCutoff = ($isMonthFinished && $monthDoneDate)
+                    ? Carbon::parse($monthDoneDate)->endOfDay()
+                    : $monthCutoff;
+                // Produk baru di bulan berjalan belum wajib diopname sampai bulan selanjutnya
+                $periodStart = Carbon::parse($key . '-01')->startOfDay();
+                $opnamedProductIdsInMonth = $inMonth->pluck('product_id')->filter()->unique()->all();
+                $totalSkuMonth = Product::active()
+                    ->where(function ($w) use ($periodStart, $opnamedProductIdsInMonth) {
+                        $w->where('created_at', '<', $periodStart);
+                        if (! empty($opnamedProductIdsInMonth)) {
+                            $w->orWhereIn('id', $opnamedProductIdsInMonth);
+                        }
+                    })
+                    ->count();
 
                 $rekapPerBulan[] = [
                     'key' => $key,
@@ -82,13 +102,14 @@ class WsStockOpnameController extends WsBaseController
                     'menunggu' => $stats['menunggu'],
                     'sesuai' => $stats['sesuai'],
                     'selisih' => $stats['selisih'],
-                    'total' => $totalSku,
+                    'total' => $totalSkuMonth,
                     'entries' => $stats['entries'],
                     'selected' => $key === $bulan,
                 ];
 
                 $rekapDetailPerBulan[$key] = $inMonth->map(function (StockOpname $o) {
                     return [
+                        'product_id' => $o->product_id,
                         'produk' => ($o->product->product_code ?? '-') . ' — ' . ($o->product->product_name ?? '-'),
                         'tercatat' => (float) $o->recorded_qty,
                         'terhitung' => (float) $o->counted_qty,
@@ -113,14 +134,14 @@ class WsStockOpnameController extends WsBaseController
             $listTahun = array_combine($semuaTahun, $semuaTahun);
         }
 
-        return view('users.warehouse.opname', compact(
+        return view('users.warehouse.stock-opname.stock-opname', compact(
             'canManage', 'productOptions', 'bulan', 'namaBulan',
             'rekapPerBulan', 'rekapDetailPerBulan', 'tahun', 'listTahun'
         ));
     }
 
     /**
-     * Halaman Catat Opname (fokus pendataan). Query: ?tanggal=YYYY-MM-DD&q=...
+     * Halaman Pencatatan Opname: antarmuka input hasil hitung fisik barang.
      */
     public function catatIndex(Request $request, StockOpnameService $opnames)
     {
@@ -131,14 +152,52 @@ class WsStockOpnameController extends WsBaseController
             abort(403, 'Hanya pengelola stok yang bisa input opname.');
         }
 
+        $bulanIn = (string) $request->get('bulan', '');
+        $hasBulan = (bool) preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulanIn);
+
         $tanggal = $this->resolveCatatDate($request);
-        $bulan = substr($tanggal, 0, 7);
-        $namaBulan = \Carbon\Carbon::parse($bulan . '-01')->locale('id')->translatedFormat('F Y');
-        $namaTanggal = \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('d F Y');
+        $bulan = $hasBulan ? $bulanIn : substr($tanggal, 0, 7);
+        $namaBulan = Carbon::parse($bulan . '-01')->locale('id')->translatedFormat('F Y');
+        $namaTanggal = Carbon::parse($tanggal)->locale('id')->translatedFormat('d F Y');
         $q = trim((string) $request->get('q', ''));
         $qLike = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $q);
 
+        $curTahun = (int) substr($bulan, 0, 4);
+        $listBulan = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $key = sprintf('%04d-%02d', $curTahun, $m);
+            $listBulan[$key] = Carbon::parse($key . '-01')->locale('id')->translatedFormat('F Y');
+        }
+        if (! isset($listBulan[$bulan])) {
+            $listBulan[$bulan] = Carbon::parse($bulan . '-01')->locale('id')->translatedFormat('F Y');
+            ksort($listBulan);
+        }
+
+        // Tentukan batas cutoff tanggal produk yang ikut dalam periode opname ini
+        $cutoffDate = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay();
+        $latestDoneOpnameDate = StockOpname::where('period', $bulan)
+            ->where('status', StockOpname::STATUS_DONE)
+            ->where(function ($q) {
+                $q->whereNull('note')->orWhere('note', 'not like', '%stok awal%');
+            })
+            ->max('opname_date');
+
+        $hasPeriodFinished = $opnames->baAvailable($bulan);
+        $filterCutoff = ($hasPeriodFinished && $latestDoneOpnameDate)
+            ? Carbon::parse($latestDoneOpnameDate)->endOfDay()
+            : $cutoffDate;
+
+        // Produk baru pada bulan berjalan tidak wajib diopname di bulan tersebut (baru diopname di bulan berikutnya)
+        $periodStart = Carbon::parse($bulan . '-01')->startOfDay();
+        $existingOpnamedIds = StockOpname::where('period', $bulan)->pluck('product_id')->filter()->unique()->all();
+
         $productOptions = Product::active()
+            ->where(function ($w) use ($periodStart, $existingOpnamedIds) {
+                $w->where('created_at', '<', $periodStart);
+                if (! empty($existingOpnamedIds)) {
+                    $w->orWhereIn('id', $existingOpnamedIds);
+                }
+            })
             ->when($q !== '', fn ($query) => $query->where(fn ($w) => $w
                 ->where('product_code', 'like', "%{$qLike}%")
                 ->orWhere('product_name', 'like', "%{$qLike}%")))
@@ -189,7 +248,14 @@ class WsStockOpnameController extends WsBaseController
         }
 
         $opnamedSet = array_fill_keys(array_map('intval', array_keys($savedMap)), true);
-        $totalSku = Product::active()->count();
+        $totalSku = Product::active()
+            ->where(function ($w) use ($periodStart, $existingOpnamedIds) {
+                $w->where('created_at', '<', $periodStart);
+                if (! empty($existingOpnamedIds)) {
+                    $w->orWhereIn('id', $existingOpnamedIds);
+                }
+            })
+            ->count();
         $tersimpan = count($savedMap);
         $menunggu = count($pendingSet);
         $sesuai = count($sesuaiSet);
@@ -216,16 +282,13 @@ class WsStockOpnameController extends WsBaseController
         $baChecker = trim((string) ($lastBaRow->ba_checker ?? ''));
         $hasExistingBa = $baCreator !== '' && $baChecker !== '';
 
-        return view('users.warehouse.opname-catat', [
+        return view('users.warehouse.stock-opname.stock-opname-catat', [
             'canManage' => true,
             'bulan' => $bulan,
+            'listBulan' => $listBulan,
             'tanggal' => $tanggal,
-            'backRoute' => strtolower(trim((string) $request->get('from', ''))) === 'dashboard'
-                ? route('warehouse.dashboard')
-                : route('warehouse.stockopname.index', ['bulan' => $bulan]),
-            'backText' => strtolower(trim((string) $request->get('from', ''))) === 'dashboard'
-                ? 'Back to Warehouse Dashboard'
-                : 'Back to Opname Recap',
+            'backRoute' => route('warehouse.stockopname.index', ['bulan' => $bulan]),
+            'backText' => 'Back to Opname Recap',
             'namaBulan' => $namaBulan,
             'namaTanggal' => $namaTanggal,
             'q' => $q,
@@ -251,8 +314,7 @@ class WsStockOpnameController extends WsBaseController
     }
 
     /**
-     * Simpan hasil hitung sebagai DRAF (stok belum berubah).
-     * Selesaikan = stok pada tanggal opname diset + BA terbit.
+     * Simpan hasil hitung fisik barang sebagai draf (atau pembaruan data jika sudah selesai).
      */
     public function opnameStore(Request $request, StockOpnameService $opnames)
     {
@@ -262,6 +324,7 @@ class WsStockOpnameController extends WsBaseController
         $validated = $request->validate([
             'product_id' => ['required', 'exists:products,id'],
             'counted_qty' => ['required', 'numeric'],
+            'recorded_qty' => ['nullable', 'numeric'],
             'expected_qty' => ['nullable', 'numeric'],
             'reason' => ['nullable', 'string', 'max:1000'],
             'recount' => ['nullable'],
@@ -274,28 +337,28 @@ class WsStockOpnameController extends WsBaseController
         $counted = round((float) $validated['counted_qty'], 2);
         $isJson = $request->expectsJson();
 
-        $todayStr = now()->format('Y-m-d');
         $tanggalIn = $validated['tanggal'] ?? null;
         if (! empty($tanggalIn)) {
-            $dt = \Carbon\Carbon::createFromFormat('Y-m-d', $tanggalIn);
-            if (! $dt || $dt->format('Y-m-d') !== $tanggalIn || $tanggalIn > $todayStr) {
-                return $this->opnameError('Tanggal pelaksanaan tidak valid atau belum berjalan.', $isJson);
+            $dt = Carbon::createFromFormat('Y-m-d', $tanggalIn);
+            if (! $dt || $dt->format('Y-m-d') !== $tanggalIn) {
+                return $this->opnameError('Tanggal pelaksanaan tidak valid.', $isJson);
             }
             $tanggal = $tanggalIn;
         } else {
             $bulanIn = $validated['bulan'] ?? now()->format('Y-m');
-            if ($bulanIn > now()->format('Y-m')) {
-                return $this->opnameError('Bulan belum berjalan — pilih bulan berjalan atau sebelumnya.', $isJson);
-            }
             $tanggal = $bulanIn === now()->format('Y-m')
-                ? $todayStr
-                : \Carbon\Carbon::parse($bulanIn . '-01')->endOfMonth()->format('Y-m-d');
+                ? now()->format('Y-m-d')
+                : Carbon::parse($bulanIn . '-01')->format('Y-m-d');
         }
-        $bulanKey = substr($tanggal, 0, 7);
-        $namaBulanIsi = \Carbon\Carbon::parse($bulanKey . '-01')->locale('id')->translatedFormat('F Y');
+        $bulanKey = $validated['bulan'] ?? substr($tanggal, 0, 7);
+        $namaBulanIsi = Carbon::parse($bulanKey . '-01')->locale('id')->translatedFormat('F Y');
 
-        // Snapshot guard: stok berubah sejak form dibuka.
-        if ($request->filled('expected_qty') && abs((float) $validated['expected_qty'] - $recordedNow) > 0.004) {
+        $existingRow = StockOpname::where('product_id', $product->id)
+            ->where('period', $bulanKey)
+            ->first();
+
+        // Cek apakah stok berubah saat form dibuka (khusus barang baru yang belum pernah dicatat opname)
+        if (! $existingRow && $request->filled('expected_qty') && abs((float) $validated['expected_qty'] - $recordedNow) > 0.004) {
             return $this->opnameError(
                 "Stok {$product->product_name} berubah saat Anda menghitung (kini {$recordedNow}, form menampilkan {$validated['expected_qty']}). Ulangi hitung dan simpan kembali.",
                 $isJson,
@@ -303,27 +366,21 @@ class WsStockOpnameController extends WsBaseController
             );
         }
 
-        // Baris opname yang sudah ada memakai qty tercatat saat pertama dihitung.
-        // Jangan bandingkan dengan stok live yang mungkin sudah bergerak setelahnya.
-        $existingRow = StockOpname::where('product_id', $product->id)
-            ->where('period', substr($tanggal, 0, 7))
-            ->first();
-        $recordedBase = $existingRow ? (float) $existingRow->recorded_qty : $recordedNow;
+        $recordedInput = isset($validated['recorded_qty']) && $validated['recorded_qty'] !== ''
+            ? round((float) $validated['recorded_qty'], 2)
+            : null;
+        $recordedBase = $recordedInput ?? ($existingRow ? (float) $existingRow->recorded_qty : $recordedNow);
 
         $diffNow = round($counted - $recordedBase, 2);
         $tolerance = self::toleranceFor($recordedBase);
         $note = trim((string) ($validated['reason'] ?? ''));
         if ($note === '-' || $note === '') {
-            $note = '';
+            $diffStr = $diffNow > 0 ? "+{$diffNow}" : "{$diffNow}";
+            $note = abs($diffNow) >= 0.005 ? "Selisih {$diffStr}" : '';
         }
 
-        if (abs($diffNow) >= 0.005 && $note === '') {
-            return $this->opnameError(
-                "Ada selisih {$diffNow}: wajib isi keterangan penyebab sebelum menyimpan.",
-                $isJson
-            );
-        }
-        if (abs($diffNow) > $tolerance && empty($validated['recount'])) {
+        // Peringatan toleransi selisih untuk verifikasi ulang fisik
+        if (! $existingRow && abs($diffNow) > $tolerance && empty($validated['recount'])) {
             return $this->opnameError(
                 "Selisih {$diffNow} melebihi toleransi wajar (±{$tolerance}). Hitung ulang fisik, lalu centang konfirmasi hitung ulang.",
                 $isJson
@@ -331,7 +388,7 @@ class WsStockOpnameController extends WsBaseController
         }
 
         try {
-            $row = $opnames->saveResult($product, $tanggal, $counted, $note ?: null, Auth::user());
+            $row = $opnames->saveResult($product, $tanggal, $counted, $note ?: null, Auth::user(), $recordedInput, $bulanKey);
         } catch (\Throwable $e) {
             report($e);
             $msg = $e instanceof \InvalidArgumentException
@@ -346,7 +403,7 @@ class WsStockOpnameController extends WsBaseController
         $msg = "{$status}: {$product->product_name} — fisik {$counted}, selisih {$diff}. "
             . ($row->isDraft()
                 ? "Klik Selesaikan untuk menerapkan ke stok tanggal {$namaBulanIsi} + menerbitkan BA."
-                : 'BA sudah terbit.');
+                : 'Stok diperbarui & Berita Acara langsung ter-update.');
 
         if ($isJson) {
             return response()->json([
@@ -354,7 +411,7 @@ class WsStockOpnameController extends WsBaseController
                 'draft' => $row->isDraft(),
                 'done' => $row->isDone(),
                 'message' => $msg,
-                'stock' => $recordedNow,
+                'stock' => round((float) $product->fresh()->stock, 2),
                 'recorded' => (float) $row->recorded_qty,
                 'counted' => (float) $row->counted_qty,
                 'diff' => $diff,
@@ -367,8 +424,7 @@ class WsStockOpnameController extends WsBaseController
     }
 
     /**
-     * Selesaikan opname sebulan: stok pada tanggal opname diset ke hasil hitung,
-     * semua draf menjadi DONE, dan BA terbit.
+     * Selesaikan periode opname bulanan: validasi seluruh draf, terapkan adjustment ke stok, dan terbitkan Berita Acara.
      */
     public function opnameFinish(
         Request $request,
@@ -385,7 +441,7 @@ class WsStockOpnameController extends WsBaseController
             'pemeriksa_ba' => ['nullable', 'string', 'max:100'],
         ]);
         $bulanKey = $validated['bulan'] ?? now()->format('Y-m');
-        $namaBulan = \Carbon\Carbon::parse($bulanKey . '-01')->locale('id')->translatedFormat('F Y');
+        $namaBulan = Carbon::parse($bulanKey . '-01')->locale('id')->translatedFormat('F Y');
         $isJson = $request->expectsJson();
 
         $lastBaRow = StockOpname::where('period', $bulanKey)
@@ -463,7 +519,9 @@ class WsStockOpnameController extends WsBaseController
         return back()->with('success', $msg);
     }
 
-    /** Scrap: barang rusak/buang + alasan, langsung tervalidasi. */
+    /**
+     * Catat barang rusak / rejected (Scrap) dengan mutasi pengurangan stok langsung.
+     */
     public function scrapStore(Request $request, StockMoveService $svc)
     {
         if (! $this->canManage()) {
@@ -493,7 +551,9 @@ class WsStockOpnameController extends WsBaseController
         return back()->with('success', 'Rejected dicatat dan stok dikurangi.');
     }
 
-    /** Rekap draf sebulan (JSON) untuk popup konfirmasi Selesaikan. */
+    /**
+     * Ambil rekap draf opname satu bulan (format JSON) untuk modal konfirmasi penyelesaian.
+     */
     public function draftList(Request $request)
     {
         if (! $this->hasAccess()) {
@@ -530,7 +590,7 @@ class WsStockOpnameController extends WsBaseController
         return response()->json([
             'ok' => true,
             'bulan' => $bulan,
-            'namaBulan' => \Carbon\Carbon::parse($bulan . '-01')->locale('id')->translatedFormat('F Y'),
+            'namaBulan' => Carbon::parse($bulan . '-01')->locale('id')->translatedFormat('F Y'),
             'count' => $items->count(),
             'total_drafts' => $drafts->count(),
             'same_count' => $drafts->count() - $items->count(),
@@ -538,7 +598,9 @@ class WsStockOpnameController extends WsBaseController
         ]);
     }
 
-    /** Cetak Berita Acara gabungan sebulan. */
+    /**
+     * Cetak Berita Acara gabungan seluruh opname dalam satu bulan ke format PDF.
+     */
     public function opnamePrintBulan(Request $request, StockOpnameService $opnames)
     {
         if (! $this->hasAccess()) {
@@ -551,7 +613,7 @@ class WsStockOpnameController extends WsBaseController
         if (! $opnames->baAvailable($bulan)) {
             abort(403, 'BA tersedia setelah opname bulan ini diselesaikan.');
         }
-        $namaBulan = \Carbon\Carbon::parse($bulan . '-01')->locale('id')->translatedFormat('F Y');
+        $namaBulan = Carbon::parse($bulan . '-01')->locale('id')->translatedFormat('F Y');
 
         $rows = StockOpname::with(['product', 'creator', 'validator'])
             ->where('period', $bulan)
@@ -575,7 +637,7 @@ class WsStockOpnameController extends WsBaseController
         $pembuat = $withBa->ba_creator ?? null;
         $pemeriksa = $withBa->ba_checker ?? null;
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.warehouse.opname-ba-bulan', [
+        $pdf = Pdf::loadView('pdf.warehouse.opname-ba-bulan', [
             'bulan' => $bulan,
             'namaBulan' => $namaBulan,
             'hari' => now()->translatedFormat('j'),
@@ -591,8 +653,7 @@ class WsStockOpnameController extends WsBaseController
     }
 
     /**
-     * Export rekap seluruh hasil opname satu periode.
-     * Format Excel dan PDF memakai data yang sama dari opnameRekapData().
+     * Export rekap seluruh hasil opname satu periode (Excel atau PDF).
      */
     public function opnameExportRekap(string $bulan, string $format)
     {
@@ -615,12 +676,14 @@ class WsStockOpnameController extends WsBaseController
             return Excel::download(new OpnameRekapExport($data), $filename . '.xlsx');
         }
 
-        return \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.warehouse.opname-rekap-bulan', $data)
+        return Pdf::loadView('pdf.warehouse.opname-rekap-bulan', $data)
             ->setPaper('a4', 'landscape')
             ->download($filename . '.pdf');
     }
 
-    /** Cetak Berita Acara stock opname per produk/periode. */
+    /**
+     * Cetak dokumen PDF Berita Acara opname per produk.
+     */
     public function opnamePrint(StockOpname $opname)
     {
         if (! $this->hasAccess()) {
@@ -631,7 +694,7 @@ class WsStockOpnameController extends WsBaseController
         }
         $opname->load(['product', 'creator', 'validator', 'stockMove']);
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.warehouse.opname-ba', [
+        $pdf = Pdf::loadView('pdf.warehouse.opname-ba', [
             'opname' => $opname,
             'move' => $opname->stockMove,
             'tercatat' => (float) $opname->recorded_qty,
@@ -650,19 +713,23 @@ class WsStockOpnameController extends WsBaseController
         return $pdf->download('BA_Opname_' . $name . '.pdf');
     }
 
-    /** Batas toleransi wajar angka tercatat. */
+    /**
+     * Batas toleransi wajar selisih fisik terhadap angka tercatat.
+     */
     public static function toleranceFor(float $recorded): float
     {
         return round(max(self::TOL_ABS, abs($recorded) * self::TOL_PCT), 2);
     }
 
-    /** Tanggal catat: eksplisit > simpanan terakhir (cookie) > bulan > hari ini. */
+    /**
+     * Helper penentuan tanggal opname (request > cookie tersimpan > akhir bulan > hari ini).
+     */
     private function resolveCatatDate(Request $request): string
     {
         $today = now()->format('Y-m-d');
         $cookieKey = 'opname_last_date_' . (Auth::id() ?? 'guest');
         $last = (string) $request->cookie($cookieKey, '');
-        if (! $this->isValidCatatDate($last, $today)) {
+        if (! $this->isValidCatatDate($last)) {
             $last = '';
         }
 
@@ -670,14 +737,14 @@ class WsStockOpnameController extends WsBaseController
         $bulanIn = (string) $request->get('bulan', '');
         $hasBulan = (bool) preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulanIn);
 
-        if ($this->isValidCatatDate($tanggalIn, $today)) {
+        if ($this->isValidCatatDate($tanggalIn)) {
             $tanggal = $tanggalIn;
         } elseif ($last !== '' && (! $hasBulan || substr($last, 0, 7) === $bulanIn)) {
             $tanggal = $last;
         } elseif ($hasBulan) {
-            $tanggal = $bulanIn === now()->format('Y-m')
+            $tanggal = ($bulanIn >= now()->format('Y-m'))
                 ? $today
-                : min(\Carbon\Carbon::parse($bulanIn . '-01')->endOfMonth()->format('Y-m-d'), $today);
+                : Carbon::parse($bulanIn . '-01')->endOfMonth()->format('Y-m-d');
         } elseif ($last !== '') {
             $tanggal = $last;
         } else {
@@ -689,32 +756,33 @@ class WsStockOpnameController extends WsBaseController
         return $tanggal;
     }
 
-    private function isValidCatatDate(string $value, string $today): bool
+    /**
+     * Validasi format string tanggal YYYY-MM-DD.
+     */
+    private function isValidCatatDate(string $value): bool
     {
         if ($value === '' || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
             return false;
         }
 
         try {
-            $dt = \Carbon\Carbon::createFromFormat('Y-m-d', $value);
+            $dt = Carbon::createFromFormat('Y-m-d', $value);
         } catch (\Throwable $e) {
             return false;
         }
 
         return $dt && $dt->format('Y-m-d') === $value
-            && $value <= $today
             && $value >= '2020-01-01';
     }
 
-    /** Ringkasan status dari koleksi baris opname. */
     /**
-     * Bentuk data rekap yang dipakai bersama oleh export Excel dan PDF.
+     * Siapkan struktur data rekapitulasi opname untuk export Excel dan PDF.
      *
      * @return array{bulan:string,namaBulan:string,rows:array,summary:array}
      */
     private function opnameRekapData(string $bulan): array
     {
-        $namaBulan = \Carbon\Carbon::parse($bulan . '-01')->locale('id')->translatedFormat('F Y');
+        $namaBulan = Carbon::parse($bulan . '-01')->locale('id')->translatedFormat('F Y');
 
         $records = StockOpname::with(['product', 'creator', 'stockMove'])
             ->where('period', $bulan)
@@ -760,6 +828,9 @@ class WsStockOpnameController extends WsBaseController
         ];
     }
 
+    /**
+     * Hitung agregat status baris opname (tersimpan, selesai, menunggu, sesuai, selisih).
+     */
     private function statsFromRows($rows): array
     {
         $done = $rows->where('status', StockOpname::STATUS_DONE);
@@ -775,6 +846,9 @@ class WsStockOpnameController extends WsBaseController
         ];
     }
 
+    /**
+     * Helper response error opname (JSON atau redirect back).
+     */
     private function opnameError(string $message, bool $isJson, array $extra = [])
     {
         if ($isJson) {
@@ -784,7 +858,9 @@ class WsStockOpnameController extends WsBaseController
         return back()->with('error', $message)->withInput();
     }
 
-    /** Baca: divisi gudang/sales + manajemen. */
+    /**
+     * Otorisasi baca: divisi gudang, sales, operasional, dan manajemen.
+     */
     protected function hasAccess(): bool
     {
         $user = Auth::user();
@@ -799,20 +875,21 @@ class WsStockOpnameController extends WsBaseController
         }
         $jabatan = strtolower(trim($user->jabatan ?? ''));
         $divisi = strtolower(trim($user->divisi ?? ''));
-        if (\Illuminate\Support\Str::contains($jabatan, 'direktur') || $divisi === 'top management') {
+        if (Str::contains($jabatan, 'direktur') || $divisi === 'top management') {
             return true;
         }
-        if (\Illuminate\Support\Str::contains($divisi, 'gudang')
-            || \Illuminate\Support\Str::contains($jabatan, 'gudang')) {
+        if (Str::contains($divisi, 'gudang') || Str::contains($jabatan, 'gudang')) {
             return true;
         }
 
         return in_array($divisi, ['marketing dan operasional', 'finance dan gudang', 'fianance dan gudang'])
-            || \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang'
-            || \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing') || \Illuminate\Support\Str::contains($jabatan, 'purchasing');
+            || Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang'
+            || Str::contains($jabatan, 'legal & purchasing') || Str::contains($jabatan, 'purchasing');
     }
 
-    /** Tulis: pengelola stok + divisi gudang. */
+    /**
+     * Otorisasi tulis: pengelola stok dan staf/admin gudang.
+     */
     protected function canManage(): bool
     {
         $user = Auth::user();
@@ -829,12 +906,12 @@ class WsStockOpnameController extends WsBaseController
         $divisi = strtolower(trim($user->divisi ?? ''));
 
         $isDivisiGudang = in_array($divisi, ['finance dan gudang', 'fianance dan gudang'], true)
-            || \Illuminate\Support\Str::contains($divisi, 'gudang')
-            || \Illuminate\Support\Str::contains($jabatan, 'gudang');
+            || Str::contains($divisi, 'gudang')
+            || Str::contains($jabatan, 'gudang');
 
-        return \Illuminate\Support\Str::contains($jabatan, 'test')
-            || \Illuminate\Support\Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang'
-            || \Illuminate\Support\Str::contains($jabatan, 'legal & purchasing')
+        return Str::contains($jabatan, 'test')
+            || Str::contains($jabatan, 'admin gudang') || $jabatan === 'gudang'
+            || Str::contains($jabatan, 'legal & purchasing')
             || $isDivisiGudang;
     }
 }

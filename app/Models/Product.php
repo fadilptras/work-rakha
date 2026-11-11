@@ -76,28 +76,15 @@ class Product extends Model
     }
 
     /**
-     * Format stok dengan detail kemasan.
-     * Contoh: 300 pcs -> "3 Polybag (300 pcs)".
+     * Format stok dalam satuan pack (stok diinput per pack, bukan isi).
+     * Contoh: 19 -> "19 Polybag".
      */
     public function formatStock(): string
     {
         $stock = (int) ($this->stock ?? 0);
-        $unit = $this->unit ?: 'pcs';
-        $fillUnit = $this->fill_unit ?: 'pcs';
-        $pcsPerUnit = $this->packQty();
+        $unit = $this->unit ?: ($this->fill_unit ?: 'pcs');
 
-        if ($pcsPerUnit <= 1) {
-            return "{$stock} {$unit}";
-        }
-
-        $packQty = intdiv($stock, $pcsPerUnit);
-        $remainder = $stock % $pcsPerUnit;
-
-        if ($packQty === 0 || $remainder > 0) {
-            return "{$stock} {$fillUnit}";
-        }
-
-        return "{$packQty} {$unit} ({$stock} {$fillUnit})";
+        return "{$stock} {$unit}";
     }
 
     public function batches(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -113,5 +100,27 @@ class Product extends Model
     public function reorderingRule(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(ReorderingRule::class);
+    }
+
+    public function opnames(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StockOpname::class);
+    }
+
+    /**
+     * Cek apakah produk sudah pernah di-opname (opname fisik resmi/revisi, bukan sekadar draf awal).
+     */
+    public function hasBeenOpnamed(): bool
+    {
+        return StockOpname::where('product_id', $this->id)
+            ->where(function ($q) {
+                $q->whereNull('note')
+                    ->orWhere('note', 'not like', '%stok awal%')
+                    ->orWhere('revision', '>', 1);
+            })
+            ->exists()
+            || StockMove::where('product_id', $this->id)
+                ->where('reason', 'like', 'Opname%')
+                ->exists();
     }
 }

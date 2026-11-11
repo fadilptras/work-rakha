@@ -19,8 +19,9 @@ use App\Http\Controllers\Admin\AdminPengajuanBarangController;
 use App\Http\Controllers\Admin\AdminHolidayController;
 use App\Http\Controllers\Admin\AdminKpiController;
 use App\Http\Controllers\Admin\AdminKpiIndicatorController;
-use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\SupplierController as AdminSupplierController;
 use App\Http\Controllers\Admin\AdminBarangController;
+use App\Http\Controllers\Admin\AdminCustomerController;
 
 use App\Http\Controllers\AbsenController;
 use App\Http\Controllers\RekapAbsenController;
@@ -43,8 +44,7 @@ use App\Http\Controllers\Sales\SalesPricingController;
 use App\Http\Controllers\Sales\SalesSphController;
 use App\Http\Controllers\Sales\MonitoringStockController;
 use App\Http\Controllers\Warehouse\WsProductController;
-use App\Http\Controllers\Warehouse\InventoryController;
-use App\Http\Controllers\Warehouse\WsDashboardController;
+use App\Http\Controllers\Warehouse\WsAnalyticsController;
 use App\Http\Controllers\Warehouse\WsStockCardController;
 use App\Http\Controllers\Warehouse\WsStockOpnameController;
 use App\Http\Controllers\Warehouse\WsMutationController;
@@ -52,6 +52,11 @@ use App\Http\Controllers\Warehouse\WsSjController;
 use App\Http\Controllers\Crm\ClientController;
 use App\Http\Controllers\Crm\TransactionController;
 use App\Http\Controllers\Crm\ReportController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PengajuanCenterController;
+use App\Http\Controllers\HrdController;
+use App\Http\Controllers\AdminApproverController;
 
 Route::get('/', fn() => redirect()->route('login'));
 
@@ -93,8 +98,12 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     });
 
     // KPI
-    Route::controller(KpiController::class)->group(function () {
-        Route::get('/kpi', 'index')->name('kpi.index');
+    Route::controller(KpiController::class)->prefix('kpi')->name('kpi.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/evaluate/{id}', 'evaluate')->name('evaluate');
+        Route::post('/evaluate/{id}', 'storeEvaluate')->name('storeEvaluate');
+        Route::post('/approve/{id}', 'approve')->name('approve');
+        Route::get('/pdf/{id}', 'exportPdf')->name('exportPdf');
     });
 
     // Cuti
@@ -130,7 +139,11 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
         Route::post('/pengajuan-dana', 'store')->name('pengajuan_dana.store');
         Route::get('/pengajuan-dana/monitoring', 'monitoringAll')->name('pengajuan_dana.monitoring_all');
         Route::get('/pengajuan-dana/{pengajuanDana}', 'show')->name('pengajuan_dana.show');
+        Route::get('/pengajuan-dana/{pengajuanDana}/edit', 'edit')->name('pengajuan_dana.edit');
+        Route::put('/pengajuan-dana/{pengajuanDana}', 'update')->name('pengajuan_dana.update');
+        Route::put('/pengajuan-dana/{pengajuanDana}/adjust', 'adjustByApprover')->name('pengajuan_dana.adjust');
         Route::post('/pengajuan-dana/{pengajuanDana}/approve', 'approve')->name('pengajuan_dana.approve');
+        Route::post('/pengajuan-dana/{pengajuanDana}/hold', 'hold')->name('pengajuan_dana.hold');
         Route::post('/pengajuan-dana/{pengajuanDana}/reject', 'reject')->name('pengajuan_dana.reject');
         Route::get('/pengajuan-dana/{pengajuanDana}/download', 'downloadPDF')->name('pengajuan_dana.download');
         Route::post('/pengajuan-dana/{pengajuanDana}/cancel', 'cancel')->name('pengajuan_dana.cancel');
@@ -153,8 +166,6 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     // CRM
     Route::prefix('crm')->name('crm.')->group(function () {
         Route::controller(ReportController::class)->group(function () {
-            Route::get('/matrix', 'matrix')->name('matrix');
-            Route::get('/matrix/export', 'exportMatrix')->name('matrix.export');
             Route::get('/{client}/export', 'exportClientRecap')->name('client.export');
         });
 
@@ -215,7 +226,6 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
 
         Route::controller(MonitoringStockController::class)->prefix('stock')->name('monitoring.')->group(function () {
             Route::get('/', 'index')->name('index');
-            Route::get('/history', 'historyIndex')->name('history');
             Route::post('/update-bulk', 'updateBulk')->name('update_bulk');
             Route::post('/parse-import', 'parseImport')->name('parse_import');
             Route::post('/save-import', 'saveImport')->name('save_import');
@@ -269,23 +279,23 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     });
 
     Route::prefix('warehouse')->name('warehouse.')->group(function () {
-        Route::controller(WsDashboardController::class)->group(function () {
-            Route::get('/gudang/dashboard', 'dashboard')->name('dashboard');
-        });
+        Route::get('/analytics', [WsAnalyticsController::class, 'index'])->name('analytics');
 
         Route::controller(WsStockCardController::class)->group(function () {
             Route::get('/stock/card', 'cardIndex')->name('stockcard.index');
             Route::get('/stock/card/{product}/export-pdf', 'cardExportPdf')->name('stockcard.export.pdf');
             Route::get('/stock/card/{product}/print', 'cardPrint')->name('stockcard.print');
+            Route::post('/stock/card/{product}/moves', 'cardMoveStore')->name('stockcard.moves.store');
             Route::put('/stock/card/moves/{move}', 'cardMoveUpdate')->name('stockcard.moves.update');
             Route::delete('/stock/card/moves/{move}', 'cardMoveDestroy')->name('stockcard.moves.destroy');
             Route::get('/stock/card/{product}', 'cardShow')->name('stockcard.show');
         });
 
         Route::controller(WsMutationController::class)->group(function () {
-            Route::get('/stock/pencatatan', 'pencatatanIndex')->name('mutation.index');
+            Route::get('/stock/pencatatan', 'pencatatanRedirect')->name('mutation.index');
             Route::get('/stock/pencatatan/batches', 'productBatches')->name('mutation.batches');
             Route::post('/stock/pencatatan', 'pencatatanStore')->name('mutation.store');
+            Route::put('/stock/pencatatan/doc/{doc}', 'pencatatanDocUpdate')->name('mutation.doc.update');
             Route::delete('/stock/pencatatan/bulk', 'pencatatanBulkDestroy')->name('mutation.bulk_destroy');
             Route::put('/stock/pencatatan/{move}', 'pencatatanUpdate')->name('mutation.update');
             Route::delete('/stock/pencatatan/{move}', 'pencatatanDestroy')->name('mutation.destroy');
@@ -299,13 +309,17 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
         Route::controller(WsSjController::class)->group(function () {
             Route::get('/stock/surat-jalan', 'index')->name('sj.index');
             Route::get('/stock/surat-jalan/export/pdf', 'exportPdf')->name('sj.export.pdf');
+            Route::get('/stock/surat-jalan/{doc}/edit', 'edit')->name('mutation.doc.edit');
             Route::get('/stock/surat-jalan/{doc}/cetak', 'print')->name('sj.print');
         });
 
         // Data Product: CRUD master produk.
         Route::controller(WsProductController::class)->group(function () {
             Route::get('/stock/barang', 'barangIndex')->name('product.index');
+            Route::get('/stock/barang/export/pdf', 'exportPdf')->name('product.export.pdf');
+            Route::get('/stock/barang/export/excel', 'exportExcel')->name('product.export.excel');
             Route::post('/stock/barang', 'storeBarang')->name('product.store');
+            Route::delete('/stock/barang/bulk', 'bulkDestroyBarang')->name('product.bulk_destroy');
             Route::put('/stock/barang/{product}', 'updateBarang')->name('product.update');
             Route::delete('/stock/barang/{product}', 'destroyBarang')->name('product.destroy');
         });
@@ -315,21 +329,14 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
             Route::get('/opname/catat', 'catatIndex')->name('stockopname.catat');
             Route::get('/opname/draf', 'draftList')->name('stockopname.drafts');
             Route::get('/opname/cetak-bulan', 'opnamePrintBulan')->name('stockopname.print-bulan');
+            Route::get('/opname/rekap/{bulan}/{format}', 'opnameExportRekap')
+                ->name('stockopname.export-rekap')
+                ->where('bulan', '\d{4}-(0[1-9]|1[0-2])')
+                ->whereIn('format', ['excel', 'pdf']);
             Route::post('/opname/selesai', 'opnameFinish')->name('stockopname.finish');
-            Route::get('/opname/{move}/cetak', 'opnamePrint')->name('stockopname.print')->whereNumber('move');
+            Route::get('/opname/{opname}/cetak', 'opnamePrint')->name('stockopname.print')->whereNumber('opname');
             Route::post('/inventory/opname', 'opnameStore')->name('stockopname.store');
             Route::post('/inventory/scrap', 'scrapStore')->name('stockopname.scrap');
-        });
-
-        Route::controller(InventoryController::class)->group(function () {
-            Route::get('/inventory', 'index')->name('inventory');
-            Route::post('/inventory/moves', 'storeMove')->name('inventory.moves.store');
-            Route::post('/inventory/moves/{move}/validate', 'validateMove')->name('inventory.moves.validate');
-            Route::post('/inventory/moves/{move}/cancel', 'cancelMove')->name('inventory.moves.cancel');
-            Route::post('/inventory/moves/{move}/reverse', 'reverseMove')->name('inventory.moves.reverse');
-            Route::put('/inventory/products/{product}/min-stock', 'minStockUpdate')->name('inventory.min-stock.update');
-            Route::post('/inventory/rules', 'rulesStore')->name('inventory.rules.store');
-            Route::post('/inventory/draft-order', 'draftOrder')->name('inventory.draft-order');
         });
 
         // Alias lawas: halaman monitoring stok pernah diakses via warehouse.*.
@@ -337,7 +344,6 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
         // tidak RouteNotFoundException.
         Route::controller(MonitoringStockController::class)->prefix('monitoring')->name('monitoring.')->group(function () {
             Route::get('/', 'index')->name('index');
-            Route::get('/history', 'historyIndex')->name('history');
             Route::post('/update-bulk', 'updateBulk')->name('update_bulk');
             Route::post('/parse-import', 'parseImport')->name('parse_import');
             Route::post('/save-import', 'saveImport')->name('save_import');
@@ -359,16 +365,19 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
     });
 
     // Pengajuan Barang (User)
-    // Pengajuan Barang / SPB (User)
     Route::controller(WsSpbController::class)->prefix('pengajuan-barang')->name('pengajuan_barang.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::post('/', 'store')->name('store');
         Route::get('/history', 'history')->name('history');
         Route::get('/cek-riwayat', 'checkRiwayat')->name('checkRiwayat');
         Route::get('/cek-forecast', 'checkForecast')->name('checkForecast');
+        Route::get('/status-batch', 'statusBatch')->name('statusBatch');
+        Route::post('/status-batch-names', 'statusBatchNames')->name('statusBatchNames');
         Route::get('/monitoring-all', 'monitoringAll')->name('monitoring_all');
+        Route::get('/export-all-excel', 'exportAllExcel')->name('export_all_excel');
         Route::get('/{pengajuanBarang}', 'show')->name('show')->whereNumber('pengajuanBarang');
         Route::get('/{pengajuanBarang}/download', 'download')->name('download')->whereNumber('pengajuanBarang');
+        Route::get('/{pengajuanBarang}/export-excel', 'exportSingleExcel')->name('export_single_excel')->whereNumber('pengajuanBarang');
         Route::patch('/{pengajuanBarang}/status', 'updateStatus')->name('updateStatus')->whereNumber('pengajuanBarang');
         Route::post('/{pengajuanBarang}/cancel', 'cancel')->name('cancel')->whereNumber('pengajuanBarang');
         Route::post('/{pengajuanBarang}/update-monitoring', 'updateMonitoring')->name('updateMonitoring')->whereNumber('pengajuanBarang');
@@ -378,6 +387,67 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
 
     Route::controller(AdminPengajuanBarangController::class)->prefix('pengajuan-barang')->name('pengajuan_barang.')->group(function () {
         Route::get('/export-excel', 'exportRekapExcel')->name('export_excel');
+    });
+
+    // Kelola Supplier & Customer & Pengajuan (Sisi User)
+    Route::resource('suppliers', SupplierController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('customers', CustomerController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('/pengajuan-center', [PengajuanCenterController::class, 'index'])->name('pengajuan.center');
+
+    // Admin Center - Pengaturan Approvers (Sisi User)
+    Route::get('/admin-center/approvers', [AdminApproverController::class, 'index'])->name('admin.approvers.index');
+    Route::post('/admin-center/approvers', [AdminApproverController::class, 'update'])->name('admin.approvers.update');
+
+    // Admin Center - Kelola Agenda & Hari Libur (Sisi User / GA)
+    Route::controller(AdminAgendaController::class)->prefix('admin-center/agenda')->name('admin.agenda.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::get('/get-all-users', 'getAllUsers')->name('getAllUsers');
+        Route::get('/events', 'getAdminAgendas')->name('getEvents');
+        Route::put('/{agenda}', 'update')->name('update');
+        Route::delete('/{agenda}', 'destroy')->name('destroy');
+        Route::post('/{agenda}/resend', 'resend')->name('resend');
+    });
+
+    Route::resource('admin-center/holidays', AdminHolidayController::class)->names([
+        'index' => 'admin.holidays.index',
+        'store' => 'admin.holidays.store',
+        'update' => 'admin.holidays.update',
+        'destroy' => 'admin.holidays.destroy',
+    ]);
+
+    // HRD & People Operations (Sisi User)
+    Route::prefix('hrd')->name('hrd.')->group(function () {
+        Route::get('/karyawan', [HrdController::class, 'karyawan'])->name('karyawan.index');
+        Route::post('/karyawan', [HrdController::class, 'storeKaryawan'])->name('karyawan.store');
+        Route::get('/karyawan/{user}/edit', [HrdController::class, 'editKaryawan'])->name('karyawan.edit');
+        Route::put('/karyawan/{user}', [HrdController::class, 'updateKaryawan'])->name('karyawan.update');
+        Route::delete('/karyawan/{user}', [HrdController::class, 'destroyKaryawan'])->name('karyawan.destroy');
+        Route::post('/karyawan/{user}/set-as-head', [HrdController::class, 'setAsHeadKaryawan'])->name('karyawan.setAsHead');
+        Route::get('/karyawan/{user}/download-pdf', [HrdController::class, 'downloadProfilePdf'])->name('karyawan.downloadPdf');
+        Route::get('/absensi', [HrdController::class, 'absensi'])->name('absensi.index');
+        Route::get('/absensi/rekap', [HrdController::class, 'absensiRekap'])->name('absensi.rekap');
+        Route::get('/absensi/pdf/harian', [HrdController::class, 'downloadPdfHarian'])->name('absensi.downloadPdfHarian');
+        Route::get('/absensi/excel/harian', [HrdController::class, 'downloadExcelHarian'])->name('absensi.downloadExcelHarian');
+        Route::get('/absensi/rekap/pdf', [HrdController::class, 'downloadRekapPdf'])->name('absensi.rekap.downloadPdf');
+        Route::get('/absensi/rekap/excel', [HrdController::class, 'downloadRekapExcel'])->name('absensi.rekap.downloadExcel');
+        Route::get('/cuti', [HrdController::class, 'cuti'])->name('cuti.index');
+        Route::get('/lembur', [HrdController::class, 'lembur'])->name('lembur.index');
+        Route::get('/lembur/rekap', [HrdController::class, 'lemburRekap'])->name('lembur.rekap');
+        Route::get('/lembur/rekap/pdf', [HrdController::class, 'downloadRekapLemburPdf'])->name('lembur.rekap.downloadPdf');
+        Route::get('/lembur/rekap/excel', [HrdController::class, 'downloadRekapLemburExcel'])->name('lembur.rekap.downloadExcel');
+        Route::get('/aktivitas', [HrdController::class, 'aktivitas'])->name('aktivitas.index');
+        Route::prefix('kpi')->name('kpi.')->group(function () {
+            Route::get('/', [HrdController::class, 'kpi'])->name('index');
+            Route::get('/indicators', [HrdController::class, 'kpiIndicators'])->name('indicators.index');
+            Route::post('/indicators/seed', [HrdController::class, 'kpiSeedDefaultIndicators'])->name('indicators.seed');
+            Route::post('/indicators', [HrdController::class, 'kpiStoreIndicator'])->name('indicators.store');
+            Route::put('/indicators/{indicator}', [HrdController::class, 'kpiUpdateIndicator'])->name('indicators.update');
+            Route::delete('/indicators/{indicator}', [HrdController::class, 'kpiDestroyIndicator'])->name('indicators.destroy');
+            Route::get('/evaluators', [HrdController::class, 'kpiEvaluators'])->name('evaluators.index');
+            Route::post('/evaluators', [HrdController::class, 'kpiSaveEvaluators'])->name('evaluators.save');
+        });
+        Route::get('/agenda', [HrdController::class, 'agenda'])->name('agenda.index');
     });
 });
 
@@ -527,13 +597,18 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
     });
 
     Route::resource('holidays', AdminHolidayController::class);
-    Route::resource('suppliers', SupplierController::class);
-    // Packagings harus didaftar SEBELUM resource agar tidak ditangkap route show {barang}
+    Route::resource('suppliers', AdminSupplierController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('customers', AdminCustomerController::class)->only(['index', 'store', 'update', 'destroy']);
+    
+    Route::redirect('/products', '/admin/barangs', 301);
+    Route::redirect('/products/{any}', '/admin/barangs', 301)->where('any', '.*');
+    
     Route::controller(AdminBarangController::class)->prefix('barangs')->name('barangs.')->group(function () {
         Route::get('/packagings', 'packagings')->name('packagings.index');
         Route::post('/packagings', 'storePackaging')->name('packagings.store');
         Route::put('/packagings/{packaging}', 'updatePackaging')->name('packagings.update');
         Route::delete('/packagings/{packaging}', 'destroyPackaging')->name('packagings.destroy');
     });
+    
     Route::resource('barangs', AdminBarangController::class);
 });
