@@ -93,9 +93,9 @@
         <tr>
             <td align="center" style="border: 1px solid #000000;">{{ $rowNumber }}</td>
             <td style="border: 1px solid #000000;">{{ $client->client_name }}</td>
-            <td style="border: 1px solid #000000;">{{ $client->customer_name }}</td>
+            <td style="border: 1px solid #000000;">{{ $client->customer?->customer_name ?? '-' }}</td>
             <td style="border: 1px solid #000000; text-align: center;">{{ $client->ps ?? '-' }}</td>
-            <td style="border: 1px solid #000000; text-align: center;">{{ $client->area }}</td>
+            <td style="border: 1px solid #000000; text-align: center;">{{ $client->customer?->area }}</td>
             
             <td style="border: 1px solid #000000; font-weight: bold; color: #4b5563; background-color: #f9fafb;">
                 Saldo Awal Tahun {{ $year }}
@@ -168,9 +168,9 @@
                 <tr>
                     <td align="center" style="border: 1px solid #000000;">{{ $rowNumber }}</td>
                     <td style="border: 1px solid #000000;">{{ $client->client_name }}</td>
-                    <td style="border: 1px solid #000000;">{{ $client->customer_name }}</td>
+                    <td style="border: 1px solid #000000;">{{ $client->customer?->customer_name ?? '-' }}</td>
                     <td style="border: 1px solid #000000; text-align: center;">{{ $client->ps ?? '-' }}</td>
-                    <td style="border: 1px solid #000000; text-align: center;">{{ $client->area }}</td>
+                    <td style="border: 1px solid #000000; text-align: center;">{{ $client->customer?->area }}</td>
                     
                     <td style="border: 1px solid #000000;">{{ $displayName }}</td>
                     

@@ -1,13 +1,15 @@
 <?php
 
 namespace App\Http\Controllers\Crm;
-
 use App\Models\Client;
 use App\Models\ClientInteraction;
+use App\Models\ClientPicHistory;
+use App\Models\Product;
 use App\Models\PengajuanDana;
 use App\Models\Sales;
 use App\Notifications\PengajuanDanaNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -69,7 +71,7 @@ class TransactionController extends BaseCrmController
             ]);
 
             $interaction->update([
-                'product_name'     => 'USAGE : ' . ($interaction->client->client_name ?? '') . ' - ' . ($interaction->client->customer_name ?? '') . ' (' . $request->purpose . ')',
+                'product_name'     => 'USAGE : ' . ($interaction->client->client_name ?? '') . ' - ' . ($interaction->client->customer?->customer_name ?? '') . ' (' . $request->purpose . ')',
                 'interaction_date' => $request->interaction_date,
                 'sales_amount'     => 0,
                 'amount'           => $request->amount,
@@ -170,6 +172,7 @@ class TransactionController extends BaseCrmController
         [$created, $skipped] = DB::transaction(function () use ($rows, $clients, $request) {
             $created = 0;
             $skipped = 0;
+            $productMap = Product::whereNotNull('match_key')->pluck('id', 'match_key');
             foreach ($rows as $row) {
                 $rowClient = $clients->get($row['client_id']);
                 $rowRate = $rowClient ? (float) $rowClient->commission_rate : 0;
@@ -188,6 +191,8 @@ class TransactionController extends BaseCrmController
 
 ClientInteraction::create([
                     'client_id' => $row['client_id'],
+                    'customer_id' => $rowClient?->customer_id,
+                    'product_id' => $productMap[Product::buildMatchKey($row['product_name'])] ?? null,
                     'transaction_type' => 'IN',
                     'product_name' => $row['product_name'],
                     'interaction_date' => $row['interaction_date'],
@@ -225,8 +230,9 @@ ClientInteraction::create([
             ]);
             ClientInteraction::create([
                 'client_id' => $request->client_id,
+                'customer_id' => $client->customer_id,
                 'transaction_type' => 'OUT',
-                'product_name' => 'USAGE : ' . $client->client_name . ' - ' . $client->customer_name . ' (' . $request->purpose . ')',
+                'product_name' => 'USAGE : ' . $client->client_name . ' - ' . ($client->customer?->customer_name ?? '') . ' (' . $request->purpose . ')',
                 'interaction_date' => $request->interaction_date,
                 'sales_amount' => 0,
                 'amount' => $request->amount,
@@ -273,14 +279,15 @@ ClientInteraction::create([
         $st3 = $app3 ? 'menunggu' : 'skipped';
         $st4 = $app4 ? 'menunggu' : 'skipped';
 
-        $judulPengajuan = 'Support Klien: ' . $client->customer_name . ' - ' . $client->client_name;
+        $judulPengajuan = 'Support Klien: ' . ($client->customer?->customer_name ?? '') . ' - ' . $client->client_name;
 
         // Titipkan data CRM di rincian_dana (format: client - customer (keperluan))
         $rincian = [
             [
-                'deskripsi' => $client->client_name . ' - ' . $client->customer_name . ' (' . $request->purpose . ')',
+                'deskripsi' => $client->client_name . ' - ' . ($client->customer?->customer_name ?? '') . ' (' . $request->purpose . ')',
                 'jumlah' => $request->amount,
                 'client_id' => $request->client_id, // Disisipkan untuk pencatatan riwayat nanti
+                'customer_id' => $client->customer_id,
                 'interaction_date' => $request->interaction_date,
                 'crm_notes' => $request->notes,
             ]
@@ -289,7 +296,7 @@ ClientInteraction::create([
         // 3. Generate File PDF Rekap Sales sebagai Lampiran
         $year = date('Y');
         $calc = $this->calculateRecapData($client, $year);
-        $safeClientName = str_replace(['/', '\\', ' '], '_', $client->customer_name);
+        $safeClientName = str_replace(['/', '\\', ' '], '_', $client->customer?->customer_name ?? 'klien');
         $fileName = 'Rekap_Sales_' . $safeClientName . '_' . date('Ymd_His') . '.pdf';
         $filePath = 'lampiran_dana/' . $fileName;
 
@@ -351,8 +358,8 @@ ClientInteraction::create([
             $firstStage = 4;
         }
 
-        if ($firstStage == 3) {
-            $pengajuanDana->update(['status' => 'proses_pembayaran']);
+        if ($firstStage == 2 || $firstStage == 3) {
+            $pengajuanDana->update(['status' => 'diproses']);
         } elseif ($firstStage == 4) {
             $pengajuanDana->update(['status' => 'disetujui']);
         }
@@ -375,6 +382,7 @@ ClientInteraction::create([
         ]);
         ClientInteraction::create([
             'client_id' => $request->client_id, 'transaction_type' => 'ENTERTAIN',
+            'customer_id' => $client->customer_id,
             'product_name' => 'ENTERTAIN : ' . \Illuminate\Support\Str::limit(trim((string) $request->notes), 200, ''),
             'interaction_date' => $request->interaction_date,
             'sales_amount' => 0, 'amount' => $request->amount, 'notes' => $request->notes,
@@ -392,13 +400,12 @@ ClientInteraction::create([
         $month = substr((string) $request->input('date'), 0, 7); // Normalisasi YYYY-MM-DD (mobile) maupun YYYY-MM (desktop) ke YYYY-MM
         $salesCustomer = trim((string) $request->input('sales_customer'));
 
-        // 2. Kunci ke PS klien (server-side, tidak percaya input): PS -> customer -> tanggal.
-        $client->loadMissing('user');
-        $lockedPs = trim((string) ($client->ps !== null && $client->ps !== '' ? $client->ps : ($client->user->name ?? '')));
-
-        // 3. Alias nama customer di sales: bila klien punya pemetaan eksplisit,
-        // pakai alias tersebut (nama klien tidak selalu sama persis dengan di sales).
-        $salesAlias = trim((string) ($client->sales_customer_name ?? ''));
+        // Alias nama customer di sales: bila instansi punya pemetaan eksplisit,
+        // pakai alias tersebut (nama instansi tidak selalu sama persis dengan di sales).
+        if (Client::hasCustomerIdColumn()) {
+            $client->loadMissing('customer');
+        }
+        $salesAlias = trim((string) ($client->customer?->sales_customer_name ?? ''));
         if ($salesAlias !== '') {
             $salesCustomer = $salesAlias;
         }
@@ -407,25 +414,55 @@ ClientInteraction::create([
             return response()->json(['success' => false, 'message' => 'Bulan atau Rumah Sakit tidak valid.']);
         }
 
-        // Cari data di Sales Command Center milik PS klien tersebut.
-        // Kolom sales pasca migrasi Sep 2026: date, customer_name, product_name, qty, unit, base_price, discount, net_price, month, ps.
+        $startOfMonth = Carbon::parse($month . '-01')->startOfMonth()->toDateString();
+        $endOfMonth = Carbon::parse($month . '-01')->endOfMonth()->toDateString();
+
+        // 1. Cari PIC yang pernah aktif di rentang bulan tersebut
+        $activePics = $client->picHistories()
+            ->where('start_date', '<=', $endOfMonth)
+            ->where(function ($q) use ($startOfMonth) {
+                $q->whereNull('end_date')
+                  ->orWhere('end_date', '>=', $startOfMonth);
+            })
+            ->pluck('pic_name')
+            ->toArray();
+
+        // Fallback ke PIC saat ini / nama user jika belum ada di riwayat
+        $client->loadMissing('user');
+        $currentPs = trim((string) ($client->ps !== null && $client->ps !== '' ? $client->ps : ($client->user->name ?? '')));
+        if (empty($activePics) && $currentPs !== '') {
+            $activePics[] = $currentPs;
+        }
+        $activePics = array_values(array_unique(array_filter(array_map('trim', $activePics))));
+
+        // 2. Query data di Sales Command Center milik PIC aktif tersebut
         $query = Sales::query()
             ->where('date', 'LIKE', $month . '%')
             ->where('customer_name', $salesCustomer)
             ->where('ps', '!=', 'Office');
-        if ($lockedPs !== '') {
-            $query->whereRaw('LOWER(TRIM(ps)) = ?', [mb_strtolower($lockedPs)]);
+
+        if (!empty($activePics)) {
+            $query->where(function ($q) use ($activePics) {
+                foreach ($activePics as $pic) {
+                    $q->orWhereRaw('LOWER(TRIM(ps)) = ?', [mb_strtolower($pic)]);
+                }
+            });
         }
+
         $total = (clone $query)->count();
         $limit = 500;
         $sales = $query
-            ->select(['product_name', 'net_price', 'date', 'qty', 'unit', 'customer_name'])
+            ->select(['product_name', 'net_price', 'date', 'qty', 'unit', 'customer_name', 'ps'])
             ->orderBy('date')
             ->limit($limit)
             ->get();
 
         if ($sales->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'Data sales tidak ditemukan untuk bulan tersebut.']);
+            $picInfo = !empty($activePics) ? ' (' . implode(', ', $activePics) . ')' : '';
+            return response()->json([
+                'success' => false,
+                'message' => "Data sales tidak ditemukan untuk bulan tersebut di bawah PIC{$picInfo}."
+            ]);
         }
 
         // Ambil data sales yang sesuai dan mapping langsung ke Client yang sedang dibuka
@@ -437,7 +474,8 @@ ClientInteraction::create([
                 'qty' => $sale->qty,
                 'unit' => $sale->unit,
                 'client_id' => $client->id,
-                'customer_name' => $sale->customer_name // Nama asli dari tabel Sales Command Center
+                'customer_name' => $sale->customer_name,
+                'ps' => $sale->ps,
             ];
         });
 
@@ -448,6 +486,7 @@ ClientInteraction::create([
             'truncated' => $total > $limit,
             'customer' => $salesCustomer,
             'aliased' => $salesAlias !== '',
+            'active_pics' => $activePics,
         ]);
     }
 

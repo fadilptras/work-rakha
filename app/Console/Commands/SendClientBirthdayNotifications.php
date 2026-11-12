@@ -21,8 +21,13 @@ class SendClientBirthdayNotifications extends Command
         $today = now();
         $this->info("Cek Ultah Client {$today->toDateString()}");
 
-        $birthdayClients = Client::whereMonth('tanggal_lahir', $today->month)
-                                 ->whereDay('tanggal_lahir', $today->day)
+        $birthCol = \Illuminate\Support\Facades\Schema::hasColumn('clients', 'birthdate')
+            ? 'birthdate'
+            : (\Illuminate\Support\Facades\Schema::hasColumn('clients', 'contact_birth_date') ? 'contact_birth_date' : 'tanggal_lahir');
+
+        $birthdayClients = Client::active()
+                                 ->whereMonth($birthCol, $today->month)
+                                 ->whereDay($birthCol, $today->day)
                                  ->with('user') // Load relasi user (Sales Person)
                                  ->get();
 
@@ -42,8 +47,8 @@ class SendClientBirthdayNotifications extends Command
 
         // 3. Loop Client dan Kirim Notifikasi
         foreach ($birthdayClients as $client) {
-            $namaClient = $client->nama_user;
-            $perusahaan = $client->nama_perusahaan;
+            $namaClient = $client->client_name;
+            $perusahaan = $client->customer?->customer_name ?? $client->customer_name ?? '-';
             
             $this->info("Memproses Client: {$namaClient} ({$perusahaan})");
 

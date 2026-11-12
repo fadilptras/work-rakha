@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Rekapitulasi Sales Klien - {{ $client->customer_name }}</title>
+    <title>Rekapitulasi Sales Klien - {{ $client->customer?->customer_name ?? '-' }}</title>
     <style>
         body { font-family: 'Times New Roman', 'Times', serif; font-size: 12px; color: #111827; line-height: 1.5; }
         .doc-title { text-align: center; margin-bottom: 10px; border-bottom: 2px solid #111827; padding-bottom: 12px; }
@@ -82,7 +82,7 @@
         <tr>
             <td class="label">Nama Customer</td>
             <td class="sep">:</td>
-            <td class="value-wide" colspan="4">{{ $client->customer_name ?? '-' }}</td>
+            <td class="value-wide" colspan="4">{{ $client->customer?->customer_name ?? '-' }}</td>
         </tr>
         <tr>
             <td class="label">Keperluan</td>

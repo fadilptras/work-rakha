@@ -29,8 +29,8 @@ class ClientBirthdayNotification extends Notification implements ShouldQueue
     public function toWhatsApp(object $notifiable)
     {
         // Ambil data dari model Client
-        $namaClient = $this->client->nama_user;
-        $perusahaan = $this->client->nama_perusahaan;
+        $namaClient = $this->client->client_name;
+        $perusahaan = $this->client->customer?->customer_name ?? $this->client->customer_name ?? '-';
         
         // Ambil nama sales internal jika ada
         $salesName = $this->client->user ? $this->client->user->name : '-';
@@ -46,8 +46,8 @@ class ClientBirthdayNotification extends Notification implements ShouldQueue
 
     public function toArray(object $notifiable)
     {
-        $namaClient = $this->client->nama_user;
-        $perusahaan = $this->client->nama_perusahaan;
+        $namaClient = $this->client->client_name;
+        $perusahaan = $this->client->customer?->customer_name ?? $this->client->customer_name ?? '-';
 
         return [
             'title'   => 'Client Ulang Tahun!',

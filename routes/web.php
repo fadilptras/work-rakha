@@ -175,6 +175,7 @@ Route::middleware(['auth', 'redirect.if.admin'])->group(function () {
             Route::get('/{client}', 'show')->name('show');
             Route::get('/client/{client}/edit', 'edit')->name('client.edit');
             Route::put('/client/{client}', 'update')->name('client.update');
+            Route::post('/client/{client}/handover', 'handoverPic')->name('client.handover');
             Route::delete('/client/{client}', 'destroyClient')->name('client.destroy');
         });
 
@@ -572,6 +573,7 @@ Route::middleware(['auth', 'admin', 'admin.idle'])->prefix('admin')->name('admin
         Route::get('/{client}', 'show')->name('show');
         Route::get('/client/{client}/edit', 'edit')->name('client.edit');
         Route::put('/client/{client}', 'update')->name('client.update');
+        Route::post('/client/{client}/handover', 'handoverPic')->name('client.handover');
         Route::delete('/client/{client}', 'destroyClient')->name('client.destroy');
         Route::post('/interaction', 'storeInteraction')->name('interaction.store');
         Route::post('/interaction/support', 'storeSupport')->name('interaction.support');

@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Crm;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Customer;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -17,6 +20,11 @@ use Illuminate\Support\Str;
  */
 abstract class BaseCrmController extends Controller
 {
+    protected const CRM_DIVISIONS = [
+        'marketing',
+        'operasional',
+        'marketing dan operasional',
+    ];
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -38,16 +46,21 @@ abstract class BaseCrmController extends Controller
         $user = Auth::user();
         if (!$user) return false;
 
+        if (\App\Models\User::isSuperUserEmail($user->email ?? '')) return true;
+
         $jabatan = strtolower(trim($user->jabatan ?? ''));
         $divisi  = strtolower(trim($user->divisi ?? ''));
+        $email   = strtolower(trim($user->email ?? ''));
 
         $isTopManagement = Str::contains($jabatan, 'direktur') || $divisi === 'top management';
         $isKepalaDivisi  = (($user->is_kepala_divisi == 1) || Str::contains($jabatan, 'kepala'))
             && in_array($divisi, ['marketing', 'operasional', 'marketing dan operasional']);
         $isAdminSupport  = Str::contains($jabatan, 'admin support');
+        $isSalesSupervisor = Str::contains($jabatan, 'sales supervisor')
+            || in_array($email, ['paladin_arief@yahoo.com'], true);
         $isTest          = Str::contains($jabatan, 'test');
 
-        return $isTopManagement || $isKepalaDivisi || $isAdminSupport || $isTest;
+        return $isTopManagement || $isKepalaDivisi || $isAdminSupport || $isSalesSupervisor || $isTest;
     }
 
     // Cek Akses Dasar (Apakah boleh buka CRM sama sekali)
@@ -60,13 +73,88 @@ abstract class BaseCrmController extends Controller
 
         $divisi = strtolower(trim($user->divisi ?? ''));
 
-        $allowedDivisi = [
-            'marketing',
-            'operasional',
-            'marketing dan operasional'
-        ];
+        return in_array($divisi, self::CRM_DIVISIONS, true);
+    }
 
-        return in_array($divisi, $allowedDivisi);
+    /**
+     * Daftar karyawan pada divisi Marketing / Operasional untuk dropdown PIC CRM.
+     */
+    protected function getMarketingOperationalUsers()
+    {
+        return User::whereIn(DB::raw('LOWER(TRIM(divisi))'), self::CRM_DIVISIONS)
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'divisi', 'jabatan']);
+    }
+
+    // ---------- Helper split kontak + instansi ----------
+
+    /**
+     * Cari atau buatkan Customer dari nama instansi, lalu sinkronkan
+     * field instansi yang disertakan (alias, area, apoteker, alamat kantor).
+     */
+    protected function resolveCustomer(array $input): Customer
+    {
+        $name = trim((string) ($input['customer_name'] ?? ''));
+        abort_if($name === '', 422, 'Nama instansi wajib diisi.');
+        $customer = Customer::firstOrCreate(['customer_name' => $name]);
+
+        $attrs = [];
+        foreach (['sales_customer_name', 'area', 'pharmacist_name', 'pharmacist_license_no', 'pharmacist_phone'] as $f) {
+            if (array_key_exists($f, $input) && trim((string) $input[$f]) !== '') {
+                $attrs[$f] = trim((string) $input[$f]);
+            }
+        }
+        // Field form bernama company_* dipetakan ke kolom customer.
+        $fieldMap = [
+            'customer_type' => 'customer_type',
+            'company_phone' => 'phone',
+            'company_email' => 'email',
+            'anniversary_date' => 'anniversary_date',
+            'npwp' => 'npwp',
+        ];
+        foreach ($fieldMap as $in => $col) {
+            if (array_key_exists($in, $input) && trim((string) $input[$in]) !== '') {
+                $attrs[$col] = trim((string) $input[$in]);
+            }
+        }
+        if ($attrs) $customer->update($attrs);
+        if (array_key_exists('company_address', $input)) {
+            $this->syncCustomerOfficeAddress($customer, $input['company_address']);
+        }
+
+        return $customer->fresh();
+    }
+
+    /**
+     * Tulis/bersihkan entri alamat berlabel Kantor di customer_address (JSON).
+     * Entri berlabel lain (Gudang/Cabang) tidak disentuh.
+     */
+    protected function syncCustomerOfficeAddress(Customer $customer, $address): void
+    {
+        $address = trim((string) ($address ?? ''));
+        $list = array_values(array_filter((array) ($customer->customer_address ?? []), 'is_array'));
+        $found = false;
+        foreach ($list as $i => $a) {
+            if (($a['label'] ?? '') === 'Kantor') {
+                $list[$i]['address'] = $address;
+                $found = true;
+                break;
+            }
+        }
+        if (!$found && $address !== '') {
+            $list[] = ['label' => 'Kantor', 'address' => $address, 'city' => '', 'phone' => '', 'is_default' => empty($list)];
+        }
+        $customer->update(['customer_address' => array_values($list)]);
+    }
+
+    /**
+     * Ambil hanya field milik kontak dari input tervalidasi.
+     */
+    protected function contactAttributes(array $validated): array
+    {
+        $keys = ['client_name', 'email', 'phone', 'address', 'birthdate', 'position', 'hobby', 'commission_rate', 'bank_name', 'bank_account_number', 'bank_account_name', 'opening_balance'];
+
+        return array_intersect_key($validated, array_flip($keys));
     }
 
     // ---------- Kalkulator saldo / rekap ----------

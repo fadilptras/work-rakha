@@ -7,7 +7,7 @@
         <th colspan="6" align="center">REKAPITULASI SALES TAHUN {{ $year }}</th>
     </tr>
     <tr>
-        <th colspan="6" align="center">{{ strtoupper($client->client_name) }} - {{ strtoupper($client->customer_name) }}</th>
+        <th colspan="6" align="center">{{ strtoupper($client->client_name) }} - {{ strtoupper($client->customer?->customer_name ?? '') }}</th>
     </tr>
     <tr><td colspan="6"></td></tr>
 
@@ -30,7 +30,7 @@
     {{-- [BARU] Baris 2: Jabatan & No. Rekening --}}
     <tr>
         <td><b>Jabatan</b></td>
-        <td>{{ $client->contact_position ?? '-' }}</td>
+        <td>{{ $client->position ?? '-' }}</td>
         <td></td>
         <td><b>No. Rekening</b></td>
         <td colspan="2" align="left" style="mso-number-format:'@';">{{ $client->bank_account_number ?? '-' }}</td>
@@ -39,7 +39,7 @@
     {{-- Baris 3: Instansi & Atas Nama --}}
     <tr>
         <td><b>Instansi</b></td>
-        <td>{{ $client->customer_name }}</td>
+        <td>{{ $client->customer?->customer_name ?? '-' }}</td>
         <td></td>
         <td><b>Atas Nama (A/N)</b></td>
         <td colspan="2" align="left">{{ $client->bank_account_name ?? '-' }}</td>
@@ -48,7 +48,7 @@
     {{-- [BARU] Baris 4: Hobby & Saldo Awal --}}
     <tr>
         <td><b>Hobby / Minat</b></td>
-        <td>{{ $client->contact_hobby ?? '-' }}</td>
+        <td>{{ $client->hobby ?? '-' }}</td>
         <td></td>
         <td><b>Saldo Awal</b></td>
         <td colspan="2">{{ $client->opening_balance ?? 0 }}</td>
@@ -57,7 +57,7 @@
     {{-- Baris 5: Area (Kanan Kosong) --}}
     <tr>
         <td><b>Area</b></td>
-        <td>{{ $client->area ?? '-' }}</td>
+        <td>{{ $client->customer?->area ?? '-' }}</td>
         <td></td>
         <td></td>
         <td colspan="2"></td>
@@ -74,7 +74,7 @@
 
     <tr>
         <td><b>Kontak</b></td>
-        <td>{{ $client->email }} / {{ $client->contact_phone }}</td>
+        <td>{{ $client->email }} / {{ $client->phone }}</td>
         <td></td>
         <td></td>
         <td colspan="2"></td>
@@ -82,7 +82,7 @@
 
     <tr>
         <td valign="top"><b>Alamat</b></td>
-        <td colspan="5">{{ $client->contact_address ?? $client->company_address ?? '-' }}</td>
+        <td colspan="5">{{ $client->address ?? $client->customer?->displayAddress() ?: '-' }}</td>
     </tr>
 
     <tr>
