@@ -669,6 +669,90 @@ class StockOpnameTest extends TestCase
         $this->assertEquals(5, (float) $row->diff_qty);
     }
 
+    public function test_new_products_after_finished_opname_only_appear_in_next_month()
+    {
+        $this->travelTo('2026-10-05 09:00:00');
+        $this->actingAs($this->stockManager());
+
+        $before = $this->makeProduct(10);
+        $this->saveOpname($before, '2026-10-12', 8, 'Selisih hitung')->assertOk();
+
+        $this->travelTo('2026-10-20 10:00:00');
+        $this->finish('2026-10')->assertOk();
+
+        // Produk didaftarkan sesudah opname Oktober selesai (cutoff 20 Okt).
+        $this->travelTo('2026-10-22 10:00:00');
+        $after = $this->makeProduct(10);
+
+        $response = $this->get(route('warehouse.stockopname.index', [
+            'bulan' => '2026-10',
+            'tahun' => 2026,
+        ]));
+        $response->assertOk();
+        $response->assertViewHas('rekapPerBulan', function ($rows) {
+            $oktober = collect($rows)->firstWhere('key', '2026-10');
+
+            return $oktober !== null && (int) $oktober['total'] === 1;
+        });
+
+        $catatOktober = $this->get(route('warehouse.stockopname.catat', [
+            'bulan' => '2026-10',
+            'tanggal' => '2026-10-12',
+        ]));
+        $catatOktober->assertOk();
+        $catatOktober->assertViewHas('productOptions', function ($options) use ($before, $after) {
+            $ids = $options->pluck('id');
+
+            return $ids->contains($before->id) && ! $ids->contains($after->id);
+        });
+
+        $catatNovember = $this->get(route('warehouse.stockopname.catat', [
+            'bulan' => '2026-11',
+            'tanggal' => '2026-11-01',
+        ]));
+        $catatNovember->assertOk();
+        $catatNovember->assertViewHas('productOptions', fn ($options) => $options->pluck('id')->contains($after->id));
+    }
+
+    public function test_opname_month_total_uses_products_existing_in_that_month_not_current_total()
+    {
+        $this->travelTo('2026-10-05 09:00:00');
+        $this->actingAs($this->stockManager());
+
+        $octoberProduct = $this->makeProduct(10);
+        $this->saveOpname($octoberProduct, '2026-10-12', 8, 'Selisih hitung')->assertOk();
+
+        // Produk Desember tidak boleh ikut menambah denominator opname Oktober.
+        $this->travelTo('2026-12-01 09:00:00');
+        $decemberProduct = $this->makeProduct(10);
+
+        // Opname Oktober baru divalidasi pada Desember.
+        $this->finish('2026-10')->assertOk();
+
+        $response = $this->get(route('warehouse.stockopname.index', [
+            'bulan' => '2026-10',
+            'tahun' => 2026,
+        ]));
+        $response->assertOk();
+        $response->assertViewHas('rekapPerBulan', function ($rows) {
+            $oktober = collect($rows)->firstWhere('key', '2026-10');
+
+            return $oktober !== null && (int) $oktober['total'] === 1;
+        });
+
+        $catat = $this->get(route('warehouse.stockopname.catat', [
+            'bulan' => '2026-10',
+            'tanggal' => '2026-10-12',
+        ]));
+        $catat->assertOk();
+        $catat->assertViewHas('totalSku', 1);
+        $catat->assertViewHas('productOptions', function ($options) use ($octoberProduct, $decemberProduct) {
+            $ids = $options->pluck('id');
+
+            return $ids->contains($octoberProduct->id) && ! $ids->contains($decemberProduct->id);
+        });
+    }
+
     public function test_opname_note_is_optional_and_defaults_to_selisih_dots()
     {
         $this->travelTo('2026-10-31 10:00:00');

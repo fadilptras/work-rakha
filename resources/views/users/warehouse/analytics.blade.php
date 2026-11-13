@@ -194,16 +194,48 @@
                 </form>
             </div>
 
-            {{-- BAGIAN 1: GRAFIK PRODUK KELUAR (TOP 10 TERBANYAK vs TOP 10 TERSEDIKIT) --}}
+            {{-- RINGKASAN SINGKAT: ANGKA KELUAR DIAMBIL DARI QTY INPUT --}}
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="glass-panel !py-4 flex items-center justify-between">
+                    <div>
+                        <p class="pbi-label !mb-1">Total Qty Keluar</p>
+                        <p class="text-[10px] font-bold text-slate-400 mb-1">{{ $periode === 'tahun' ? 'Tahun ' . $tahun : $bulanLabel . ' ' . $tahun }}</p>
+                        <h3 class="text-2xl font-black text-sky-400">{{ number_format($totalOutQty, 0, ',', '.') }}</h3>
+                    </div>
+                    <i class="fas fa-arrow-up-from-bracket text-sky-400/60 text-2xl"></i>
+                </div>
+                <div class="glass-panel !py-4 flex items-center justify-between">
+                    <div>
+                        <p class="pbi-label !mb-1">SKU Bergerak</p>
+                        <p class="text-[10px] font-bold text-slate-400 mb-1" title="Jumlah SKU aktif yang punya qty keluar pada periode ini">Qty keluar &gt; 0</p>
+                        <h3 class="text-2xl font-black text-emerald-400">{{ number_format($movedProducts, 0, ',', '.') }}</h3>
+                    </div>
+                    <i class="fas fa-boxes-stacked text-emerald-400/60 text-2xl"></i>
+                </div>
+                <div class="glass-panel !py-4 flex items-center justify-between">
+                    <div>
+                        <p class="pbi-label !mb-1">SKU Belum Bergerak</p>
+                        <p class="text-[10px] font-bold text-slate-400 mb-1" title="Jumlah SKU aktif tanpa qty keluar pada periode ini">Qty keluar = 0</p>
+                        <h3 class="text-2xl font-black text-amber-400">{{ number_format(max(0, $totalMasterProducts - $movedProducts), 0, ',', '.') }}</h3>
+                    </div>
+                    <i class="fas fa-box-open text-amber-400/60 text-2xl"></i>
+                </div>
+            </div>
+            <p class="-mt-2 text-xs text-slate-400">
+                <i class="fas fa-circle-info mr-1 text-sky-400"></i>
+                Qty dihitung langsung dari input barang keluar (delivery/scrap) yang sah. Pembatalan, reversal, dan koreksi opname tidak dihitung.
+            </p>
+
+            {{-- BAGIAN 1: GRAFIK PRODUK KELUAR (10 TERBANYAK vs 10 TERENDAH) --}}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {{-- Chart Kiri: Top 10 Fast-Moving --}}
                 <div class="glass-panel">
                     <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-700/60">
                         <div>
                             <h2 class="text-base font-black text-white flex items-center gap-2">
-                                <i class="fas fa-fire text-rose-400"></i> Top 10 Produk Keluar Terbanyak (Fast-Moving)
+                                <i class="fas fa-fire text-rose-400"></i> 10 Qty Keluar Terbanyak (Fast-Moving)
                             </h2>
-                            <p class="text-xs text-slate-400 mt-0.5">Produk dengan total kuantitas mutasi keluar terbanyak dari gudang.</p>
+                            <p class="text-xs text-slate-400 mt-0.5">Akumulasi qty input mutasi keluar per produk. Arahkan kursor ke batang untuk melihat riwayat tujuan.</p>
                         </div>
                         <span class="text-xs text-rose-400 font-bold bg-rose-950/80 px-2.5 py-1 rounded-full border border-rose-600/40 whitespace-nowrap">
                             {{ $periode === 'tahun' ? 'Tahun ' . $tahun : $bulanLabel }}
@@ -225,9 +257,9 @@
                     <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-700/60">
                         <div>
                             <h2 class="text-base font-black text-white flex items-center gap-2">
-                                <i class="fas fa-temperature-low text-sky-400"></i> Top 10 Produk Keluar Tersedikit (Slow-Moving)
+                                <i class="fas fa-temperature-low text-sky-400"></i> 10 Qty Keluar Terendah
                             </h2>
-                            <p class="text-xs text-slate-400 mt-0.5">Produk pergerakan terendah / minim keluar gudang (potensi tertahan).</p>
+                            <p class="text-xs text-slate-400 mt-0.5">Qty keluar paling sedikit di antara produk yang bergerak. Arahkan kursor ke batang untuk riwayat tujuan.</p>
                         </div>
                         <span class="text-xs text-sky-400 font-bold bg-sky-950/80 px-2.5 py-1 rounded-full border border-sky-600/40 whitespace-nowrap">
                             {{ $periode === 'tahun' ? 'Tahun ' . $tahun : $bulanLabel }}
@@ -255,10 +287,10 @@
                                 <h2 class="text-base font-black text-white flex items-center gap-2">
                                     <i class="fas fa-chart-line text-sky-400"></i> Tren Pengeluaran {{ $tahun }}
                                 </h2>
-                                <p class="text-xs text-slate-400 mt-0.5">Total mutasi barang keluar per bulan.</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Akumulasi qty input barang keluar per bulan (Jan–Des {{ $tahun }}).</p>
                             </div>
                             <span class="text-xs font-bold text-sky-400 bg-sky-950/80 px-2.5 py-1 rounded-full border border-sky-600/40 whitespace-nowrap">
-                                Total: {{ number_format(array_sum($trend), 0, ',', '.') }} Qty
+                                Total Setahun: {{ number_format(array_sum($trend), 0, ',', '.') }} Unit
                             </span>
                         </div>
                         <div class="relative h-[310px] w-full">
@@ -271,7 +303,7 @@
                     </div>
                 </div>
 
-                {{-- Kanan: Top Pengajuan Barang (SPB) by Quantity & DOI (7 Kolom) --}}
+                {{-- Kanan: Top Pengajuan Barang (SPB) by Quantity & DOI (6 Kolom) --}}
                 <div class="glass-panel lg:col-span-7 overflow-hidden">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-700/60">
                         <div>
@@ -299,7 +331,6 @@
                                     <th>Freq</th>
                                     <th>Stok Gudang</th>
                                     <th>DOI</th>
-                                    <th class="text-center">Status Evaluasi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -340,25 +371,10 @@
                                                 <span class="text-slate-500 text-xs italic">-</span>
                                             @endif
                                         </td>
-                                        <td class="text-center">
-                                            @if($spb['status_type'] === 'overstock')
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-950/90 text-rose-400 border border-rose-600/40" title="Diajukan banyak padahal stok masih aman untuk >90 hari">
-                                                    <i class="fas fa-triangle-exclamation text-[10px]"></i> Overstock Risk
-                                                </span>
-                                            @elseif($spb['status_type'] === 'urgent')
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950/90 text-emerald-400 border border-emerald-600/40" title="Kebutuhan mendesak: stok menipis / DOI < 30 hari">
-                                                    <i class="fas fa-fire text-[10px]"></i> Stok Kritis
-                                                </span>
-                                            @else
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-950/90 text-sky-400 border border-sky-600/40" title="Pengajuan seimbang sesuai perputaran">
-                                                    <i class="fas fa-circle-check text-[10px]"></i> Aman / Terkendali
-                                                </span>
-                                            @endif
-                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7">
+                                        <td colspan="6">
                                             <div class="py-12 text-center text-slate-500 text-xs">
                                                 <i class="fas fa-file-invoice text-2xl text-slate-600 mb-2 block"></i>
                                                 Belum ada data pengajuan barang (SPB) pada periode {{ $periodeLabel }}.
@@ -603,6 +619,27 @@
             const gridColor = 'rgba(148, 163, 184, 0.08)';
             const tickColor = '#94a3b8';
 
+            // Baris riwayat keluar yang tampil saat kursor mengarah ke batang grafik.
+            const outgoingHistoryLines = (history) => {
+                if (!history || history.length === 0) {
+                    return ['', ' Belum ada detail riwayat keluar.'];
+                }
+
+                const lines = ['', ' Riwayat keluar (terbaru):'];
+                history.slice(0, 5).forEach((h) => {
+                    lines.push(` • ${h.tanggal} — ${Number(h.qty).toLocaleString('id-ID')} ${h.satuan} → ${h.tujuan}`);
+                    const meta = [h.jenis, h.dok, h.ekspedisi].filter(Boolean);
+                    if (meta.length > 0) {
+                        lines.push(`   ${meta.join(' · ')}`);
+                    }
+                });
+                if (history.length > 5) {
+                    lines.push(` …dan ${history.length - 5} transaksi lainnya`);
+                }
+
+                return lines;
+            };
+
             // 1. DATA CHART TOP 10 FAST-MOVING (DENGAN ANGKA DI SETIAP BATANG)
             const topOutRaw = @json($topOut);
             const topOutLabels = topOutRaw.map(item => item.nama.length > 22 ? item.nama.substring(0, 22) + '...' : item.nama);
@@ -610,6 +647,7 @@
             const topOutData = topOutRaw.map(item => item.total_out);
             const topOutUnits = topOutRaw.map(item => item.satuan);
             const topOutStocks = topOutRaw.map(item => item.stok);
+            const topOutHistory = topOutRaw.map(item => item.history || []);
 
             const chartTopEl = document.getElementById('chartTopOut');
             if (chartTopEl && topOutData.length > 0) {
@@ -652,13 +690,16 @@
                                 titleColor: '#f8fafc',
                                 bodyColor: '#cbd5e1',
                                 padding: 10,
+                                displayColors: false,
+                                bodySpacing: 3,
                                 callbacks: {
                                     title: (items) => topOutFullNames[items[0].dataIndex] || items[0].label,
                                     label: (ctx) => {
                                         const idx = ctx.dataIndex;
                                         return [
                                             ` Total Keluar: ${Number(ctx.raw).toLocaleString('id-ID')} ${topOutUnits[idx]}`,
-                                            ` Sisa Stok: ${Number(topOutStocks[idx]).toLocaleString('id-ID')} ${topOutUnits[idx]}`
+                                            ` Sisa Stok: ${Number(topOutStocks[idx]).toLocaleString('id-ID')} ${topOutUnits[idx]}`,
+                                            ...outgoingHistoryLines(topOutHistory[idx])
                                         ];
                                     }
                                 }
@@ -694,6 +735,7 @@
             const leastOutData = leastOutRaw.map(item => item.total_out);
             const leastOutUnits = leastOutRaw.map(item => item.satuan);
             const leastOutStocks = leastOutRaw.map(item => item.stok);
+            const leastOutHistory = leastOutRaw.map(item => item.history || []);
 
             const chartLeastEl = document.getElementById('chartLeastOut');
             if (chartLeastEl && leastOutData.length > 0) {
@@ -736,13 +778,16 @@
                                 titleColor: '#f8fafc',
                                 bodyColor: '#cbd5e1',
                                 padding: 10,
+                                displayColors: false,
+                                bodySpacing: 3,
                                 callbacks: {
                                     title: (items) => leastOutFullNames[items[0].dataIndex] || items[0].label,
                                     label: (ctx) => {
                                         const idx = ctx.dataIndex;
                                         return [
                                             ` Total Keluar: ${Number(ctx.raw).toLocaleString('id-ID')} ${leastOutUnits[idx]}`,
-                                            ` Sisa Stok: ${Number(leastOutStocks[idx]).toLocaleString('id-ID')} ${leastOutUnits[idx]}`
+                                            ` Sisa Stok: ${Number(leastOutStocks[idx]).toLocaleString('id-ID')} ${leastOutUnits[idx]}`,
+                                            ...outgoingHistoryLines(leastOutHistory[idx])
                                         ];
                                     }
                                 }

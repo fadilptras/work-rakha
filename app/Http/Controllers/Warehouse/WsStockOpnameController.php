@@ -73,20 +73,14 @@ class WsStockOpnameController extends WsBaseController
             foreach ($listBulan as $key => $label) {
                 $inMonth = $rows->get($key, collect());
                 $stats = $this->statsFromRows($inMonth);
-                $monthCutoff = Carbon::parse($key . '-01')->endOfMonth()->endOfDay();
-                $monthDoneDate = $inMonth->where('status', StockOpname::STATUS_DONE)
-                    ->filter(fn ($o) => empty($o->note) || ! str_contains(strtolower($o->note), 'stok awal'))
-                    ->max('opname_date');
                 $isMonthFinished = $stats['menunggu'] === 0 && $stats['tersimpan'] > 0;
-                $effectiveCutoff = ($isMonthFinished && $monthDoneDate)
-                    ? Carbon::parse($monthDoneDate)->endOfDay()
-                    : $monthCutoff;
-                // Produk baru di bulan berjalan belum wajib diopname sampai bulan selanjutnya
-                $periodStart = Carbon::parse($key . '-01')->startOfDay();
+                // Cutoff = waktu opname bulan ini selesai. Produk yang didaftarkan
+                // sebelum cutoff ikut periode ini; sesudahnya baru ikut bulan berikutnya.
+                $effectiveCutoff = $this->productCutoffForPeriod($key, $isMonthFinished);
                 $opnamedProductIdsInMonth = $inMonth->pluck('product_id')->filter()->unique()->all();
                 $totalSkuMonth = Product::active()
-                    ->where(function ($w) use ($periodStart, $opnamedProductIdsInMonth) {
-                        $w->where('created_at', '<', $periodStart);
+                    ->where(function ($w) use ($effectiveCutoff, $opnamedProductIdsInMonth) {
+                        $w->where('created_at', '<=', $effectiveCutoff);
                         if (! empty($opnamedProductIdsInMonth)) {
                             $w->orWhereIn('id', $opnamedProductIdsInMonth);
                         }
@@ -173,27 +167,17 @@ class WsStockOpnameController extends WsBaseController
             ksort($listBulan);
         }
 
-        // Tentukan batas cutoff tanggal produk yang ikut dalam periode opname ini
-        $cutoffDate = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay();
-        $latestDoneOpnameDate = StockOpname::where('period', $bulan)
-            ->where('status', StockOpname::STATUS_DONE)
-            ->where(function ($q) {
-                $q->whereNull('note')->orWhere('note', 'not like', '%stok awal%');
-            })
-            ->max('opname_date');
-
+        // Tentukan batas cutoff produk yang ikut dalam periode opname ini.
+        // Produk yang didaftarkan sebelum opname berjalan wajib ikut; produk yang
+        // didaftarkan setelah opname bulan ini selesai baru ikut bulan berikutnya.
         $hasPeriodFinished = $opnames->baAvailable($bulan);
-        $filterCutoff = ($hasPeriodFinished && $latestDoneOpnameDate)
-            ? Carbon::parse($latestDoneOpnameDate)->endOfDay()
-            : $cutoffDate;
+        $filterCutoff = $this->productCutoffForPeriod($bulan, $hasPeriodFinished);
 
-        // Produk baru pada bulan berjalan tidak wajib diopname di bulan tersebut (baru diopname di bulan berikutnya)
-        $periodStart = Carbon::parse($bulan . '-01')->startOfDay();
         $existingOpnamedIds = StockOpname::where('period', $bulan)->pluck('product_id')->filter()->unique()->all();
 
         $productOptions = Product::active()
-            ->where(function ($w) use ($periodStart, $existingOpnamedIds) {
-                $w->where('created_at', '<', $periodStart);
+            ->where(function ($w) use ($filterCutoff, $existingOpnamedIds) {
+                $w->where('created_at', '<=', $filterCutoff);
                 if (! empty($existingOpnamedIds)) {
                     $w->orWhereIn('id', $existingOpnamedIds);
                 }
@@ -249,8 +233,8 @@ class WsStockOpnameController extends WsBaseController
 
         $opnamedSet = array_fill_keys(array_map('intval', array_keys($savedMap)), true);
         $totalSku = Product::active()
-            ->where(function ($w) use ($periodStart, $existingOpnamedIds) {
-                $w->where('created_at', '<', $periodStart);
+            ->where(function ($w) use ($filterCutoff, $existingOpnamedIds) {
+                $w->where('created_at', '<=', $filterCutoff);
                 if (! empty($existingOpnamedIds)) {
                     $w->orWhereIn('id', $existingOpnamedIds);
                 }
@@ -719,6 +703,52 @@ class WsStockOpnameController extends WsBaseController
     public static function toleranceFor(float $recorded): float
     {
         return round(max(self::TOL_ABS, abs($recorded) * self::TOL_PCT), 2);
+    }
+
+    /**
+     * Batas waktu produk yang masuk daftar opname satu periode.
+     *
+     * - Periode belum selesai: semua produk yang sudah terdaftar sampai akhir bulan
+     *   tetap ikut, karena opname bulan tersebut masih berjalan.
+     * - Periode sudah selesai: cutoff memakai waktu opname terakhir dilaksanakan
+     *   (bukan waktu validasi), lalu dibatasi maksimal akhir bulan tersebut.
+     *   Produk yang didaftarkan setelahnya tidak masuk periode ini, melainkan
+     *   otomatis masuk daftar opname bulan berikutnya.
+     * - Batas akhir bulan mencegah produk bulan-bulan berikutnya ikut terhitung
+     *   saat opname lama baru divalidasi belakangan.
+     */
+    private function productCutoffForPeriod(string $bulan, bool $periodFinished): Carbon
+    {
+        $monthEnd = Carbon::parse($bulan . '-01')->endOfMonth()->endOfDay();
+
+        if (! $periodFinished) {
+            return $monthEnd;
+        }
+
+        $done = StockOpname::where('period', $bulan)
+            ->where('status', StockOpname::STATUS_DONE)
+            ->where(function ($q) {
+                $q->whereNull('note')->orWhere('note', 'not like', '%stok awal%');
+            });
+
+        $opnameAt = (clone $done)->max('opname_at');
+        if ($opnameAt) {
+            $cutoff = Carbon::parse($opnameAt);
+        } else {
+            $opnameDate = (clone $done)->max('opname_date');
+            if ($opnameDate) {
+                $cutoff = Carbon::parse($opnameDate)->endOfDay();
+            } else {
+                $validatedAt = (clone $done)->max('validated_at');
+                $cutoff = $validatedAt ? Carbon::parse($validatedAt) : null;
+            }
+        }
+
+        if (! $cutoff) {
+            return $monthEnd;
+        }
+
+        return $cutoff->greaterThan($monthEnd) ? $monthEnd : $cutoff;
     }
 
     /**

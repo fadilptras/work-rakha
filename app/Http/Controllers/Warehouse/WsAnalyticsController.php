@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Warehouse;
 
 use App\Services\ForecastService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
  * Analitik gudang:
- * - Outflow barang keluar (Top 10 Fast-Moving & Under 10 Slow-Moving dalam Grafik)
+ * - Outflow barang keluar (10 Qty Terbanyak & 10 Qty Terendah dalam Grafik)
  * - Top Pengajuan Barang (SPB) berdasarkan Quantity + DOI
  * - Filter periode: Per Bulan & Per Tahun
  * Route: warehouse.analytics
@@ -174,7 +175,8 @@ class WsAnalyticsController extends WsBaseController
 
     /**
      * Total keluar per produk pada periode terpilih (bulan tertentu atau 1 tahun penuh).
-     * Keluar = delivery, scrap, atau adjustment dari Stock ke lokasi luar.
+     * Keluar = qty input dari mutasi delivery/scrap yang sah. Reversal, koreksi
+     * opname, dan baris batal tidak dihitung agar angka tidak dobel/melembung.
      *
      * @return array{0: \Illuminate\Support\Collection, 1: \Illuminate\Support\Collection, 2: float, 3: int, 4: int}
      */
@@ -185,6 +187,7 @@ class WsAnalyticsController extends WsBaseController
         }
 
         $outgoingSql = $this->outgoingCaseSql('m');
+        $historyByProduct = $this->outgoingHistoryByProduct($tahun, $bulan);
 
         $rows = DB::table('products as p')
             ->leftJoin('stock_moves as m', function ($join) use ($tahun, $bulan) {
@@ -207,14 +210,17 @@ class WsAnalyticsController extends WsBaseController
             ])
             ->selectRaw($outgoingSql . ' as total_out')
             ->get()
-            ->map(function ($row) {
+            ->map(function ($row) use ($historyByProduct) {
+                $productId = (int) $row->id;
+
                 return [
-                    'id' => (int) $row->id,
+                    'id' => $productId,
                     'kode' => $row->product_code ?: '-',
                     'nama' => $row->product_name ?: '-',
                     'satuan' => $row->unit ?: ($row->fill_unit ?: 'Pcs'),
                     'stok' => (float) $row->stock,
                     'total_out' => (float) $row->total_out,
+                    'history' => $historyByProduct[$productId] ?? [],
                 ];
             });
 
@@ -224,7 +230,7 @@ class WsAnalyticsController extends WsBaseController
         // Top 10 keluar terbanyak (Fast-moving)
         $topOut = $moved->sortByDesc('total_out')->take(10)->values();
 
-        // Under 10 keluar tersedikit (Slow-moving / Dead Stock)
+        // 10 qty keluar terendah di antara produk yang bergerak
         $leastOut = $moved->sortBy('total_out')->take(10)->values();
         // Bila pergerakan kurang dari 10 produk, sertakan produk berstok yang belum bergerak sama sekali
         if ($leastOut->count() < 10) {
@@ -272,20 +278,38 @@ class WsAnalyticsController extends WsBaseController
         // Master produk untuk sinkronisasi kode, satuan, dan stok fisik realtime
         $masterProducts = DB::table('products')
             ->where('is_deleted', 0)
-            ->select(['id', 'product_code', 'product_name', 'unit', 'fill_unit', 'stock'])
+            ->select(['id', 'product_code', 'product_name', 'product_name_clean', 'unit', 'fill_unit', 'stock'])
             ->get();
 
         $productMap = [];
         foreach ($masterProducts as $mp) {
-            $key = mb_strtolower(trim((string) $mp->product_name));
-            if ($key !== '') {
-                $productMap[$key] = [
-                    'id' => $mp->id,
-                    'kode' => $mp->product_code ?: '-',
-                    'nama' => $mp->product_name,
-                    'satuan' => $mp->unit ?: ($mp->fill_unit ?: 'Pcs'),
-                    'stok' => (float) $mp->stock,
-                ];
+            $entry = [
+                'id' => $mp->id,
+                'kode' => $mp->product_code ?: '-',
+                'nama' => $mp->product_name,
+                'satuan' => $mp->unit ?: ($mp->fill_unit ?: 'Pcs'),
+                'stok' => (float) $mp->stock,
+            ];
+
+            $keys = $this->productMatchKeys((string) $mp->product_name);
+            if (! empty($mp->product_name_clean)) {
+                $keys = array_merge($keys, $this->productMatchKeys((string) $mp->product_name_clean));
+            }
+
+            foreach (array_unique($keys) as $key) {
+                if (! isset($productMap[$key])) {
+                    $productMap[$key] = $entry;
+                }
+            }
+        }
+
+        // DOI juga diindeks dengan normalisasi nama yang sama agar stok & DOI konsisten.
+        $doiMapByKey = [];
+        foreach ($doiMap as $dKey => $dVal) {
+            foreach ($this->productMatchKeys((string) $dKey) as $key) {
+                if (! isset($doiMapByKey[$key])) {
+                    $doiMapByKey[$key] = $dVal;
+                }
             }
         }
 
@@ -330,12 +354,20 @@ class WsAnalyticsController extends WsBaseController
             }
         }
 
-        $topSpb = collect($itemAgg)->map(function ($item, $key) use ($productMap, $doiMap) {
-            // Cocokkan ke master product
-            $master = $productMap[$key] ?? null;
+        $topSpb = collect($itemAgg)->map(function ($item, $key) use ($productMap, $doiMapByKey) {
+            $matchKeys = $this->productMatchKeys((string) $item['nama']);
+
+            // Cocokkan ke master product: exact normalization dulu, baru substring.
+            $master = null;
+            foreach ($matchKeys as $mk) {
+                if (isset($productMap[$mk])) {
+                    $master = $productMap[$mk];
+                    break;
+                }
+            }
             if (! $master) {
                 foreach ($productMap as $mKey => $mVal) {
-                    if ($mKey === $key || str_contains($mKey, $key) || str_contains($key, $mKey)) {
+                    if (str_contains($mKey, $key) || str_contains($key, $mKey)) {
                         $master = $mVal;
                         break;
                     }
@@ -346,11 +378,17 @@ class WsAnalyticsController extends WsBaseController
             $stok = $master['stok'] ?? 0.0;
             $satuan = $master['satuan'] ?? $item['satuan'];
 
-            // Cocokkan ke data ForecastService DOI
-            $doiInfo = $doiMap[$key] ?? null;
+            // Cocokkan ke data ForecastService DOI dengan normalisasi yang sama.
+            $doiInfo = null;
+            foreach ($matchKeys as $mk) {
+                if (isset($doiMapByKey[$mk])) {
+                    $doiInfo = $doiMapByKey[$mk];
+                    break;
+                }
+            }
             if (! $doiInfo) {
-                foreach ($doiMap as $dKey => $dVal) {
-                    if ($dKey === $key || str_contains($dKey, $key) || str_contains($key, $dKey)) {
+                foreach ($doiMapByKey as $dKey => $dVal) {
+                    if (str_contains($dKey, $key) || str_contains($key, $dKey)) {
                         $doiInfo = $dVal;
                         break;
                     }
@@ -359,31 +397,6 @@ class WsAnalyticsController extends WsBaseController
 
             $doi = $doiInfo['doi'] ?? null;
             $avgSales = $doiInfo['avg'] ?? 0.0;
-
-            // Evaluasi rasionalitas pengajuan berdasarkan stok & DOI
-            if ($doi !== null) {
-                if ($doi >= 90) {
-                    $statusType = 'overstock';
-                    $statusLabel = 'Overstock Risk';
-                } elseif ($doi < 30 || $stok <= 0) {
-                    $statusType = 'urgent';
-                    $statusLabel = 'Stok Kritis';
-                } else {
-                    $statusType = 'normal';
-                    $statusLabel = 'Aman / Terkendali';
-                }
-            } else {
-                if ($stok <= 0) {
-                    $statusType = 'urgent';
-                    $statusLabel = 'Stok Habis';
-                } elseif ($stok > 100) {
-                    $statusType = 'overstock';
-                    $statusLabel = 'Stok Tinggi';
-                } else {
-                    $statusType = 'normal';
-                    $statusLabel = 'Normal';
-                }
-            }
 
             return [
                 'nama' => $master['nama'] ?? $item['nama'],
@@ -394,8 +407,6 @@ class WsAnalyticsController extends WsBaseController
                 'stok' => $stok,
                 'avg_sales' => $avgSales,
                 'doi' => $doi,
-                'status_type' => $statusType,
-                'status_label' => $statusLabel,
             ];
         })
         ->sortByDesc('total_qty')
@@ -405,15 +416,117 @@ class WsAnalyticsController extends WsBaseController
         return [$topSpb, $totalSpbQty, $spbDocCount];
     }
 
-    /** Ekspresi SUM qty keluar untuk tabel stock_moves ber-alias. */
+    /**
+     * Kunci pencocokan nama produk yang toleran terhadap spasi, tanda baca,
+     * dan prefix "RAKHA" (mis. "No 16 -MUA" vs "No 16 - MUA").
+     *
+     * @return array<int, string>
+     */
+    private function productMatchKeys(string $name): array
+    {
+        $base = mb_strtolower(trim($name));
+        if ($base === '') {
+            return [];
+        }
+
+        $spaced = preg_replace('/[^a-z0-9]+/u', ' ', $base) ?? '';
+        $spaced = trim(preg_replace('/\s+/', ' ', $spaced) ?? '');
+
+        $compact = preg_replace('/[^a-z0-9]+/u', '', $base) ?? '';
+        $compact = preg_replace('/^rakha/', '', $compact) ?? $compact;
+
+        return array_values(array_unique(array_filter([$base, $spaced, $compact])));
+    }
+
+    /**
+     * Riwayat detail barang keluar per produk (tujuan, qty, dokumen, ekspedisi).
+     *
+     * @return array<int, array<int, array<string, mixed>>>
+     */
+    private function outgoingHistoryByProduct(int $tahun, ?int $bulan): array
+    {
+        if (! Schema::hasTable('stock_moves')) {
+            return [];
+        }
+
+        $rows = DB::table('stock_moves as m')
+            ->join('products as p', 'p.id', '=', 'm.product_id')
+            ->where('p.is_deleted', 0)
+            ->where('m.status', 'done')
+            ->whereIn('m.type', ['delivery', 'scrap'])
+            ->where(function ($q) {
+                $q->whereNull('m.ref_type')->orWhere('m.ref_type', '<>', 'stock_move_reversal');
+            })
+            ->where(function ($q) {
+                $q->whereNull('m.reason')->orWhere(function ($q2) {
+                    $q2->where('m.reason', 'not like', 'Opname%')
+                        ->where('m.reason', 'not like', '%[dibatalkan]%');
+                });
+            })
+            ->whereYear('m.created_at', $tahun)
+            ->when($bulan !== null, fn ($q) => $q->whereMonth('m.created_at', $bulan))
+            ->orderByDesc('m.created_at')
+            ->get([
+                'm.product_id',
+                'm.created_at',
+                'm.qty',
+                'm.uom',
+                'm.type',
+                'm.to_location',
+                'm.partner',
+                'm.purpose',
+                'm.expedition',
+                'm.doc_no',
+                'm.reason',
+            ]);
+
+        return $rows->groupBy('product_id')->map(function ($moves) {
+            return $moves->map(function ($move) {
+                $tujuan = trim((string) $move->partner);
+
+                // Sebagian data lama hanya menyimpan tujuan di teks alasan.
+                if ($tujuan === '' && preg_match('/\bke\s+(.+?)(?:\s*\(|$)/i', (string) $move->reason, $match)) {
+                    $tujuan = trim($match[1]);
+                }
+                if ($tujuan === '') {
+                    $tujuan = $move->to_location && ! in_array(strtolower((string) $move->to_location), ['customer', 'stock'], true)
+                        ? $move->to_location
+                        : 'Tujuan tidak tercatat';
+                }
+
+                return [
+                    'tanggal' => $move->created_at
+                        ? Carbon::parse($move->created_at)->locale('id')->translatedFormat('d M Y')
+                        : '-',
+                    'qty' => (float) $move->qty,
+                    'satuan' => $move->uom ?: 'Unit',
+                    'tujuan' => $tujuan,
+                    'jenis' => $move->purpose ?: ($move->type === 'scrap' ? 'Scrap' : 'Penjualan'),
+                    'dok' => $move->doc_no ?: '',
+                    'ekspedisi' => $move->expedition ?: '',
+                ];
+            })->values()->all();
+        })->all();
+    }
+
+    /**
+     * Ekspresi SUM qty keluar riil untuk tabel stock_moves ber-alias.
+     *
+     * Sumber angka hanya qty input pada baris delivery/scrap berstatus selesai.
+     * Baris reversal (ref_type stock_move_reversal), koreksi opname, dan penanda
+     * pembatalan dikecualikan supaya produk yang hanya dibatalkan/dikoreksi tidak
+     * dianggap sebagai barang keluar dan totalnya tidak terhitung dua kali.
+     */
     private function outgoingCaseSql(string $alias): string
     {
         $p = $alias . '.';
 
         return "SUM(CASE
-            WHEN {$p}type = 'delivery' THEN {$p}qty
-            WHEN {$p}type = 'scrap' THEN {$p}qty
-            WHEN {$p}type = 'adjustment' AND {$p}from_location = 'Stock' AND {$p}to_location <> 'Stock' THEN {$p}qty
+            WHEN {$p}status = 'done'
+                AND {$p}type IN ('delivery', 'scrap')
+                AND ({$p}ref_type IS NULL OR {$p}ref_type <> 'stock_move_reversal')
+                AND ({$p}reason IS NULL OR ({$p}reason NOT LIKE 'Opname%' AND {$p}reason NOT LIKE '%[dibatalkan]%'))
+            THEN {$p}qty
             ELSE 0
         END)";
     }
@@ -431,12 +544,16 @@ class WsAnalyticsController extends WsBaseController
             return $trend;
         }
 
-        $rows = DB::table('stock_moves')
-            ->where('status', 'done')
-            ->whereYear('created_at', $tahun)
-            ->selectRaw('MONTH(created_at) as bulan')
-            ->selectRaw($this->outgoingCaseSql('stock_moves') . ' as total')
-            ->groupByRaw('MONTH(created_at)')
+        // Samakan cakupan dengan buildOutgoing(): abaikan mutasi produk yang
+        // sudah dihapus agar total tren = total qty keluar pada card ringkasan.
+        $rows = DB::table('stock_moves as m')
+            ->join('products as p', 'p.id', '=', 'm.product_id')
+            ->where('p.is_deleted', 0)
+            ->where('m.status', 'done')
+            ->whereYear('m.created_at', $tahun)
+            ->selectRaw('MONTH(m.created_at) as bulan')
+            ->selectRaw($this->outgoingCaseSql('m') . ' as total')
+            ->groupByRaw('MONTH(m.created_at)')
             ->pluck('total', 'bulan');
 
         foreach ($rows as $bulan => $total) {
